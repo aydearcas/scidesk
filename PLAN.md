@@ -1,6 +1,6 @@
 # SciDesk: plan de desarrollo
 
-**Borrador v0.4, 20 de noviembre de 2026.** Incorpora tus respuestas a la v0.3. Las decisiones que siguen pendientes están marcadas como **[P21]**, **[P22]**… y se recogen en la sección 10. Lo que he supuesto sin preguntarte aparece como *Supuesto*. Cada decisión tomada tiene su ficha en [`docs/decisiones/`](docs/decisiones/).
+**Borrador v0.4, 20 de noviembre de 2026.** Incorpora tus respuestas a la v0.3. Todas las preguntas del plan están contestadas (sección 10). Lo que he supuesto sin preguntarte aparece como *Supuesto*. Cada decisión tomada tiene su ficha en [`docs/decisiones/`](docs/decisiones/).
 
 > **El programa se llama SciDesk** (decidido en P19). Su nombre de trabajo era SciScribe, que se descartó porque ya existe un producto con ese nombre en el mismo sector.
 
@@ -8,6 +8,7 @@
 
 - Decididas: licencia AGPL-3.0 con CLA (P1b, 6.3), historial con instantáneas propias en lugar de git (P15, 6.4) y perfiles de revista creados bajo demanda al elegir revista (P20, 5.9).
 - Decidida P12: un proyecto puede tener varios artículos, con biblioteca y directorio de personas comunes. Nueva estructura de carpetas (4) y análisis en 4.1.
+- Decididas P21 a P23: el módulo de adaptación a revista no usa IA, se aceptan los cuatro niveles de confidencialidad de los paquetes para LLM, y los comentarios del código y los commits van en inglés.
 - Nombre definitivo: **SciDesk** (P19), con nuevas extensiones de archivo: `.scidesk`, `.scidoc` y `.scitable`.
 - Nueva función futura con IA: revisar rasgos típicos de texto generado con IA, como rayas, punto y coma y dos puntos en exceso (5.12).
 
@@ -25,7 +26,7 @@ La v0.3 añadió el resumen aparte, los dos modos de biblioteca (propia o Zotero
 | P4b | Varios coautores revisan **en paralelo** y cada uno devuelve su copia; tú lo pasas todo a tu copia maestra | **Fusionar varias copias devueltas es el núcleo de la fase 2**, no un extra (5.11) |
 | P5 | **Texto continuo + vista previa paginada** | No hay paginación en vivo. La vista previa y el PDF se deciden en la fase 0 |
 | P6 | Ecuaciones: pocas en biomedicina, pero **necesarias para ampliar a otras disciplinas** | El formato las admite desde la versión 1, para no tener que migrar documentos. El editor y la exportación a Word llegan con la ampliación a otras disciplinas (fase 4) |
-| P7 | Interfaz en **español e inglés**, con cambio de idioma en las opciones. **El código, en inglés** | Todos los textos de la interfaz van en archivos de traducción desde el primer día. Identificadores y claves del formato, en inglés. Falta concretar comentarios y commits (P23) |
+| P7 | Interfaz en **español e inglés**, con cambio de idioma en las opciones. **El código, en inglés** | Todos los textos de la interfaz van en archivos de traducción desde el primer día. Identificadores, claves del formato, comentarios del código y mensajes de commit, en inglés (P23) |
 | P8 | **Cada tabla en su propio archivo** (`tablas/`) y cada figura en `figuras/`, **editables también desde la vista del documento completo** | La tabla se edita dentro del artículo, como en Word, o en su propia pestaña; en los dos casos se modifica el mismo archivo |
 | P9 | Documentos base aceptados, **más un documento propio para el resumen y las palabras clave**. Las plantillas por tipo de artículo se hacen según avance el desarrollo | Ver 4 |
 | P10 | Revistas Q1–Q2 de reumatología. **Reumatología Clínica es la revista de prueba** | Primer perfil de revista y caso de prueba de principio a fin (5.9) |
@@ -39,6 +40,9 @@ La v0.3 añadió el resumen aparte, los dos modos de biblioteca (propia o Zotero
 | P18 | **Pila propuesta aceptada**: Tauri + React + TypeScript | Se confirma con los prototipos de la fase 0 |
 | P19 | **El programa se llama SciDesk** | Extensiones: `.scidesk` para el manifiesto del proyecto y su carpeta oculta, `.scidoc` para los documentos y `.scitable` para las tablas (*Supuesto*). Comprobaciones y nombres descartados en la ficha 0016 |
 | P20 | **Perfiles de revista bajo demanda**: estilo de cita y datos de la revista de fuentes abiertas; el resto, con un paquete para LLM cuando eliges una revista que aún no tiene perfil | Nadie tiene que crear perfiles de todas las revistas por adelantado: el catálogo crece con el uso (5.9) |
+| P21 | **El módulo de adaptación a revista no usa IA**: solo formato y requisitos | Lo que no toca tu texto se aplica al exportar; lo demás queda como lista de tareas. La ayuda con IA en la redacción, la corrección y la traducción irá en la futura versión con IA (5.12) |
+| P22 | **Paquetes para LLM con cuatro niveles de confidencialidad** (0 público, 1 términos sueltos, 2 fragmentos que eliges, 3 documento completo) | Por defecto solo se ofrecen los niveles 0 y 1. Primeros usos: perfiles de revista y diccionarios de especialidad (5.12) |
+| P23 | **Comentarios del código y mensajes de commit en inglés** | El plan y las decisiones siguen en español |
 | — | **Fuentes**: todas las habituales de Word (Calibri, Times New Roman, Arial…) y Roboto | Ver 5.2 |
 | — | **Módulo de adaptación a revista** | Ver 5.9 |
 
@@ -379,7 +383,7 @@ Al elegir revista o cambiar de revista, el módulo compara el proyecto con el pe
 - **Lo que se aplica solo al exportar, sin tocar tu texto**: estilo de cita, formato de página, orden y nombres de los apartados, tablas al final o en el texto, nombres de los archivos de figura, portada separada y versión cegada, y declaraciones en su sitio.
 - **Lo que tienes que hacer tú**, como lista de tareas enlazada al texto: recortar palabras del resumen o del texto, cambiar los apartados del resumen estructurado, reducir referencias o figuras, añadir palabras clave, poner el título en inglés o escribir una declaración que falta.
 
-Sustituye a "cambiar de revista tras un rechazo" de la v0.2, que pasa de [Después] a V1. *Supuesto:* "adaptar el estilo" se refiere al formato y los requisitos, no al estilo de redacción (tono, longitud de las frases); eso último necesitaría IA **[P21]**.
+Sustituye a "cambiar de revista tras un rechazo" de la v0.2, que pasa de [Después] a V1. El módulo no usa IA y se limita al formato y los requisitos (decidido en P21). Adaptar el estilo de redacción queda para la futura versión con IA (5.12).
 
 **Primer caso: Reumatología Clínica** (guía para autores consultada el 20 de noviembre de 2026)
 
@@ -447,7 +451,7 @@ Esta tabla ya muestra el problema: la guía es buena, pero le falta un dato impo
 
 ### 5.12 IA y paquetes para LLM (opcional)
 
-**Asistente con IA integrado** **[Después]**: con tu clave de API y solo cuando lo pidas. En qué pasos tiene sentido se decidirá cuando el programa exista (P16). Candidatos:
+**Versión con IA** **[Después]**: por ahora el programa no usa IA (P16 y P21). Más adelante habrá una versión que la incluya, con tu clave de API y solo cuando lo pidas, y en qué pasos se decidirá cuando el programa exista. Una de sus funciones principales será **ayudar en la redacción, corregirla y traducir** (por ejemplo, pasar el resumen al inglés o adaptar el estilo de redacción a una revista). Otros candidatos:
 - Revisar el inglés.
 - Recortar el resumen al límite.
 - Comprobar que las cifras del resumen coinciden con las de los resultados.
@@ -467,7 +471,7 @@ Tú lo procesas con el LLM que prefieras (por ejemplo, Claude con una skill) e i
 
 Ventajas: no hace falta clave de API ni conexión desde el programa, eliges el modelo y ves exactamente qué sale de tu equipo.
 
-**Niveles de confidencialidad [P22].** Cada paquete declara su nivel, y antes de crearlo el programa muestra la lista exacta de lo que contiene:
+**Niveles de confidencialidad (decidido en P22).** Cada paquete declara su nivel, y antes de crearlo el programa muestra la lista exacta de lo que contiene:
 
 | Nivel | Qué sale de tu equipo | Ejemplos |
 |---|---|---|
@@ -694,14 +698,14 @@ Se desarrolla y se prueba en Windows; la integración continua compila también 
 - `CLAUDE.md` en la raíz guarda las decisiones y el estado, para que cualquier sesión nueva continúe sin perder contexto.
 - `docs/decisiones/` contiene un archivo corto por decisión importante: qué se eligió, por qué y qué se descartó.
 - Un corpus de prueba en `tests/corpus/` con tablas de Word, archivos RIS y NBIB, DOCX reales y rondas de revisión con coautores (anonimizados si hace falta). Es la mejor protección contra regresiones al importar y exportar.
-- Idiomas: el código (identificadores y, si lo confirmas en P23, comentarios y commits) en inglés; el plan y las decisiones, en español.
+- Idiomas: el código (identificadores, comentarios) y los mensajes de commit, en inglés (P23); el plan y las decisiones, en español.
 - Plataforma: desarrollo y pruebas diarias en Windows; macOS en el MacBook Air al cerrar cada fase.
 
 ## 10. Preguntas abiertas
 
-*Contestadas: P1 a P20, con P1b (ver "Decisiones tomadas" al principio).*
+*Contestadas todas: P1 a P23, con P1b (ver "Decisiones tomadas" al principio).*
 
-**Otras**
-- **[P21] Adaptación a revista.** ¿El módulo se limita al formato y los requisitos, o quieres que adapte también el estilo de redacción (tono, longitud de las frases)? Lo segundo necesitaría IA.
-- **[P22] Paquetes para LLM.** ¿Te parecen bien los cuatro niveles de confidencialidad y empezar por los perfiles de revista y los diccionarios de especialidad (5.12)?
-- **[P23] Código en inglés.** ¿Incluye también los comentarios del código y los mensajes de commit? Propongo que sí, porque es un proyecto abierto e internacional. El plan y las decisiones seguirían en español.
+No queda ninguna pregunta abierta. El siguiente paso es la fase 0 (sección 8):
+- Reservar scidesk.app, scidesk.dev y los nombres en GitHub, npm y crates.io.
+- Hacer los seis prototipos de riesgo.
+- Especificar los formatos: `.scidoc`, `autores.json`, `personas.json`, el manifiesto `.scidesk` y el esquema del perfil de revista.

@@ -1,14 +1,14 @@
 # 0005. Alcance e idiomas
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada (queda por concretar si comentarios y commits van en inglés: P23)
-- **Preguntas del plan:** P3, P6 y P7
+- **Estado:** aceptada
+- **Preguntas del plan:** P3, P6, P7 y P23
 
 ## Qué se decide
 - **Alcance:** primero artículos de biomedicina y clínica, en español e inglés. Después, cualquier disciplina.
 - **Ecuaciones:** el formato las admite desde la versión 1; el editor y la exportación a Word llegan con la ampliación a otras disciplinas.
 - **Interfaz:** en español y en inglés, con cambio de idioma en las opciones.
-- **Código:** en inglés.
+- **Código:** en inglés, incluidos los comentarios del código y los mensajes de commit (P23). El plan y las decisiones siguen en español.
 
 ## Por qué
 - Biomedicina y clínica es el uso real de quien impulsa el proyecto y el que permite probar con artículos reales, pero el programa debe servir para cualquier disciplina.

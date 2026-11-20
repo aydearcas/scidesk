@@ -8,7 +8,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0002](0002-plataformas-windows-primero.md) | Windows y macOS, desarrollando primero en Windows | P2 | 20/11/2026 |
 | [0003](0003-coautores-con-word-y-fusion.md) | Coautores con Word y fusión de copias devueltas en paralelo | P4, P4b | 20/11/2026 |
 | [0004](0004-texto-continuo-con-vista-previa.md) | Texto continuo con vista previa paginada | P5 | 20/11/2026 |
-| [0005](0005-alcance-e-idiomas.md) | Biomedicina primero; interfaz en español e inglés; código en inglés; ecuaciones con la ampliación | P3, P6, P7 | 20/11/2026 |
+| [0005](0005-alcance-e-idiomas.md) | Biomedicina primero; interfaz en español e inglés; código, comentarios y commits en inglés; ecuaciones con la ampliación | P3, P6, P7, P23 | 20/11/2026 |
 | [0006](0006-estructura-del-proyecto.md) | Tablas y figuras en archivos propios, documentos base y resumen aparte | P8, P9 | 20/11/2026 |
 | [0007](0007-referencias.md) | Biblioteca propia o vinculada a Zotero; consultas en línea opcionales; estilo de Reumatología Clínica | P11, P13, P14 | 20/11/2026 |
 | [0008](0008-revista-de-prueba.md) | Reumatología Clínica como revista de prueba | P10 | 20/11/2026 |
@@ -20,6 +20,8 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0014](0014-perfiles-de-revista.md) | Perfiles de revista bajo demanda | P20 | 20/11/2026 |
 | [0015](0015-varios-articulos-por-proyecto.md) | Un proyecto, varios artículos, con biblioteca y personas comunes | P12 | 20/11/2026 |
 | [0016](0016-nombre-scidesk.md) | El programa se llama SciDesk | P19 | 20/11/2026 |
+| [0017](0017-adaptacion-sin-ia.md) | Adaptación a revista sin IA; redacción y traducción en la futura versión con IA | P21 | 20/11/2026 |
+| [0018](0018-paquetes-llm.md) | Paquetes para LLM con cuatro niveles de confidencialidad | P22 | 20/11/2026 |
 
 ## Plantilla
 

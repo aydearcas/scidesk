@@ -1,7 +1,7 @@
 # 0009. IA más adelante; sin conexión con revsis-app por ahora
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada (el diseño de los paquetes para LLM es una propuesta pendiente: P22)
+- **Estado:** aceptada. Los paquetes para LLM se deciden en [0018](0018-paquetes-llm.md), y el alcance de la futura versión con IA, en [0017](0017-adaptacion-sin-ia.md).
 - **Preguntas del plan:** P16 y P17
 
 ## Qué se decide
