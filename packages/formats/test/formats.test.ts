@@ -100,9 +100,11 @@ describe("rules that catch real mistakes", () => {
     d.doc.content[3].content.push({ type: "text", text: "[3]", attrs: { n: 3 } });
     expect(validate("scidoc", d)).not.toEqual([]);
   });
-  it("says precisely what is wrong in the prototypes' raw files (they predate v1)", () => {
-    const p7 = JSON.parse(readFileSync(`${PROTO}07-track-changes/out/word-edited.scidoc.json`, "utf8"));
-    expect(validate("scidoc", { schemaVersion: 1, documentType: "article", lang: "es", comments: {}, ...p7 })).toEqual([
+  it("says precisely what is wrong (prototype 7 named its changes c1, c2…)", () => {
+    // prototypes/*/out/ is not in the repository: start from the committed example
+    const p7 = JSON.parse(readFileSync(`${EXAMPLES}standalone/tracked-changes.scidoc`, "utf8"));
+    p7.doc.content[0].content[1].marks[0].attrs.id = "c1";
+    expect(validate("scidoc", p7)).toEqual([
       { level: "error", file: undefined, path: "/doc/content/0/content/1/marks/0/attrs/id", message: 'must match pattern "^ch-[a-z0-9]{1,24}$"' },
     ]);
     const d = clone(body);

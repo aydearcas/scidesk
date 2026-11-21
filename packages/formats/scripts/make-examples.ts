@@ -10,7 +10,11 @@
 //   examples/standalone/        files outside a project: prototype 7's document edited in
 //                               Word (tracked changes), a citation field and the property of
 //                               a DOCX for co-authors, and a computer's local state.
-// Ids come from a seeded generator, so every run writes the same bytes.
+// Ids come from a seeded generator, so every run writes the same bytes. Two inputs are
+// outputs of prototypes that are not in the repository (prototypes/*/out/ is ignored):
+// prototypes/05-zotero/out/library.json and prototypes/07-track-changes/out/word-edited.scidoc.json.
+// Run those prototypes first; the examples themselves are committed, so the tests do not
+// need them.
 //   npm run make:examples
 import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";

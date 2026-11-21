@@ -300,7 +300,7 @@ El JSON del campo de cita y el de la propiedad `SciDesk` tienen esquema (`docx-c
 | `examples/composite-zotero/` | Proyecto de prueba del prototipo 8 y biblioteca del prototipo 5 | Proyecto vinculado a Zotero: el resumen y dos tablas como partes, citas de 30 referencias leídas de Zotero; los ids de bloque, que el prototipo no tenía, los pone la normalización |
 | `examples/standalone/` | Prototipo 7 y lo anterior | El documento editado en Word con 8 cambios marcados (7 en el cuerpo y 1 en su tabla, cada archivo con su registro), un campo de cita y la propiedad `SciDesk` de un DOCX para coautores, y el estado local de un equipo con la sincronización de Zotero |
 
-Los ejemplos se regeneran con `npm run make:examples` (ids de un generador con semilla: siempre los mismos bytes) y los esquemas con `npm run build:schemas`; `npm test` comprueba todo y `npm run typecheck`, los tipos. Las personas y los datos son ficticios; los Word privados del usuario no se usan.
+Los ejemplos se regeneran con `npm run make:examples` (ids de un generador con semilla: siempre los mismos bytes; necesita antes las salidas de los prototipos 5 y 7, que no están en el repositorio) y los esquemas con `npm run build:schemas`; `npm test` comprueba todo y `npm run typecheck`, los tipos. Las personas y los datos son ficticios; los Word privados del usuario no se usan.
 
 ## 12. Fuera de la v1
 

@@ -24,4 +24,4 @@ npm test
 npm run typecheck
 ```
 
-Después de cambiar una definición: `npm run build:schemas` (y `npm run make:examples` si cambian los ejemplos). Las pruebas fallan si `schemas/` no está al día.
+Después de cambiar una definición: `npm run build:schemas` (y `npm run make:examples` si cambian los ejemplos). Las pruebas fallan si `schemas/` no está al día. Regenerar los ejemplos necesita dos salidas de prototipos que no están en el repositorio (`prototypes/05-zotero/out/library.json` y `prototypes/07-track-changes/out/word-edited.scidoc.json`): hay que ejecutar antes esos prototipos. Las pruebas no las necesitan.
