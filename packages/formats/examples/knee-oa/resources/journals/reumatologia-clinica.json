@@ -1,0 +1,324 @@
+{
+  "abstract": {
+    "sections": {
+      "source": "guide",
+      "value": [
+        {
+          "label": {
+            "es": "Antecedentes y objetivo"
+          },
+          "role": "background-objective"
+        },
+        {
+          "label": {
+            "es": "Pacientes o Materiales y métodos"
+          },
+          "role": "patients-methods"
+        },
+        {
+          "label": {
+            "es": "Resultados"
+          },
+          "role": "results"
+        },
+        {
+          "label": {
+            "es": "Discusión y Conclusiones"
+          },
+          "role": "discussion-conclusions"
+        }
+      ]
+    },
+    "structured": {
+      "source": "guide",
+      "value": true
+    }
+  },
+  "articleTypes": [
+    {
+      "articleType": "original",
+      "journalName": {
+        "es": "Original"
+      },
+      "limits": {
+        "authorsAdvised": {
+          "source": "guide",
+          "value": 6
+        },
+        "figures": {
+          "source": "guide",
+          "value": 6
+        },
+        "keywords": {
+          "source": "guide",
+          "value": 6
+        },
+        "references": {
+          "source": "guide",
+          "value": 30
+        },
+        "tables": {
+          "source": "guide",
+          "value": 6
+        },
+        "words": {
+          "source": "guide",
+          "value": 3000
+        }
+      }
+    },
+    {
+      "articleType": "brief-original",
+      "journalName": {
+        "es": "Original breve"
+      },
+      "limits": {
+        "authors": {
+          "source": "guide",
+          "value": 6
+        },
+        "figuresAndTables": {
+          "source": "guide",
+          "value": 2
+        },
+        "references": {
+          "source": "guide",
+          "value": 15
+        },
+        "words": {
+          "source": "guide",
+          "value": 1500
+        }
+      }
+    },
+    {
+      "articleType": "case-report",
+      "journalName": {
+        "es": "Caso clínico"
+      },
+      "limits": {
+        "figures": {
+          "source": "guide",
+          "value": 1
+        },
+        "references": {
+          "source": "guide",
+          "value": 10
+        },
+        "tables": {
+          "source": "guide",
+          "value": 1
+        },
+        "words": {
+          "source": "guide",
+          "value": 600
+        }
+      },
+      "sections": {
+        "source": "guide",
+        "value": [
+          "introduction",
+          "case-presentation",
+          "discussion",
+          "conclusions"
+        ]
+      }
+    },
+    {
+      "articleType": "letter",
+      "journalName": {
+        "es": "Carta al editor"
+      },
+      "limits": {
+        "authors": {
+          "source": "guide",
+          "value": 4
+        },
+        "figuresAndTables": {
+          "source": "guide",
+          "value": 1
+        },
+        "references": {
+          "source": "guide",
+          "value": 10
+        },
+        "words": {
+          "source": "guide",
+          "value": 600
+        }
+      },
+      "opening": {
+        "source": "guide",
+        "value": "Señor editor"
+      }
+    }
+  ],
+  "citationStyle": {
+    "source": "scidesk",
+    "value": {
+      "basedOn": "http://www.zotero.org/styles/elsevier-vancouver",
+      "file": "styles/reumatologia-clinica-2026.csl",
+      "id": "http://www.zotero.org/styles/reumatologia-clinica-scidesk-prototype"
+    }
+  },
+  "declarations": [
+    {
+      "kind": "ai-use",
+      "placement": {
+        "source": "guide",
+        "value": "before-references"
+      },
+      "required": {
+        "source": "guide",
+        "value": true
+      }
+    }
+  ],
+  "figures": {
+    "minDpi": {
+      "source": "guide",
+      "value": {
+        "combination": 500,
+        "lineArt": 1000,
+        "photo": 300
+      }
+    },
+    "separateFiles": {
+      "source": "guide",
+      "value": true
+    }
+  },
+  "id": "reumatologia-clinica",
+  "journal": {
+    "nlmAbbreviation": {
+      "source": "guide",
+      "value": "Reumatol Clin"
+    },
+    "publisher": {
+      "source": "guide",
+      "value": "Elsevier"
+    },
+    "title": {
+      "source": "guide",
+      "value": "Reumatología Clínica"
+    }
+  },
+  "languages": {
+    "source": "guide",
+    "value": {
+      "abstractAlso": [
+        "en"
+      ],
+      "keywordsAlso": [
+        "en"
+      ],
+      "manuscript": [
+        "es",
+        "en"
+      ],
+      "titleAlso": [
+        "en"
+      ]
+    }
+  },
+  "manuscriptFormat": {
+    "figureCaptionsList": {
+      "source": "guide",
+      "value": true
+    },
+    "fontSizePt": {
+      "source": "guide",
+      "value": 12
+    },
+    "hyphenation": {
+      "source": "guide",
+      "value": false
+    },
+    "justified": {
+      "source": "guide",
+      "value": false
+    },
+    "lineSpacing": {
+      "source": "guide",
+      "value": 2
+    },
+    "pageNumbers": {
+      "source": "guide",
+      "value": true
+    },
+    "sideMarginsCm": {
+      "source": "guide",
+      "value": {
+        "max": 2.5,
+        "min": 2
+      }
+    }
+  },
+  "notes": [
+    {
+      "checked": "2026-11-20",
+      "source": "guide",
+      "value": "La guía actual no da el límite de palabras del resumen (una versión anterior decía 250 para originales)."
+    }
+  ],
+  "optionalDocuments": [
+    {
+      "kind": "highlights",
+      "rules": {
+        "source": "guide",
+        "value": {
+          "max": 5,
+          "maxCharacters": 85,
+          "min": 3
+        }
+      }
+    },
+    {
+      "kind": "graphical-abstract",
+      "rules": {
+        "source": "guide",
+        "value": {}
+      }
+    }
+  ],
+  "review": {
+    "blind": {
+      "source": "guide",
+      "value": "double"
+    },
+    "separateTitlePage": {
+      "source": "guide",
+      "value": true
+    }
+  },
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "accessed": "2026-11-20",
+      "id": "guide",
+      "kind": "author-guide",
+      "lang": "es",
+      "title": "Guía para autores",
+      "url": "https://www.reumatologiaclinica.org/es-guia-autores"
+    },
+    {
+      "accessed": "2026-11-21",
+      "id": "csl",
+      "kind": "csl-repository",
+      "url": "https://github.com/citation-style-language/styles/blob/master/reumatologia-clinica.csl"
+    },
+    {
+      "accessed": "2026-11-21",
+      "id": "scidesk",
+      "kind": "scidesk",
+      "title": "Estilo propio de SciDesk (ficha 0026)",
+      "url": "https://scidesk.app/"
+    }
+  ],
+  "submission": {
+    "system": {
+      "source": "guide",
+      "value": "Editorial Manager"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "articleType": "narrative-review",
+  "citationStyle": {
+    "id": "http://www.zotero.org/styles/reumatologia-clinica-scidesk-prototype"
+  },
+  "id": "a-ocjzl8sdxh",
+  "ignoredWarnings": [
+    {
+      "by": "Lucía Herrera Gil",
+      "date": "2026-11-21T12:00:00Z",
+      "note": "Se define en el resumen.",
+      "status": "correct",
+      "warning": "abbreviation-before-definition:OAI"
+    }
+  ],
+  "journal": "reumatologia-clinica",
+  "lang": "es",
+  "referenceTermsLang": null,
+  "runningTitle": "Artrosis de rodilla acelerada",
+  "schemaVersion": 1,
+  "translations": [
+    "en"
+  ]
+}

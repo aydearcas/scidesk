@@ -1,0 +1,374 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "attrs": {
+      "id": "t-basal"
+    },
+    "content": [
+      {
+        "attrs": {
+          "id": "b-q116g62lyi"
+        },
+        "content": [
+          {
+            "text": "Características basales de los pacientes",
+            "type": "text"
+          }
+        ],
+        "type": "tableCaption"
+      },
+      {
+        "attrs": {
+          "id": "b-y1akju1ldd"
+        },
+        "content": [
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 2
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-gkuh215rh6"
+                    },
+                    "content": [
+                      {
+                        "text": "Variable",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "colspan": 2,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-f693oerft3"
+                    },
+                    "content": [
+                      {
+                        "text": "Cohorte (n = 120)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-yqian6wp8m"
+                    },
+                    "content": [
+                      {
+                        "text": "n",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-6fxr7nstfu"
+                    },
+                    "content": [
+                      {
+                        "text": "%",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-j6djx6wejq"
+                    },
+                    "content": [
+                      {
+                        "text": "Mujeres",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-2ja48ofitn"
+                    },
+                    "content": [
+                      {
+                        "text": "86",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-hwv8loheef"
+                    },
+                    "content": [
+                      {
+                        "text": "72",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-ivk9w6mu0u"
+                    },
+                    "content": [
+                      {
+                        "text": "Factor reumatoide positivo",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-d07qcf99qf"
+                    },
+                    "content": [
+                      {
+                        "text": "74",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-6tl6flfkzu"
+                    },
+                    "content": [
+                      {
+                        "text": "62",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-qy3eke6gnl"
+                    },
+                    "content": [
+                      {
+                        "text": "Actividad inflamatoria alta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-v6zciihlen"
+                    },
+                    "content": [
+                      {
+                        "text": "51",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-l3tov54ysw"
+                    },
+                    "content": [
+                      {
+                        "text": "43",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "attrs": {
+          "id": "n-a",
+          "kind": "general"
+        },
+        "content": [
+          {
+            "text": "Actividad inflamatoria medida con el DAS28.",
+            "type": "text"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-8e2o95dyrm",
+              "items": [
+                {
+                  "ref": "r-92a71b9iff"
+                }
+              ]
+            },
+            "type": "citation"
+          }
+        ],
+        "type": "tableNote"
+      },
+      {
+        "attrs": {
+          "id": "n-b",
+          "kind": "general"
+        },
+        "content": [
+          {
+            "text": "Porcentajes sobre el total de la cohorte.",
+            "type": "text"
+          }
+        ],
+        "type": "tableNote"
+      }
+    ],
+    "type": "tablePart"
+  },
+  "documentType": "table",
+  "lang": "es",
+  "schemaVersion": 1
+}

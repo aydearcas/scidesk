@@ -1,0 +1,77 @@
+{
+  "citationID": "c-y1bpvg7mck",
+  "citationItems": [
+    {
+      "id": "r-b6yn8tpj9i",
+      "itemData": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Bierma-Zeinstra",
+            "given": "S"
+          }
+        ],
+        "container-title-short": "Lancet",
+        "id": "r-b6yn8tpj9i",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1745-59",
+        "title": "Osteoarthritis",
+        "type": "article-journal",
+        "volume": "393"
+      },
+      "uris": [
+        "https://scidesk.app/ref/6f1d2c4e-8a3b-4c7d-9e2f-1a5b7c9d0e3f/r-b6yn8tpj9i"
+      ]
+    },
+    {
+      "id": "r-mxdusb2fj6",
+      "itemData": {
+        "author": [
+          {
+            "family": "Cross",
+            "given": "M"
+          },
+          {
+            "family": "Smith",
+            "given": "E"
+          },
+          {
+            "family": "Hoy",
+            "given": "D"
+          }
+        ],
+        "container-title-short": "Ann Rheum Dis",
+        "id": "r-mxdusb2fj6",
+        "issued": {
+          "date-parts": [
+            [
+              2014
+            ]
+          ]
+        },
+        "page": "1323-30",
+        "title": "The global burden of hip and knee osteoarthritis: estimates from the Global Burden of Disease 2010 study",
+        "type": "article-journal",
+        "volume": "73"
+      },
+      "uris": [
+        "https://scidesk.app/ref/6f1d2c4e-8a3b-4c7d-9e2f-1a5b7c9d0e3f/r-mxdusb2fj6"
+      ]
+    }
+  ],
+  "properties": {
+    "formattedCitation": "<sup>1,2</sup>",
+    "noteIndex": 0,
+    "plainCitation": "1,2"
+  },
+  "schema": "https://github.com/citation-style-language/schema/raw/master/csl-citation.json"
+}

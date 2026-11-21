@@ -1,0 +1,78 @@
+{
+  "$id": "https://scidesk.app/schema/v1/local-state.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "paths": {
+      "description": "Where this computer has seen the project. Two live folders with the same id mean a copy: SciDesk asks and gives the copy a new id.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "lastOpened": {
+            "description": "UTC date and time, ISO 8601 with Z.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "lastOpened"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "project": {
+      "description": "Random UUID (version 4), lowercase.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    },
+    "window": {
+      "description": "Open tabs, panels, scroll positions: free form, owned by the interface."
+    },
+    "zotero": {
+      "additionalProperties": false,
+      "properties": {
+        "items": {
+          "description": "Version of each item when it was last read.",
+          "patternProperties": {
+            "^[23456789ABCDEFGHIJKLMNPQRSTUVWXYZ]{8}$": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "libraryVersion": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "serverId": {
+          "description": "Zotero-Server-ID of this computer's Zotero (record 0027).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "serverId",
+        "libraryVersion",
+        "items"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "project",
+    "paths"
+  ],
+  "title": "SciDesk local state of a project (app data folder)",
+  "type": "object"
+}

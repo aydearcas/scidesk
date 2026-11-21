@@ -1,7 +1,7 @@
 # 0027. Zotero por su API local, y un URI por referencia en las citas del DOCX
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada (resultado del prototipo 5 de la fase 0). Concreta el modo vinculado a Zotero de [0007](0007-referencias.md) y corrige el exportador de [0025](0025-docx-con-marcas-y-campos.md).
+- **Estado:** aceptada (resultado del prototipo 5 de la fase 0). Concreta el modo vinculado a Zotero de [0007](0007-referencias.md) y corrige el exportador de [0025](0025-docx-con-marcas-y-campos.md). Corregida el 21/11/2026 por [0031](0031-formatos-v1-con-un-solo-esquema.md): la versión de cada elemento y el `Zotero-Server-ID` van al estado local de cada equipo, no a `library.json`.
 - **Pregunta del plan:** prototipo 5 de la sección 8, y lo que el prototipo 3 dejó pendiente
 
 ## Qué se decide
@@ -18,7 +18,7 @@ La biblioteca vinculada se lee por la **API local de Zotero** (`http://127.0.0.1
   - `journalAbbreviation` pasa a `container-title-short`;
   - los años en texto pasan a número;
   - el `csljson` que llega como texto se interpreta.
-- **Cada entrada de `library.json`** lleva un `id` propio de SciDesk, el CSL-JSON y un bloque `zotero` con `key`, `version`, `uri`, `serverId`, la biblioteca y la fecha de modificación.
+- **Cada entrada de `library.json`** lleva un `id` propio de SciDesk, el CSL-JSON y un bloque `zotero` con `key`, `uri`, la biblioteca y la fecha de modificación. La `version` de cada elemento y el `serverId` se guardan en el estado local de cada equipo, porque cada instalación de Zotero tiene los suyos ([0031](0031-formatos-v1-con-un-solo-esquema.md)).
 - **Si Zotero está cerrado o la API local desactivada** (`403 Local API is not enabled`), SciDesk sigue con la copia guardada, lo dice y explica cómo activar la API: Ajustes › Avanzado › «Permitir que otras aplicaciones de este equipo se comuniquen con Zotero».
 
 ### Citas en el DOCX: siempre con URI

@@ -1,0 +1,32 @@
+{
+  "copies": [
+    {
+      "file": "copies/rios.docx",
+      "id": "cp-ba26cyrixd",
+      "received": "2026-11-21T08:00:00Z",
+      "returnedBy": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "sha256": "a6333fd4ed4cbe51c926ebd691ce208af6c0d1fb251035bd67404d3b6f2d720b"
+    },
+    {
+      "file": "copies/soler.docx",
+      "id": "cp-2gvq646uy6",
+      "received": "2026-11-21T08:00:00Z",
+      "returnedBy": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "sha256": "c90f8a54e2155f98512ae8c04140fb61d02397553d903500af3a7c03461b015c"
+    }
+  ],
+  "id": "rd-z09j6f77cc",
+  "name": "Coautores, 1.ª ronda",
+  "schemaVersion": 1,
+  "sent": {
+    "date": "2026-11-20T09:00:00Z",
+    "file": "sent.docx",
+    "snapshot": "s-pqzeqyzslz"
+  }
+}

@@ -1,0 +1,716 @@
+{
+  "base": {
+    "snapshot": "s-pqzeqyzslz"
+  },
+  "created": "2026-11-21T12:00:00Z",
+  "hiddenNoise": 1,
+  "id": "ps-pcpl07cbkl",
+  "integrity": "ok",
+  "origin": {
+    "copy": "cp-2gvq646uy6",
+    "file": "rounds/ronda-1/copies/soler.docx",
+    "kind": "docx-copy",
+    "round": "rd-z09j6f77cc"
+  },
+  "proposals": [
+    {
+      "after": "en cuatro años o menos",
+      "anchor": {
+        "block": "b-0d625aaq6p",
+        "file": "manuscript/abstract.scidoc",
+        "from": 170,
+        "to": 193
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "en menos de cuatro años",
+      "decided": {
+        "by": {
+          "name": "Lucía Herrera Gil",
+          "person": "p-2t0g6swk3d"
+        },
+        "date": "2026-11-21T12:00:00Z"
+      },
+      "decision": "accepted",
+      "id": "pr-eyofiw3ty1",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": ", con controles clínicos y radiográficos,",
+      "anchor": {
+        "block": "b-uf62he3p85",
+        "file": "manuscript/abstract.scidoc",
+        "from": 271,
+        "to": 271
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decided": {
+        "by": {
+          "name": "Lucía Herrera Gil",
+          "person": "p-2t0g6swk3d"
+        },
+        "date": "2026-11-21T12:00:00Z"
+      },
+      "decision": "accepted",
+      "id": "pr-6aovvabrsp",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-9l53cyj0ol",
+        "file": "manuscript/article.scidoc",
+        "from": 576,
+        "to": 591
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "llamativamente ",
+      "decision": "pending",
+      "id": "pr-hham8f2kon",
+      "kind": "delete",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "se le llama",
+      "anchor": {
+        "block": "b-9l53cyj0ol",
+        "file": "manuscript/article.scidoc",
+        "from": 619,
+        "to": 638
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "se le ha denominado",
+      "decision": "pending",
+      "id": "pr-tjxfd33gry",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "45–79",
+      "anchor": {
+        "block": "b-icnazd4sxc",
+        "file": "manuscript/article.scidoc",
+        "from": 162,
+        "to": 167
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "45-79",
+      "decision": "pending",
+      "id": "pr-lxh54wosl9",
+      "kind": "replace",
+      "status": "noise-hidden",
+      "tracked": false
+    },
+    {
+      "after": "el diseño de ",
+      "anchor": {
+        "block": "b-icnazd4sxc",
+        "file": "manuscript/article.scidoc",
+        "from": 660,
+        "to": 660
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-gzbou2ugcc",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "salvo",
+      "anchor": {
+        "block": "b-nphcvy6nt4",
+        "file": "manuscript/article.scidoc",
+        "from": 257,
+        "to": 268
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "por ejemplo",
+      "decision": "pending",
+      "id": "pr-5dumsgogfa",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "mucho",
+      "anchor": {
+        "block": "b-d64e9beytw",
+        "file": "manuscript/article.scidoc",
+        "from": 505,
+        "to": 522
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "de manera notable",
+      "decision": "pending",
+      "id": "pr-bqrokaem0n",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": false
+    },
+    {
+      "after": "colaboradores. Tras comparar varios algoritmos en la OAI, estos autores propusieron",
+      "anchor": {
+        "block": "b-5emlpnx041",
+        "file": "manuscript/article.scidoc",
+        "from": 60,
+        "to": 131
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "colaboradores, que compararon varios algoritmos en la OAI y propusieron",
+      "decision": "pending",
+      "id": "pr-4purf1uqi7",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-enk2va83fv"
+    },
+    {
+      "after": " y, con frecuencia, derrame o sinovitis visibles en la ecografía",
+      "anchor": {
+        "block": "b-u27026os0g",
+        "file": "manuscript/article.scidoc",
+        "from": 210,
+        "to": 210
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-ickv5gl1wy",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": ". Esta aproximación mezcla la progresión estructural con la sintomática, que no siempre coinciden, y por eso",
+      "anchor": {
+        "block": "b-pgv3stg4f6",
+        "file": "manuscript/article.scidoc",
+        "from": 486,
+        "to": 600
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": ", aunque esta aproximación mezcla la progresión estructural con la sintomática y no siempre coinciden, de modo que",
+      "decision": "pending",
+      "id": "pr-xh0ho8kno9",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "< 5 %",
+      "anchor": {
+        "block": "b-7qxvj2blgp",
+        "file": "manuscript/article.scidoc",
+        "from": 359,
+        "to": 362
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "4 %",
+      "decision": "pending",
+      "id": "pr-cxuflvuxow",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-u5sgse2tq5"
+    },
+    {
+      "after": "más del doble, cercana al 10 %,",
+      "anchor": {
+        "block": "b-7qxvj2blgp",
+        "file": "manuscript/article.scidoc",
+        "from": 484,
+        "to": 511
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "algo mayor, cercana al 9 %,",
+      "decision": "pending",
+      "id": "pr-nqbdwdrh8j",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-tn36y42ps7"
+    },
+    {
+      "after": ", aunque se trata solo de mujeres y el resultado no es directamente extrapolable a los varones",
+      "anchor": {
+        "block": "b-xsetl5x05s",
+        "file": "manuscript/article.scidoc",
+        "from": 200,
+        "to": 254
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": ", con un perfil de participantes parecido al de la OAI",
+      "decision": "pending",
+      "id": "pr-nj00ladifa",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "no se dispone de estimaciones poblacionales en España",
+      "anchor": {
+        "block": "b-xsetl5x05s",
+        "file": "manuscript/article.scidoc",
+        "from": 470,
+        "to": 523
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "no se dispone de estimaciones poblacionales en España",
+      "comment": {
+        "replies": [],
+        "text": "¿Lo hemos comprobado bien? EPISER da prevalencia de artrosis pero no distingue fenotipos. Si nadie conoce datos españoles, lo dejaría así, pero mejor asegurarse antes de afirmarlo."
+      },
+      "decision": "pending",
+      "id": "pr-5xo5ti8sp9",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": ". Este rasgo apunta",
+      "anchor": {
+        "block": "b-k2eg2eabdp",
+        "file": "manuscript/article.scidoc",
+        "from": 544,
+        "to": 565
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": ", un rasgo que apunta",
+      "decision": "pending",
+      "id": "pr-inyzgbyy8e",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "es menos prevalente que en edades más avanzadas",
+      "anchor": {
+        "block": "b-zydsupokqm",
+        "file": "manuscript/article.scidoc",
+        "from": 199,
+        "to": 225
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "todavía es poco prevalente",
+      "decision": "pending",
+      "id": "pr-55l66xbbcs",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "multiplica por 1,5 a 2,5 el riesgo de progresión rápida en varios estudios",
+      "anchor": {
+        "block": "b-zydsupokqm",
+        "file": "manuscript/article.scidoc",
+        "from": 320,
+        "to": 394
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "multiplica por 1,5 a 2,5 el riesgo de progresión rápida en varios estudios",
+      "comment": {
+        "replies": [],
+        "text": "¿De qué estudios sale esta horquilla? Ahora solo citamos [19], que es de pérdida de peso. Habría que poner la referencia aquí."
+      },
+      "decision": "pending",
+      "id": "pr-mzdvsdr6mb",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": " [20]",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 108,
+        "to": 108
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-cr7tkxmct8",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "[4]",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 280,
+        "to": 286
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "[4,20]",
+      "decision": "pending",
+      "id": "pr-c3gfehrg05",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "se desaconseja la meniscectomía artroscópica",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 679,
+        "to": 730
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "algunos grupos aconsejan evitar la cirugía meniscal",
+      "decision": "pending",
+      "id": "pr-xld43j9731",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "per se",
+      "anchor": {
+        "block": "b-3unlwkut98",
+        "file": "manuscript/article.scidoc",
+        "from": 485,
+        "to": 491
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "per se",
+      "decision": "pending",
+      "format": {
+        "add": [
+          "italic"
+        ],
+        "remove": []
+      },
+      "id": "pr-3c9qqxwvg8",
+      "kind": "format",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "in vivo",
+      "anchor": {
+        "block": "b-z3wlri4vwf",
+        "file": "manuscript/article.scidoc",
+        "from": 296,
+        "to": 303
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "in vivo",
+      "decision": "pending",
+      "format": {
+        "add": [
+          "italic"
+        ],
+        "remove": []
+      },
+      "id": "pr-o7iojcw9vq",
+      "kind": "format",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-s5ywx4b6du",
+        "file": "manuscript/article.scidoc",
+        "from": 580,
+        "to": 610
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": " y no como hechos establecidos",
+      "decision": "pending",
+      "id": "pr-p7zv2qbx7y",
+      "kind": "delete",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "retrospectivo",
+      "anchor": {
+        "block": "b-xp7vg7k6r3",
+        "file": "manuscript/article.scidoc",
+        "from": 46,
+        "to": 59
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "retrospectivo",
+      "decision": "pending",
+      "format": {
+        "add": [
+          "italic"
+        ],
+        "remove": []
+      },
+      "id": "pr-j3nbkae4r0",
+      "kind": "format",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-xp7vg7k6r3",
+        "file": "manuscript/article.scidoc",
+        "from": 279,
+        "to": 305
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "La sospecha debería surgir",
+      "decision": "pending",
+      "id": "pr-e4oik61wtt",
+      "kind": "split-paragraph",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": ", y la ecografía en la consulta ayuda a documentar el derrame y la sinovitis entre una radiografía y otra",
+      "anchor": {
+        "block": "b-xp7vg7k6r3",
+        "file": "manuscript/article.scidoc",
+        "from": 609,
+        "to": 609
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-leornlr9jw",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "0,1 a 0,2 mm anuales",
+      "anchor": {
+        "block": "b-i3ge7b9rnk",
+        "file": "manuscript/article.scidoc",
+        "from": 397,
+        "to": 417
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "0,1 a 0,2 mm anuales",
+      "comment": {
+        "replies": [],
+        "text": "Ojo: 0,1-0,2 mm/año es lo que damos en la tabla 1 para la pérdida de espacio articular en la radiografía, no para el grosor del cartílago en RM, que suele darse en micras o en porcentaje. Revisadlo con la ref. 29."
+      },
+      "decision": "pending",
+      "id": "pr-pjq1loe09g",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "lo que aumenta la probabilidad de una cirugía de revisión",
+      "anchor": {
+        "block": "b-nk8ramezu3",
+        "file": "manuscript/article.scidoc",
+        "from": 637,
+        "to": 754
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "con las consecuencias que ello conlleva para la durabilidad de la prótesis y para la necesidad de una futura revisión",
+      "decision": "pending",
+      "id": "pr-fota66gtrz",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": " (de primera elección en la rodilla)",
+      "anchor": {
+        "block": "b-xl9fk8brsy",
+        "file": "manuscript/article.scidoc",
+        "from": 406,
+        "to": 406
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-fzv4jgufve",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "En la práctica, el seguimiento más estrecho",
+      "anchor": {
+        "block": "b-xl9fk8brsy",
+        "file": "manuscript/article.scidoc",
+        "from": 612,
+        "to": 655
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "En la práctica, el seguimiento más estrecho",
+      "comment": {
+        "replies": [],
+        "text": "Echo de menos las infiltraciones: en estos pacientes con derrame recurrente se ponen muchos corticoides intraarticulares, y hay datos que sugieren que podrían acelerar la progresión. Merece al menos una frase."
+      },
+      "decision": "pending",
+      "id": "pr-de6vwhz76a",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": " en pacientes con artrosis moderada o grave",
+      "anchor": {
+        "block": "b-zgb501k1iv",
+        "file": "manuscript/article.scidoc",
+        "from": 138,
+        "to": 138
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-zn0zd3ivb9",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": ", según la definición que se use. Se asocia con",
+      "anchor": {
+        "block": "b-fbym1e3b88",
+        "file": "manuscript/article.scidoc",
+        "from": 155,
+        "to": 171
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": " y se asocia con",
+      "decision": "pending",
+      "id": "pr-45m0376yf1",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-olvm02jo4q"
+    },
+    {
+      "after": " (cada 12 a 24 meses)",
+      "anchor": {
+        "block": "b-m4m8b5jd70",
+        "file": "manuscript/article.scidoc",
+        "from": 398,
+        "to": 398
+      },
+      "author": {
+        "name": "Javier Soler Benítez",
+        "person": "p-k61mnk1iy6"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-pf1v8ydtmo",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    }
+  ],
+  "schemaVersion": 1
+}

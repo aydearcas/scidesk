@@ -1,0 +1,104 @@
+{
+  "$id": "https://scidesk.app/schema/v1/docx-citation.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "citationID": {
+      "description": "The id of the citation in SciDesk.",
+      "pattern": "^c-[a-z0-9]{1,24}$",
+      "type": "string"
+    },
+    "citationItems": {
+      "items": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "itemData": {
+            "description": "CSL-JSON of the reference.",
+            "properties": {
+              "type": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "label": {
+            "type": "string"
+          },
+          "locator": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "suppress-author": {
+            "type": "boolean"
+          },
+          "uris": {
+            "description": "Always one URI (record 0027).",
+            "items": {
+              "pattern": "^https?://\\S+$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "uris",
+          "itemData"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "properties": {
+      "properties": {
+        "formattedCitation": {
+          "type": "string"
+        },
+        "noteIndex": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "plainCitation": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "formattedCitation",
+        "plainCitation",
+        "noteIndex"
+      ],
+      "type": "object"
+    },
+    "schema": {
+      "const": "https://github.com/citation-style-language/schema/raw/master/csl-citation.json",
+      "type": "string"
+    }
+  },
+  "required": [
+    "citationID",
+    "properties",
+    "citationItems",
+    "schema"
+  ],
+  "title": "Citation field of a SciDesk DOCX (ADDIN ZOTERO_ITEM CSL_CITATION)",
+  "type": "object"
+}

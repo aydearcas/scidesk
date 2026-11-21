@@ -1,0 +1,104 @@
+{
+  "affiliations": [
+    {
+      "city": "Santa Aurelia",
+      "country": "ES",
+      "department": "Servicio de Reumatología",
+      "id": "af-72lkorr7jv",
+      "institution": "Hospital Universitario Ficticio de Santa Aurelia"
+    },
+    {
+      "city": "Valdoria",
+      "country": "ES",
+      "department": "Unidad de Investigación Musculoesquelética",
+      "id": "af-agmtmghjg0",
+      "institution": "Instituto Ficticio de Ciencias de la Salud del Norte"
+    },
+    {
+      "city": "Puerto Alba",
+      "country": "ES",
+      "department": "Departamento de Cirugía Ortopédica y Traumatología",
+      "id": "af-8bvhum5ypa",
+      "institution": "Hospital Ficticio del Mar"
+    }
+  ],
+  "people": [
+    {
+      "affiliations": [
+        "af-72lkorr7jv"
+      ],
+      "citationName": "Herrera-Gil L",
+      "degrees": [
+        "MD",
+        "PhD"
+      ],
+      "email": "lucía.herrera@example.org",
+      "family": "Herrera Gil",
+      "given": "Lucía",
+      "id": "p-2t0g6swk3d",
+      "kind": "person",
+      "orcid": "0000-0002-1825-0097"
+    },
+    {
+      "affiliations": [
+        "af-agmtmghjg0"
+      ],
+      "email": "marta.rios@example.org",
+      "family": "Ríos Navarro",
+      "given": "Marta",
+      "id": "p-mg56623wh9",
+      "kind": "person"
+    },
+    {
+      "affiliations": [
+        "af-72lkorr7jv"
+      ],
+      "email": "javier.soler@example.org",
+      "family": "Soler Benítez",
+      "given": "Javier",
+      "id": "p-k61mnk1iy6",
+      "kind": "person"
+    },
+    {
+      "affiliations": [
+        "af-8bvhum5ypa"
+      ],
+      "email": "andrés.calvo@example.org",
+      "family": "Calvo Mora",
+      "given": "Andrés",
+      "id": "p-n6esr14snl",
+      "kind": "person"
+    },
+    {
+      "affiliations": [
+        "af-agmtmghjg0"
+      ],
+      "email": "elena.vidal@example.org",
+      "family": "Vidal Ortega",
+      "given": "Elena",
+      "id": "p-0l46682qni",
+      "kind": "person"
+    },
+    {
+      "affiliations": [
+        "af-8bvhum5ypa"
+      ],
+      "email": "pablo.navas@example.org",
+      "family": "Navas Cuesta",
+      "given": "Pablo",
+      "id": "p-x92d5esuci",
+      "kind": "person"
+    },
+    {
+      "affiliations": [],
+      "id": "p-xvh0xsorxa",
+      "kind": "group",
+      "members": [
+        "p-0l46682qni",
+        "p-x92d5esuci"
+      ],
+      "name": "Grupo de Trabajo Ficticio de Artrosis"
+    }
+  ],
+  "schemaVersion": 1
+}

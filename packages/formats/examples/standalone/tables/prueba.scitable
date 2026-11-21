@@ -1,0 +1,155 @@
+{
+  "changes": {
+    "ch-gpli7jm94i": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    }
+  },
+  "comments": {},
+  "doc": {
+    "attrs": {
+      "id": "t-m710iccehf"
+    },
+    "content": [
+      {
+        "attrs": {
+          "id": "b-dxowow9524",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Tabla de prueba del prototipo 7",
+            "type": "text"
+          }
+        ],
+        "type": "tableCaption"
+      },
+      {
+        "attrs": {
+          "id": "b-edpkrpnlgo"
+        },
+        "content": [
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-s2wcvtzzwn"
+                    },
+                    "content": [
+                      {
+                        "text": "Edad",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-yrt9xqflx3"
+                    },
+                    "content": [
+                      {
+                        "text": "54 años",
+                        "type": "text"
+                      },
+                      {
+                        "marks": [
+                          {
+                            "attrs": {
+                              "id": "ch-gpli7jm94i"
+                            },
+                            "type": "insertion"
+                          }
+                        ],
+                        "text": " (DE 11)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-tsibv5qwhj"
+                    },
+                    "content": [
+                      {
+                        "text": "Mujeres",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-gx1b2et48x"
+                    },
+                    "content": [
+                      {
+                        "text": "72 %",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          }
+        ],
+        "type": "table"
+      }
+    ],
+    "type": "tablePart"
+  },
+  "documentType": "table",
+  "lang": "es",
+  "schemaVersion": 1
+}

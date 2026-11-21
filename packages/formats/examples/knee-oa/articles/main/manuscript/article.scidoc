@@ -1,0 +1,1229 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "id": "b-ubkr9138ju",
+          "lang": "es"
+        },
+        "content": [
+          {
+            "text": "Artrosis de rodilla acelerada: una revisión narrativa sobre su definición, epidemiología, factores de riesgo y manejo",
+            "type": "text"
+          }
+        ],
+        "type": "title"
+      },
+      {
+        "attrs": {
+          "id": "b-qfm0z6fqpf",
+          "lang": "en"
+        },
+        "content": [
+          {
+            "text": "Accelerated knee osteoarthritis: a narrative review of its definition, epidemiology, risk factors and management",
+            "type": "text"
+          }
+        ],
+        "type": "title"
+      },
+      {
+        "attrs": {
+          "id": "b-9i01rby03a",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "AVISO: este documento es material sintético de prueba, generado con un modelo de lenguaje para probar software. No es un artículo real y no debe citarse ni utilizarse con fines clínicos. Las referencias bibliográficas no se han verificado y pueden ser inexactas o inexistentes, y las cifras del texto y de las tablas son orientativas.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-cnuompuppm",
+          "lang": null,
+          "level": 1,
+          "role": "introduction"
+        },
+        "content": [
+          {
+            "text": "Introducción",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-9l53cyj0ol",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La artrosis de rodilla es una de las principales causas de dolor y discapacidad en adultos de mediana edad y mayores, y se describe de forma habitual como una enfermedad de evolución lenta que, a lo largo de décadas, deteriora el cartílago, el hueso subcondral y las partes blandas",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-y1bpvg7mck",
+              "items": [
+                {
+                  "ref": "r-b6yn8tpj9i"
+                },
+                {
+                  "ref": "r-mxdusb2fj6"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Esta imagen resulta útil en la consulta, pero es incompleta. Los estudios de cohortes con radiografías seriadas muestran que la trayectoria individual es muy heterogénea: muchas rodillas permanecen estables durante años, otras empeoran de forma gradual y un grupo reducido sufre un deterioro llamativamente rápido. A este último grupo se le ha denominado artrosis de rodilla acelerada, abreviada aquí como AKOA por su nombre inglés.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-icnazd4sxc",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "El concepto surgió del análisis de la Osteoarthritis Initiative (OAI), una cohorte observacional multicéntrica estadounidense que reclutó a 4796 participantes de 45-79 años con artrosis de rodilla o con riesgo de padecerla, y que reunió radiografías, resonancias magnéticas (RM) y datos clínicos durante más de ocho años de seguimiento",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-sj6ycjza4i",
+              "items": [
+                {
+                  "ref": "r-6pzuojkhy6"
+                },
+                {
+                  "ref": "r-h7ando77jw"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". En ese marco se observó que algunos participantes, sin artrosis radiográfica o con cambios mínimos al inicio, alcanzaban en cuatro años o menos los grados 3 o 4 de la escala de Kellgren y Lawrence (KL)",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-tzwou0u21e",
+              "items": [
+                {
+                  "ref": "r-vg25kt68ji"
+                },
+                {
+                  "ref": "r-uwmivrq3yt"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La observación importa por dos motivos: sugiere que existe una ventana de intervención temprana y obliga a replantear los ensayos clínicos, en los que se promedian trayectorias muy distintas.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-nphcvy6nt4",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "El interés por la AKOA ha crecido en la última década, pero la bibliografía sigue siendo fragmentaria. Hay definiciones que compiten entre sí, estimaciones de frecuencia que oscilan según el umbral elegido y pocos datos procedentes de poblaciones europeas, por ejemplo la cohorte de mujeres de Chingford",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-30s7bwypuf",
+              "items": [
+                {
+                  "ref": "r-q7g1o9epxu"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". El objetivo de esta revisión narrativa es resumir lo que se sabe sobre la definición, la epidemiología, los factores de riesgo, la fisiopatología, el diagnóstico por imagen y el pronóstico de la AKOA, y señalar las lagunas que deberían cubrir los estudios futuros. No se ha seguido una metodología sistemática, de modo que la selección de los trabajos refleja el criterio de los autores.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-akbf5cr3l2",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Definición y criterios",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-d64e9beytw",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "No existe una definición única de AKOA. En términos generales, se entiende como una progresión estructural rápida, en una rodilla que partía de un estado sin enfermedad o con enfermedad leve, hacia una artrosis radiográfica avanzada en un intervalo breve. Las diferencias entre autores afectan al punto de partida (rodillas sin ningún signo o con signos dudosos), al punto de llegada (KL 3 o KL 4) y a la ventana de tiempo permitida (12, 24 o 48 meses). Estas decisiones, aparentemente menores, modifican de manera notable la frecuencia observada y la composición del grupo de casos, y por eso la comparación entre estudios exige leer con atención los métodos",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-u7bslcp3l0",
+              "items": [
+                {
+                  "ref": "r-ej88x893rt"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-v646m9bwe1",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Criterios radiográficos",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-5emlpnx041",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La definición más utilizada procede del trabajo de Driban y colaboradores, que compararon varios algoritmos en la OAI y propusieron como mejor opción el paso de una rodilla con KL 0 o 1 en la visita basal a una rodilla con KL 3 o 4 en el plazo de 48 meses",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-9ocsslpnju",
+              "items": [
+                {
+                  "ref": "r-uwmivrq3yt"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La escala KL clasifica la artrosis de 0 a 4 según la presencia de osteofitos, el estrechamiento del espacio articular, la esclerosis y la deformidad ósea, y sigue siendo la referencia pese a su carácter ordinal y a su variabilidad entre lectores",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-bblhqisfdu",
+              "items": [
+                {
+                  "ref": "r-vg25kt68ji"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Una variante más estricta exige que la rodilla pase por un estado de enfermedad indeterminada antes de llegar al grado avanzado; otra, más laxa, admite el salto desde KL 2. Las diferencias entre la AKOA y la artrosis de rodilla típica en las cohortes de referencia se resumen más abajo (",
+            "type": "text"
+          },
+          {
+            "text": "tabla ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "t-4lc2rymcdc"
+            },
+            "type": "xref"
+          },
+          {
+            "text": ").",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "t-4lc2rymcdc",
+          "src": "tables/tabla-1.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "attrs": {
+          "id": "b-u27026os0g",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Conviene recordar que la clasificación radiográfica tiene un límite intrínseco: la radiografía simple es poco sensible a los cambios precoces del cartílago y del menisco. Una rodilla con KL 1 puede albergar ya lesiones importantes en la RM, de modo que el supuesto salto \"de la normalidad a la enfermedad\" refleja en parte la incapacidad de la técnica para detectar lo que ocurría antes. Por esta razón, algunos autores prefieren hablar de progresión radiográfica rápida y reservar el término AKOA para los casos en que la evolución es excepcional incluso en comparación con el resto de rodillas en riesgo, por ejemplo, cuando la pérdida anual de espacio articular supera 0,5 mm.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-3e0esc21md",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Definiciones basadas en resonancia magnética y otras propuestas",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-atyjr9amsa",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La RM permite una definición alternativa, basada en la evolución de las lesiones del cartílago, la médula ósea y el menisco medidas con sistemas semicuantitativos como el MOAKS",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-wjrj5bvizx",
+              "items": [
+                {
+                  "ref": "r-rfairgiu13"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Con esta técnica se ha visto que las rodillas que desarrollan AKOA presentan, antes de que la radiografía sea anormal, más lesiones meniscales con potencial desestabilizador (desgarros radiales, en asa de cubo o complejos) y una mayor carga de lesiones de médula ósea",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-wfrqasp2db",
+              "items": [
+                {
+                  "ref": "r-njqz1iadq6"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Otros trabajos describen más derrame-sinovitis y una alteración de la señal de la grasa infrapatelar en los casos que luego progresan con rapidez",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-qi48ez2qhy",
+              "items": [
+                {
+                  "ref": "r-3ygjvucwqz"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-pgv3stg4f6",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Estas observaciones han alimentado propuestas que combinan criterios, es decir, una definición radiográfica del desenlace y un conjunto de marcadores de RM que identifican a priori las rodillas con mayor riesgo. Ninguna de ellas se ha validado todavía en cohortes independientes, y su uso se limita hoy a la investigación. Por otra parte, la AKOA se ha definido también por criterios clínicos, como un empeoramiento del dolor medido con la escala WOMAC de al menos 20 puntos en dos años, aunque esta aproximación mezcla la progresión estructural con la sintomática y no siempre coinciden, de modo que muchos autores prefieren hablar de un \"fenotipo doloroso\" cuando predominan los síntomas.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-srhc3qjtkd",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Epidemiología",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-7qxvj2blgp",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La artrosis de rodilla afecta a más del 10 % de los adultos mayores de 60 años y a cerca de 250 millones de personas en el mundo, con una carga que crece por el envejecimiento y por la epidemia de obesidad",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-16lyfpv6xx",
+              "items": [
+                {
+                  "ref": "r-3rrfdhnrxf"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Dentro de ese conjunto, la AKOA es un subgrupo minoritario cuya frecuencia exacta depende de la definición y de la población de partida. En la OAI, el 4 % de las rodillas sin artrosis radiográfica establecida cumplió criterios en los primeros cuatro años, y la frecuencia fue algo mayor, cercana al 9 %, cuando se aceptaron definiciones más laxas con inicio en KL 2",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-av3d9irqdc",
+              "items": [
+                {
+                  "ref": "r-h7ando77jw"
+                },
+                {
+                  "ref": "r-uwmivrq3yt"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": " (",
+            "type": "text"
+          },
+          {
+            "text": "figura ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "f-igjr5mtmio"
+            },
+            "type": "xref"
+          },
+          {
+            "text": ").",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "f-igjr5mtmio",
+          "src": "figures/figura-1.scifigure"
+        },
+        "type": "figureRef"
+      },
+      {
+        "attrs": {
+          "id": "b-xsetl5x05s",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Los datos europeos son escasos. En las mujeres de la cohorte de Chingford, con edad media de unos 54 años al inicio, se estimó una incidencia de AKOA próxima al 5,5 % durante un seguimiento de 15 años, con un perfil de participantes parecido al de la OAI",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-ktnkkp6ty7",
+              "items": [
+                {
+                  "ref": "r-q7g1o9epxu"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Estas cifras se calculan sobre rodillas en riesgo y no sobre la población general, lo que explica que parezcan elevadas en comparación con la prevalencia de artrosis grave en adultos de 40-60 años. Hasta la fecha no se dispone de estimaciones poblacionales en España ni en Latinoamérica.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-k2eg2eabdp",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Los pacientes con AKOA tienden a ser algo más jóvenes que los de la artrosis típica de rodilla, con una edad media de 60 años frente a 63, y muestran un índice de masa corporal (IMC) medio de 28-30 kg/m2",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-5nqcyy8bhf",
+              "items": [
+                {
+                  "ref": "r-pnqewtmoes"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La proporción de mujeres es ligeramente superior a la de la artrosis común, aunque esta diferencia no siempre alcanza significación estadística. Además, el dolor basal suele ser mayor, y el grupo con AKOA, que algunos describen como \"de inicio abrupto\", refiere más síntomas desde el momento en que aún no hay lesión radiográfica evidente, un rasgo que apunta a un proceso biológicamente más activo",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-4r6o60jut0",
+              "items": [
+                {
+                  "ref": "r-zw0oosvnfe"
+                },
+                {
+                  "ref": "r-7a3hvdlbhg"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-cb2mggkhof",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Factores de riesgo",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-50pryy2upg",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La identificación de los factores asociados a la AKOA procede de análisis de cohortes en los que se compara a los casos con rodillas sin enfermedad o con la progresión habitual. Casi todos los factores clásicos de la artrosis de rodilla (edad, sexo femenino, obesidad, lesión previa, alineación) se han explorado en este contexto, pero la magnitud de las asociaciones y su especificidad respecto a la artrosis típica son motivo de debate",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-y8tl1n73bd",
+              "items": [
+                {
+                  "ref": "r-c1vi7y7i6y"
+                },
+                {
+                  "ref": "r-91p2x6ns0t"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Los más estudiados, con las medidas de asociación publicadas, figuran más abajo (",
+            "type": "text"
+          },
+          {
+            "text": "tabla ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "t-t194ssclyt"
+            },
+            "type": "xref"
+          },
+          {
+            "text": ") y deben interpretarse como aproximadas porque cada estudio usa definiciones distintas.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "t-t194ssclyt",
+          "src": "tables/tabla-2.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "attrs": {
+          "id": "b-3i941boz9m",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Factores demográficos y metabólicos",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-zydsupokqm",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La edad avanzada es un factor de riesgo clásico de artrosis, pero en la AKOA su papel es menos nítido: los casos son frecuentes entre los 50 y los 65 años, un tramo de edad en que la artrosis típica todavía es poco prevalente",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-9kxl6pf1b2",
+              "items": [
+                {
+                  "ref": "r-enp5p1ture"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". El sobrepeso y la obesidad sí muestran una relación consistente. Un IMC superior a 30 kg/m2 multiplica por 1,5 a 2,5 el riesgo de progresión rápida en varios estudios, y la pérdida de peso sostenida (de al menos un 5 % del peso corporal) se asocia con menos deterioro del cartílago y menos dolor en el seguimiento a cuatro años",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-471083srdf",
+              "items": [
+                {
+                  "ref": "r-8tgm36u3nr"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Estas cifras no prueban causalidad: parte de la relación podría deberse a la carga mecánica y parte a la inflamación sistémica de bajo grado propia del tejido adiposo.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-fw1s64dilo",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Lesiones y factores mecánicos",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-qjvrqemvqu",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La lesión de rodilla previa, sobre todo la rotura del ligamento cruzado anterior y las lesiones meniscales, es el factor mejor documentado. En la OAI, el antecedente de lesión articular grave duplicó con holgura la probabilidad de AKOA, con una razón de oportunidades (OR) de 2,2",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-diwdjf6c9d",
+              "items": [
+                {
+                  "ref": "r-h7ando77jw"
+                },
+                {
+                  "ref": "r-6f57r6aid4"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Los desgarros meniscales sin tratamiento quirúrgico incrementan el riesgo de artrosis radiográfica incidente en personas de mediana edad y mayores, y la meniscectomía parcial se asocia con un empeoramiento del cartílago en el año siguiente",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-3qr5rf2996",
+              "items": [
+                {
+                  "ref": "r-jdr6vphgpu"
+                },
+                {
+                  "ref": "r-b10n62e4a5"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Estos hallazgos resultan coherentes con la idea de que la pérdida de la función de amortiguación del menisco precipita la degeneración, y explican por qué algunos grupos aconsejan evitar la cirugía meniscal en rodillas sin síntomas mecánicos.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-1soy1bdd9c",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Inflamación y estructura",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-ksw8hatcub",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Por último, varios marcadores de inflamación local y de estructura articular se asocian con la progresión rápida. La sinovitis y el derrame articular detectados por RM anticipan la pérdida de cartílago en rodillas sin artrosis a los 30 meses, y las lesiones de médula ósea y los desgarros meniscales complejos se hallan sobrerrepresentados en los casos de AKOA",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-l77jbiet6r",
+              "items": [
+                {
+                  "ref": "r-j23xxv1s6n"
+                },
+                {
+                  "ref": "r-qgdzneafqz"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La alineación en varo, la laxitud ligamentosa y la debilidad del cuádriceps se han propuesto también como factores mecánicos, aunque los datos son menos consistentes. Es probable que la AKOA no tenga una causa única y que resulte de la suma de una rodilla estructuralmente vulnerable y un desencadenante, ya sea traumático, inflamatorio o metabólico.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-9y1ef93o1h",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Fisiopatología",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-3unlwkut98",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La fisiopatología de la AKOA se conoce de forma parcial. Desde una perspectiva conceptual, la artrosis se entiende hoy como la enfermedad de la articulación como órgano, en la que intervienen el cartílago, el hueso subcondral, el menisco, la sinovial y la grasa infrapatelar",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-lk4i33fj3g",
+              "items": [
+                {
+                  "ref": "r-7vhme53occ"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La AKOA sería el extremo rápido de ese espectro, en el que el desequilibrio entre el daño tisular y la capacidad de reparación se establece de forma abrupta. No hay pruebas de que sea una enfermedad distinta per se, y es posible que represente simplemente la cola de una distribución continua de velocidades de progresión.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-z3wlri4vwf",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Entre los mecanismos candidatos, la sobrecarga mecánica tras un daño meniscal ocupa un lugar central. Un menisco desgarrado o resecado transmite peor la carga, el cartílago soporta tensiones mayores y la degeneración se acelera, un proceso que puede reproducirse en modelos animales y observarse in vivo en la RM seriada",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-61d9i84dfy",
+              "items": [
+                {
+                  "ref": "r-twa5ah2srg"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Junto a esta vía mecánica opera una inflamatoria: la sinovitis libera citocinas y metaloproteasas que degradan la matriz cartilaginosa y sensibilizan los nociceptores, lo que podría explicar el mayor dolor de los pacientes con AKOA",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-74bbkauosx",
+              "items": [
+                {
+                  "ref": "r-0cpmgixyvf"
+                },
+                {
+                  "ref": "r-p5g03442hb"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Ambos procesos se retroalimentan, ya que los fragmentos de matriz activan la sinovial, que a su vez perpetúa la destrucción.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-s5ywx4b6du",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Un tercer elemento es el hueso subcondral. Las lesiones de médula ósea, visibles como áreas de edema en la RM, reflejan microfracturas y remodelado acelerado, y se asocian con la pérdida de cartílago adyacente. La hipótesis más aceptada propone que el hueso y el cartílago forman una unidad funcional y que el daño en uno se transmite al otro. También se ha sugerido una predisposición genética o epigenética, pero hoy no existen estudios que la sustenten con solidez. Muchas de estas ideas proceden de estudios observacionales, de modo que deben tomarse como hipótesis de trabajo y no como hechos establecidos.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-y1nje6qa6k",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Diagnóstico e imagen",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-xp7vg7k6r3",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "El diagnóstico de la AKOA es, por definición, retrospectivo: solo se confirma cuando la segunda radiografía muestra el cambio estructural. Esto limita su utilidad clínica inmediata, y el reto actual consiste en reconocer de forma prospectiva a los pacientes que están en riesgo. La sospecha debería surgir ante una persona de 45-65 años con dolor de rodilla de aparición reciente, antecedente de lesión meniscal o ligamentosa, derrame articular recurrente y una radiografía basal normal o casi normal. En esta situación, repetir la radiografía en 12 a 24 meses, en lugar de esperar los intervalos habituales, es una estrategia razonable.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-i3ge7b9rnk",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La RM aporta más información que la radiografía en esta fase. Los hallazgos con mayor valor pronóstico son los desgarros meniscales complejos, el derrame-sinovitis moderado o grave, las lesiones de médula ósea de tamaño grande y los defectos del cartílago de espesor completo",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-691ubns66b",
+              "items": [
+                {
+                  "ref": "r-rfairgiu13"
+                },
+                {
+                  "ref": "r-njqz1iadq6"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". La medición cuantitativa del grosor del cartílago permite detectar cambios en periodos cortos, con tasas de pérdida de 0,1 a 0,2 mm anuales en la artrosis típica, y muy superiores en las rodillas con progresión rápida",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-3ilp200jws",
+              "items": [
+                {
+                  "ref": "r-ik5m4oxkvl"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Sin embargo, la RM es costosa, no siempre está disponible y su uso rutinario en rodillas con radiografía normal no está avalado por las guías.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-bv6yb9rpnt",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Los biomarcadores bioquímicos de recambio del cartílago y de inflamación (por ejemplo, el CTX-II urinario o el COMP sérico) se han ensayado como complemento, con resultados discretos. Tomados de forma aislada, no discriminan bien a los pacientes con AKOA de los demás. El uso combinado de variables clínicas, estructurales y bioquímicas es una vía prometedora, y se espera que los modelos de predicción construidos con estos datos permitan estimar a priori el riesgo individual de progresión rápida",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-xow1yvkqpl",
+              "items": [
+                {
+                  "ref": "r-ms34nwhp32"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Por ahora, ninguna de estas herramientas está lista para su aplicación en la práctica clínica.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-4efx3jmf23",
+          "lang": null,
+          "level": 1,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Pronóstico y manejo",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-aa3gai59aq",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Pronóstico",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-nk8ramezu3",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La AKOA tiene peor pronóstico que la artrosis típica. Los pacientes con AKOA refieren más dolor, con diferencias medias de 5 a 10 puntos en las escalas de 0-100 en el momento del diagnóstico radiográfico, y su dolor se mantiene más intenso durante el seguimiento posterior",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-qb47phhrnn",
+              "items": [
+                {
+                  "ref": "r-zw0oosvnfe"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". También reciben con más frecuencia una artroplastia total de rodilla: en la OAI, cerca del 20 % de los casos con AKOA fue intervenido en los cinco años siguientes, frente a menos del 5 % de las rodillas con progresión típica, lo que implica un riesgo relativo de entre 3 y 5 veces",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-9857bakye3",
+              "items": [
+                {
+                  "ref": "r-pnqewtmoes"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Estas intervenciones se indican con frecuencia a edades relativamente jóvenes, con las consecuencias que ello conlleva para la durabilidad de la prótesis y para la necesidad de una futura revisión.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-fj4gnuhz67",
+          "lang": null,
+          "level": 2,
+          "role": null
+        },
+        "content": [
+          {
+            "text": "Manejo",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-xl9fk8brsy",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "No existe un tratamiento específico para la AKOA, y las recomendaciones actuales se derivan de las guías de artrosis de rodilla en general. Las guías del American College of Rheumatology, de la OARSI y de la ESCEO coinciden en situar en la base del manejo la educación del paciente, el ejercicio terapéutico y la pérdida de peso en caso de sobrepeso, y reservar los antiinflamatorios no esteroideos (AINE) tópicos u orales, con la precaución habitual, para el control del dolor",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-1gcpfeb6qy",
+              "items": [
+                {
+                  "ref": "r-kmc3711gm1"
+                },
+                {
+                  "ref": "r-lda1405sgc"
+                },
+                {
+                  "ref": "r-aodquuf0sx"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Estas medidas son especialmente pertinentes en la AKOA, porque actúan sobre dos factores modificables, el peso y la carga mecánica. En la práctica, el seguimiento más estrecho y la individualización del plan de ejercicio son las acciones más razonables.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-zgb501k1iv",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Cuando el tratamiento conservador no basta, la artroplastia es una opción eficaz, aunque debe sopesarse con cuidado en pacientes jóvenes. Un ensayo aleatorizado mostró que añadir la cirugía al tratamiento no quirúrgico estructurado mejora el dolor y la función, aunque a costa de más acontecimientos adversos graves",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-avzihcopko",
+              "items": [
+                {
+                  "ref": "r-j2j4txdwt7"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Respecto a la investigación, la heterogeneidad de la artrosis de rodilla ha llevado a proponer ensayos que seleccionen a los pacientes por fenotipo, y la AKOA es uno de los candidatos más claros",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-bp3pfjzacm",
+              "items": [
+                {
+                  "ref": "r-7nfw7khzut"
+                },
+                {
+                  "ref": "r-z0dj7dfo9f"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ". Los avances recientes en epidemiología y tratamiento de la artrosis refuerzan esa línea, pero aún no hay fármacos modificadores de la enfermedad aprobados",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-cc06aafa6h",
+              "items": [
+                {
+                  "ref": "r-9d85xfkljm"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-a96lybke2j",
+          "lang": null,
+          "level": 1,
+          "role": "conclusions"
+        },
+        "content": [
+          {
+            "text": "Conclusiones",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-fbym1e3b88",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "La artrosis de rodilla acelerada es un fenotipo plausible y probablemente infradiagnosticado, que afecta a entre el 4 % y el 10 % de las rodillas en riesgo y se asocia con más dolor, más artroplastias y una pérdida de cartílago más rápida. Sus factores de riesgo principales (lesión meniscal o ligamentosa, sinovitis, sobrepeso) coinciden en buena parte con los de la artrosis típica, lo que obliga a preguntarse si es una entidad aparte o la parte extrema de un continuo. De momento, el término es útil sobre todo para la investigación.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-m4m8b5jd70",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Quedan tareas pendientes: acordar una definición operativa, validar los marcadores de RM en cohortes independientes y europeas, estudiar la AKOA fuera del ámbito de la OAI, y diseñar ensayos que evalúen intervenciones dirigidas, como el control del peso o la protección del menisco, en las rodillas con riesgo alto. En la consulta, la recomendación práctica es mantener un umbral bajo de sospecha, vigilar con radiografías seriadas a las personas con una lesión meniscal reciente y optimizar el tratamiento de los factores modificables.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-drst1t4ddy",
+          "lang": null,
+          "level": 1,
+          "role": "references"
+        },
+        "content": [
+          {
+            "text": "Bibliografía",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "article",
+  "lang": "es",
+  "schemaVersion": 1
+}

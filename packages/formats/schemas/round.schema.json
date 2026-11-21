@@ -1,0 +1,108 @@
+{
+  "$id": "https://scidesk.app/schema/v1/round.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "copies": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "pattern": "^copies/[^/\\\\]+\\.docx$",
+            "type": "string"
+          },
+          "id": {
+            "description": "Id of a returned copy.",
+            "pattern": "^cp-[a-z0-9]{1,24}$",
+            "type": "string"
+          },
+          "received": {
+            "description": "UTC date and time, ISO 8601 with Z.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+            "type": "string"
+          },
+          "returnedBy": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                "minLength": 1,
+                "type": "string"
+              },
+              "person": {
+                "description": "Person id in people.json, when known.",
+                "pattern": "^p-[a-z0-9]{1,24}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "file",
+          "returnedBy",
+          "received",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "id": {
+      "description": "Id of a review round.",
+      "pattern": "^rd-[a-z0-9]{1,24}$",
+      "type": "string"
+    },
+    "name": {
+      "description": "E.g. 'Coautores, 1.ª ronda'.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    },
+    "sent": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "description": "UTC date and time, ISO 8601 with Z.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+          "type": "string"
+        },
+        "file": {
+          "description": "Copy of the DOCX sent, relative to the round folder.",
+          "type": "string"
+        },
+        "snapshot": {
+          "description": "Id of a snapshot of the history.",
+          "pattern": "^s-[a-z0-9]{1,24}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot",
+        "date"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "sent",
+    "copies"
+  ],
+  "title": "SciDesk review round (rounds/<round>/round.json)",
+  "type": "object"
+}

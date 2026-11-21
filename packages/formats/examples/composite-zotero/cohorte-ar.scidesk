@@ -1,0 +1,21 @@
+{
+  "articles": [
+    {
+      "folder": "main",
+      "id": "a-4p9ibjp2ju"
+    }
+  ],
+  "created": "2026-11-21T12:00:00Z",
+  "format": "scidesk-project",
+  "id": "0b7e4f2a-3c9d-4e1f-a8b6-5d2c7e9f1a04",
+  "library": {
+    "mode": "zotero",
+    "zotero": {
+      "collection": "QK8M2T4N",
+      "library": "user",
+      "name": "Cohorte AR"
+    }
+  },
+  "name": "Cohorte de artritis reumatoide de inicio",
+  "schemaVersion": 1
+}

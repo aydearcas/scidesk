@@ -1,7 +1,7 @@
 # 0022. Pegar tablas de Word: limpiador de HTML de Office y citas del portapapeles
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada (resultado del prototipo 1 de la fase 0, confirmado con Ctrl+V real; repetido en el Mac con el prototipo 11). La parte de formato de celda es una propuesta que se cierra al especificar `.scitable`.
+- **Estado:** aceptada (resultado del prototipo 1 de la fase 0, confirmado con Ctrl+V real; repetido en el Mac con el prototipo 11). La parte de formato de celda se cerró al especificar `.scitable` ([0031](0031-formatos-v1-con-un-solo-esquema.md)): alineación por celda y anchos relativos de las columnas.
 - **Pregunta del plan:** riesgo 7.1 y R23 (prototipo 1 de la sección 8)
 
 ## Qué se decide

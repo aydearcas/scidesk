@@ -1,0 +1,39 @@
+{
+  "$id": "https://scidesk.app/schema/v1/docx-property.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "article": {
+      "description": "Id of a article.",
+      "pattern": "^a-[a-z0-9]{1,24}$",
+      "type": "string"
+    },
+    "format": {
+      "const": 1,
+      "type": "number"
+    },
+    "profile": {
+      "const": "coauthors",
+      "type": "string"
+    },
+    "project": {
+      "description": "Random UUID (version 4), lowercase.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "snapshot": {
+      "description": "Snapshot saved at export: the base of the three-way merge (R42).",
+      "pattern": "^s-[a-z0-9]{1,24}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "format",
+    "project",
+    "article",
+    "snapshot",
+    "profile"
+  ],
+  "title": "Custom property 'SciDesk' of a DOCX for co-authors",
+  "type": "object"
+}

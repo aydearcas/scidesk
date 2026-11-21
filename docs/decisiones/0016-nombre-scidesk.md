@@ -1,12 +1,12 @@
 # 0016. El programa se llama SciDesk
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada
+- **Estado:** aceptada. Actualizada el 21/11/2026: extensión `.scifigure` ([0031](0031-formatos-v1-con-un-solo-esquema.md)).
 - **Pregunta del plan:** P19
 
 ## Qué se decide
 - El programa se llama **SciDesk**.
-- Extensiones de archivo (*supuesto*): `.scidesk` para el manifiesto del proyecto y su carpeta oculta, `.scidoc` para los documentos y `.scitable` para las tablas.
+- Extensiones de archivo (*supuesto*): `.scidesk` para el manifiesto del proyecto y su carpeta oculta, `.scidoc` para los documentos, `.scitable` para las tablas y, desde [0031](0031-formatos-v1-con-un-solo-esquema.md), `.scifigure` para las figuras.
 
 ## Por qué
 Comprobaciones del 20/11/2026 (no son asesoramiento legal):

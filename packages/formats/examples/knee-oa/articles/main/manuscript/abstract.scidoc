@@ -1,0 +1,233 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "id": "b-s8fss4e3eg",
+          "lang": "es"
+        },
+        "content": [
+          {
+            "attrs": {
+              "id": "b-zydza3e24e",
+              "lang": null,
+              "level": 2,
+              "role": "background"
+            },
+            "content": [
+              {
+                "text": "Introducción",
+                "type": "text"
+              }
+            ],
+            "type": "heading"
+          },
+          {
+            "attrs": {
+              "id": "b-0d625aaq6p",
+              "lang": null
+            },
+            "content": [
+              {
+                "text": "La artrosis de rodilla acelerada (AKOA, del inglés accelerated knee osteoarthritis) es un fenotipo en el que una rodilla sin artrosis radiográfica establecida evoluciona en menos de cuatro años hacia una enfermedad avanzada. Se trata de una entidad descrita sobre todo a partir de cohortes como la Osteoarthritis Initiative (OAI), y su definición todavía no es universal.",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-dumep5qkc6",
+              "lang": null,
+              "level": 2,
+              "role": "other"
+            },
+            "content": [
+              {
+                "text": "Desarrollo",
+                "type": "text"
+              }
+            ],
+            "type": "heading"
+          },
+          {
+            "attrs": {
+              "id": "b-vq3hc5zoqw",
+              "lang": null
+            },
+            "content": [
+              {
+                "text": "Se revisan los criterios radiográficos y de resonancia magnética (RM) propuestos, la frecuencia estimada (entre el 4 % y el 10 % de las rodillas en riesgo, según la definición), los factores de riesgo asociados, como la lesión meniscal, el antecedente traumático, la sinovitis y el sobrepeso, y los mecanismos fisiopatológicos candidatos. También se discuten el pronóstico, con una mayor probabilidad de artroplastia, y las implicaciones para el manejo y para el diseño de ensayos clínicos.",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-u1dehhf0y8",
+              "lang": null,
+              "level": 2,
+              "role": "conclusions"
+            },
+            "content": [
+              {
+                "text": "Conclusiones",
+                "type": "text"
+              }
+            ],
+            "type": "heading"
+          },
+          {
+            "attrs": {
+              "id": "b-uf62he3p85",
+              "lang": null
+            },
+            "content": [
+              {
+                "text": "La AKOA parece un fenotipo clínicamente relevante, con más dolor y una evolución estructural más rápida que la artrosis típica. Faltan definiciones consensuadas, estudios fuera de las cohortes estadounidenses y ensayos dirigidos a este subgrupo. Mientras tanto, conviene vigilar de cerca las rodillas de riesgo y tratar los factores modificables.",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-j1qq9f8anm"
+            },
+            "content": [
+              {
+                "content": [
+                  {
+                    "text": "artrosis de rodilla",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "progresión rápida",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "fenotipo",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "resonancia magnética",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "menisco",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "Osteoarthritis Initiative",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              }
+            ],
+            "type": "keywords"
+          }
+        ],
+        "type": "abstractSection"
+      },
+      {
+        "attrs": {
+          "id": "b-661v3xutle",
+          "lang": "en"
+        },
+        "content": [
+          {
+            "attrs": {
+              "id": "b-0mnzoouszd",
+              "lang": null
+            },
+            "content": [
+              {
+                "text": "Background: accelerated knee osteoarthritis (AKOA) is a phenotype in which a knee without established radiographic osteoarthritis progresses to advanced disease in less than four years.",
+                "type": "text"
+              },
+              {
+                "marks": [
+                  {
+                    "type": "italic"
+                  }
+                ],
+                "text": " (Synthetic test data.)",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-nhj25if3iw"
+            },
+            "content": [
+              {
+                "content": [
+                  {
+                    "text": "knee osteoarthritis",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "rapid progression",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "phenotype",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              }
+            ],
+            "type": "keywords"
+          }
+        ],
+        "type": "abstractSection"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "abstract",
+  "lang": "es",
+  "schemaVersion": 1
+}

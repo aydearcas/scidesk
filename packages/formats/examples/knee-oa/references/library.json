@@ -1,0 +1,1350 @@
+{
+  "references": [
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Bierma-Zeinstra",
+            "given": "S"
+          }
+        ],
+        "container-title-short": "Lancet",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1745-59",
+        "title": "Osteoarthritis",
+        "type": "article-journal",
+        "volume": "393"
+      },
+      "id": "r-b6yn8tpj9i",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Cross",
+            "given": "M"
+          },
+          {
+            "family": "Smith",
+            "given": "E"
+          },
+          {
+            "family": "Hoy",
+            "given": "D"
+          }
+        ],
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2014
+            ]
+          ]
+        },
+        "page": "1323-30",
+        "title": "The global burden of hip and knee osteoarthritis: estimates from the Global Burden of Disease 2010 study",
+        "type": "article-journal",
+        "volume": "73"
+      },
+      "id": "r-mxdusb2fj6",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Eckstein",
+            "given": "F"
+          },
+          {
+            "family": "Wirth",
+            "given": "W"
+          },
+          {
+            "family": "Nevitt",
+            "given": "M C"
+          }
+        ],
+        "container-title-short": "Nat Rev Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2012
+            ]
+          ]
+        },
+        "page": "622-30",
+        "title": "Recent advances in osteoarthritis imaging: the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "8"
+      },
+      "id": "r-6pzuojkhy6",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title-short": "Arthritis Care Res",
+        "issued": {
+          "date-parts": [
+            [
+              2014
+            ]
+          ]
+        },
+        "page": "1673-9",
+        "title": "Association of knee injuries with accelerated knee osteoarthritis progression: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "66"
+      },
+      "id": "r-h7ando77jw",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "borrador-coautora.docx",
+        "key": "x9vt2sdwfxa0wae9pqpvfz9qp0z5rvxt0z2f:118",
+        "kind": "endnote-field",
+        "unmapped": {
+          "custom2": "PMC4229403"
+        }
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kellgren",
+            "given": "J H"
+          },
+          {
+            "family": "Lawrence",
+            "given": "J S"
+          }
+        ],
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              1957
+            ]
+          ]
+        },
+        "page": "494-502",
+        "title": "Radiological assessment of osteo-arthrosis",
+        "type": "article-journal",
+        "volume": "16"
+      },
+      "id": "r-vg25kt68ji",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Stout",
+            "given": "A C"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title-short": "Ther Adv Musculoskelet Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "165-71",
+        "title": "Best performing definition of accelerated knee osteoarthritis: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "8"
+      },
+      "id": "r-uwmivrq3yt",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Bannuru",
+            "given": "R R"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          }
+        ],
+        "container-title-short": "BMC Musculoskelet Disord",
+        "issued": {
+          "date-parts": [
+            [
+              2020
+            ]
+          ]
+        },
+        "page": "60",
+        "title": "The incidence and characteristics of accelerated knee osteoarthritis among women: the Chingford cohort",
+        "type": "article-journal",
+        "volume": "21"
+      },
+      "id": "r-q7g1o9epxu",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kraus",
+            "given": "V B"
+          },
+          {
+            "family": "Blanco",
+            "given": "F J"
+          },
+          {
+            "family": "Englund",
+            "given": "M"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2015
+            ]
+          ]
+        },
+        "page": "1233-41",
+        "title": "Call for standardized definitions of osteoarthritis and risk stratification for clinical trials and clinical use",
+        "type": "article-journal",
+        "volume": "23"
+      },
+      "id": "r-ej88x893rt",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2011
+            ]
+          ]
+        },
+        "page": "990-1002",
+        "title": "Evolution of semi-quantitative whole joint assessment of knee OA: MOAKS (MRI Osteoarthritis Knee Score)",
+        "type": "article-journal",
+        "volume": "19"
+      },
+      "id": "r-rfairgiu13",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Lu",
+            "given": "B"
+          }
+        ],
+        "container-title-short": "Arthritis Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1089-100",
+        "title": "Accelerated knee osteoarthritis is characterized by destabilizing meniscal tears and preradiographic MRI features",
+        "type": "article-journal",
+        "volume": "71"
+      },
+      "id": "r-njqz1iadq6",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Ward",
+            "given": "R J"
+          },
+          {
+            "family": "MacKay",
+            "given": "J W"
+          }
+        ],
+        "container-title-short": "Rheumatology (Oxford)",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "418-26",
+        "title": "Effusion-synovitis and infrapatellar fat pad signal intensity alteration differentiate accelerated knee osteoarthritis",
+        "type": "article-journal",
+        "volume": "58"
+      },
+      "id": "r-3ygjvucwqz",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Zhang",
+            "given": "Y"
+          },
+          {
+            "family": "Jordan",
+            "given": "J M"
+          }
+        ],
+        "container-title-short": "Clin Geriatr Med",
+        "issued": {
+          "date-parts": [
+            [
+              2010
+            ]
+          ]
+        },
+        "page": "355-69",
+        "title": "Epidemiology of osteoarthritis",
+        "type": "article-journal",
+        "volume": "26"
+      },
+      "id": "r-3rrfdhnrxf",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Liu",
+            "given": "S H"
+          },
+          {
+            "family": "Lapane",
+            "given": "K"
+          }
+        ],
+        "container-title-short": "Clin Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2018
+            ]
+          ]
+        },
+        "page": "3105-10",
+        "title": "Adults with incident accelerated knee osteoarthritis are more likely to receive a knee replacement: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "37"
+      },
+      "id": "r-pnqewtmoes",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Price",
+            "given": "L L"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          }
+        ],
+        "container-title-short": "Clin Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "1565-71",
+        "title": "Individuals with incident accelerated knee osteoarthritis have greater pain than those with common knee osteoarthritis progression: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "35"
+      },
+      "id": "r-zw0oosvnfe",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Neogi",
+            "given": "T"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2013
+            ]
+          ]
+        },
+        "page": "1145-53",
+        "title": "The epidemiology and impact of pain in osteoarthritis",
+        "type": "article-journal",
+        "volume": "21"
+      },
+      "id": "r-7a3hvdlbhg",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Lawrence",
+            "given": "R C"
+          },
+          {
+            "family": "Dieppe",
+            "given": "P A"
+          }
+        ],
+        "container-title-short": "Ann Intern Med",
+        "issued": {
+          "date-parts": [
+            [
+              2000
+            ]
+          ]
+        },
+        "page": "635-46",
+        "title": "Osteoarthritis: new insights. Part 1: the disease and its risk factors",
+        "type": "article-journal",
+        "volume": "133"
+      },
+      "id": "r-c1vi7y7i6y",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Blagojevic",
+            "given": "M"
+          },
+          {
+            "family": "Jinks",
+            "given": "C"
+          },
+          {
+            "family": "Jeffery",
+            "given": "A"
+          },
+          {
+            "family": "Jordan",
+            "given": "K P"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2010
+            ]
+          ]
+        },
+        "page": "24-33",
+        "title": "Risk factors for onset of osteoarthritis of the knee in older adults: a systematic review and meta-analysis",
+        "type": "article-journal",
+        "volume": "18"
+      },
+      "id": "r-91p2x6ns0t",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Zhang",
+            "given": "Y"
+          },
+          {
+            "family": "Hannan",
+            "given": "M T"
+          }
+        ],
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              1997
+            ]
+          ]
+        },
+        "page": "728-33",
+        "title": "Risk factors for incident radiographic knee osteoarthritis in the elderly: the Framingham Study",
+        "type": "article-journal",
+        "volume": "40"
+      },
+      "id": "r-enp5p1ture",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Gersing",
+            "given": "A S"
+          },
+          {
+            "family": "Solka",
+            "given": "M"
+          },
+          {
+            "family": "Joseph",
+            "given": "G B"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "1126-34",
+        "title": "Progression of cartilage degeneration and clinical symptoms in obese and overweight individuals is dependent on the amount of weight loss: 48-month data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "24"
+      },
+      "id": "r-8tgm36u3nr",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Lohmander",
+            "given": "L S"
+          },
+          {
+            "family": "Englund",
+            "given": "P M"
+          },
+          {
+            "family": "Dahl",
+            "given": "L L"
+          },
+          {
+            "family": "Roos",
+            "given": "E M"
+          }
+        ],
+        "container-title-short": "Am J Sports Med",
+        "issued": {
+          "date-parts": [
+            [
+              2007
+            ]
+          ]
+        },
+        "page": "1756-69",
+        "title": "The long-term consequence of anterior cruciate ligament and meniscus injuries: osteoarthritis",
+        "type": "article-journal",
+        "volume": "35"
+      },
+      "id": "r-6f57r6aid4",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Englund",
+            "given": "M"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Roemer",
+            "given": "F W"
+          }
+        ],
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              2009
+            ]
+          ]
+        },
+        "page": "831-9",
+        "title": "Meniscal tear in knees without surgery and the development of radiographic osteoarthritis among middle-aged and elderly persons: the MOST study",
+        "type": "article-journal",
+        "volume": "60"
+      },
+      "id": "r-jdr6vphgpu",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Roemer",
+            "given": "F W"
+          },
+          {
+            "family": "Kwoh",
+            "given": "C K"
+          },
+          {
+            "family": "Hannon",
+            "given": "M J"
+          }
+        ],
+        "container-title-short": "Eur Radiol",
+        "issued": {
+          "date-parts": [
+            [
+              2017
+            ]
+          ]
+        },
+        "page": "404-13",
+        "title": "Partial meniscectomy is associated with increased risk of incident radiographic osteoarthritis and worsening cartilage damage in the following year",
+        "type": "article-journal",
+        "volume": "27"
+      },
+      "id": "r-b10n62e4a5",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Niu",
+            "given": "J"
+          },
+          {
+            "family": "Neogi",
+            "given": "T"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "458-64",
+        "title": "Synovitis and the risk of knee osteoarthritis: the MOST Study",
+        "type": "article-journal",
+        "volume": "24"
+      },
+      "id": "r-j23xxv1s6n",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Roemer",
+            "given": "F W"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Felson",
+            "given": "D T"
+          }
+        ],
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2011
+            ]
+          ]
+        },
+        "page": "1804-9",
+        "title": "Presence of MRI-detected joint effusion and synovitis increases risk of cartilage loss in knees without osteoarthritis at 30-month follow-up: the MOST study",
+        "type": "article-journal",
+        "volume": "70"
+      },
+      "id": "r-qgdzneafqz",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Loeser",
+            "given": "R F"
+          },
+          {
+            "family": "Goldring",
+            "given": "S R"
+          },
+          {
+            "family": "Scanzello",
+            "given": "C R"
+          },
+          {
+            "family": "Goldring",
+            "given": "M B"
+          }
+        ],
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              2012
+            ]
+          ]
+        },
+        "page": "1697-707",
+        "title": "Osteoarthritis: a disease of the joint as an organ",
+        "type": "article-journal",
+        "volume": "64"
+      },
+      "id": "r-7vhme53occ",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Zhang",
+            "given": "Y Q"
+          },
+          {
+            "family": "Niu",
+            "given": "J B"
+          }
+        ],
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              2006
+            ]
+          ]
+        },
+        "page": "795-801",
+        "title": "The association of meniscal pathologic changes with cartilage loss in symptomatic knee osteoarthritis",
+        "type": "article-journal",
+        "volume": "54"
+      },
+      "id": "r-twa5ah2srg",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Scanzello",
+            "given": "C R"
+          },
+          {
+            "family": "Goldring",
+            "given": "S R"
+          }
+        ],
+        "container-title-short": "Bone",
+        "issued": {
+          "date-parts": [
+            [
+              2012
+            ]
+          ]
+        },
+        "page": "249-57",
+        "title": "The role of synovitis in osteoarthritis pathogenesis",
+        "type": "article-journal",
+        "volume": "51"
+      },
+      "id": "r-0cpmgixyvf",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Berenbaum",
+            "given": "F"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2013
+            ]
+          ]
+        },
+        "page": "16-21",
+        "title": "Osteoarthritis as an inflammatory disease (osteoarthritis is not osteoarthrosis!)",
+        "type": "article-journal",
+        "volume": "21"
+      },
+      "id": "r-p5g03442hb",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Eckstein",
+            "given": "F"
+          },
+          {
+            "family": "Collins",
+            "given": "J E"
+          },
+          {
+            "family": "Nevitt",
+            "given": "M C"
+          }
+        ],
+        "container-title-short": "Arthritis Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2015
+            ]
+          ]
+        },
+        "page": "3184-9",
+        "title": "Brief report: cartilage thickness change as an imaging biomarker of knee osteoarthritis progression: data from the Foundation for the National Institutes of Health Osteoarthritis Biomarkers Consortium",
+        "type": "article-journal",
+        "volume": "67"
+      },
+      "id": "r-ik5m4oxkvl",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Bierma-Zeinstra",
+            "given": "S M"
+          },
+          {
+            "family": "Verhagen",
+            "given": "A P"
+          }
+        ],
+        "container-title-short": "Arthritis Res Ther",
+        "issued": {
+          "date-parts": [
+            [
+              2011
+            ]
+          ]
+        },
+        "page": "213",
+        "title": "Osteoarthritis subpopulations and implications for clinical trial design",
+        "type": "article-journal",
+        "volume": "13"
+      },
+      "id": "r-ms34nwhp32",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kolasinski",
+            "given": "S L"
+          },
+          {
+            "family": "Neogi",
+            "given": "T"
+          },
+          {
+            "family": "Hochberg",
+            "given": "M C"
+          }
+        ],
+        "container-title-short": "Arthritis Care Res",
+        "issued": {
+          "date-parts": [
+            [
+              2020
+            ]
+          ]
+        },
+        "page": "149-62",
+        "title": "2019 American College of Rheumatology/Arthritis Foundation guideline for the management of osteoarthritis of the hand, hip, and knee",
+        "type": "article-journal",
+        "volume": "72"
+      },
+      "id": "r-kmc3711gm1",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Bannuru",
+            "given": "R R"
+          },
+          {
+            "family": "Osani",
+            "given": "M C"
+          },
+          {
+            "family": "Vaysbrot",
+            "given": "E E"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1578-89",
+        "title": "OARSI guidelines for the non-surgical management of knee, hip, and polyarticular osteoarthritis",
+        "type": "article-journal",
+        "volume": "27"
+      },
+      "id": "r-lda1405sgc",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Bruyere",
+            "given": "O"
+          },
+          {
+            "family": "Honvo",
+            "given": "G"
+          },
+          {
+            "family": "Veronese",
+            "given": "N"
+          }
+        ],
+        "container-title-short": "Semin Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "337-50",
+        "title": "An updated algorithm recommendation for the management of knee osteoarthritis from the European Society for Clinical and Economic Aspects of Osteoporosis, Osteoarthritis and Musculoskeletal Diseases (ESCEO)",
+        "type": "article-journal",
+        "volume": "49"
+      },
+      "id": "r-aodquuf0sx",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Skou",
+            "given": "S T"
+          },
+          {
+            "family": "Roos",
+            "given": "E M"
+          },
+          {
+            "family": "Laursen",
+            "given": "M B"
+          }
+        ],
+        "container-title-short": "N Engl J Med",
+        "issued": {
+          "date-parts": [
+            [
+              2015
+            ]
+          ]
+        },
+        "page": "1597-606",
+        "title": "A randomized, controlled trial of total knee replacement",
+        "type": "article-journal",
+        "volume": "373"
+      },
+      "id": "r-j2j4txdwt7",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Deveza",
+            "given": "L A"
+          },
+          {
+            "family": "Melo",
+            "given": "L"
+          },
+          {
+            "family": "Yamato",
+            "given": "T P"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2017
+            ]
+          ]
+        },
+        "page": "1926-41",
+        "title": "Knee osteoarthritis phenotypes and their relevance for outcomes: a systematic review",
+        "type": "article-journal",
+        "volume": "25"
+      },
+      "id": "r-7nfw7khzut",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Dell'Isola",
+            "given": "A"
+          },
+          {
+            "family": "Allan",
+            "given": "R"
+          },
+          {
+            "family": "Smith",
+            "given": "S L"
+          }
+        ],
+        "container-title-short": "BMC Musculoskelet Disord",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "425",
+        "title": "Identification of clinical phenotypes in knee osteoarthritis: a systematic review of the literature",
+        "type": "article-journal",
+        "volume": "17"
+      },
+      "id": "r-z0dj7dfo9f",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    },
+    {
+      "added": "2026-11-21T12:00:00Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kloppenburg",
+            "given": "M"
+          },
+          {
+            "family": "Berenbaum",
+            "given": "F"
+          }
+        ],
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2020
+            ]
+          ]
+        },
+        "page": "242-8",
+        "title": "Osteoarthritis year in review 2019: epidemiology and therapy",
+        "type": "article-journal",
+        "volume": "28"
+      },
+      "id": "r-9d85xfkljm",
+      "source": {
+        "date": "2026-11-21T12:00:00Z",
+        "file": "references/imports/revision-artrosis.ris",
+        "kind": "ris"
+      }
+    }
+  ],
+  "schemaVersion": 1
+}

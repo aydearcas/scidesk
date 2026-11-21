@@ -1,0 +1,211 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "id": "b-m8thakhcti",
+          "level": 1,
+          "role": "introduction"
+        },
+        "content": [
+          {
+            "text": "Introducción",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-gxxdf8gufg"
+        },
+        "content": [
+          {
+            "text": "La artritis reumatoide afecta al 0,5–1 % de la población adulta ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-dg72qs0gjd",
+              "items": [
+                {
+                  "ref": "r-m80c5jttif"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-d0omb4782a"
+        },
+        "content": [
+          {
+            "text": "El objetivo fue describir la actividad de la enfermedad en una cohorte de pacientes con artritis reumatoide de inicio ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-kcgwyfdht4",
+              "items": [
+                {
+                  "ref": "r-iqk5xfl9rc"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-9fq43s8evi",
+          "level": 1,
+          "role": "results"
+        },
+        "content": [
+          {
+            "text": "Resultados",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-2ehpnaeyyr"
+        },
+        "content": [
+          {
+            "text": "Las características basales se muestran en la ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "t-basal"
+            },
+            "type": "xref"
+          },
+          {
+            "text": ". La actividad inflamatoria disminuyó en el seguimiento.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "t-basal",
+          "src": "tables/basal.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "attrs": {
+          "id": "b-shbnrbxi3l"
+        },
+        "content": [
+          {
+            "text": "La respuesta al tratamiento se resume en la ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "t-resp"
+            },
+            "type": "xref"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-7123dz8iku",
+              "items": [
+                {
+                  "ref": "r-dmvkoe9nu6"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "t-resp",
+          "src": "tables/respuesta.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "attrs": {
+          "id": "b-gn5cyw1gek",
+          "level": 1,
+          "role": "discussion"
+        },
+        "content": [
+          {
+            "text": "Discusión",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "attrs": {
+          "id": "b-429g7bhx7s"
+        },
+        "content": [
+          {
+            "text": "La actividad inflamatoria en nuestra cohorte fue similar a la descrita en otras series ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-z8ah1xhf61",
+              "items": [
+                {
+                  "ref": "r-m80c5jttif"
+                },
+                {
+                  "ref": "r-iqk5xfl9rc"
+                }
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "article",
+  "lang": "es",
+  "schemaVersion": 1
+}

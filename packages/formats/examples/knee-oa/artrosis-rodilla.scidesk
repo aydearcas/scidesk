@@ -1,0 +1,16 @@
+{
+  "articles": [
+    {
+      "folder": "main",
+      "id": "a-ocjzl8sdxh"
+    }
+  ],
+  "created": "2026-11-21T12:00:00Z",
+  "format": "scidesk-project",
+  "id": "6f1d2c4e-8a3b-4c7d-9e2f-1a5b7c9d0e3f",
+  "library": {
+    "mode": "own"
+  },
+  "name": "Artrosis de rodilla acelerada",
+  "schemaVersion": 1
+}

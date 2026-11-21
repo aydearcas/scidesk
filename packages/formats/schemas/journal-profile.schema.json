@@ -1,0 +1,1935 @@
+{
+  "$id": "https://scidesk.app/schema/v1/journal-profile.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "abstract": {
+      "additionalProperties": false,
+      "properties": {
+        "keywordsMin": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "sections": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "description": "Heading as the journal writes it, by language.",
+                    "patternProperties": {
+                      "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "role": {
+                    "enum": [
+                      "introduction",
+                      "background",
+                      "objective",
+                      "background-objective",
+                      "methods",
+                      "patients-methods",
+                      "results",
+                      "discussion",
+                      "conclusions",
+                      "discussion-conclusions",
+                      "case-presentation",
+                      "acknowledgements",
+                      "funding",
+                      "conflicts",
+                      "ethics",
+                      "consent",
+                      "data-availability",
+                      "registration",
+                      "ai-use",
+                      "contributions",
+                      "references",
+                      "appendix",
+                      "other"
+                    ]
+                  }
+                },
+                "required": [
+                  "role",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "structured": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "structured"
+      ],
+      "type": "object"
+    },
+    "articleTypes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "abstract": {
+            "additionalProperties": false,
+            "properties": {
+              "keywordsMin": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "sections": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "label": {
+                          "description": "Heading as the journal writes it, by language.",
+                          "patternProperties": {
+                            "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "role": {
+                          "enum": [
+                            "introduction",
+                            "background",
+                            "objective",
+                            "background-objective",
+                            "methods",
+                            "patients-methods",
+                            "results",
+                            "discussion",
+                            "conclusions",
+                            "discussion-conclusions",
+                            "case-presentation",
+                            "acknowledgements",
+                            "funding",
+                            "conflicts",
+                            "ethics",
+                            "consent",
+                            "data-availability",
+                            "registration",
+                            "ai-use",
+                            "contributions",
+                            "references",
+                            "appendix",
+                            "other"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "role",
+                        "label"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "structured": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "structured"
+            ],
+            "type": "object"
+          },
+          "articleType": {
+            "enum": [
+              "original",
+              "brief-original",
+              "systematic-review",
+              "clinical-trial",
+              "observational",
+              "case-report",
+              "protocol",
+              "qualitative",
+              "narrative-review",
+              "letter",
+              "guideline",
+              "other"
+            ]
+          },
+          "journalName": {
+            "description": "Name of the type in the journal's guide.",
+            "patternProperties": {
+              "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "limits": {
+            "additionalProperties": false,
+            "properties": {
+              "abstractWords": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "authors": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "authorsAdvised": {
+                "additionalProperties": false,
+                "description": "Advised, not required.",
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "figures": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "figuresAndTables": {
+                "additionalProperties": false,
+                "description": "When the guide counts figures and tables together.",
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "keywords": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "references": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "tables": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "titleCharacters": {
+                "additionalProperties": false,
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              },
+              "words": {
+                "additionalProperties": false,
+                "description": "Words of the main text.",
+                "properties": {
+                  "checked": {
+                    "description": "Calendar date, ISO 8601.",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    "type": "string"
+                  },
+                  "quote": {
+                    "description": "Literal quote of the source that supports the value.",
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "description": "Id of a source listed in `sources`.",
+                    "pattern": "^[a-z0-9-]{1,32}$",
+                    "type": "string"
+                  },
+                  "value": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "value",
+                  "source"
+                ],
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "opening": {
+            "additionalProperties": false,
+            "description": "Fixed opening, e.g. 'Señor editor'.",
+            "properties": {
+              "checked": {
+                "description": "Calendar date, ISO 8601.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              "quote": {
+                "description": "Literal quote of the source that supports the value.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "source": {
+                "description": "Id of a source listed in `sources`.",
+                "pattern": "^[a-z0-9-]{1,32}$",
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "type": "object"
+          },
+          "sections": {
+            "additionalProperties": false,
+            "description": "Fixed sections, in order.",
+            "properties": {
+              "checked": {
+                "description": "Calendar date, ISO 8601.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              "quote": {
+                "description": "Literal quote of the source that supports the value.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "source": {
+                "description": "Id of a source listed in `sources`.",
+                "pattern": "^[a-z0-9-]{1,32}$",
+                "type": "string"
+              },
+              "value": {
+                "items": {
+                  "enum": [
+                    "introduction",
+                    "background",
+                    "objective",
+                    "background-objective",
+                    "methods",
+                    "patients-methods",
+                    "results",
+                    "discussion",
+                    "conclusions",
+                    "discussion-conclusions",
+                    "case-presentation",
+                    "acknowledgements",
+                    "funding",
+                    "conflicts",
+                    "ethics",
+                    "consent",
+                    "data-availability",
+                    "registration",
+                    "ai-use",
+                    "contributions",
+                    "references",
+                    "appendix",
+                    "other"
+                  ]
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "articleType",
+          "journalName",
+          "limits"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "citationStyle": {
+      "additionalProperties": false,
+      "properties": {
+        "checked": {
+          "description": "Calendar date, ISO 8601.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Literal quote of the source that supports the value.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "description": "Id of a source listed in `sources`.",
+          "pattern": "^[a-z0-9-]{1,32}$",
+          "type": "string"
+        },
+        "value": {
+          "additionalProperties": false,
+          "properties": {
+            "basedOn": {
+              "description": "CSL <id> of the style it derives from.",
+              "type": "string"
+            },
+            "file": {
+              "description": "The profile's own style, travelling with it, when the repository's does not match the guide (record 0026).",
+              "pattern": "^styles/[^/]+\\.csl$",
+              "type": "string"
+            },
+            "id": {
+              "description": "CSL <id> of the style.",
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "value",
+        "source"
+      ],
+      "type": "object"
+    },
+    "contributionsFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "checked": {
+          "description": "Calendar date, ISO 8601.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Literal quote of the source that supports the value.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "description": "Id of a source listed in `sources`.",
+          "pattern": "^[a-z0-9-]{1,32}$",
+          "type": "string"
+        },
+        "value": {
+          "enum": [
+            "credit",
+            "initials-sentence",
+            "icmje"
+          ]
+        }
+      },
+      "required": [
+        "value",
+        "source"
+      ],
+      "type": "object"
+    },
+    "declarations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "funding",
+              "conflicts",
+              "ethics",
+              "consent",
+              "data-availability",
+              "registration",
+              "ai-use",
+              "acknowledgements",
+              "contributions"
+            ]
+          },
+          "placement": {
+            "additionalProperties": false,
+            "properties": {
+              "checked": {
+                "description": "Calendar date, ISO 8601.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              "quote": {
+                "description": "Literal quote of the source that supports the value.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "source": {
+                "description": "Id of a source listed in `sources`.",
+                "pattern": "^[a-z0-9-]{1,32}$",
+                "type": "string"
+              },
+              "value": {
+                "enum": [
+                  "manuscript",
+                  "before-references",
+                  "title-page",
+                  "separate-file",
+                  "submission-form"
+                ]
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "type": "object"
+          },
+          "required": {
+            "additionalProperties": false,
+            "properties": {
+              "checked": {
+                "description": "Calendar date, ISO 8601.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              "quote": {
+                "description": "Literal quote of the source that supports the value.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "source": {
+                "description": "Id of a source listed in `sources`.",
+                "pattern": "^[a-z0-9-]{1,32}$",
+                "type": "string"
+              },
+              "value": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "extends": {
+      "description": "Base profile (e.g. of the publisher) whose data this one inherits (supposition of record 0014).",
+      "pattern": "^[a-z0-9-]+$",
+      "type": "string"
+    },
+    "figures": {
+      "additionalProperties": false,
+      "properties": {
+        "formats": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "minDpi": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "additionalProperties": false,
+              "properties": {
+                "combination": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "lineArt": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "photo": {
+                  "minimum": 0,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "separateFiles": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "id": {
+      "description": "Profile id, e.g. reumatologia-clinica.",
+      "pattern": "^[a-z0-9-]+$",
+      "type": "string"
+    },
+    "journal": {
+      "additionalProperties": false,
+      "properties": {
+        "homepage": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "pattern": "^https?://\\S+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "issnElectronic": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "pattern": "^\\d{4}-\\d{3}[\\dX]$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "issnPrint": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "pattern": "^\\d{4}-\\d{3}[\\dX]$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "nlmAbbreviation": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "openAccess": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "publisher": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "title": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "type": "object"
+    },
+    "languages": {
+      "additionalProperties": false,
+      "properties": {
+        "checked": {
+          "description": "Calendar date, ISO 8601.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Literal quote of the source that supports the value.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "description": "Id of a source listed in `sources`.",
+          "pattern": "^[a-z0-9-]{1,32}$",
+          "type": "string"
+        },
+        "value": {
+          "additionalProperties": false,
+          "properties": {
+            "abstractAlso": {
+              "items": {
+                "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "keywordsAlso": {
+              "items": {
+                "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "manuscript": {
+              "description": "Languages a manuscript may be written in.",
+              "items": {
+                "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "titleAlso": {
+              "items": {
+                "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "manuscript"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "value",
+        "source"
+      ],
+      "type": "object"
+    },
+    "manuscriptFormat": {
+      "additionalProperties": false,
+      "properties": {
+        "englishVariant": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "british",
+                "american"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "figureCaptionsList": {
+          "additionalProperties": false,
+          "description": "Figure captions in a list at the end.",
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "font": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "fontSizePt": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "minimum": 6,
+              "type": "number"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "hyphenation": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "justified": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "lineNumbers": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "lineSpacing": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "minimum": 1,
+              "type": "number"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "pageNumbers": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "sideMarginsCm": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "additionalProperties": false,
+              "properties": {
+                "max": {
+                  "type": "number"
+                },
+                "min": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "min"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "tables": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "in-text",
+                "end"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "notes": {
+      "description": "What the guide says that has no field, or what it leaves out.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "checked": {
+            "description": "Calendar date, ISO 8601.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "quote": {
+            "description": "Literal quote of the source that supports the value.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "source": {
+            "description": "Id of a source listed in `sources`.",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "source"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "optionalDocuments": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "highlights",
+              "graphical-abstract",
+              "video-abstract"
+            ]
+          },
+          "rules": {
+            "additionalProperties": false,
+            "properties": {
+              "checked": {
+                "description": "Calendar date, ISO 8601.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              "quote": {
+                "description": "Literal quote of the source that supports the value.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "source": {
+                "description": "Id of a source listed in `sources`.",
+                "pattern": "^[a-z0-9-]{1,32}$",
+                "type": "string"
+              },
+              "value": {
+                "additionalProperties": false,
+                "properties": {
+                  "max": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "maxCharacters": {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "min": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "value",
+              "source"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "kind",
+          "rules"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "referenceTermsLang": {
+      "additionalProperties": false,
+      "description": "Only when the journal asks for the fixed words of the references in a given language; otherwise the manuscript's.",
+      "properties": {
+        "checked": {
+          "description": "Calendar date, ISO 8601.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "type": "string"
+        },
+        "quote": {
+          "description": "Literal quote of the source that supports the value.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "description": "Id of a source listed in `sources`.",
+          "pattern": "^[a-z0-9-]{1,32}$",
+          "type": "string"
+        },
+        "value": {
+          "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+          "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "source"
+      ],
+      "type": "object"
+    },
+    "review": {
+      "additionalProperties": false,
+      "properties": {
+        "blind": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "double",
+                "single",
+                "open",
+                "none"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "separateTitlePage": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "blind"
+      ],
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    },
+    "sources": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "accessed": {
+            "description": "Calendar date, ISO 8601.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "id": {
+            "description": "Id of a source listed in `sources`.",
+            "pattern": "^[a-z0-9-]{1,32}$",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "author-guide",
+              "nlm-catalog",
+              "openalex",
+              "doaj",
+              "csl-repository",
+              "publisher",
+              "scidesk",
+              "other"
+            ]
+          },
+          "lang": {
+            "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+            "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "pattern": "^https?://\\S+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "url",
+          "accessed"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "submission": {
+      "additionalProperties": false,
+      "properties": {
+        "system": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
+        "url": {
+          "additionalProperties": false,
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "pattern": "^https?://\\S+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "system"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "sources",
+    "journal",
+    "citationStyle",
+    "languages",
+    "articleTypes"
+  ],
+  "title": "SciDesk journal profile",
+  "type": "object"
+}

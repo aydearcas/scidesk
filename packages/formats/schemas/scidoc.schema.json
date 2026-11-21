@@ -1,0 +1,2725 @@
+{
+  "$defs": {
+    "AbstractDoc": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "$ref": "#/$defs/AbstractSection"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "type": {
+          "const": "doc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ],
+      "type": "object"
+    },
+    "AbstractPart": {
+      "additionalProperties": false,
+      "description": "The abstract inside the composite document (memory only).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "src": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "src"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/AbstractSection"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "type": {
+          "const": "abstractPart",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "AbstractSection": {
+      "additionalProperties": false,
+      "description": "The abstract in one language, with its keywords.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+              "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "lang"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Heading"
+              },
+              {
+                "$ref": "#/$defs/Paragraph"
+              },
+              {
+                "$ref": "#/$defs/Keywords"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "abstractSection",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Body": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Paragraph"
+        },
+        {
+          "$ref": "#/$defs/Heading"
+        },
+        {
+          "$ref": "#/$defs/Title"
+        },
+        {
+          "$ref": "#/$defs/BulletList"
+        },
+        {
+          "$ref": "#/$defs/OrderedList"
+        },
+        {
+          "$ref": "#/$defs/Equation"
+        },
+        {
+          "$ref": "#/$defs/TableRef"
+        },
+        {
+          "$ref": "#/$defs/FigureRef"
+        }
+      ]
+    },
+    "BodyDoc": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Body"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "doc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Bold": {
+      "additionalProperties": false,
+      "description": "Bold.",
+      "properties": {
+        "type": {
+          "const": "bold",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "BulletList": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/ListItem"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "bulletList",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "description": "A citation: never its number, which citeproc-js computes.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Citation id; it is the citationID of the Zotero field in the DOCX.",
+              "pattern": "^c-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "items": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "enum": [
+                      "act",
+                      "appendix",
+                      "article-locator",
+                      "book",
+                      "canon",
+                      "chapter",
+                      "column",
+                      "elocation",
+                      "equation",
+                      "figure",
+                      "folio",
+                      "issue",
+                      "line",
+                      "note",
+                      "opus",
+                      "page",
+                      "paragraph",
+                      "part",
+                      "rule",
+                      "scene",
+                      "section",
+                      "sub-verbo",
+                      "supplement",
+                      "table",
+                      "timestamp",
+                      "title-locator",
+                      "verse",
+                      "version",
+                      "volume"
+                    ]
+                  },
+                  "locator": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "prefix": {
+                    "type": "string"
+                  },
+                  "ref": {
+                    "description": "Reference of references/library.json.",
+                    "pattern": "^r-[a-z0-9]{1,24}$",
+                    "type": "string"
+                  },
+                  "suffix": {
+                    "type": "string"
+                  },
+                  "suppressAuthor": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "ref"
+                ],
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "items"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "citation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "CommentMark": {
+      "additionalProperties": false,
+      "description": "Text anchored to a comment of the `comments` registry.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a comment.",
+              "pattern": "^cm-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "comment",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "CompositeDoc": {
+      "additionalProperties": false,
+      "description": "The composite document built in memory: abstract, body, tables and figures in one tree (record 0021). Not a file.",
+      "properties": {
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/AbstractPart"
+              },
+              {
+                "$ref": "#/$defs/Body"
+              },
+              {
+                "$ref": "#/$defs/TablePart"
+              },
+              {
+                "$ref": "#/$defs/FigurePart"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "doc",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Deletion": {
+      "additionalProperties": false,
+      "description": "Tracked deletion (w:del). The text stays in the document until accepted.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of the tracked change; its author, date and origin are in the `changes` registry.",
+              "pattern": "^ch-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "deletion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Equation": {
+      "additionalProperties": false,
+      "description": "Display equation in LaTeX (phase 4; in the format from v1).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a equation.",
+              "pattern": "^e-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "latex": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "latex"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "equation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Field": {
+      "additionalProperties": false,
+      "description": "Merge field of the cover letter.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "enum": [
+                "journal",
+                "editor",
+                "title",
+                "article-type",
+                "corresponding-author",
+                "authors",
+                "date"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "FigureCaption": {
+      "additionalProperties": false,
+      "description": "Caption of a figure (without 'Figura 1.').",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "figureCaption",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "FigureNote": {
+      "additionalProperties": false,
+      "description": "Note under a figure.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a table or figure note.",
+              "pattern": "^n-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "kind": {
+              "description": "general: no call; specific: called from cells with noteRef, lettered by first call.",
+              "enum": [
+                "general",
+                "specific"
+              ]
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "figureNote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "FigurePart": {
+      "additionalProperties": false,
+      "description": "A figure: image file, caption and notes.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "alt": {
+              "anyOf": [
+                {
+                  "description": "Text alternative (accessible PDF).",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "credit": {
+              "anyOf": [
+                {
+                  "description": "Source of the figure, if it is not original.",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "description": "Id of a figure (its part and its figureRef).",
+              "pattern": "^f-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "image": {
+              "description": "Image file, relative to the article folder.",
+              "pattern": "^figures/[^/]+\\.(png|jpe?g|tiff?|svg|eps|pdf)$",
+              "type": "string"
+            },
+            "license": {
+              "anyOf": [
+                {
+                  "description": "Licence or permission (SPDX id when there is one).",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "src": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "image"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/FigureNote"
+          },
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/FigureCaption"
+            }
+          ],
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "figurePart",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "FigureRef": {
+      "additionalProperties": false,
+      "description": "Where a figure of figures/ goes. The caption and notes live in its .scifigure.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a figure (its part and its figureRef).",
+              "pattern": "^f-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "src": {
+              "pattern": "^figures/[^/]+\\.scifigure$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "src"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "figureRef",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "HardBreak": {
+      "additionalProperties": false,
+      "description": "Line break inside a paragraph.",
+      "properties": {
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "hardBreak",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Heading": {
+      "additionalProperties": false,
+      "description": "Section heading; `role` says which section it starts.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "level": {
+              "maximum": 6,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "role": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "introduction",
+                    "background",
+                    "objective",
+                    "background-objective",
+                    "methods",
+                    "patients-methods",
+                    "results",
+                    "discussion",
+                    "conclusions",
+                    "discussion-conclusions",
+                    "case-presentation",
+                    "acknowledgements",
+                    "funding",
+                    "conflicts",
+                    "ethics",
+                    "consent",
+                    "data-availability",
+                    "registration",
+                    "ai-use",
+                    "contributions",
+                    "references",
+                    "appendix",
+                    "other"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "level"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "heading",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Inline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Text"
+        },
+        {
+          "$ref": "#/$defs/HardBreak"
+        },
+        {
+          "$ref": "#/$defs/Citation"
+        },
+        {
+          "$ref": "#/$defs/Xref"
+        },
+        {
+          "$ref": "#/$defs/NoteRef"
+        },
+        {
+          "$ref": "#/$defs/InlineEquation"
+        },
+        {
+          "$ref": "#/$defs/Field"
+        }
+      ]
+    },
+    "InlineEquation": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "latex": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "latex"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "inlineEquation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Insertion": {
+      "additionalProperties": false,
+      "description": "Tracked insertion (w:ins).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of the tracked change; its author, date and origin are in the `changes` registry.",
+              "pattern": "^ch-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "insertion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Italic": {
+      "additionalProperties": false,
+      "description": "Italic.",
+      "properties": {
+        "type": {
+          "const": "italic",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Keyword": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "keyword",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Keywords": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Keyword"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "keywords",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "LangMark": {
+      "additionalProperties": false,
+      "description": "Language of a fragment inside a paragraph (spell checking, hyphenation, export).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "lang": {
+              "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+              "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "lang"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "lang",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "description": "Hyperlink (http, https or mailto only).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "href": {
+              "pattern": "^(https?://|mailto:)\\S+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "href"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "link",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "ListItem": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Paragraph"
+              },
+              {
+                "$ref": "#/$defs/BulletList"
+              },
+              {
+                "$ref": "#/$defs/OrderedList"
+              }
+            ]
+          },
+          "minItems": 1,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/Paragraph"
+            }
+          ],
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "listItem",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Modification": {
+      "additionalProperties": false,
+      "description": "Tracked change of a node attribute (heading level, cell alignment...). A change of text format is a deletion plus an insertion of the same text with the same id.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "attrName": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "description": "Id of the tracked change; its author, date and origin are in the `changes` registry.",
+              "pattern": "^ch-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "newValue": {},
+            "previousValue": {},
+            "type": {
+              "description": "What changed, as prosemirror-suggest-changes records it (e.g. 'attr').",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "type"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "modification",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "NodeMark": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CommentMark"
+        },
+        {
+          "$ref": "#/$defs/Insertion"
+        },
+        {
+          "$ref": "#/$defs/Deletion"
+        },
+        {
+          "$ref": "#/$defs/Modification"
+        }
+      ]
+    },
+    "NoteRef": {
+      "additionalProperties": false,
+      "description": "Call to a note of the same table or figure (its letter is computed, R11).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "target": {
+              "description": "Id of a table or figure note.",
+              "pattern": "^n-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "noteRef",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "OrderedList": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "start": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/ListItem"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "orderedList",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Paragraph": {
+      "additionalProperties": false,
+      "description": "Paragraph.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "paragraph",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "ScidocFile": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "changes": {
+              "description": "Who made each tracked change, when and from where. Entries whose id is no longer in `doc` are dropped on save.",
+              "patternProperties": {
+                "^ch-[a-z0-9]{1,24}$": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "author": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "person": {
+                          "description": "Person id in people.json, when known.",
+                          "pattern": "^p-[a-z0-9]{1,24}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "date": {
+                      "description": "UTC date and time, ISO 8601 with Z.",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "type": "string"
+                    },
+                    "origin": {
+                      "enum": [
+                        "local",
+                        "docx",
+                        "llm",
+                        "conflict-copy",
+                        "history",
+                        "scidesk"
+                      ]
+                    },
+                    "source": {
+                      "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "author",
+                    "date",
+                    "origin"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "comments": {
+              "description": "Comments anchored with the `comment` mark.",
+              "patternProperties": {
+                "^cm-[a-z0-9]{1,24}$": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "author": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "person": {
+                          "description": "Person id in people.json, when known.",
+                          "pattern": "^p-[a-z0-9]{1,24}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "date": {
+                      "description": "UTC date and time, ISO 8601 with Z.",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "type": "string"
+                    },
+                    "origin": {
+                      "enum": [
+                        "local",
+                        "docx",
+                        "llm",
+                        "conflict-copy",
+                        "history",
+                        "scidesk"
+                      ]
+                    },
+                    "replies": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "author": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "person": {
+                                "description": "Person id in people.json, when known.",
+                                "pattern": "^p-[a-z0-9]{1,24}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          "date": {
+                            "description": "UTC date and time, ISO 8601 with Z.",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "author",
+                          "date",
+                          "text"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "resolved": {
+                      "type": "boolean"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "author",
+                    "date",
+                    "origin",
+                    "text",
+                    "resolved",
+                    "replies"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "doc": {
+              "$ref": "#/$defs/AbstractDoc"
+            },
+            "documentType": {
+              "const": "abstract",
+              "type": "string"
+            },
+            "lang": {
+              "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+              "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+              "type": "string"
+            },
+            "schemaVersion": {
+              "const": 1,
+              "description": "Version of the format. Files with a lower version are migrated when opened.",
+              "type": "number"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "lang",
+            "changes",
+            "comments",
+            "documentType",
+            "doc"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "changes": {
+              "description": "Who made each tracked change, when and from where. Entries whose id is no longer in `doc` are dropped on save.",
+              "patternProperties": {
+                "^ch-[a-z0-9]{1,24}$": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "author": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "person": {
+                          "description": "Person id in people.json, when known.",
+                          "pattern": "^p-[a-z0-9]{1,24}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "date": {
+                      "description": "UTC date and time, ISO 8601 with Z.",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "type": "string"
+                    },
+                    "origin": {
+                      "enum": [
+                        "local",
+                        "docx",
+                        "llm",
+                        "conflict-copy",
+                        "history",
+                        "scidesk"
+                      ]
+                    },
+                    "source": {
+                      "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "author",
+                    "date",
+                    "origin"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "comments": {
+              "description": "Comments anchored with the `comment` mark.",
+              "patternProperties": {
+                "^cm-[a-z0-9]{1,24}$": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "author": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "person": {
+                          "description": "Person id in people.json, when known.",
+                          "pattern": "^p-[a-z0-9]{1,24}$",
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    },
+                    "date": {
+                      "description": "UTC date and time, ISO 8601 with Z.",
+                      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                      "type": "string"
+                    },
+                    "origin": {
+                      "enum": [
+                        "local",
+                        "docx",
+                        "llm",
+                        "conflict-copy",
+                        "history",
+                        "scidesk"
+                      ]
+                    },
+                    "replies": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "author": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                                "minLength": 1,
+                                "type": "string"
+                              },
+                              "person": {
+                                "description": "Person id in people.json, when known.",
+                                "pattern": "^p-[a-z0-9]{1,24}$",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          },
+                          "date": {
+                            "description": "UTC date and time, ISO 8601 with Z.",
+                            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                            "type": "string"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "author",
+                          "date",
+                          "text"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "resolved": {
+                      "type": "boolean"
+                    },
+                    "text": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "author",
+                    "date",
+                    "origin",
+                    "text",
+                    "resolved",
+                    "replies"
+                  ],
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "doc": {
+              "$ref": "#/$defs/BodyDoc"
+            },
+            "documentType": {
+              "enum": [
+                "article",
+                "cover-letter",
+                "title-page",
+                "contributions",
+                "declarations",
+                "supplementary",
+                "reviewer-response"
+              ]
+            },
+            "lang": {
+              "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+              "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+              "type": "string"
+            },
+            "schemaVersion": {
+              "const": 1,
+              "description": "Version of the format. Files with a lower version are migrated when opened.",
+              "type": "number"
+            }
+          },
+          "required": [
+            "schemaVersion",
+            "lang",
+            "changes",
+            "comments",
+            "documentType",
+            "doc"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ScifigureFile": {
+      "additionalProperties": false,
+      "properties": {
+        "changes": {
+          "description": "Who made each tracked change, when and from where. Entries whose id is no longer in `doc` are dropped on save.",
+          "patternProperties": {
+            "^ch-[a-z0-9]{1,24}$": {
+              "additionalProperties": false,
+              "properties": {
+                "author": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "person": {
+                      "description": "Person id in people.json, when known.",
+                      "pattern": "^p-[a-z0-9]{1,24}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "description": "UTC date and time, ISO 8601 with Z.",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "type": "string"
+                },
+                "origin": {
+                  "enum": [
+                    "local",
+                    "docx",
+                    "llm",
+                    "conflict-copy",
+                    "history",
+                    "scidesk"
+                  ]
+                },
+                "source": {
+                  "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author",
+                "date",
+                "origin"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "comments": {
+          "description": "Comments anchored with the `comment` mark.",
+          "patternProperties": {
+            "^cm-[a-z0-9]{1,24}$": {
+              "additionalProperties": false,
+              "properties": {
+                "author": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "person": {
+                      "description": "Person id in people.json, when known.",
+                      "pattern": "^p-[a-z0-9]{1,24}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "description": "UTC date and time, ISO 8601 with Z.",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "type": "string"
+                },
+                "origin": {
+                  "enum": [
+                    "local",
+                    "docx",
+                    "llm",
+                    "conflict-copy",
+                    "history",
+                    "scidesk"
+                  ]
+                },
+                "replies": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "author": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "person": {
+                            "description": "Person id in people.json, when known.",
+                            "pattern": "^p-[a-z0-9]{1,24}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      },
+                      "date": {
+                        "description": "UTC date and time, ISO 8601 with Z.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "author",
+                      "date",
+                      "text"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "resolved": {
+                  "type": "boolean"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author",
+                "date",
+                "origin",
+                "text",
+                "resolved",
+                "replies"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "doc": {
+          "$ref": "#/$defs/FigurePart"
+        },
+        "documentType": {
+          "const": "figure",
+          "type": "string"
+        },
+        "lang": {
+          "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+          "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "description": "Version of the format. Files with a lower version are migrated when opened.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "lang",
+        "changes",
+        "comments",
+        "documentType",
+        "doc"
+      ],
+      "type": "object"
+    },
+    "ScitableFile": {
+      "additionalProperties": false,
+      "properties": {
+        "changes": {
+          "description": "Who made each tracked change, when and from where. Entries whose id is no longer in `doc` are dropped on save.",
+          "patternProperties": {
+            "^ch-[a-z0-9]{1,24}$": {
+              "additionalProperties": false,
+              "properties": {
+                "author": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "person": {
+                      "description": "Person id in people.json, when known.",
+                      "pattern": "^p-[a-z0-9]{1,24}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "description": "UTC date and time, ISO 8601 with Z.",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "type": "string"
+                },
+                "origin": {
+                  "enum": [
+                    "local",
+                    "docx",
+                    "llm",
+                    "conflict-copy",
+                    "history",
+                    "scidesk"
+                  ]
+                },
+                "source": {
+                  "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author",
+                "date",
+                "origin"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "comments": {
+          "description": "Comments anchored with the `comment` mark.",
+          "patternProperties": {
+            "^cm-[a-z0-9]{1,24}$": {
+              "additionalProperties": false,
+              "properties": {
+                "author": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "person": {
+                      "description": "Person id in people.json, when known.",
+                      "pattern": "^p-[a-z0-9]{1,24}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "description": "UTC date and time, ISO 8601 with Z.",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                  "type": "string"
+                },
+                "origin": {
+                  "enum": [
+                    "local",
+                    "docx",
+                    "llm",
+                    "conflict-copy",
+                    "history",
+                    "scidesk"
+                  ]
+                },
+                "replies": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "author": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "description": "Name as shown (from people.json, or the w:author of a Word copy).",
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "person": {
+                            "description": "Person id in people.json, when known.",
+                            "pattern": "^p-[a-z0-9]{1,24}$",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      },
+                      "date": {
+                        "description": "UTC date and time, ISO 8601 with Z.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                        "type": "string"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "author",
+                      "date",
+                      "text"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "resolved": {
+                  "type": "boolean"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "author",
+                "date",
+                "origin",
+                "text",
+                "resolved",
+                "replies"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "doc": {
+          "$ref": "#/$defs/TablePart"
+        },
+        "documentType": {
+          "const": "table",
+          "type": "string"
+        },
+        "lang": {
+          "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+          "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "description": "Version of the format. Files with a lower version are migrated when opened.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "lang",
+        "changes",
+        "comments",
+        "documentType",
+        "doc"
+      ],
+      "type": "object"
+    },
+    "Subscript": {
+      "additionalProperties": false,
+      "description": "Subscript.",
+      "properties": {
+        "type": {
+          "const": "subscript",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Superscript": {
+      "additionalProperties": false,
+      "description": "Superscript.",
+      "properties": {
+        "type": {
+          "const": "superscript",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Table": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "columnWidths": {
+              "anyOf": [
+                {
+                  "description": "Relative widths of the columns (record 0022); null lets the export decide.",
+                  "items": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/TableRow"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "TableCaption": {
+      "additionalProperties": false,
+      "description": "Caption of a table (without 'Tabla 1.', which is computed).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableCaption",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "TableCell": {
+      "additionalProperties": false,
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "align": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "left",
+                    "center",
+                    "right",
+                    "decimal"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "colspan": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "rowspan": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "colspan",
+            "rowspan"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Paragraph"
+              },
+              {
+                "$ref": "#/$defs/BulletList"
+              },
+              {
+                "$ref": "#/$defs/OrderedList"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableCell",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "TableHeader": {
+      "additionalProperties": false,
+      "description": "Header cell; a row of header cells is repeated on every page.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "align": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "left",
+                    "center",
+                    "right",
+                    "decimal"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "colspan": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "rowspan": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "colspan",
+            "rowspan"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Paragraph"
+              },
+              {
+                "$ref": "#/$defs/BulletList"
+              },
+              {
+                "$ref": "#/$defs/OrderedList"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableHeader",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "TableNote": {
+      "additionalProperties": false,
+      "description": "Note under a table: an object, not a lettered paragraph (R11).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a table or figure note.",
+              "pattern": "^n-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "kind": {
+              "description": "general: no call; specific: called from cells with noteRef, lettered by first call.",
+              "enum": [
+                "general",
+                "specific"
+              ]
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "kind"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableNote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "TablePart": {
+      "additionalProperties": false,
+      "description": "A table with its caption and notes. In the file, `src` is absent; in the composite document it says which file the part goes back to.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a table (its part and its tableRef).",
+              "pattern": "^t-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "src": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/TableNote"
+          },
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/TableCaption"
+            },
+            {
+              "$ref": "#/$defs/Table"
+            }
+          ],
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tablePart",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
+    "TableRef": {
+      "additionalProperties": false,
+      "description": "Where a table of tables/ goes. The table itself lives in its .scitable.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a table (its part and its tableRef).",
+              "pattern": "^t-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "src": {
+              "pattern": "^tables/[^/]+\\.scitable$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "src"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableRef",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "TableRow": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/TableCell"
+              },
+              {
+                "$ref": "#/$defs/TableHeader"
+              }
+            ]
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "tableRow",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ],
+      "type": "object"
+    },
+    "Text": {
+      "additionalProperties": false,
+      "properties": {
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/TextMark"
+          },
+          "type": "array"
+        },
+        "text": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "type": "object"
+    },
+    "TextMark": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Bold"
+        },
+        {
+          "$ref": "#/$defs/Italic"
+        },
+        {
+          "$ref": "#/$defs/Underline"
+        },
+        {
+          "$ref": "#/$defs/Superscript"
+        },
+        {
+          "$ref": "#/$defs/Subscript"
+        },
+        {
+          "$ref": "#/$defs/LangMark"
+        },
+        {
+          "$ref": "#/$defs/Link"
+        },
+        {
+          "$ref": "#/$defs/CommentMark"
+        },
+        {
+          "$ref": "#/$defs/Insertion"
+        },
+        {
+          "$ref": "#/$defs/Deletion"
+        },
+        {
+          "$ref": "#/$defs/Modification"
+        }
+      ]
+    },
+    "Title": {
+      "additionalProperties": false,
+      "description": "Title of the article; one per language, the first is the main one.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "lang": {
+              "anyOf": [
+                {
+                  "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+                  "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Inline"
+          },
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "Underline": {
+      "additionalProperties": false,
+      "description": "Underline.",
+      "properties": {
+        "type": {
+          "const": "underline",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "Xref": {
+      "additionalProperties": false,
+      "description": "Cross-reference to a table, figure, heading or equation; shows only its number (the word 'tabla' is text).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "target": {
+              "description": "A SciDesk id: <kind>-<suffix>.",
+              "pattern": "^(b|n|t|f|e|c|ch|cm|r|p|af|a|s|rd|cp|ps|pr|z|g)-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "xref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://scidesk.app/schema/v1/scidoc.schema.json",
+  "$ref": "#/$defs/ScidocFile",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SciDesk document (.scidoc)"
+}

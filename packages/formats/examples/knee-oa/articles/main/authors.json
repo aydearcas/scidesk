@@ -1,0 +1,101 @@
+{
+  "acknowledged": [
+    "p-xvh0xsorxa"
+  ],
+  "authors": [
+    {
+      "affiliations": [
+        "af-72lkorr7jv"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": true,
+      "credit": [
+        {
+          "degree": "lead",
+          "role": "conceptualization"
+        },
+        {
+          "role": "writing-original-draft"
+        },
+        {
+          "role": "supervision"
+        }
+      ],
+      "person": "p-2t0g6swk3d"
+    },
+    {
+      "affiliations": [
+        "af-agmtmghjg0"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": false,
+      "credit": [
+        {
+          "role": "investigation"
+        },
+        {
+          "role": "writing-review-editing"
+        }
+      ],
+      "equalContribution": "e1",
+      "person": "p-mg56623wh9"
+    },
+    {
+      "affiliations": [
+        "af-72lkorr7jv"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": false,
+      "credit": [
+        {
+          "role": "formal-analysis"
+        },
+        {
+          "role": "writing-review-editing"
+        }
+      ],
+      "equalContribution": "e1",
+      "person": "p-k61mnk1iy6"
+    },
+    {
+      "affiliations": [
+        "af-8bvhum5ypa"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": false,
+      "credit": [
+        {
+          "role": "investigation"
+        }
+      ],
+      "person": "p-n6esr14snl"
+    },
+    {
+      "affiliations": [
+        "af-agmtmghjg0"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": false,
+      "credit": [
+        {
+          "role": "visualization"
+        }
+      ],
+      "person": "p-0l46682qni"
+    },
+    {
+      "affiliations": [
+        "af-8bvhum5ypa"
+      ],
+      "conflicts": "Sin conflictos de interés.",
+      "corresponding": false,
+      "credit": [
+        {
+          "role": "writing-review-editing"
+        }
+      ],
+      "person": "p-x92d5esuci"
+    }
+  ],
+  "schemaVersion": 1
+}

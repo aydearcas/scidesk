@@ -1,0 +1,2135 @@
+{
+  "$id": "https://scidesk.app/schema/v1/library.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "references": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "added": {
+            "description": "UTC date and time, ISO 8601 with Z.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+            "type": "string"
+          },
+          "csl": {
+            "additionalProperties": false,
+            "description": "CSL-JSON item (CSL 1.0.2) without id.",
+            "properties": {
+              "DOI": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "ISBN": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "ISSN": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "PMCID": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "PMID": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "URL": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "abstract": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "accessed": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "annote": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "archive": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "archive-place": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "archive_collection": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "archive_location": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "author": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "authority": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "available-date": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "call-number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "categories": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "chair": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "chapter-number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "citation-key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "citation-label": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "collection-editor": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "collection-number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "collection-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "compiler": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "composer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "container-author": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "container-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "container-title-short": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "contributor": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "curator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "dimensions": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "director": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "division": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "edition": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "editor": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "editor-translator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "editorial-director": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "event": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "event-date": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "event-place": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "event-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "executive-producer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "genre": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "guest": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "host": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "illustrator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "interviewer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "issue": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "issued": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "jurisdiction": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "keyword": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "language": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "license": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "medium": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "narrator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "note": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "number": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "number-of-pages": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "number-of-volumes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "organizer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "original-author": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "original-date": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "original-publisher": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "original-publisher-place": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "original-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "page": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "page-first": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "part": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "part-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "performer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "printing": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "producer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "publisher": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "publisher-place": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "recipient": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "references": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "reviewed-author": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "reviewed-genre": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "reviewed-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "scale": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "script-writer": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "section": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "series-creator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "submitted": {
+                "additionalProperties": false,
+                "properties": {
+                  "circa": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "date-parts": {
+                    "description": "One date, or two for a range.",
+                    "items": {
+                      "description": "[year, month?, day?]",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "maxItems": 3,
+                      "minItems": 1,
+                      "type": "array"
+                    },
+                    "maxItems": 2,
+                    "minItems": 1,
+                    "type": "array"
+                  },
+                  "literal": {
+                    "type": "string"
+                  },
+                  "raw": {
+                    "type": "string"
+                  },
+                  "season": {
+                    "anyOf": [
+                      {
+                        "maximum": 4,
+                        "minimum": 1,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "supplement": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "title-short": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "translator": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "comma-suffix": {
+                      "type": "boolean"
+                    },
+                    "dropping-particle": {
+                      "type": "string"
+                    },
+                    "family": {
+                      "type": "string"
+                    },
+                    "given": {
+                      "type": "string"
+                    },
+                    "literal": {
+                      "description": "Organisation or group author, written as is.",
+                      "type": "string"
+                    },
+                    "non-dropping-particle": {
+                      "type": "string"
+                    },
+                    "parse-names": {
+                      "type": "boolean"
+                    },
+                    "static-ordering": {
+                      "type": "boolean"
+                    },
+                    "suffix": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "type": {
+                "enum": [
+                  "article",
+                  "article-journal",
+                  "article-magazine",
+                  "article-newspaper",
+                  "bill",
+                  "book",
+                  "broadcast",
+                  "chapter",
+                  "classic",
+                  "collection",
+                  "dataset",
+                  "document",
+                  "entry",
+                  "entry-dictionary",
+                  "entry-encyclopedia",
+                  "event",
+                  "figure",
+                  "graphic",
+                  "hearing",
+                  "interview",
+                  "legal_case",
+                  "legislation",
+                  "manuscript",
+                  "map",
+                  "motion_picture",
+                  "musical_score",
+                  "pamphlet",
+                  "paper-conference",
+                  "patent",
+                  "performance",
+                  "periodical",
+                  "personal_communication",
+                  "post",
+                  "post-weblog",
+                  "regulation",
+                  "report",
+                  "review",
+                  "review-book",
+                  "software",
+                  "song",
+                  "speech",
+                  "standard",
+                  "thesis",
+                  "treaty",
+                  "webpage"
+                ]
+              },
+              "version": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "volume": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "volume-title": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "volume-title-short": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "year-suffix": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "description": "Id of a reference of the library.",
+            "pattern": "^r-[a-z0-9]{1,24}$",
+            "type": "string"
+          },
+          "source": {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "description": "UTC date and time, ISO 8601 with Z.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                "type": "string"
+              },
+              "file": {
+                "description": "Copy of the imported file in references/imports/, or the name of the Word document the citation came from.",
+                "type": "string"
+              },
+              "key": {
+                "description": "Identity in the source: EndNote '<db-id>:<rec-number>', the URI of a Zotero/Mendeley field, a PMID or DOI.",
+                "type": "string"
+              },
+              "kind": {
+                "description": "How the reference entered the library.",
+                "enum": [
+                  "endnote-field",
+                  "zotero-field",
+                  "mendeley-field",
+                  "ris",
+                  "nbib",
+                  "bibtex",
+                  "csl-json",
+                  "endnote-xml",
+                  "pubmed",
+                  "crossref",
+                  "zotero",
+                  "manual",
+                  "project"
+                ]
+              },
+              "unmapped": {
+                "description": "Fields of the source that were not converted to CSL-JSON, shown to the user instead of dropped (record 0028).",
+                "patternProperties": {
+                  "^.*$": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "kind",
+              "date"
+            ],
+            "type": "object"
+          },
+          "zotero": {
+            "additionalProperties": false,
+            "properties": {
+              "dateModified": {
+                "description": "UTC date and time, ISO 8601 with Z.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                "type": "string"
+              },
+              "key": {
+                "description": "Zotero item key.",
+                "pattern": "^[23456789ABCDEFGHIJKLMNPQRSTUVWXYZ]{8}$",
+                "type": "string"
+              },
+              "library": {
+                "enum": [
+                  "user",
+                  "group"
+                ]
+              },
+              "libraryId": {
+                "description": "Group id, for group libraries.",
+                "type": "string"
+              },
+              "uri": {
+                "description": "Item URI; it goes in every citation of the DOCX (record 0027).",
+                "pattern": "^https?://zotero\\.org/(users|groups)/(local/)?[^/]+/items/[A-Z0-9]{8}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "key",
+              "uri",
+              "library",
+              "dateModified"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "csl",
+          "added"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "references"
+  ],
+  "title": "SciDesk library (references/library.json)",
+  "type": "object"
+}

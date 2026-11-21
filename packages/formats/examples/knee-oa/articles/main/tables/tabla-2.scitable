@@ -1,0 +1,770 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "attrs": {
+      "id": "t-t194ssclyt"
+    },
+    "content": [
+      {
+        "attrs": {
+          "id": "b-efueel3dhn",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Factores de riesgo de artrosis de rodilla acelerada y magnitud de la asociación publicada (datos sintéticos orientativos).",
+            "type": "text"
+          }
+        ],
+        "type": "tableCaption"
+      },
+      {
+        "attrs": {
+          "columnWidths": null,
+          "id": "b-9rvc7v7si5"
+        },
+        "content": [
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-6dgvzbqgxk",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Factor de riesgo",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-b6zp4ydjar",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Medida",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-pify2qgf97",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Valor (IC 95 %)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-5h7021xlts",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Observación",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-al8tqqmq8x",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Lesión articular previa",
+                        "type": "text"
+                      },
+                      {
+                        "attrs": {
+                          "target": "n-ur8f6i945u"
+                        },
+                        "type": "noteRef"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-ipl15x6vc7",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-louji3mth1",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "2,2 (1,4-3,5)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-rjmtxxv8x3",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Mayor con rotura de LCA",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-cue7r86e38",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Desgarro meniscal complejo",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-j63s6yjjvw",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-c8ntp43hw5",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "3,1 (1,9-5,0)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-26wvdefhwa",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Valorado por RM",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-degcv7g87h",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Obesidad (IMC mayor de 30)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-l1fikyziax",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-uabf8slrle",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "1,9 (1,2-3,0)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-vilc8u4w78",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Relación dosis-respuesta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-m86g2qc9tx",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Sinovitis o derrame por RM",
+                        "type": "text"
+                      },
+                      {
+                        "attrs": {
+                          "target": "n-btj63wm31y"
+                        },
+                        "type": "noteRef"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-bcc17mvsnf",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-oe6gjgxk1i",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "2,4 (1,5-3,8)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-jwqdoges9s",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "A los 30 meses",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-s3llegqgp6",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Sexo femenino",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-0bjc58w4yg",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-l1g6p1y0l9",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "1,3 (0,9-1,9)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-mx2aroabjm",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "No siempre significativa",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "align": null,
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-vvarq906dg",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Edad (por cada 10 años)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-yxa6rep5cl",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "OR",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-n6t8ccbgos",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "1,1 (0,9-1,4)",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "align": "center",
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-ittea8y9xb",
+                      "lang": null
+                    },
+                    "content": [
+                      {
+                        "text": "Asociación débil",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "attrs": {
+          "id": "n-tqy1h87hib",
+          "kind": "general",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Abreviaturas: IC, intervalo de confianza; IMC, índice de masa corporal; LCA, ligamento cruzado anterior; OR, razón de oportunidades; RM, resonancia magnética.",
+            "type": "text"
+          }
+        ],
+        "type": "tableNote"
+      },
+      {
+        "attrs": {
+          "id": "n-ur8f6i945u",
+          "kind": "specific",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Lesión con atención médica o cirugía previa.",
+            "type": "text"
+          }
+        ],
+        "type": "tableNote"
+      },
+      {
+        "attrs": {
+          "id": "n-btj63wm31y",
+          "kind": "specific",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Grado moderado o grave en la RM basal.",
+            "type": "text"
+          }
+        ],
+        "type": "tableNote"
+      }
+    ],
+    "type": "tablePart"
+  },
+  "documentType": "table",
+  "lang": "es",
+  "schemaVersion": 1
+}

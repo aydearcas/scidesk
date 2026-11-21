@@ -1,0 +1,26 @@
+{
+  "name": "@scidesk/formats",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SciDesk file formats: one schema per format (TypeScript types, validation and published JSON Schema).",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build:schemas": "node scripts/build-schemas.ts",
+    "make:examples": "node scripts/make-examples.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "typebox": "1.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.6",
+    "ajv": "8.20.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1"
+  }
+}

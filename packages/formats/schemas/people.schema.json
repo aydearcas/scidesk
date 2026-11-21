@@ -1,0 +1,181 @@
+{
+  "$id": "https://scidesk.app/schema/v1/people.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "affiliations": {
+      "description": "Affiliations, shared between people.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "description": "ISO 3166-1 alpha-2.",
+            "pattern": "^[A-Z]{2}$",
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "id": {
+            "description": "Id of a affiliation.",
+            "pattern": "^af-[a-z0-9]{1,24}$",
+            "type": "string"
+          },
+          "institution": {
+            "description": "Hospital, university or centre, as it is printed.",
+            "minLength": 1,
+            "type": "string"
+          },
+          "ror": {
+            "description": "ROR id of the institution.",
+            "pattern": "^https://ror\\.org/0[a-z0-9]{8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "institution"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "people": {
+      "items": {
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "affiliations": {
+                "description": "Every known affiliation; each article chooses which ones it prints.",
+                "items": {
+                  "description": "Id of a affiliation.",
+                  "pattern": "^af-[a-z0-9]{1,24}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "citationName": {
+                "description": "Form of citation, e.g. 'Pérez-García J'. Computed from the name when absent.",
+                "type": "string"
+              },
+              "degrees": {
+                "description": "Academic degrees as printed: MD, PhD…",
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "email": {
+                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                "type": "string"
+              },
+              "family": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "given": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "id": {
+                "description": "Id of a person of the directory.",
+                "pattern": "^p-[a-z0-9]{1,24}$",
+                "type": "string"
+              },
+              "kind": {
+                "const": "person",
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              },
+              "orcid": {
+                "description": "ORCID iD (its check digit is verified by validate.ts).",
+                "pattern": "^\\d{4}-\\d{4}-\\d{4}-\\d{3}[\\dX]$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "affiliations",
+              "kind",
+              "given",
+              "family"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "affiliations": {
+                "description": "Every known affiliation; each article chooses which ones it prints.",
+                "items": {
+                  "description": "Id of a affiliation.",
+                  "pattern": "^af-[a-z0-9]{1,24}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "email": {
+                "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                "type": "string"
+              },
+              "id": {
+                "description": "Id of a person of the directory.",
+                "pattern": "^p-[a-z0-9]{1,24}$",
+                "type": "string"
+              },
+              "kind": {
+                "const": "group",
+                "type": "string"
+              },
+              "members": {
+                "description": "People of the directory who belong to the group.",
+                "items": {
+                  "description": "Id of a person of the directory.",
+                  "pattern": "^p-[a-z0-9]{1,24}$",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "name": {
+                "description": "Group or consortium authorship, e.g. 'Grupo de Estudio ARTRO'.",
+                "minLength": 1,
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "affiliations",
+              "kind",
+              "name",
+              "members"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "affiliations",
+    "people"
+  ],
+  "title": "SciDesk directory of people (people/people.json)",
+  "type": "object"
+}

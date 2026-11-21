@@ -1,0 +1,130 @@
+{
+  "$id": "https://scidesk.app/schema/v1/manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "articles": {
+      "description": "Articles of the project, in the order the navigator shows them.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "folder": {
+            "description": "Folder under articles/ (e.g. 'main', 'protocolo').",
+            "pattern": "^[^/\\\\:*?\"<>|\\u0000-\\u001f]+$",
+            "type": "string"
+          },
+          "id": {
+            "description": "Id of a article.",
+            "pattern": "^a-[a-z0-9]{1,24}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "folder"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "created": {
+      "description": "UTC date and time, ISO 8601 with Z.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+      "type": "string"
+    },
+    "format": {
+      "const": "scidesk-project",
+      "description": "Tells a SciDesk project apart from any other JSON.",
+      "type": "string"
+    },
+    "id": {
+      "description": "Random UUID (version 4), lowercase.",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "library": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "own",
+              "type": "string"
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "const": "zotero",
+              "type": "string"
+            },
+            "zotero": {
+              "additionalProperties": false,
+              "properties": {
+                "collection": {
+                  "description": "Key of the collection; its subcollections are included.",
+                  "pattern": "^[23456789ABCDEFGHIJKLMNPQRSTUVWXYZ]{8}$",
+                  "type": "string"
+                },
+                "library": {
+                  "enum": [
+                    "user",
+                    "group"
+                  ]
+                },
+                "libraryId": {
+                  "description": "Group id, for group libraries.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Name of the collection when it was linked, to show it while Zotero is closed.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "library",
+                "collection",
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "mode",
+            "zotero"
+          ],
+          "type": "object"
+        }
+      ],
+      "description": "Own library, or linked to a Zotero collection (record 0007)."
+    },
+    "name": {
+      "description": "Name shown by SciDesk; the folder may have another.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    }
+  },
+  "required": [
+    "format",
+    "schemaVersion",
+    "id",
+    "name",
+    "created",
+    "articles",
+    "library"
+  ],
+  "title": "SciDesk project manifest (<name>.scidesk)",
+  "type": "object"
+}

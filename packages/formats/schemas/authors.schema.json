@@ -1,0 +1,107 @@
+{
+  "$id": "https://scidesk.app/schema/v1/authors.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "acknowledged": {
+      "description": "People thanked who do not sign.",
+      "items": {
+        "description": "Id of a person of the directory.",
+        "pattern": "^p-[a-z0-9]{1,24}$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "authors": {
+      "description": "In the order they sign.",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "affiliations": {
+            "description": "Affiliations printed for this article, in order; a subset of the person's.",
+            "items": {
+              "description": "Id of a affiliation.",
+              "pattern": "^af-[a-z0-9]{1,24}$",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "conflicts": {
+            "description": "Declaration of conflicts of interest of this author.",
+            "type": "string"
+          },
+          "corresponding": {
+            "type": "boolean"
+          },
+          "credit": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "degree": {
+                  "description": "CRediT degree of contribution.",
+                  "enum": [
+                    "lead",
+                    "equal",
+                    "supporting"
+                  ]
+                },
+                "role": {
+                  "enum": [
+                    "conceptualization",
+                    "data-curation",
+                    "formal-analysis",
+                    "funding-acquisition",
+                    "investigation",
+                    "methodology",
+                    "project-administration",
+                    "resources",
+                    "software",
+                    "supervision",
+                    "validation",
+                    "visualization",
+                    "writing-original-draft",
+                    "writing-review-editing"
+                  ]
+                }
+              },
+              "required": [
+                "role"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "equalContribution": {
+            "description": "Authors with the same token contributed equally.",
+            "pattern": "^[a-z0-9-]{1,24}$",
+            "type": "string"
+          },
+          "person": {
+            "description": "Person or group of people.json.",
+            "pattern": "^p-[a-z0-9]{1,24}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "person",
+          "affiliations",
+          "corresponding",
+          "credit"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "authors"
+  ],
+  "title": "SciDesk authors of an article (articles/<article>/authors.json)",
+  "type": "object"
+}

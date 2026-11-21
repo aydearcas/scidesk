@@ -1,0 +1,32 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "attrs": {
+      "alt": "Gráfico de barras: proporción acumulada de rodillas con artrosis acelerada por visita",
+      "credit": null,
+      "id": "f-igjr5mtmio",
+      "image": "figures/figura-1.png",
+      "license": null
+    },
+    "content": [
+      {
+        "attrs": {
+          "id": "b-q1d8u1xvsu",
+          "lang": null
+        },
+        "content": [
+          {
+            "text": "Proporción acumulada de rodillas que cumplen la definición de artrosis acelerada en cada visita (datos sintéticos).",
+            "type": "text"
+          }
+        ],
+        "type": "figureCaption"
+      }
+    ],
+    "type": "figurePart"
+  },
+  "documentType": "figure",
+  "lang": "es",
+  "schemaVersion": 1
+}

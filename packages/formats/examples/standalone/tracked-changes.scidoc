@@ -1,0 +1,247 @@
+{
+  "changes": {
+    "ch-41tqlqcsk8": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-8p4lhjijf5": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-d5suyops6j": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-humobc6vxb": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-ktqqjp61tc": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-r50h6l07ry": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    },
+    "ch-ww7t45lsbc": {
+      "author": {
+        "name": "Ana Torres"
+      },
+      "date": "2026-11-21T02:01:00Z",
+      "origin": "docx",
+      "source": "cp-example"
+    }
+  },
+  "comments": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "id": "b-yzua84wq0c"
+        },
+        "content": [
+          {
+            "text": "La ",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-d5suyops6j"
+                },
+                "type": "deletion"
+              }
+            ],
+            "text": "artritis",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "type": "bold"
+              },
+              {
+                "attrs": {
+                  "id": "ch-d5suyops6j"
+                },
+                "type": "insertion"
+              }
+            ],
+            "text": "artritis",
+            "type": "text"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-ww7t45lsbc"
+                },
+                "type": "deletion"
+              }
+            ],
+            "text": "reumatoide ",
+            "type": "text"
+          },
+          {
+            "text": "afecta ",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-41tqlqcsk8"
+                },
+                "type": "insertion"
+              }
+            ],
+            "text": "aproximadamente ",
+            "type": "text"
+          },
+          {
+            "text": "al ",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-ktqqjp61tc"
+                },
+                "type": "insertion"
+              }
+            ],
+            "text": "0,5-1 %",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-humobc6vxb"
+                },
+                "type": "deletion"
+              }
+            ],
+            "text": "1 %",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-8p4lhjijf5"
+                },
+                "type": "insertion"
+              }
+            ],
+            "text": "​",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-8bqm4b7i35"
+        },
+        "content": [
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-8p4lhjijf5"
+                },
+                "type": "insertion"
+              }
+            ],
+            "text": "​",
+            "type": "text"
+          },
+          {
+            "text": " de la población {cit}.",
+            "type": "text"
+          },
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-r50h6l07ry"
+                },
+                "type": "deletion"
+              }
+            ],
+            "text": "​",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "b-8l4f1ydek5"
+        },
+        "content": [
+          {
+            "marks": [
+              {
+                "attrs": {
+                  "id": "ch-r50h6l07ry"
+                },
+                "type": "deletion"
+              }
+            ],
+            "text": "​",
+            "type": "text"
+          },
+          {
+            "text": "Los resultados se muestran en la tabla.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "t-m710iccehf",
+          "src": "tables/prueba.scitable"
+        },
+        "type": "tableRef"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "article",
+  "lang": "es",
+  "schemaVersion": 1
+}

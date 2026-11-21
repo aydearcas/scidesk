@@ -1,0 +1,146 @@
+{
+  "$id": "https://scidesk.app/schema/v1/article.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "articleType": {
+      "enum": [
+        "original",
+        "brief-original",
+        "systematic-review",
+        "clinical-trial",
+        "observational",
+        "case-report",
+        "protocol",
+        "qualitative",
+        "narrative-review",
+        "letter",
+        "guideline",
+        "other"
+      ]
+    },
+    "citationStyle": {
+      "additionalProperties": false,
+      "description": "The journal profile's style by default; the user may choose another.",
+      "properties": {
+        "file": {
+          "description": "The style file, when it is not one of the styles included with SciDesk.",
+          "pattern": "^resources/styles/[^/]+\\.csl$",
+          "type": "string"
+        },
+        "id": {
+          "description": "CSL style id (the <id> of the style), e.g. http://www.zotero.org/styles/vancouver.",
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    },
+    "id": {
+      "description": "Id of a article.",
+      "pattern": "^a-[a-z0-9]{1,24}$",
+      "type": "string"
+    },
+    "ignoredWarnings": {
+      "description": "Warnings marked 'correct' or 'not applicable' (R12).",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "by": {
+            "type": "string"
+          },
+          "date": {
+            "description": "UTC date and time, ISO 8601 with Z.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "correct",
+              "not-applicable"
+            ]
+          },
+          "warning": {
+            "description": "Stable id of the warning (check id plus what it is about).",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "warning",
+          "status",
+          "date"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "journal": {
+      "anyOf": [
+        {
+          "description": "Target journal: id of a profile in resources/journals/.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "lang": {
+      "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+      "type": "string"
+    },
+    "referenceTermsLang": {
+      "anyOf": [
+        {
+          "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+          "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Language of the fixed words of the references (En:, editores…); null: the language of the manuscript (record 0026)."
+    },
+    "runningTitle": {
+      "description": "Short title (R14).",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "description": "Version of the format. Files with a lower version are migrated when opened.",
+      "type": "number"
+    },
+    "translations": {
+      "description": "Other languages of the title, the abstract and the keywords (Reumatología Clínica: en).",
+      "items": {
+        "description": "BCP 47 language tag, e.g. es, en, en-GB, es-419.",
+        "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "articleType",
+    "lang",
+    "translations",
+    "journal",
+    "citationStyle",
+    "referenceTermsLang",
+    "ignoredWarnings"
+  ],
+  "title": "SciDesk article (articles/<folder>/article.json)",
+  "type": "object"
+}

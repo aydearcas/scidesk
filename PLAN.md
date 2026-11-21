@@ -59,7 +59,7 @@ Decisiones que salen de la revisión de la v0.4:
 | R28 | **Nombres de carpeta fijos en el disco** y etiquetas traducidas en el programa. A la izquierda, un navegador por conceptos | Los nombres van en inglés (P24). 4 y 5.1, ficha 0005 |
 | P24 | **Nombres fijos de carpetas y archivos en inglés** (`references/`, `people/`, `articles/main/`, `tables/`, `figures/`…) | Coherentes con las claves del formato y el código (P7, P23); dentro del programa cada cual ve las etiquetas en su idioma. Los nombres que salen de tu contenido (proyecto, tablas) siguen en tu idioma (4, ficha 0005) |
 | R29–R32 | **Corrector ortográfico propio, PDF con Typst, control de cambios propio y documento compuesto** | Los cuatro se prueban con un prototipo en la fase 0 (3.3, 6.1, fichas 0004, 0006 y 0010) |
-| R33–R34 | **Núcleo sin interfaz con línea de comandos y un solo esquema** para validar todo. El `.scidoc` es el JSON de ProseMirror tal cual | 3.2, 6.1 y 6.2 |
+| R33–R34 | **Núcleo sin interfaz con línea de comandos y un solo esquema** para validar todo. El `.scidoc` es el JSON de ProseMirror tal cual. **Formatos v1 especificados con TypeBox en `packages/formats/`** (21/11/2026), con `.scifigure` para las figuras y las rondas de revisión dentro del proyecto | 3.2, 4, 6.1 y 6.2; [`docs/formatos/especificacion-formatos.md`](docs/formatos/especificacion-formatos.md), ficha 0031 |
 | R36 | **No se usa código GPL ni AGPL de terceros**, aunque la licencia lo permitiría, para no cerrar la licencia dual | 6.3, ficha 0012 |
 | R40 | **Firma del instalador de Windows: por ahora, como el software libre habitual**, sin certificado comercial | 8, ficha 0002 |
 | R42–R44 | **Corte vertical al empezar la fase 1, MVP recortado y ampliado, y fase 2 en dos partes** | 8 |
@@ -121,31 +121,32 @@ El hueco que cubre SciDesk: un editor visual como Word, con la lógica de proyec
 - **Nunca se guardan números calculados.** Una cita es `{tipo: cita, refs: ["smith2021"]}`, no "[3]", y una figura es una referencia a `figures/fig-kaplan.png`. La numeración se calcula al mostrar o exportar. Lo mismo vale para las llamadas de nota de las tablas (ᵃ, ᵇ, ᶜ): cada nota es un objeto con identificador y su letra se calcula (R11, 5.4).
 - Cada bloque y cada fragmento admiten un atributo de idioma desde la versión 1, aunque la función llegue en V1 (R20, 5.2).
 - Las claves del formato están en inglés (P7). El esquema incluye desde la versión 1 los elementos que llegarán más tarde (ecuación, comentario, cambio), para no tener que migrar documentos cuando lleguen (P6). Los cambios marcados se guardan como marcas `insertion`, `deletion` y `modification` con un `id`, y el autor, la fecha y el origen de cada `id` van en un registro `changes` junto a `doc` (prototipo 7, ficha 0020).
-- **Un solo esquema por formato** (`.scidoc`, `.scitable`, perfil de revista, respuesta de un paquete para LLM), definido una vez con una herramienta que genera a la vez los tipos de TypeScript, la validación y el JSON Schema publicado. Todo lo que entra de fuera se valida con ese mismo código (R34).
+- **Un solo esquema por formato** (`.scidoc`, `.scitable`, perfil de revista, respuesta de un paquete para LLM), definido una vez con una herramienta que genera a la vez los tipos de TypeScript, la validación y el JSON Schema publicado. Todo lo que entra de fuera se valida con ese mismo código (R34). **Hecho en la fase 0 con TypeBox** en [`packages/formats/`](packages/formats/); la especificación completa está en [`docs/formatos/especificacion-formatos.md`](docs/formatos/especificacion-formatos.md) (ficha 0031).
 - Se escribe con formato estable (claves ordenadas, sangría) para que las diferencias entre versiones sean legibles.
 - Hay una garantía anti-encierro: el contenido siempre se puede exportar a DOCX, Markdown y JATS sin pérdida de texto.
 
-Ejemplo simplificado. El archivo envuelve el documento de ProseMirror (`doc`), y los datos de cada nodo van en `attrs`, como los guarda ProseMirror:
+Ejemplo simplificado. El archivo envuelve el documento de ProseMirror (`doc`), y los datos de cada nodo van en `attrs`, como los guarda ProseMirror. Las secciones no son nodos contenedores: un encabezado con `role` empieza la sección (ficha 0031):
 
 ```json
 {
   "schemaVersion": 1,
   "documentType": "article",
+  "lang": "es",
   "doc": {
     "type": "doc",
     "content": [
-      { "type": "section", "attrs": { "id": "s-intro", "role": "introduction" }, "content": [
-        { "type": "heading", "attrs": { "id": "h-2c9e" }, "content": [{ "type": "text", "text": "Introducción" }] },
-        { "type": "paragraph", "attrs": { "id": "p-7f3a" }, "content": [
-          { "type": "text", "text": "La artritis reumatoide afecta al 0,5–1 % de la población " },
-          { "type": "citation", "attrs": { "refs": [{ "id": "smolen2016" }, { "id": "aletaha2018", "locator": "p. 12" }] } },
-          { "type": "text", "text": ". Los resultados se muestran en la " },
-          { "type": "xref", "attrs": { "target": "tab-basal" } }
-        ]}
+      { "type": "heading", "attrs": { "id": "b-2c9e0k1m4q", "level": 1, "role": "introduction" }, "content": [{ "type": "text", "text": "Introducción" }] },
+      { "type": "paragraph", "attrs": { "id": "b-7f3a2n8x5w" }, "content": [
+        { "type": "text", "text": "La artritis reumatoide afecta al 0,5–1 % de la población " },
+        { "type": "citation", "attrs": { "id": "c-4h9s1d7e2r", "items": [{ "ref": "r-smo2016aaa" }, { "ref": "r-ale2018bbb", "locator": "12", "label": "page" }] } },
+        { "type": "text", "text": ". Los resultados se muestran en la tabla " },
+        { "type": "xref", "attrs": { "target": "t-basal8k2m1" } }
       ]},
-      { "type": "tableRef", "attrs": { "id": "tab-basal", "src": "tables/caracteristicas-basales.scitable" } }
+      { "type": "tableRef", "attrs": { "id": "t-basal8k2m1", "src": "tables/caracteristicas-basales.scitable" } }
     ]
-  }
+  },
+  "changes": {},
+  "comments": {}
 }
 ```
 
@@ -169,16 +170,16 @@ Y genera esto:
 
 ```
 mi-estudio/
-├── mi-estudio.scidesk          ← manifiesto: identificador del proyecto, artículos, idiomas, modo de biblioteca, versión del formato
+├── mi-estudio.scidesk          ← manifiesto: identificador del proyecto, artículos, modo de biblioteca, versión del formato (los idiomas van en cada artículo)
 ├── references/                    ← «Referencias»; común a todo el proyecto
 │   ├── library.json               ← biblioteca en CSL-JSON (con la clave de Zotero si está vinculada)
 │   └── imports/                   ← copia de cada RIS o NBIB importado, para trazabilidad
 ├── people/                        ← «Personas»
 │   └── people.json                ← ficha de cada persona: nombre, forma de cita, ORCID, correo, grado y afiliaciones
-├── resources/                     ← «Recursos»; común: diccionario del proyecto, abreviaturas y perfiles de revista descargados
+├── resources/                     ← «Recursos»; común: diccionario del proyecto (dictionary.txt), abreviaturas, perfiles de revista (journals/) y estilos CSL elegidos (styles/)
 ├── articles/                      ← «Artículos»
 │   └── main/                      ← el primer artículo; el programa oculta este nivel mientras solo haya uno
-│       ├── article.json           ← tipo, revista objetivo y estilo de cita de este artículo
+│       ├── article.json           ← tipo, idiomas, revista objetivo, estilo de cita y avisos ignorados de este artículo
 │       ├── manuscript/
 │       │   ├── article.scidoc     ← el cuerpo del artículo
 │       │   └── abstract.scidoc    ← resumen y palabras clave, en uno o dos idiomas
@@ -189,8 +190,10 @@ mi-estudio/
 │       │   ├── contributions.scidoc  ← se genera a partir de la matriz CRediT
 │       │   ├── declarations.scidoc   ← financiación, conflictos, ética, disponibilidad de datos, uso de IA
 │       │   └── reviewer-responses/   ← respuesta a revisores, una por ronda de revisión [V1]
-│       ├── figures/               ← imágenes originales y sus metadatos (pie, fuente, licencia)
+│       ├── figures/               ← cada imagen original y su .scifigure (pie, notas, texto alternativo, fuente, licencia)
 │       ├── tables/                ← cada tabla en su archivo .scitable
+│       ├── rounds/                ← rondas con coautores: copias enviada y devueltas y sus propuestas [fase 2]
+│       ├── proposals/             ← propuestas de otros orígenes: paquetes para LLM, copias en conflicto, versiones antiguas
 │       ├── supplementary/
 │       │   └── supplementary-material.scidoc ← con su propia numeración (Tabla S1, Figura S1)
 │       └── exports/               ← DOCX, PDF y paquetes de envío generados (se pueden borrar y regenerar)
@@ -612,7 +615,7 @@ La respuesta importada se trata como datos no confiables: se valida contra el es
 | Motor del editor | **ProseMirror** (vía **Tiptap**: núcleo y extensiones con licencia MIT, como UniqueID para los identificadores de bloque) | Lexical, Slate, CKEditor 5, ONLYOFFICE embebido | ProseMirror es el estándar para documentos estructurados: esquema estricto, nodos personalizados (cita, referencia cruzada) y tablas con celdas combinadas. Solo se usan piezas libres: en Tiptap, los comentarios, el control de cambios y la conversión a DOCX son extensiones de pago (`@tiptap-pro`) y no se usan |
 | Comentarios y control de cambios | **Implementación propia** sobre una pieza libre: **`@handlewithcare/prosemirror-suggest-changes` (MIT), en una copia propia**, elegida con el prototipo 7 frente a `@manuscripts/track-changes-plugin` (ficha 0020) | — | Es la función más difícil de un editor y determina cómo se guardan los cambios en `.scidoc`, así que el esquema de la versión 1 no se cierra sin un prototipo que escriba y borre en modo de sugerencias, acepte y rechace, exporte a `w:ins` y `w:del` y vuelva a importar (R31) |
 | Núcleo sin interfaz | **Paquete de TypeScript sin interfaz** con todo lo que no es pantalla: esquema, numeración, citas, comprobaciones, importación, exportación, fusión y propuestas. **Línea de comandos** (`scidesk export`, `scidesk check`) sobre él | — | Las pruebas con el corpus se ejecutan en segundos sin abrir la aplicación; herramientas externas, como una skill de Claude, pueden trabajar con un proyecto sin meter IA en el programa; y es la base del servidor de sincronización de la fase 5 (R33) |
-| Esquemas y validación | **Una sola definición por formato** que genera los tipos de TypeScript, la validación y el JSON Schema publicado (por ejemplo, Zod o TypeBox, ambos MIT; se elige en la fase 0) | — | Todo lo que entra de fuera se valida con el mismo código (R34, 3.2) |
+| Esquemas y validación | **Una sola definición por formato** que genera los tipos de TypeScript, la validación y el JSON Schema publicado: **TypeBox** (MIT), elegido en la fase 0 (ficha 0031), en el paquete [`packages/formats/`](packages/formats/) | Zod (descartado: sus refinamientos no pasan al JSON Schema publicado) | Todo lo que entra de fuera se valida con el mismo código (R34, 3.2). Con TypeBox la definición ya es JSON Schema, así que lo publicado es exactamente lo que se comprueba; el núcleo de Rust y los paquetes para LLM usan el mismo archivo |
 | Motor de citas | **citeproc-js** (el de Zotero y Mendeley) en un *web worker* | hayagriva (Rust, MIT/Apache) | citeproc-js es la implementación de referencia de CSL y es la más fiel. **Licencia: CPAL/AGPL** (ver 6.3). Confirmado con el prototipo 2 (ficha 0026): renumera en vivo en unos 2 ms con 50 referencias. Se incluye desde su repositorio en un commit fijo, porque npm no recibe versiones desde 2023 |
 | Lectura de formatos de referencias | citation-js (MIT) para RIS, BibTeX y CSL-JSON, y analizadores propios para NBIB y EndNote XML | — | NBIB y EndNote XML son sencillos de analizar y conviene controlarlos |
 | Zotero | API local de Zotero (HTTP en el propio equipo), detrás de una interfaz propia | Better BibTeX | La interfaz propia permite añadir EndNote y Mendeley después sin tocar el resto |
@@ -816,7 +819,7 @@ Con la hoja de ruta de la v0.4, el programa no mejoraba a Word con Zotero hasta 
   9. Corrector (R29): ¿qué motor carga rápido el diccionario español, corrige un artículo de 5000 palabras sin retraso y admite idioma por fragmento?
   10. Importar un Word tuyo con citas de Zotero o EndNote (R1): ¿se recuperan las citas y la biblioteca?
   11. Arranque en el MacBook (R37): repetir el prototipo 1 y la edición básica en el MacBook Air. ¿Se comporta igual el editor?
-- Especificar con un solo esquema (R34) el formato `.scidoc` v1 (JSON de ProseMirror tal cual, con cambios marcados, idioma por fragmento e identificadores que se regeneran al pegar), `.scitable` (con las notas como objetos, R11), `authors.json`, el manifiesto `.scidesk` con varios artículos (P12) y el identificador del proyecto, `people.json` y el esquema del perfil de revista. Los esquemas de los paquetes para LLM se definen con la misma herramienta cuando lleguen (fase 3). Especificar también las marcas del DOCX (R3), el modelo de propuestas (R7, 6.5) y qué se queda en cada equipo (R26).
+- Especificar con un solo esquema (R34) el formato `.scidoc` v1 (JSON de ProseMirror tal cual, con cambios marcados, idioma por fragmento e identificadores que se regeneran al pegar), `.scitable` (con las notas como objetos, R11), `authors.json`, el manifiesto `.scidesk` con varios artículos (P12) y el identificador del proyecto, `people.json` y el esquema del perfil de revista. Los esquemas de los paquetes para LLM se definen con la misma herramienta cuando lleguen (fase 3). Especificar también las marcas del DOCX (R3), el modelo de propuestas (R7, 6.5) y qué se queda en cada equipo (R26). **Hecho el 21/11/2026** con TypeBox en [`packages/formats/`](packages/formats/): esquemas, ejemplos construidos con los datos sintéticos de los prototipos y pruebas; especificación en [`docs/formatos/especificacion-formatos.md`](docs/formatos/especificacion-formatos.md) (ficha 0031).
 - **Terminado cuando:** las respuestas están escritas en `docs/decisiones/` y la pila de la sección 6 está confirmada o corregida, incluida la elección entre Tauri y Electron según las tres condiciones de 6.1.
 
 ### Fase 1: MVP, "escribo un artículo para Reumatología Clínica y lo envío en Word" (L)

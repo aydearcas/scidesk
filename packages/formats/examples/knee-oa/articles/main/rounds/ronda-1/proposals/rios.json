@@ -1,0 +1,631 @@
+{
+  "base": {
+    "snapshot": "s-pqzeqyzslz"
+  },
+  "created": "2026-11-21T12:00:00Z",
+  "hiddenNoise": 1,
+  "id": "ps-bpmb4ygk86",
+  "integrity": "ok",
+  "origin": {
+    "copy": "cp-ba26cyrixd",
+    "file": "rounds/ronda-1/copies/rios.docx",
+    "kind": "docx-copy",
+    "round": "rd-z09j6f77cc"
+  },
+  "proposals": [
+    {
+      "after": "en cuatro años o menos",
+      "anchor": {
+        "block": "b-0d625aaq6p",
+        "file": "manuscript/abstract.scidoc",
+        "from": 170,
+        "to": 193
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "en menos de cuatro años",
+      "decided": {
+        "by": {
+          "name": "Lucía Herrera Gil",
+          "person": "p-2t0g6swk3d"
+        },
+        "date": "2026-11-21T12:00:00Z"
+      },
+      "decision": "accepted",
+      "id": "pr-z59nxcv5zg",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "9 %",
+      "anchor": {
+        "block": "b-vq3hc5zoqw",
+        "file": "manuscript/abstract.scidoc",
+        "from": 124,
+        "to": 128
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "10 %",
+      "decided": {
+        "by": {
+          "name": "Lucía Herrera Gil",
+          "person": "p-2t0g6swk3d"
+        },
+        "date": "2026-11-21T12:00:00Z"
+      },
+      "decision": "accepted",
+      "id": "pr-rrf44lz80g",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": ", más artroplastias",
+      "anchor": {
+        "block": "b-uf62he3p85",
+        "file": "manuscript/abstract.scidoc",
+        "from": 51,
+        "to": 51
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-k24lb9qajk",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-9l53cyj0ol",
+        "file": "manuscript/article.scidoc",
+        "from": 345,
+        "to": 345
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "Falta cita. ¿Podemos poner aquí algún trabajo de trayectorias de progresión (OAI o CHECK)? Si no, el revisor nos lo va a pedir."
+      },
+      "decision": "pending",
+      "id": "pr-t0zx3y8f4r",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "[3]",
+      "anchor": {
+        "block": "b-icnazd4sxc",
+        "file": "manuscript/article.scidoc",
+        "from": 336,
+        "to": 341
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "[3,4]",
+      "decision": "pending",
+      "id": "pr-si1u12jrvl",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "con la excepción de",
+      "anchor": {
+        "block": "b-nphcvy6nt4",
+        "file": "manuscript/article.scidoc",
+        "from": 257,
+        "to": 268
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "por ejemplo",
+      "decision": "pending",
+      "id": "pr-hpfgjbrpdz",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "(12, 24 o 48 meses)",
+      "anchor": {
+        "block": "b-d64e9beytw",
+        "file": "manuscript/article.scidoc",
+        "from": 433,
+        "to": 452
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "(12, 24 o 48 meses)",
+      "comment": {
+        "replies": [],
+        "text": "¿Hay alguna definición publicada con 12 meses? Yo solo conozco las de 24 y 48 meses. Si la hay, citarla; si no, quitaría el 12."
+      },
+      "decision": "pending",
+      "id": "pr-x4dp2c5b8x",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "en un plazo máximo de 48 meses",
+      "anchor": {
+        "block": "b-5emlpnx041",
+        "file": "manuscript/article.scidoc",
+        "from": 232,
+        "to": 255
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "en el plazo de 48 meses",
+      "decision": "pending",
+      "id": "pr-f3ouadyf14",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-enk2va83fv"
+    },
+    {
+      "after": "<5 %",
+      "anchor": {
+        "block": "b-7qxvj2blgp",
+        "file": "manuscript/article.scidoc",
+        "from": 359,
+        "to": 362
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "4 %",
+      "decision": "pending",
+      "id": "pr-uh62fh7cy9",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-u5sgse2tq5"
+    },
+    {
+      "after": "“de la normalidad a la enfermedad”",
+      "anchor": {
+        "block": "b-u27026os0g",
+        "file": "manuscript/article.scidoc",
+        "from": 271,
+        "to": 305
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "\"de la normalidad a la enfermedad\"",
+      "decision": "pending",
+      "id": "pr-v10lxlpren",
+      "kind": "replace",
+      "status": "noise-hidden",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-u27026os0g",
+        "file": "manuscript/article.scidoc",
+        "from": 620,
+        "to": 620
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "¿Referencia para el umbral de 0,5 mm al año? No lo encuentro en Driban 2016 [6]. Si es propuesta nuestra, decirlo."
+      },
+      "decision": "pending",
+      "id": "pr-puyg07zqg7",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "Davis y colaboradores describieron",
+      "anchor": {
+        "block": "b-atyjr9amsa",
+        "file": "manuscript/article.scidoc",
+        "from": 449,
+        "to": 473
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "Otros trabajos describen",
+      "decision": "pending",
+      "id": "pr-hl1dyi2nh8",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "a priori",
+      "anchor": {
+        "block": "b-pgv3stg4f6",
+        "file": "manuscript/article.scidoc",
+        "from": 172,
+        "to": 180
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "a priori",
+      "decision": "pending",
+      "format": {
+        "add": [
+          "italic"
+        ],
+        "remove": []
+      },
+      "id": "pr-rcj8wcq1bu",
+      "kind": "format",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-pgv3stg4f6",
+        "file": "manuscript/article.scidoc",
+        "from": 426,
+        "to": 426
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "¿En qué escala? La subescala de dolor del WOMAC va de 0 a 20 en la versión Likert; 20 puntos solo tiene sentido si está normalizada a 0-100. Precisarlo y poner la cita de esta definición clínica."
+      },
+      "decision": "pending",
+      "id": "pr-vl9squwdq1",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "los criterios de AKOA en los primeros 48 meses",
+      "anchor": {
+        "block": "b-7qxvj2blgp",
+        "file": "manuscript/article.scidoc",
+        "from": 425,
+        "to": 462
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "criterios en los primeros cuatro años",
+      "decision": "pending",
+      "id": "pr-os9v1rkf3n",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-tn36y42ps7"
+    },
+    {
+      "after": "cercana al 9 %",
+      "anchor": {
+        "block": "b-7qxvj2blgp",
+        "file": "manuscript/article.scidoc",
+        "from": 496,
+        "to": 510
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "cercana al 9 %",
+      "comment": {
+        "replies": [],
+        "text": "Comprobar este 9 % con el original [6]; recuerdo una cifra algo más baja con inicio en KL 2. Además, la referencia 4 no da frecuencias con definiciones laxas."
+      },
+      "decision": "pending",
+      "id": "pr-ptws3aq6lz",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-xsetl5x05s",
+        "file": "manuscript/article.scidoc",
+        "from": 200,
+        "to": 254
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": ", con un perfil de participantes parecido al de la OAI",
+      "decision": "pending",
+      "id": "pr-ds17s7bfhz",
+      "kind": "delete",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": " (frente a unos 27 kg/m2 en la artrosis típica)",
+      "anchor": {
+        "block": "b-k2eg2eabdp",
+        "file": "manuscript/article.scidoc",
+        "from": 192,
+        "to": 192
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-0jtuq0e1k2",
+      "kind": "insert",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-k2eg2eabdp",
+        "file": "manuscript/article.scidoc",
+        "from": 206,
+        "to": 206
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "decision": "pending",
+      "id": "pr-l0232c5fk5",
+      "kind": "move",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-zydsupokqm",
+        "file": "manuscript/article.scidoc",
+        "from": 320,
+        "to": 320
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "¿Qué estudios? Falta la cita. Además, en la tabla 2 damos OR 1,9 (1,2-3,0), que no coincide del todo con 1,5 a 2,5."
+      },
+      "decision": "pending",
+      "id": "pr-ggm3ku0o5p",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "duplicó aproximadamente",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 192,
+        "to": 211
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "duplicó con holgura",
+      "decision": "pending",
+      "id": "pr-elcmq0kqhc",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "[4]",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 280,
+        "to": 286
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "[4,20]",
+      "decision": "pending",
+      "id": "pr-p5c70b6jql",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-qjvrqemvqu",
+        "file": "manuscript/article.scidoc",
+        "from": 679,
+        "to": 679
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "Esto es más que «algunos grupos»: hay ensayos aleatorizados de meniscectomía artroscópica frente a placebo o fisioterapia y recomendaciones en las guías. Habría que citarlos."
+      },
+      "decision": "pending",
+      "id": "pr-pry919smn9",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "per se",
+      "anchor": {
+        "block": "b-3unlwkut98",
+        "file": "manuscript/article.scidoc",
+        "from": 485,
+        "to": 491
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "per se",
+      "decision": "pending",
+      "format": {
+        "add": [
+          "italic"
+        ],
+        "remove": []
+      },
+      "id": "pr-7kolo4ocib",
+      "kind": "format",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "nos parece una estrategia razonable, aunque no se ha validado",
+      "anchor": {
+        "block": "b-xp7vg7k6r3",
+        "file": "manuscript/article.scidoc",
+        "from": 609,
+        "to": 636
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "es una estrategia razonable",
+      "decision": "pending",
+      "id": "pr-cj980z1taj",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-i3ge7b9rnk",
+        "file": "manuscript/article.scidoc",
+        "from": 373,
+        "to": 373
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "",
+      "comment": {
+        "replies": [],
+        "text": "La pérdida de grosor del cartílago por RM suele darse en µm o en % al año; 0,1-0,2 mm me parece alto. Revisarlo con [29]. Ojo también: en la tabla 1 el mismo intervalo aparece como pérdida de espacio articular radiográfico, que es otra medida."
+      },
+      "decision": "pending",
+      "id": "pr-i1e0m9drqj",
+      "kind": "comment",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "tópicos (de elección en la rodilla) u orales",
+      "anchor": {
+        "block": "b-xl9fk8brsy",
+        "file": "manuscript/article.scidoc",
+        "from": 406,
+        "to": 422
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "tópicos u orales",
+      "decision": "pending",
+      "id": "pr-l8kwvxgshe",
+      "kind": "replace",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "",
+      "anchor": {
+        "block": "b-zgb501k1iv",
+        "file": "manuscript/article.scidoc",
+        "from": 318,
+        "to": 345
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "Respecto a la investigación",
+      "decision": "pending",
+      "id": "pr-lromlpmmcy",
+      "kind": "split-paragraph",
+      "status": "applicable",
+      "tracked": true
+    },
+    {
+      "after": "9 %",
+      "anchor": {
+        "block": "b-fbym1e3b88",
+        "file": "manuscript/article.scidoc",
+        "from": 125,
+        "to": 129
+      },
+      "author": {
+        "name": "Marta Ríos Navarro",
+        "person": "p-mg56623wh9"
+      },
+      "before": "10 %",
+      "decision": "pending",
+      "id": "pr-y7wm5fbiwq",
+      "kind": "replace",
+      "status": "conflict-coauthors",
+      "tracked": true,
+      "zone": "z-olvm02jo4q"
+    }
+  ],
+  "schemaVersion": 1
+}

@@ -1,0 +1,251 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "attrs": {
+      "id": "t-resp"
+    },
+    "content": [
+      {
+        "attrs": {
+          "id": "b-wzce7uo3h7"
+        },
+        "content": [
+          {
+            "text": "Respuesta EULAR a los 12 meses",
+            "type": "text"
+          }
+        ],
+        "type": "tableCaption"
+      },
+      {
+        "attrs": {
+          "id": "b-qm9i5hm8w1"
+        },
+        "content": [
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-am0u9ocf7t"
+                    },
+                    "content": [
+                      {
+                        "text": "Respuesta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-p4tlre8l53"
+                    },
+                    "content": [
+                      {
+                        "text": "n",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-hjnbo8g2h8"
+                    },
+                    "content": [
+                      {
+                        "text": "Buena",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-dsc82ps3vo"
+                    },
+                    "content": [
+                      {
+                        "text": "48",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-16exe43oim"
+                    },
+                    "content": [
+                      {
+                        "text": "Moderada",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-gpsqydldew"
+                    },
+                    "content": [
+                      {
+                        "text": "40",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-83tzhg04vo"
+                    },
+                    "content": [
+                      {
+                        "text": "Sin respuesta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {
+                  "colspan": 1,
+                  "rowspan": 1
+                },
+                "content": [
+                  {
+                    "attrs": {
+                      "id": "b-9ump3relvq"
+                    },
+                    "content": [
+                      {
+                        "text": "32",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "attrs": {
+          "id": "n-c",
+          "kind": "general"
+        },
+        "content": [
+          {
+            "text": "Criterios de respuesta EULAR.",
+            "type": "text"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "id": "c-lmupbhavtq",
+              "items": [
+                {
+                  "ref": "r-dmvkoe9nu6"
+                }
+              ]
+            },
+            "type": "citation"
+          }
+        ],
+        "type": "tableNote"
+      }
+    ],
+    "type": "tablePart"
+  },
+  "documentType": "table",
+  "lang": "es",
+  "schemaVersion": 1
+}

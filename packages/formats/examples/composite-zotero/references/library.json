@@ -1,0 +1,1286 @@
+{
+  "references": [
+    {
+      "added": "2026-11-21T14:15:09Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Mettam",
+            "given": "G R"
+          },
+          {
+            "family": "Adams",
+            "given": "L B"
+          }
+        ],
+        "container-title": "Introduction to the electronic age",
+        "editor": [
+          {
+            "family": "Jones",
+            "given": "B S"
+          },
+          {
+            "family": "Smith",
+            "given": "R Z"
+          }
+        ],
+        "issued": {
+          "date-parts": [
+            [
+              2009
+            ]
+          ]
+        },
+        "page": "281-304",
+        "publisher": "E-Publishing Inc",
+        "publisher-place": "New York",
+        "title": "How to prepare an electronic version of your article",
+        "type": "chapter"
+      },
+      "id": "r-m80c5jttif",
+      "source": {
+        "date": "2026-11-21T14:15:09Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:09Z",
+        "key": "3J63BHMP",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/3J63BHMP"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:09Z",
+      "csl": {
+        "URL": "http://www.cancerresearchuk.org/aboutcancer/statistics/cancerstatsreport/",
+        "accessed": {
+          "date-parts": [
+            [
+              2003,
+              3,
+              13
+            ]
+          ]
+        },
+        "author": [
+          {
+            "literal": "Cancer Research UK"
+          }
+        ],
+        "issued": {
+          "date-parts": [
+            [
+              2003
+            ]
+          ]
+        },
+        "title": "Cancer statistics reports for the UK",
+        "type": "webpage"
+      },
+      "id": "r-iqk5xfl9rc",
+      "source": {
+        "date": "2026-11-21T14:15:09Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:09Z",
+        "key": "CDDCVQAU",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/CDDCVQAU"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:09Z",
+      "csl": {
+        "DOI": "10.17632/xwj98nb39r.1",
+        "author": [
+          {
+            "family": "Oguro",
+            "given": "M"
+          },
+          {
+            "family": "Imahiro",
+            "given": "S"
+          },
+          {
+            "family": "Saito",
+            "given": "S"
+          },
+          {
+            "family": "Nakashizuka",
+            "given": "T"
+          }
+        ],
+        "issued": {
+          "date-parts": [
+            [
+              2015
+            ]
+          ]
+        },
+        "publisher": "Mendeley Data",
+        "title": "Mortality data for Japanese oak wilt disease and surrounding forest compositions",
+        "type": "dataset"
+      },
+      "id": "r-dmvkoe9nu6",
+      "source": {
+        "date": "2026-11-21T14:15:09Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:09Z",
+        "key": "ASAQ3IEJ",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/ASAQ3IEJ"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:08Z",
+      "csl": {
+        "DOI": "10.1016/j.Sc.2010.00372",
+        "author": [
+          {
+            "family": "Van der Geer",
+            "given": "J"
+          },
+          {
+            "family": "Hanraads",
+            "given": "J A J"
+          },
+          {
+            "family": "Lupton",
+            "given": "R A"
+          }
+        ],
+        "container-title": "Journal of Science Communication",
+        "container-title-short": "J Sci Commun",
+        "issued": {
+          "date-parts": [
+            [
+              2010
+            ]
+          ]
+        },
+        "page": "51-59",
+        "title": "The art of writing a scientific article",
+        "type": "article-journal",
+        "volume": "163"
+      },
+      "id": "r-92a71b9iff",
+      "source": {
+        "date": "2026-11-21T14:15:08Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:08Z",
+        "key": "UNWN2XTZ",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/UNWN2XTZ"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:08Z",
+      "csl": {
+        "DOI": "10.1016/j.heliyon.2018.e00205",
+        "author": [
+          {
+            "family": "Van der Geer",
+            "given": "J"
+          },
+          {
+            "family": "Hanraads",
+            "given": "J A J"
+          },
+          {
+            "family": "Lupton",
+            "given": "R A"
+          }
+        ],
+        "container-title": "Heliyon",
+        "container-title-short": "Heliyon",
+        "issued": {
+          "date-parts": [
+            [
+              2018
+            ]
+          ]
+        },
+        "page": "e00205",
+        "title": "The art of writing a scientific article",
+        "type": "article-journal",
+        "volume": "19"
+      },
+      "id": "r-u7447q0dnm",
+      "source": {
+        "date": "2026-11-21T14:15:08Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:08Z",
+        "key": "HF6M89Z6",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/HF6M89Z6"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:08Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Strunk",
+            "given": "W",
+            "suffix": "Jr"
+          },
+          {
+            "family": "White",
+            "given": "E B"
+          }
+        ],
+        "edition": "4",
+        "issued": {
+          "date-parts": [
+            [
+              2000
+            ]
+          ]
+        },
+        "publisher": "Longman",
+        "publisher-place": "New York",
+        "title": "The elements of style",
+        "type": "book"
+      },
+      "id": "r-4m46rvmjby",
+      "source": {
+        "date": "2026-11-21T14:15:08Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:08Z",
+        "key": "AIRCJY84",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/AIRCJY84"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:07Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Englund",
+            "given": "M"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Roemer",
+            "given": "F W"
+          }
+        ],
+        "container-title": "Arthritis Rheum",
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              2009
+            ]
+          ]
+        },
+        "page": "831-9",
+        "title": "Meniscal tear in knees without surgery and the development of radiographic osteoarthritis among middle-aged and elderly persons: the MOST study",
+        "type": "article-journal",
+        "volume": "60"
+      },
+      "id": "r-a5aip3dn3t",
+      "source": {
+        "date": "2026-11-21T14:15:07Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:07Z",
+        "key": "KQAKBYG9",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/KQAKBYG9"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:07Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Roemer",
+            "given": "F W"
+          },
+          {
+            "family": "Kwoh",
+            "given": "C K"
+          },
+          {
+            "family": "Hannon",
+            "given": "M J"
+          }
+        ],
+        "container-title": "Eur Radiol",
+        "container-title-short": "Eur Radiol",
+        "issued": {
+          "date-parts": [
+            [
+              2017
+            ]
+          ]
+        },
+        "page": "404-13",
+        "title": "Partial meniscectomy is associated with increased risk of incident radiographic osteoarthritis and worsening cartilage damage in the following year",
+        "type": "article-journal",
+        "volume": "27"
+      },
+      "id": "r-89impd6uhe",
+      "source": {
+        "date": "2026-11-21T14:15:07Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:07Z",
+        "key": "T6UDKDHA",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/T6UDKDHA"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:07Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Niu",
+            "given": "J"
+          },
+          {
+            "family": "Neogi",
+            "given": "T"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "458-64",
+        "title": "Synovitis and the risk of knee osteoarthritis: the MOST Study",
+        "type": "article-journal",
+        "volume": "24"
+      },
+      "id": "r-me28zfxzbx",
+      "source": {
+        "date": "2026-11-21T14:15:07Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:07Z",
+        "key": "FJHUV7G2",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/FJHUV7G2"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:07Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Roemer",
+            "given": "F W"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Felson",
+            "given": "D T"
+          }
+        ],
+        "container-title": "Ann Rheum Dis",
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2011
+            ]
+          ]
+        },
+        "page": "1804-9",
+        "title": "Presence of MRI-detected joint effusion and synovitis increases risk of cartilage loss in knees without osteoarthritis at 30-month follow-up: the MOST study",
+        "type": "article-journal",
+        "volume": "70"
+      },
+      "id": "r-7ehnlio36k",
+      "source": {
+        "date": "2026-11-21T14:15:07Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:07Z",
+        "key": "BBC86DAD",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/BBC86DAD"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Guermazi",
+            "given": "A"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2011
+            ]
+          ]
+        },
+        "page": "990-1002",
+        "title": "Evolution of semi-quantitative whole joint assessment of knee OA: MOAKS (MRI Osteoarthritis Knee Score)",
+        "type": "article-journal",
+        "volume": "19"
+      },
+      "id": "r-xr0sf8h1o4",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "Z47FFP2Q",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/Z47FFP2Q"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Lu",
+            "given": "B"
+          }
+        ],
+        "container-title": "Arthritis Rheumatol",
+        "container-title-short": "Arthritis Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1089-100",
+        "title": "Accelerated knee osteoarthritis is characterized by destabilizing meniscal tears and preradiographic MRI features",
+        "type": "article-journal",
+        "volume": "71"
+      },
+      "id": "r-snt5eb4e06",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "7E2DYDFK",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/7E2DYDFK"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Ward",
+            "given": "R J"
+          },
+          {
+            "family": "MacKay",
+            "given": "J W"
+          }
+        ],
+        "container-title": "Rheumatology (Oxford)",
+        "container-title-short": "Rheumatology (Oxford)",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "418-26",
+        "title": "Effusion-synovitis and infrapatellar fat pad signal intensity alteration differentiate accelerated knee osteoarthritis",
+        "type": "article-journal",
+        "volume": "58"
+      },
+      "id": "r-h4dr26jihg",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "CI6HCGHK",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/CI6HCGHK"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Zhang",
+            "given": "Y"
+          },
+          {
+            "family": "Jordan",
+            "given": "J M"
+          }
+        ],
+        "container-title": "Clin Geriatr Med",
+        "container-title-short": "Clin Geriatr Med",
+        "issued": {
+          "date-parts": [
+            [
+              2010
+            ]
+          ]
+        },
+        "page": "355-69",
+        "title": "Epidemiology of osteoarthritis",
+        "type": "article-journal",
+        "volume": "26"
+      },
+      "id": "r-fc0rnlx4vn",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "SAQG49C8",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/SAQG49C8"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Davis",
+            "given": "J E"
+          },
+          {
+            "family": "Liu",
+            "given": "S H"
+          },
+          {
+            "family": "Lapane",
+            "given": "K"
+          }
+        ],
+        "container-title": "Clin Rheumatol",
+        "container-title-short": "Clin Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2018
+            ]
+          ]
+        },
+        "page": "3105-10",
+        "title": "Adults with incident accelerated knee osteoarthritis are more likely to receive a knee replacement: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "37"
+      },
+      "id": "r-blfahvsdmr",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "V8LBUXDH",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/V8LBUXDH"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Price",
+            "given": "L L"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          }
+        ],
+        "container-title": "Clin Rheumatol",
+        "container-title-short": "Clin Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "1565-71",
+        "title": "Individuals with incident accelerated knee osteoarthritis have greater pain than those with common knee osteoarthritis progression: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "35"
+      },
+      "id": "r-u37rw26dqa",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "4MS2EXSF",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/4MS2EXSF"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Neogi",
+            "given": "T"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2013
+            ]
+          ]
+        },
+        "page": "1145-53",
+        "title": "The epidemiology and impact of pain in osteoarthritis",
+        "type": "article-journal",
+        "volume": "21"
+      },
+      "id": "r-n2ceh9exjr",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "6SLIWYYS",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/6SLIWYYS"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Lawrence",
+            "given": "R C"
+          },
+          {
+            "family": "Dieppe",
+            "given": "P A"
+          }
+        ],
+        "container-title": "Ann Intern Med",
+        "container-title-short": "Ann Intern Med",
+        "issued": {
+          "date-parts": [
+            [
+              2000
+            ]
+          ]
+        },
+        "page": "635-46",
+        "title": "Osteoarthritis: new insights. Part 1: the disease and its risk factors",
+        "type": "article-journal",
+        "volume": "133"
+      },
+      "id": "r-l3jcu58k82",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "WFMUVZDE",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/WFMUVZDE"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Blagojevic",
+            "given": "M"
+          },
+          {
+            "family": "Jinks",
+            "given": "C"
+          },
+          {
+            "family": "Jeffery",
+            "given": "A"
+          },
+          {
+            "family": "Jordan",
+            "given": "K P"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2010
+            ]
+          ]
+        },
+        "page": "24-33",
+        "title": "Risk factors for onset of osteoarthritis of the knee in older adults: a systematic review and meta-analysis",
+        "type": "article-journal",
+        "volume": "18"
+      },
+      "id": "r-63gh1vx5yf",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "RGW36TQQ",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/RGW36TQQ"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Felson",
+            "given": "D T"
+          },
+          {
+            "family": "Zhang",
+            "given": "Y"
+          },
+          {
+            "family": "Hannan",
+            "given": "M T"
+          }
+        ],
+        "container-title": "Arthritis Rheum",
+        "container-title-short": "Arthritis Rheum",
+        "issued": {
+          "date-parts": [
+            [
+              1997
+            ]
+          ]
+        },
+        "page": "728-33",
+        "title": "Risk factors for incident radiographic knee osteoarthritis in the elderly: the Framingham Study",
+        "type": "article-journal",
+        "volume": "40"
+      },
+      "id": "r-plaxwpzgm5",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "3UD5W2KD",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/3UD5W2KD"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Gersing",
+            "given": "A S"
+          },
+          {
+            "family": "Solka",
+            "given": "M"
+          },
+          {
+            "family": "Joseph",
+            "given": "G B"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "1126-34",
+        "title": "Progression of cartilage degeneration and clinical symptoms in obese and overweight individuals is dependent on the amount of weight loss: 48-month data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "24"
+      },
+      "id": "r-p87ux3no4f",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "98B55NC2",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/98B55NC2"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:06Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Lohmander",
+            "given": "L S"
+          },
+          {
+            "family": "Englund",
+            "given": "P M"
+          },
+          {
+            "family": "Dahl",
+            "given": "L L"
+          },
+          {
+            "family": "Roos",
+            "given": "E M"
+          }
+        ],
+        "container-title": "Am J Sports Med",
+        "container-title-short": "Am J Sports Med",
+        "issued": {
+          "date-parts": [
+            [
+              2007
+            ]
+          ]
+        },
+        "page": "1756-69",
+        "title": "The long-term consequence of anterior cruciate ligament and meniscus injuries: osteoarthritis",
+        "type": "article-journal",
+        "volume": "35"
+      },
+      "id": "r-oqpaeh7418",
+      "source": {
+        "date": "2026-11-21T14:15:06Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:06Z",
+        "key": "TNYPXBSM",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/TNYPXBSM"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Hunter",
+            "given": "D J"
+          },
+          {
+            "family": "Bierma-Zeinstra",
+            "given": "S"
+          }
+        ],
+        "container-title": "Lancet",
+        "container-title-short": "Lancet",
+        "issued": {
+          "date-parts": [
+            [
+              2019
+            ]
+          ]
+        },
+        "page": "1745-59",
+        "title": "Osteoarthritis",
+        "type": "article-journal",
+        "volume": "393"
+      },
+      "id": "r-qk064uynfi",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "TLM5WYBD",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/TLM5WYBD"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Cross",
+            "given": "M"
+          },
+          {
+            "family": "Smith",
+            "given": "E"
+          },
+          {
+            "family": "Hoy",
+            "given": "D"
+          }
+        ],
+        "container-title": "Ann Rheum Dis",
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2014
+            ]
+          ]
+        },
+        "page": "1323-30",
+        "title": "The global burden of hip and knee osteoarthritis: estimates from the Global Burden of Disease 2010 study",
+        "type": "article-journal",
+        "volume": "73"
+      },
+      "id": "r-g8uh6ty0wp",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "2MLUZPAV",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/2MLUZPAV"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Eckstein",
+            "given": "F"
+          },
+          {
+            "family": "Wirth",
+            "given": "W"
+          },
+          {
+            "family": "Nevitt",
+            "given": "M C"
+          }
+        ],
+        "container-title": "Nat Rev Rheumatol",
+        "container-title-short": "Nat Rev Rheumatol",
+        "issued": {
+          "date-parts": [
+            [
+              2012
+            ]
+          ]
+        },
+        "page": "622-30",
+        "title": "Recent advances in osteoarthritis imaging: the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "8"
+      },
+      "id": "r-1q7ghhx3kb",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "4Y9DS6SZ",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/4Y9DS6SZ"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title": "Arthritis Care Res",
+        "container-title-short": "Arthritis Care Res",
+        "issued": {
+          "date-parts": [
+            [
+              2014
+            ]
+          ]
+        },
+        "page": "1673-9",
+        "title": "Association of knee injuries with accelerated knee osteoarthritis progression: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "66"
+      },
+      "id": "r-00j3cm5awi",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "REDTJTJ6",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/REDTJTJ6"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kellgren",
+            "given": "J H"
+          },
+          {
+            "family": "Lawrence",
+            "given": "J S"
+          }
+        ],
+        "container-title": "Ann Rheum Dis",
+        "container-title-short": "Ann Rheum Dis",
+        "issued": {
+          "date-parts": [
+            [
+              1957
+            ]
+          ]
+        },
+        "page": "494-502",
+        "title": "Radiological assessment of osteo-arthrosis",
+        "type": "article-journal",
+        "volume": "16"
+      },
+      "id": "r-rx4oabkhmz",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "3D2JL2R3",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/3D2JL2R3"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Stout",
+            "given": "A C"
+          },
+          {
+            "family": "Lo",
+            "given": "G H"
+          }
+        ],
+        "container-title": "Ther Adv Musculoskelet Dis",
+        "container-title-short": "Ther Adv Musculoskelet Dis",
+        "issued": {
+          "date-parts": [
+            [
+              2016
+            ]
+          ]
+        },
+        "page": "165-71",
+        "title": "Best performing definition of accelerated knee osteoarthritis: data from the Osteoarthritis Initiative",
+        "type": "article-journal",
+        "volume": "8"
+      },
+      "id": "r-xf3wrhpm5h",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "LUECDLWJ",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/LUECDLWJ"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Driban",
+            "given": "J B"
+          },
+          {
+            "family": "Bannuru",
+            "given": "R R"
+          },
+          {
+            "family": "Eaton",
+            "given": "C B"
+          }
+        ],
+        "container-title": "BMC Musculoskelet Disord",
+        "container-title-short": "BMC Musculoskelet Disord",
+        "issued": {
+          "date-parts": [
+            [
+              2020
+            ]
+          ]
+        },
+        "page": "60",
+        "title": "The incidence and characteristics of accelerated knee osteoarthritis among women: the Chingford cohort",
+        "type": "article-journal",
+        "volume": "21"
+      },
+      "id": "r-tpot1w7abw",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "FYT55ENI",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/FYT55ENI"
+      }
+    },
+    {
+      "added": "2026-11-21T14:15:05Z",
+      "csl": {
+        "author": [
+          {
+            "family": "Kraus",
+            "given": "V B"
+          },
+          {
+            "family": "Blanco",
+            "given": "F J"
+          },
+          {
+            "family": "Englund",
+            "given": "M"
+          }
+        ],
+        "container-title": "Osteoarthritis Cartilage",
+        "container-title-short": "Osteoarthritis Cartilage",
+        "issued": {
+          "date-parts": [
+            [
+              2015
+            ]
+          ]
+        },
+        "page": "1233-41",
+        "title": "Call for standardized definitions of osteoarthritis and risk stratification for clinical trials and clinical use",
+        "type": "article-journal",
+        "volume": "23"
+      },
+      "id": "r-llgg8v0ood",
+      "source": {
+        "date": "2026-11-21T14:15:05Z",
+        "kind": "zotero"
+      },
+      "zotero": {
+        "dateModified": "2026-11-21T14:15:05Z",
+        "key": "ZI8E2RBX",
+        "library": "user",
+        "uri": "http://zotero.org/users/local/3H4u3JKF/items/ZI8E2RBX"
+      }
+    }
+  ],
+  "schemaVersion": 1
+}

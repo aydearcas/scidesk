@@ -1,0 +1,108 @@
+{
+  "changes": {},
+  "comments": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "id": "b-3t5h3jrtjj",
+          "lang": "es"
+        },
+        "content": [
+          {
+            "attrs": {
+              "id": "b-drlqytqksj",
+              "level": 2,
+              "role": null
+            },
+            "content": [
+              {
+                "text": "Objetivo",
+                "type": "text"
+              }
+            ],
+            "type": "heading"
+          },
+          {
+            "attrs": {
+              "id": "b-h75xuyueny"
+            },
+            "content": [
+              {
+                "text": "describir la actividad inflamatoria en la artritis reumatoide de inicio.",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-kvlzuh8uxa",
+              "level": 2,
+              "role": "results"
+            },
+            "content": [
+              {
+                "text": "Resultados",
+                "type": "text"
+              }
+            ],
+            "type": "heading"
+          },
+          {
+            "attrs": {
+              "id": "b-swrh0nohpx"
+            },
+            "content": [
+              {
+                "text": "la actividad inflamatoria disminuyó a los 12 meses.",
+                "type": "text"
+              }
+            ],
+            "type": "paragraph"
+          },
+          {
+            "attrs": {
+              "id": "b-d6cvvxqamk"
+            },
+            "content": [
+              {
+                "content": [
+                  {
+                    "text": "artritis reumatoide",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "actividad inflamatoria",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              },
+              {
+                "content": [
+                  {
+                    "text": "cohorte",
+                    "type": "text"
+                  }
+                ],
+                "type": "keyword"
+              }
+            ],
+            "type": "keywords"
+          }
+        ],
+        "type": "abstractSection"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "abstract",
+  "lang": "es",
+  "schemaVersion": 1
+}
