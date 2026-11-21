@@ -6,6 +6,7 @@
 //   scidesk export <dir> [--profile coauthors|journal|title-page] [--article main]
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
 //   scidesk show <dir> <proposals.json>
+//   scidesk refs <dir> <file.ris|.nbib|.bib|.json>   import references into the own library
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { NodeFs, nodeResources } from "./node-fs.ts";
@@ -14,6 +15,7 @@ import { createDemoProject } from "./demo.ts";
 import { exportDocx, type ExportProfile } from "./docx-export.ts";
 import { importCopy } from "./round.ts";
 import { exportTitlePage } from "./title-page.ts";
+import { importReferences } from "./library-import.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -24,7 +26,7 @@ const positional = rest.filter((a, i) => !a.startsWith("--") && !rest[i - 1]?.st
 
 async function main() {
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|check|export|import|show> <project folder> …");
+    console.log("usage: scidesk <new|demo|check|export|import|refs|show> <project folder> …");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -65,6 +67,14 @@ async function main() {
       const r = await importCopy(p, opt("article", "main")!, new Uint8Array(await readFile(file)), { fileName: basename(file), returnedBy: { name: by } });
       const s = r.set;
       console.log(JSON.stringify({ round: r.roundFolder, proposals: r.proposalsFile, count: s.proposals.length, tracked: s.proposals.filter((x) => x.tracked).length, untracked: s.proposals.filter((x) => !x.tracked).length, hiddenNoise: s.hiddenNoise, integrity: s.integrity }));
+      break;
+    }
+    case "refs": {
+      const file = positional[0];
+      if (!file) throw new Error("usage: scidesk refs <dir> <file.ris|.nbib|.bib|.json>");
+      const p = await loadProject(fs);
+      const r = await importReferences(p, { name: basename(file), text: await readFile(file, "utf8") });
+      console.log(JSON.stringify({ format: r.format, added: r.added.length, duplicates: r.duplicates.length, copy: r.importedCopy, keptAside: r.unmapped }));
       break;
     }
     case "show": {

@@ -27,3 +27,5 @@ ins { color: var(--ins); } del { color: var(--del); }
 .note, .empty, .message, .integrity { color: var(--muted); padding: 0 12px; }
 .error { color: var(--del); padding: 0 12px; white-space: pre-wrap; }
 footer { color: var(--muted); font-size: 11px; padding: 8px 12px; border-top: 1px solid var(--line); }
+.file-button { position: relative; overflow: hidden; display: inline-block; border: 1px solid var(--line); padding: 1px 6px; border-radius: 3px; cursor: pointer; }
+.file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }

@@ -5,7 +5,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  createDemoProject, exportDocx, exportTitlePage, importCopy, loadProject, renderCitations, saveDocument,
+  createDemoProject, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, renderCitations, saveDocument,
   type Project, type Rendering,
 } from "@scidesk/core";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
@@ -28,6 +28,8 @@ export function App() {
   const [refChoice, setRefChoice] = useState("");
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const refsInput = useRef<HTMLInputElement>(null);
+  const [libraryVersion, setLibraryVersion] = useState(0);
   const article = project?.articles[0] ?? null;
 
   const editor = useEditor({
@@ -110,7 +112,17 @@ export function App() {
     if (fileInput.current) fileInput.current.value = "";
   });
 
-  const refs = useMemo(() => project?.library.references ?? [], [project]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the library is changed in place by the import
+  const refs = useMemo(() => [...(project?.library.references ?? [])], [project, libraryVersion]);
+  const onRefs = run(async () => {
+    const file = refsInput.current?.files?.[0];
+    if (!file || !project) return;
+    const r = await importReferences(project, { name: file.name, text: await file.text() });
+    setLibraryVersion((v) => v + 1);
+    if (!refChoice && r.added[0]) setRefChoice(r.added[0].id);
+    setMessage(t("refsImported", { added: r.added.length, duplicates: r.duplicates.length, format: r.format.toUpperCase() }) + (r.unmapped.length ? ` — ${t("keptAside", { n: r.unmapped.length })}` : ""));
+    if (refsInput.current) refsInput.current.value = "";
+  });
   const refLabel = (id: string) => {
     const r = refs.find((x) => x.id === id);
     const a = r?.csl.author as { family?: string; literal?: string }[] | undefined;
@@ -139,6 +151,7 @@ export function App() {
                 {refs.map((r) => <option key={r.id} value={r.id}>{refLabel(r.id)}</option>)}
               </select>
               <button onClick={insertCitation} disabled={!refChoice}>{t("insertCitation")}</button>
+              <label className="file-button">{t("importRefs")}<input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" onChange={onRefs} /></label>
               <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
               <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
               <button onClick={exportAs("title-page")}>{t("exportTitlePage")}</button>
