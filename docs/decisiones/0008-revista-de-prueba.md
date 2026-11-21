@@ -1,7 +1,7 @@
 # 0008. Reumatología Clínica como revista de prueba
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada
+- **Estado:** aceptada. Actualizada el 21/11/2026 con el prototipo 2 ([0026](0026-citas-con-citeproc-js.md)).
 - **Pregunta del plan:** P10
 
 ## Qué se decide
@@ -16,4 +16,4 @@ Es la revista con más experiencia de envío dentro del proyecto, así que permi
 ## Consecuencias
 - Su guía para autores (consultada el 20/11/2026) está resumida en PLAN.md, 5.9.
 - La guía actual no da el límite de palabras del resumen: es un ejemplo de por qué los perfiles necesitan verificación humana.
-- Su estilo de cita se incluye de serie (decisión 0007).
+- Su estilo de cita se incluye de serie (decisión 0007). El del repositorio de CSL (2012) no coincide con la guía actual, así que SciDesk incluye uno propio que sí ([0026](0026-citas-con-citeproc-js.md)).

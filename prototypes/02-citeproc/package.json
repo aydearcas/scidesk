@@ -1,0 +1,9 @@
+{
+  "name": "proto-02-citeproc",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 2: citeproc-js with 50 references and 3 styles, Reumatologia Clinica against its guide, live renumbering",
+  "dependencies": {
+    "citeproc": "^2.4.63"
+  }
+}

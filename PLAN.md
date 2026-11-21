@@ -21,7 +21,7 @@ La v0.4 decidió la licencia AGPL-3.0 con CLA, el historial con instantáneas pr
 | # | Decisión | Consecuencias en el plan |
 |---|---|---|
 | P1 | **Código abierto público**, dejando abierta la posibilidad de una versión de pago | Licencia de P1b. Motor de citas sustituible |
-| P1b | **Licencia AGPL-3.0 con acuerdo de contribución (CLA)** | Los colaboradores externos firman un CLA que permite la licencia dual o una versión de pago. citeproc-js se usa bajo AGPL. Comprobación automática de licencias de las dependencias (6.3) |
+| P1b | **Licencia AGPL-3.0 con acuerdo de contribución (CLA)** | Los colaboradores externos firman un CLA que permite la licencia dual o una versión de pago. citeproc-js se usa bajo AGPL (bajo CPAL, con su atribución, en una versión con otra licencia; ficha 0026). Comprobación automática de licencias de las dependencias (6.3) |
 | P2 | **Windows y macOS. Se desarrolla primero en Windows** y después se prueba en macOS (tienes un MacBook Air) | La integración continua compila para los dos sistemas desde la fase 1, pero el desarrollo y las pruebas diarias se hacen en Windows. El pegado de tablas y la edición básica se prueban en el MacBook ya en la fase 0, y las pruebas del editor se ejecutan a diario también sobre WebKit (R37). Lo demás propio de macOS (portapapeles de Word para Mac, firma y notarización) se resuelve antes de la primera versión pública (7.7) |
 | P3 | **Primero biomedicina y clínica**, en español e inglés; después, cualquier disciplina | Plantillas, comprobaciones y perfiles empiezan por biomedicina, pero el modelo no se ata a ella: tipos de artículo, guías de publicación y perfiles de revista son datos, no código. En el primer arranque eliges tus áreas principales para filtrar plantillas y revistas sugeridas |
 | P4 | Coautores con **Word por correo**; la edición simultánea vendrá después | La ida y vuelta con DOCX está en la fase 2. El modelo de documento se diseña para admitir edición simultánea más adelante (5.11 y fase 5) |
@@ -34,7 +34,7 @@ La v0.4 decidió la licencia AGPL-3.0 con CLA, el historial con instantáneas pr
 | P10 | Revistas Q1–Q2 de reumatología. **Reumatología Clínica es la revista de prueba** | Primer perfil de revista y caso de prueba de principio a fin (5.9) |
 | P11 | **Zotero vinculado** (primero Zotero; EndNote y Mendeley después) **o biblioteca propia** dentro del programa, ampliable con nuevos RIS, NBIB… | Dos modos de biblioteca (5.6) |
 | P12 | **Un proyecto puede tener varios artículos**: el formato lo admite desde el principio y el MVP muestra uno solo. Biblioteca y directorio de personas comunes al proyecto, sin biblioteca global; tablas y figuras se copian entre artículos | Nueva estructura de carpetas (4) y análisis en 4.1. "Añadir otro artículo" llega en V1 |
-| P13 | Incluir el **estilo de cita de Reumatología Clínica** | Existe en el repositorio oficial de estilos CSL, pero es de 2012: hay que comprobar que sigue valiendo (5.9) |
+| P13 | Incluir el **estilo de cita de Reumatología Clínica** | Existe en el repositorio oficial de estilos CSL, pero es de 2012 y no coincide con la guía actual. SciDesk incluye uno propio, derivado de «Elsevier - Vancouver» (prototipo 2, ficha 0026) |
 | P14 | Consultar Crossref y PubMed por internet: **sí, como opción que se activa en el programa y explica para qué sirve** | Ajuste de conexión con una explicación por servicio. Todo funciona igual sin red (5.6) |
 | P15 | **Historial con instantáneas propias**, no con git | Archivos que se escriben una vez y no se modifican, seguros al sincronizar con OneDrive: uno por instantánea, con solo lo nuevo de esa versión (R26). Puedes usar git por tu cuenta sobre la carpeta (6.4) |
 | P16 | Asistente con IA: **más adelante**; cuando exista el programa se decidirá en qué pasos | Sigue en [Después]. Se añade la idea de los paquetes para LLM (5.12) |
@@ -397,7 +397,8 @@ Reparto de los datos:
 - **[MVP]** Numeración automática por orden de aparición. Los rangos se compactan ([1–3, 5]) y se recalculan al mover texto.
 - **[MVP]** Bloque de bibliografía que se actualiza solo. Puede ir en el artículo o en el suplementario.
 - **[MVP]** Cambiar de estilo de cita al instante.
-- **[MVP]** Estilos incluidos de serie: Vancouver/ICMJE, AMA 11, APA 7, Harvard, NLM, Nature, Science, Cell, The Lancet, NEJM, BMJ, JAMA, IEEE, Chicago, Elsevier Vancouver y **Reumatología Clínica** (P13).
+- **[MVP]** Estilos incluidos de serie: Vancouver/ICMJE, AMA 11, APA 7, Harvard, NLM, Nature, Science, Cell, The Lancet, NEJM, BMJ, JAMA, IEEE, Chicago, Elsevier Vancouver y **Reumatología Clínica** (P13; estilo propio, ficha 0026).
+- **[MVP]** Las palabras fijas de las referencias («En:»/«In:», «editores»/«editors», «ed.», «consultada el»/«accessed», «En prensa»/«In press») salen en el idioma del manuscrito. Un ajuste del artículo permite elegir otro (ficha 0026).
 - **[V1]** Buscador del repositorio oficial de estilos CSL (más de 10 000 estilos, uno por revista), con descarga.
 - **[V1]** Avisos de referencias de la biblioteca sin citar, citas rotas y referencias incompletas (sin año, sin revista…).
 
@@ -448,7 +449,7 @@ Un panel que se va actualizando mientras escribes. Es la cara del programa y lo 
 
 | Dato | ¿Automático? | De dónde | ¿Está al día? |
 |---|---|---|---|
-| Estilo de cita | Sí | Repositorio oficial de estilos CSL (más de 10 000, mantenido por voluntarios) | En general sí, pero algunos estilos son antiguos. El de Reumatología Clínica es de 2012, y su guía actual muestra referencias con el formato de Elsevier y DOI |
+| Estilo de cita | Sí | Repositorio oficial de estilos CSL (más de 10 000, mantenido por voluntarios) | En general sí, pero algunos estilos son antiguos. El de Reumatología Clínica es de 2012 y no coincide con su guía actual, que muestra referencias con el formato de Elsevier y DOI: cumple 9 de 17 reglas. SciDesk incluye uno propio (prototipo 2, ficha 0026) |
 | Identificación de la revista: ISSN, editorial, abreviatura NLM, acceso abierto | Sí | Catálogo de revistas de la NLM (dominio público), OpenAlex y DOAJ (abiertos) | Sí, se actualizan continuamente |
 | Área temática, para sugerir revistas según tus áreas | Sí | OpenAlex | Sí |
 | Cuartil (Q1, Q2…) | En parte | JCR (Clarivate, de pago) o SJR (Scimago, consulta gratuita; hay que comprobar si se puede reutilizar) | Una vez al año |
@@ -483,7 +484,7 @@ Sustituye a "cambiar de revista tras un rechazo" de la v0.2, que pasa de [Despu�
 | Idiomas | Se publica en español y en inglés; el título se da también en inglés |
 | Revisión | Doble ciego: portada aparte (autores, afiliaciones, agradecimientos y conflictos) y manuscrito anonimizado |
 | Formato | Doble espacio, letra de 12 puntos, márgenes laterales de 2 a 2,5 cm y todas las páginas numeradas; sin justificar ni partir palabras |
-| Referencias | Números en superíndice por orden de aparición. Los ejemplos de la guía siguen el formato de Elsevier con DOI; el estilo CSL de la revista es de 2012 y deriva del de la NLM, así que hay que comprobar si coinciden |
+| Referencias | Números en superíndice por orden de aparición. Los ejemplos de la guía siguen el formato «Vancouver» de Elsevier: volumen en negrita, última página abreviada con raya corta, DOI como enlace y 6 autores antes de «et al.». El estilo CSL de la revista (2012, en realidad el de la NLM con superíndice) no coincide; SciDesk incluye uno propio que sí (ficha 0026) |
 | Declaración de uso de IA | En un apartado propio, antes de las referencias |
 | Opcionales | Puntos destacados (de 3 a 5, de 85 caracteres como máximo) y resumen gráfico |
 | Figuras | En archivos separados; fotografías a 300 ppp como mínimo, dibujos de líneas a 1000 ppp y combinadas a 500 ppp; pies de figura en una lista aparte |
@@ -611,7 +612,7 @@ La respuesta importada se trata como datos no confiables: se valida contra el es
 | Comentarios y control de cambios | **Implementación propia** sobre una pieza libre: **`@handlewithcare/prosemirror-suggest-changes` (MIT), en una copia propia**, elegida con el prototipo 7 frente a `@manuscripts/track-changes-plugin` (ficha 0020) | — | Es la función más difícil de un editor y determina cómo se guardan los cambios en `.scidoc`, así que el esquema de la versión 1 no se cierra sin un prototipo que escriba y borre en modo de sugerencias, acepte y rechace, exporte a `w:ins` y `w:del` y vuelva a importar (R31) |
 | Núcleo sin interfaz | **Paquete de TypeScript sin interfaz** con todo lo que no es pantalla: esquema, numeración, citas, comprobaciones, importación, exportación, fusión y propuestas. **Línea de comandos** (`scidesk export`, `scidesk check`) sobre él | — | Las pruebas con el corpus se ejecutan en segundos sin abrir la aplicación; herramientas externas, como una skill de Claude, pueden trabajar con un proyecto sin meter IA en el programa; y es la base del servidor de sincronización de la fase 5 (R33) |
 | Esquemas y validación | **Una sola definición por formato** que genera los tipos de TypeScript, la validación y el JSON Schema publicado (por ejemplo, Zod o TypeBox, ambos MIT; se elige en la fase 0) | — | Todo lo que entra de fuera se valida con el mismo código (R34, 3.2) |
-| Motor de citas | **citeproc-js** (el de Zotero y Mendeley) en un *web worker* | hayagriva (Rust, MIT/Apache) | citeproc-js es la implementación de referencia de CSL y es la más fiel. **Licencia: CPAL/AGPL** (ver 6.3) |
+| Motor de citas | **citeproc-js** (el de Zotero y Mendeley) en un *web worker* | hayagriva (Rust, MIT/Apache) | citeproc-js es la implementación de referencia de CSL y es la más fiel. **Licencia: CPAL/AGPL** (ver 6.3). Confirmado con el prototipo 2 (ficha 0026): renumera en vivo en unos 2 ms con 50 referencias. Se incluye desde su repositorio en un commit fijo, porque npm no recibe versiones desde 2023 |
 | Lectura de formatos de referencias | citation-js (MIT) para RIS, BibTeX y CSL-JSON, y analizadores propios para NBIB y EndNote XML | — | NBIB y EndNote XML son sencillos de analizar y conviene controlarlos |
 | Zotero | API local de Zotero (HTTP en el propio equipo), detrás de una interfaz propia | Better BibTeX | La interfaz propia permite añadir EndNote y Mendeley después sin tocar el resto |
 | Exportar DOCX | Biblioteca `docx` (MIT) más un traductor propio de nuestro documento a OOXML, con **plantilla de referencia** para los estilos | Pandoc | Control total de estilos, tablas, comentarios y cambios. La biblioteca admite cambios marcados y notas al pie. El prototipo 3 confirmó que escribe marcadores con cualquier nombre; los campos complejos (citas, `REF`, `SEQ`) se escriben como fragmentos de OOXML propios dentro de ella, y los estilos de la plantilla se buscan por su nombre interno (ficha 0025) |
@@ -670,7 +671,7 @@ La respuesta importada se trata como datos no confiables: se valida contra el es
 | TypeScript, Typst | Apache-2.0 | Ninguno. Solo es incompatible con la GPL-2.0 "solo", que no está entre las candidatas |
 | jsdiff | BSD-3-Clause | Ninguno |
 | JSZip | MIT o GPL-3.0, a elegir | Se usa como MIT |
-| **citeproc-js** | **CPAL-1.0 o AGPL-3.0, a elegir** | Con AGPL o GPL-3.0 se usa bajo AGPL. Con MIT, Apache, MPL o una versión cerrada se usa bajo CPAL, que obliga a publicar los cambios que hagamos al propio citeproc-js y puede exigir mostrar una atribución en la interfaz (pantalla de inicio o "Acerca de"). En la fase 0 se lee su anexo de atribución para saber exactamente qué pide |
+| **citeproc-js** | **CPAL-1.0 o AGPL-3.0, a elegir** | Con AGPL o GPL-3.0 se usa bajo AGPL. Con MIT, Apache, MPL o una versión cerrada se usa bajo CPAL, que obliga a publicar los cambios que hagamos al propio citeproc-js y exige mostrar una atribución en la interfaz cada vez que arranca: su anexo B pide «citeproc-js implements the Citation Style Language», «(c) Frank Bennett» y citationstyles.org. SciDesk la muestra en todas sus versiones (ficha 0026). El «AGPL-1.0» de npm es un error de metadatos: la opción real es AGPL-3.0 o posterior |
 | hayagriva (alternativa a citeproc-js) | MIT o Apache-2.0 | Ninguno |
 | gitoxide / libgit2 (solo si el historial usa git) | MIT o Apache-2.0 / GPL-2.0 con excepción de enlace | Ninguno: la excepción permite usar libgit2 desde programas con cualquier licencia |
 | Estilos y traducciones de CSL | CC BY-SA 3.0 | Son datos, no código: no afectan a la licencia del programa. Si modificamos un estilo, se publica con la misma licencia y citando la fuente |
