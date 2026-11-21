@@ -1,7 +1,7 @@
 # 0012. Licencia AGPL-3.0 con acuerdo de contribución
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada
+- **Estado:** aceptada. Actualizada el 21/11/2026 con la revisión de la v0.4 (R36): regla para las dependencias.
 - **Pregunta del plan:** P1b
 
 ## Qué se decide
@@ -20,8 +20,9 @@ El código de SciDesk se publica bajo **AGPL-3.0**, con los derechos de autor a 
 - **DCO en lugar de CLA**: no da derecho a relicenciar.
 
 ## Consecuencias
-- citeproc-js se usa bajo su opción AGPL-3.0.
+- citeproc-js se usa bajo su opción AGPL-3.0; una versión con otra licencia lo usaría bajo CPAL.
+- **No se copia código GPL ni AGPL de terceros ni se usa como dependencia** (R36). La AGPL lo permitiría, pero la licencia dual solo es posible si todo el código es propio o tiene una licencia que no obligue a publicar el programa entero con ella (permisiva, MPL o con una opción así, como citeproc-js).
 - Hay que preparar el texto del CLA y automatizar su firma en GitHub (por ejemplo, con CLA Assistant) antes de aceptar contribuciones externas.
-- La integración continua comprueba las licencias de las dependencias (cargo-deny y license-checker).
+- La integración continua comprueba las licencias de las dependencias (cargo-deny y license-checker) y avisa de cualquiera que solo se pueda usar bajo GPL o AGPL.
 - Publicar en la App Store de Apple solo es posible si publica el titular de los derechos.
 - Antes de publicar, conviene que lo revise alguien especializado en propiedad intelectual.

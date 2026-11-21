@@ -1,7 +1,7 @@
 # 0015. Un proyecto, varios artículos
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada
+- **Estado:** aceptada. Actualizada el 21/11/2026: nombres de carpeta en inglés (P24).
 - **Pregunta del plan:** P12
 
 ## Qué se decide
@@ -26,7 +26,7 @@
 - Biblioteca global de SciDesk compartida entre proyectos.
 
 ## Consecuencias
-- Nueva estructura de carpetas: lo común en la raíz (`referencias/`, `personas/`, `recursos/`) y cada artículo en `articulos/<nombre>/`. El explorador oculta ese nivel mientras solo haya un artículo.
+- Nueva estructura de carpetas: lo común en la raíz (`references/`, `people/`, `resources/`) y cada artículo en `articles/<nombre>/`, con nombres en inglés desde P24 ([0005](0005-alcance-e-idiomas.md)). El programa oculta ese nivel mientras solo haya un artículo.
 - Cada versión con nombre pertenece a un artículo y guarda los datos exactos de las referencias citadas y de sus autores, para poder reproducir siempre la versión enviada.
 - Las comprobaciones se calculan por artículo.
 - Hace falta "exportar este artículo como proyecto independiente" para enviarlo o moverlo.

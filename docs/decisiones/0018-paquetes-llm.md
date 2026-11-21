@@ -28,5 +28,6 @@ SciDesk no se conecta a ningún modelo: prepara **paquetes** (instrucciones, dat
 
 ## Consecuencias
 - La respuesta importada se trata como datos no confiables: se valida contra el esquema y nunca se ejecuta.
-- El formato de los paquetes y sus esquemas se definen cuando llegue la fase en que se usen (perfiles de revista en la fase 3).
+- El formato de los paquetes y sus esquemas se definen cuando llegue la fase en que se usen (perfiles de revista en la fase 3), con la misma herramienta de esquemas que los demás formatos (R34, [0010](0010-pila-tecnologica.md)).
+- Las respuestas que proponen cambios en el texto llegan a la vista de propuestas, como las de un coautor ([0019](0019-modelo-unico-de-propuestas.md)).
 - Detalle en PLAN.md, 5.12.
