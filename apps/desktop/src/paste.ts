@@ -2,8 +2,10 @@
 // cleaner of Office's quirks (prototype 1: 135/135 real tables right), and every table in
 // it is read into plain data for the core, which makes it a .scitable with its caption and
 // notes. What is not a table is pasted as usual by the editor's schema.
-import type { PastedCell, PastedTable, Run } from "@scidesk/core";
+import { sameFormat, type PastedCell, type PastedTable, type Run } from "@scidesk/core";
 import { NOTE_START } from "@scidesk/core";
+import { HIGHLIGHT_COLORS } from "@scidesk/formats";
+import { cssColor } from "./editor.ts";
 
 const SYMBOLS: Record<string, Record<string, string>> = {
   "wingdings 2": { P: "✓", O: "✗", R: "☑", T: "☒", "£": "☐" },
@@ -118,6 +120,11 @@ function runsOf(el: Node): Run[] {
     if (tag === "i" || tag === "em" || /font-style:\s*italic/i.test(st)) g.italic = true;
     if (tag === "sup" || /vertical-align:\s*super/i.test(st)) g.sup = true;
     if (tag === "sub" || /vertical-align:\s*sub/i.test(st)) g.sub = true;
+    if (tag === "u" || /text-decoration:[^;]*underline/i.test(st)) g.underline = true;
+    const color = cssColor(/(?:^|;)\s*color:\s*([^;]+)/i.exec(st)?.[1]);
+    if (color) g.color = color;
+    const hl = /mso-highlight:\s*([a-zA-Z]+)/i.exec(st)?.[1];
+    if (hl && (HIGHLIGHT_COLORS as readonly string[]).includes(hl)) g.highlight = hl;
     e.childNodes.forEach((c) => visit(c, g));
   };
   visit(el, {});
@@ -125,7 +132,7 @@ function runsOf(el: Node): Run[] {
   const merged: Run[] = [];
   for (const r of out) {
     const last = merged.at(-1);
-    if (last && !!last.bold === !!r.bold && !!last.italic === !!r.italic && !!last.sup === !!r.sup && !!last.sub === !!r.sub) last.text += r.text;
+    if (last && sameFormat(last, r)) last.text += r.text;
     else merged.push({ ...r });
   }
   if (merged[0]) merged[0].text = merged[0].text.replace(/^\s+/, "");

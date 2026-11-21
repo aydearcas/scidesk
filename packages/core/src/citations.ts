@@ -12,7 +12,26 @@ export interface CitationResources {
   locale(lang: string): Promise<string>;
 }
 
-export interface Run { text: string; bold?: boolean; italic?: boolean; sup?: boolean; sub?: boolean }
+export interface Run {
+  text: string; bold?: boolean; italic?: boolean; sup?: boolean; sub?: boolean;
+  /** Record 0043: underline, colour of the text (#RRGGBB) and Word's highlight colour. */
+  underline?: boolean; color?: string; highlight?: string;
+}
+
+/** The marks of a text node as a run's format (the same in every export). */
+export function runFormat(marks: { type: string; attrs?: Record<string, unknown> }[] = []): Omit<Run, "text"> {
+  const f: Omit<Run, "text"> = {};
+  for (const m of marks) {
+    if (m.type === "bold") f.bold = true;
+    else if (m.type === "italic") f.italic = true;
+    else if (m.type === "underline") f.underline = true;
+    else if (m.type === "superscript") f.sup = true;
+    else if (m.type === "subscript") f.sub = true;
+    else if (m.type === "textColor") f.color = String(m.attrs?.color);
+    else if (m.type === "highlight") f.highlight = String(m.attrs?.color);
+  }
+  return f;
+}
 export interface RenderedCitation { html: string; runs: Run[]; plain: string; refs: string[] }
 export interface Rendering {
   citations: Map<string, RenderedCitation>;

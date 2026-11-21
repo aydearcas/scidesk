@@ -855,6 +855,50 @@
       ],
       "type": "object"
     },
+    "Highlight": {
+      "additionalProperties": false,
+      "description": "Highlight, with one of Word's highlight colours (w:highlight, record 0043).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "enum": [
+                "yellow",
+                "green",
+                "cyan",
+                "magenta",
+                "blue",
+                "red",
+                "darkBlue",
+                "darkCyan",
+                "darkGreen",
+                "darkMagenta",
+                "darkRed",
+                "darkYellow",
+                "darkGray",
+                "lightGray",
+                "black",
+                "white"
+              ]
+            }
+          },
+          "required": [
+            "color"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "highlight",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
     "Inline": {
       "anyOf": [
         {
@@ -2578,6 +2622,35 @@
       ],
       "type": "object"
     },
+    "TextColor": {
+      "additionalProperties": false,
+      "description": "Colour of the text (record 0043).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "description": "Colour of the text, #RRGGBB in capitals (w:color).",
+              "pattern": "^#[0-9A-F]{6}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "color"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "textColor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
     "TextMark": {
       "anyOf": [
         {
@@ -2594,6 +2667,12 @@
         },
         {
           "$ref": "#/$defs/Subscript"
+        },
+        {
+          "$ref": "#/$defs/TextColor"
+        },
+        {
+          "$ref": "#/$defs/Highlight"
         },
         {
           "$ref": "#/$defs/LangMark"

@@ -10,7 +10,7 @@
 // preview, later). Compiling is not done here: a TypstCompiler is given (Rust in the app,
 // the scidesk-pdf binary on the command line).
 import type { JournalProfileFile, PMNode } from "@scidesk/formats";
-import { renderCitations, type CitationResources, type Run } from "./citations.ts";
+import { renderCitations, runFormat, type CitationResources, type Run } from "./citations.ts";
 import { composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
 import type { Project } from "./project.ts";
 import { pendingCount } from "./checks.ts";
@@ -68,10 +68,15 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   const files: Record<string, Uint8Array> = {};
 
   // ---------------------------------------------------------------- inline content
-  const runs = (rs: Run[]) => rs.map((r) => wrap(typstEscape(r.text), { bold: r.bold, italic: r.italic, sup: r.sup, sub: r.sub })).join("");
-  function wrap(t: string, m: { bold?: boolean; italic?: boolean; sup?: boolean; sub?: boolean }) {
+  const runs = (rs: Run[]) => rs.map((r) => wrap(typstEscape(r.text), r)).join("");
+  // Word's highlight colours, as Typst colours (record 0043)
+  const HIGHLIGHT: Record<string, string> = { yellow: "#FFFF00", green: "#00FF00", cyan: "#00FFFF", magenta: "#FF00FF", blue: "#0000FF", red: "#FF0000", darkBlue: "#000080", darkCyan: "#008080", darkGreen: "#008000", darkMagenta: "#800080", darkRed: "#800000", darkYellow: "#808000", darkGray: "#808080", lightGray: "#C0C0C0", black: "#000000", white: "#FFFFFF" };
+  function wrap(t: string, m: Omit<Run, "text">) {
     if (!t) return t;
     let out = t;
+    if (m.underline) out = `#underline[${out}]`;
+    if (m.color && /^#[0-9A-F]{6}$/i.test(m.color)) out = `#text(fill: rgb(${str(m.color)}))[${out}]`;
+    if (m.highlight && HIGHLIGHT[m.highlight]) out = `#highlight(fill: rgb(${str(HIGHLIGHT[m.highlight])}))[${out}]`;
     if (m.sup) out = `#super[${out}]`;
     if (m.sub) out = `#sub[${out}]`;
     if (m.italic) out = `#emph[${out}]`;
@@ -83,7 +88,7 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted, as in the DOCX
-      if (n.type === "text") out += wrap(typstEscape(n.text ?? ""), { bold: marks.has("bold"), italic: marks.has("italic"), sup: marks.has("superscript"), sub: marks.has("subscript") });
+      if (n.type === "text") out += wrap(typstEscape(n.text ?? ""), runFormat(n.marks));
       else if (n.type === "hardBreak") out += "#linebreak()";
       else if (n.type === "citation") out += runs(rendering.citations.get(n.attrs!.id as string)?.runs ?? [{ text: "?" }]);
       else if (n.type === "xref") {

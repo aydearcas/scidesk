@@ -3,7 +3,7 @@
 Tauri 2 + React + Tiptap. Estado: **corte vertical de la fase 1** (R42, ficha [0032](../../docs/decisiones/0032-corte-vertical.md)): abrir un proyecto, escribir, insertar citas, guardar, exportar el DOCX para coautores e importar la copia devuelta viendo sus propuestas. Sin tablas, sin estilos y sin interfaz cuidada.
 
 - `src/editor.ts`: el esquema del editor, con los nombres y atributos del formato `.scidoc`; ids de bloque únicos en cada transacción.
-- `src/QuickCite.tsx`: la cita rápida (Ctrl+Mayús+Y o «Citar…»), con varias referencias por cita y prefijo, página y sufijo; sobre una cita seleccionada, la edita (ficha 0037).
+- `src/QuickCite.tsx`: la cita rápida (Ctrl+Mayús+C o «Citar…»), con varias referencias por cita y prefijo, página y sufijo; sobre una cita seleccionada, la edita (ficha 0037).
 - `src/LibraryPanel.tsx`: la pestaña «Biblioteca»: buscar, ver cuántas veces se cita cada referencia, añadir, editar y borrar.
 - `src/AuthorsDialog.tsx`: el diálogo «Autores…»: quién firma y en qué orden, personas y grupos, afiliaciones y matriz CRediT; guarda `people.json` y `authors.json` a la vez (ficha 0038).
 - `src/ChecksPanel.tsx`: la pestaña «Comprobaciones»: recuentos frente a los límites, palabras por sección, avisos con «Ir», «Es correcto» y «No aplica», e ignorados (ficha 0041).

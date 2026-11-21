@@ -2,9 +2,9 @@
 // attributes are those of the .scidoc format (packages/formats, record 0031): the editor's
 // JSON is saved as it is (R34). Vertical slice: title, headings, paragraphs, bold, italic,
 // superscript, subscript and citations.
-import { Extension, Node, mergeAttributes } from "@tiptap/core";
+import { Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { newId } from "@scidesk/formats";
+import { HIGHLIGHT_COLORS, newId } from "@scidesk/formats";
 import Bold from "@tiptap/extension-bold";
 import Document from "@tiptap/extension-document";
 import Heading from "@tiptap/extension-heading";
@@ -172,12 +172,54 @@ const partRef = (name: "tableRef" | "figureRef", label: string) => Node.create({
 });
 
 /**
- * Quick citation: Ctrl+Shift+Y (Cmd+Shift+Y on the Mac). Provisional until the two
- * shortcut schemes (R19, D6); never Ctrl+Alt (AltGr on Spanish keyboards).
+ * Quick citation: Ctrl+Shift+C (Cmd+Shift+C on the Mac), in both shortcut schemes (D6,
+ * record 0043); never Ctrl+Alt (AltGr on Spanish keyboards).
  */
 const QuickCiteKey = Extension.create({
   name: "quickCiteKey",
-  addKeyboardShortcuts: () => ({ "Mod-Shift-y": () => { hooks.quickCite(); return true; } }),
+  addKeyboardShortcuts: () => ({ "Mod-Shift-c": () => { hooks.quickCite(); return true; } }),
+});
+
+/** "#c00000", "rgb(192, 0, 0)" -> "#C00000"; anything else (named colours, black) -> null. */
+export function cssColor(value: string | null | undefined): string | null {
+  const v = (value ?? "").trim();
+  let hex = /^#([0-9a-f]{6})$/i.exec(v)?.[1] ?? null;
+  const rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(v);
+  if (rgb) hex = rgb.slice(1, 4).map((x) => Number(x).toString(16).padStart(2, "0")).join("");
+  return hex && hex.toLowerCase() !== "000000" ? `#${hex.toUpperCase()}` : null;
+}
+
+// Record 0043: underline, colour of the text and Word's highlight, with the names and
+// attributes of the .scidoc format; Word's pasted HTML is read too (color:…, mso-highlight:…).
+const Underline = Mark.create({
+  name: "underline",
+  parseHTML: () => [{ tag: "u" }, { style: "text-decoration", getAttrs: (v) => (/underline/.test(String(v)) ? null : false) }],
+  renderHTML: () => ["u", 0],
+  addKeyboardShortcuts() { return { "Mod-u": () => this.editor.commands.toggleMark(this.name) }; },
+});
+const TextColor = Mark.create({
+  name: "textColor",
+  addAttributes: () => ({ color: { default: null } }),
+  parseHTML: () => [{ style: "color", getAttrs: (v) => { const c = cssColor(String(v)); return c ? { color: c } : false; } }],
+  renderHTML: ({ HTMLAttributes }) => ["span", { style: `color: ${HTMLAttributes.color}`, "data-color": HTMLAttributes.color }, 0],
+});
+const Highlight = Mark.create({
+  name: "highlight",
+  addAttributes: () => ({ color: { default: "yellow" } }),
+  parseHTML: () => [
+    { tag: "mark", getAttrs: (el) => ({ color: (HIGHLIGHT_COLORS as readonly string[]).includes((el as HTMLElement).dataset.highlight ?? "") ? (el as HTMLElement).dataset.highlight : "yellow" }) },
+    // Word: <span style="background:yellow;mso-highlight:yellow">; the browser drops the
+    // unknown mso- property from the parsed style, so the attribute is read as written
+    {
+      tag: "span[style*='mso-highlight']",
+      consuming: false,
+      getAttrs: (el) => {
+        const v = /mso-highlight:\s*([a-zA-Z]+)/i.exec((el as HTMLElement).getAttribute("style") ?? "")?.[1] ?? "";
+        return (HIGHLIGHT_COLORS as readonly string[]).includes(v) ? { color: v } : false;
+      },
+    },
+  ],
+  renderHTML: ({ HTMLAttributes }) => ["mark", { "data-highlight": HTMLAttributes.color, class: `hl-${HTMLAttributes.color}` }, 0],
 });
 
 export const extensions = [
@@ -204,5 +246,8 @@ export const extensions = [
   Italic,
   Superscript,
   Subscript,
+  Underline,
+  TextColor,
+  Highlight,
   UndoRedo,
 ];

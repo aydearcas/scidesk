@@ -1,6 +1,6 @@
 # Diseño de la interfaz de SciDesk
 
-**Propuesta v0.1, 20 de noviembre de 2026.** Nada de esto está decidido. Las decisiones que necesito de ti están numeradas al final (sección 12).
+**Propuesta v0.1, 20 de noviembre de 2026. Las decisiones D1–D8 (sección 12) las tomó el usuario el 21 de noviembre de 2026** ([ficha 0043](../decisiones/0043-decisiones-de-interfaz.md)): todas como se proponían, con la cita en Ctrl+Mayús+C, «Es correcto» y «No aplica» para los avisos, y color del texto y resaltado en la cinta. La maqueta está pendiente de ajustarse a la v0.5 del plan (recortes, aprobación final y envíos anteriores fuera) y de las láminas de D8.
 
 La maqueta está en un lienzo de diseño con siete láminas: [Interfaz de SciDesk](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x). Es privada, solo la ves tú. En el lienzo puedes comentar sobre cada lámina, cambiar textos y probar otros colores de acento en la lámina de estilo.
 
@@ -160,7 +160,7 @@ Están todos en la lámina de estilo.
 
 ### 4.3 Barra de herramientas, burbuja y menú contextual
 
-- **Barra de herramientas**, una sola fila: deshacer y rehacer, estilo del párrafo, negrita, cursiva, subrayado, superíndice y subíndice, y las inserciones (cita, referencia cruzada, tabla, figura, símbolo). Los botones de negrita y cursiva llevan N y K, como en Word en español, o B e I con el esquema internacional.
+- **Barra de herramientas**, una sola fila: deshacer y rehacer, estilo del párrafo, negrita, cursiva, subrayado, superíndice y subíndice, **color del texto y resaltado** (con los colores de Word, ficha 0043), y las inserciones (cita, referencia cruzada, tabla, figura, símbolo). Los botones de negrita y cursiva llevan N y K, como en Word en español, o B e I con el esquema internacional.
 - **Burbuja de selección.** Al seleccionar texto aparece junto a él una barra pequeña con formato, citar, comentar y cambiar el idioma.
 - **Menú contextual.** Lo que tiene sentido en cada sitio: en el texto, cita, referencia cruzada, comentario, pendiente y mover a recortes. En una celda, además, las órdenes de tabla.
 - **Barra de tabla.** Al entrar en una tabla aparece sobre ella una barra con filas, columnas, combinar celdas, alineación decimal y notas.
@@ -281,7 +281,7 @@ Todos los pares de texto y fondo de la maqueta cumplen el contraste mínimo de 4
 - De tú, en frases cortas y sin jerga. Nunca se nombra un formato de archivo si no hace falta.
 - Los botones dicen lo que hacen con un verbo: "Añadir apartado", "Ir al texto", "Usar esta".
 - Los avisos dicen qué pasa y dónde: "DAS28 se usa antes de definirla. Primera aparición en Métodos, párrafo 1".
-- Para descartar un aviso se usa "Es correcto", no "Ignorar". Refleja mejor la decisión de quien escribe.
+- Para descartar un aviso se usa "Es correcto" o "No aplica", no "Ignorar". Refleja mejor la decisión de quien escribe (D7, ficha 0043).
 - Los estados vacíos explican qué aparecerá ahí. Ejemplo, en la lista de envíos: "Todavía no se ha enviado. Cada envío quedará aquí con su fecha, su número de manuscrito, la decisión y la versión exacta que se mandó".
 - Sin formas con género para referirse a quien usa el programa: "Correspondencia", no "Autor para correspondencia".
 - Todos los textos van en archivos de traducción desde el principio, en español e inglés.
@@ -295,7 +295,7 @@ Atajos propuestos, todos configurables. Ninguno usa Ctrl+Alt, que en los teclado
 | Negrita, cursiva, subrayado | Ctrl+N, Ctrl+K, Ctrl+S | Ctrl+B, Ctrl+I, Ctrl+U |
 | Guardar una versión con nombre | Ctrl+G | Ctrl+S |
 | Buscar, reemplazar | Ctrl+B, Ctrl+L | Ctrl+F, Ctrl+H |
-| Insertar cita | Ctrl+Mayús+C | Igual |
+| Insertar cita | Ctrl+Mayús+C (decidido, D6) | Igual |
 | Insertar referencia cruzada | Ctrl+Mayús+R | Igual |
 | Comentario | Ctrl+Mayús+M | Igual |
 | Modo de sugerencias | Ctrl+Mayús+E, como en Word | Igual |
@@ -341,6 +341,11 @@ La estructura no cambia de una fase a otra. En la fase 1 las vistas que no exist
 | 5.12 Paquetes para LLM | Menú Archivo y los puntos donde se usan (crear un perfil de revista, validar términos), con el diálogo de la sección 6 |
 
 ## 12. Decisiones que te pido
+
+| # | Decisión | Mi propuesta |
+|---|---|---|
+
+**Decididas el 21/11/2026** (ficha 0043): D1–D5 y D8 como se proponen; D6 sí, con la cita en Ctrl+Mayús+C en los dos esquemas; D7, «Es correcto» y «No aplica»; en D8, primero inicio y tabla en su pestaña, y ajustar la maqueta a la v0.5.
 
 | # | Decisión | Mi propuesta |
 |---|---|---|

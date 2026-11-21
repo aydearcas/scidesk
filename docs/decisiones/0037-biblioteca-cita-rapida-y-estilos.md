@@ -35,7 +35,7 @@
   Cada archivo, su fuente y su licencia están en [`packages/core/assets/styles/README.md`](../../packages/core/assets/styles/README.md). JAMA es un estilo **dependiente**: el catálogo lo enlaza con su padre (`parent`), que es AMA, y citeproc-js recibe el padre. En la ventana, cada estilo se carga la primera vez que se usa.
 - **La cita se muestra como la escribe el estilo.** En el editor, la cita ya no es siempre un superíndice: se construye con los fragmentos de citeproc-js (superíndice, cursiva) como nodos de texto, nunca con su HTML, porque los datos vienen de archivos importados. Así, «(Alonso & Benítez, 2025)» en APA y «¹» en Vancouver con superíndice.
 - **En la ventana**:
-  - **Cita rápida**: un diálogo que se abre con **Ctrl+Mayús+Y** (Cmd en el Mac) o con el botón «Citar…».
+  - **Cita rápida**: un diálogo que se abre con **Ctrl+Mayús+Y** (Cmd en el Mac; **cambiado a Ctrl+Mayús+C** por decisión del usuario, ficha 0043) o con el botón «Citar…».
     - Se escribe autor, año o palabras del título. Las flechas mueven la selección e Intro añade la referencia a la cita.
     - Intro con la búsqueda vacía inserta la cita. Retroceso quita la última referencia y Esc cierra.
     - Cabe más de una referencia por cita, cada una con prefijo, página y sufijo.

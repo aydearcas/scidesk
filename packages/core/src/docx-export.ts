@@ -25,7 +25,7 @@ import {
   FIELDS, SCIDESK_PROPERTY, SEQ_LABELS, ZOTERO_PREF_PROPERTY, blockBookmark, numberBookmark, ownReferenceUri,
   snapshotBookmark, validate, type JournalProfileFile, type PMNode,
 } from "@scidesk/formats";
-import { renderCitations, type CitationResources, type Rendering, type Run } from "./citations.ts";
+import { renderCitations, runFormat, type CitationResources, type Rendering, type Run } from "./citations.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 
@@ -44,7 +44,7 @@ export const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rPr = (r: Omit<Run, "text">) => {
-  const p = (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
+  const p = (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
   return p ? `<w:rPr>${p}</w:rPr>` : "";
 };
 const runXml = (r: Run) => `<w:r>${rPr(r)}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
@@ -53,7 +53,10 @@ const raw = (xml: string) => ImportedXmlComponent.fromXmlString(xml) as unknown 
 const fieldXml = (instr: string, result: string) =>
   `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${esc(instr)} </w:instrText></w:r>` +
   `<w:r><w:fldChar w:fldCharType="separate"/></w:r>${result}<w:r><w:fldChar w:fldCharType="end"/></w:r>`;
-const textRun = (r: Run) => new TextRun({ text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}) });
+const textRun = (r: Run) => new TextRun({
+  text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}),
+  ...(r.underline ? { underline: {} } : {}), ...(r.color ? { color: r.color.slice(1) } : {}), ...(r.highlight ? { highlight: r.highlight as "yellow" } : {}),
+});
 export const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
 
 /** Width and height in pixels of a PNG, JPEG, GIF or BMP, from its header. */
@@ -233,7 +236,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted (w:ins/w:del: V1)
-      if (n.type === "text") out.push(textRun({ text: n.text!, bold: marks.has("bold"), italic: marks.has("italic"), sup: marks.has("superscript"), sub: marks.has("subscript") }));
+      if (n.type === "text") out.push(textRun({ text: n.text!, ...runFormat(n.marks) }));
       else if (n.type === "hardBreak") out.push(new TextRun({ break: 1 }));
       else if (n.type === "citation") out.push(...citation(n));
       else if (n.type === "xref") {

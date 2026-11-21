@@ -29,6 +29,10 @@ const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
 
+/** Word's standard colours (the row under the theme colours) and the usual highlights. */
+const TEXT_COLORS: [string, string][] = [["#C00000", "darkRed"], ["#FF0000", "red"], ["#FFC000", "orange"], ["#00B050", "green"], ["#0070C0", "blue"], ["#002060", "darkBlue"], ["#7030A0", "purple"], ["#7F7F7F", "gray"]];
+const HIGHLIGHTS = ["yellow", "green", "cyan", "magenta", "red", "blue", "lightGray"] as const;
+
 const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
 
 export function App() {
@@ -344,6 +348,27 @@ export function App() {
             <div className="toolbar">
               <button onClick={run(save)} disabled={!dirty}>{t("save")}</button>
               <span className="status" aria-live="polite">{saving ? t("saving") : dirty ? t("unsaved") : lastSaved ? t("savedAt", { time: lastSaved.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) }) : t("saved")}</span>
+              {/* colour and highlight (record 0043); the final toolbar comes with the interface skeleton */}
+              <select value="" aria-label={t("textColor")} title={t("textColor")} onChange={(e) => {
+                const v = e.target.value;
+                if (!editor || !v) return;
+                const c = editor.chain().focus();
+                (v === "auto" ? c.unsetMark("textColor") : c.setMark("textColor", { color: v })).run();
+              }}>
+                <option value="">{t("textColor")}</option>
+                <option value="auto">{t("colorAuto")}</option>
+                {TEXT_COLORS.map(([hex, key]) => <option key={hex} value={hex} style={{ color: hex }}>■ {t(`colors.${key}`)}</option>)}
+              </select>
+              <select value="" aria-label={t("highlightColor")} title={t("highlightColor")} onChange={(e) => {
+                const v = e.target.value;
+                if (!editor || !v) return;
+                const c = editor.chain().focus();
+                (v === "none" ? c.unsetMark("highlight") : c.setMark("highlight", { color: v })).run();
+              }}>
+                <option value="">{t("highlightColor")}</option>
+                <option value="none">{t("highlightNone")}</option>
+                {HIGHLIGHTS.map((h) => <option key={h} value={h}>{t(`highlights.${h}`)}</option>)}
+              </select>
               <button onClick={openQuickCite} title={t("quickCiteShortcut")}>{t("cite")}</button>
               <select value={article!.article.citationStyle.id} onChange={(e) => void chooseStyle(e.target.value)} aria-label={t("citationStyle")} title={t("citationStyle")}>
                 {!BUNDLED_STYLES.some((s) => s.id === article!.article.citationStyle.id) && <option value={article!.article.citationStyle.id}>{article!.article.citationStyle.id}</option>}

@@ -10,7 +10,7 @@
 import type { Run } from "./citations.ts";
 import { DOMParser, type Element, type Node } from "@xmldom/xmldom";
 import JSZip from "jszip";
-import { newId, type PMNode } from "@scidesk/formats";
+import { HIGHLIGHT_COLORS, newId, type PMNode } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
 import { createProject, loadProject, saveDocument, type Project } from "./project.ts";
 
@@ -104,7 +104,16 @@ async function readWord(bytes: Uint8Array) {
       const rPr = child(r, "rPr");
       const on = (n: string) => { const e = child(rPr, n); return !!e && !["0", "false", "off"].includes(attr(e, "val")); };
       const va = attr(child(rPr, "vertAlign"), "val");
-      const f = { bold: on("b"), italic: on("i"), sup: va === "superscript", sub: va === "subscript" };
+      const color = attr(child(rPr, "color"), "val").toUpperCase();
+      const hl = attr(child(rPr, "highlight"), "val");
+      const u = attr(child(rPr, "u"), "val");
+      const f: Omit<Run, "text"> = {
+        bold: on("b"), italic: on("i"), sup: va === "superscript", sub: va === "subscript",
+        // "auto" and black are the default colour; "none" is no highlight
+        ...(/^[0-9A-F]{6}$/.test(color) && color !== "000000" ? { color: `#${color}` } : {}),
+        ...((HIGHLIGHT_COLORS as readonly string[]).includes(hl) ? { highlight: hl } : {}),
+        ...(child(rPr, "u") && u !== "none" ? { underline: true } : {}),
+      };
       for (const e of kids(r)) {
         const ln = e.localName;
         if (ln === "fldChar") { const t = attr(e, "fldCharType"); if (t === "begin") inFieldCode++; else if (t === "separate" && inFieldCode) inFieldCode--; continue; }
@@ -125,7 +134,7 @@ async function readWord(bytes: Uint8Array) {
     const push = (text: string, f: Omit<Run, "text">) => {
       if (!text) return;
       const last = P.runs.at(-1);
-      if (last && !!last.bold === !!f.bold && !!last.italic === !!f.italic && !!last.sup === !!f.sup && !!last.sub === !!f.sub) last.text += text;
+      if (last && sameFormat(last, f)) last.text += text;
       else P.runs.push({ text, ...f });
     };
     const walk = (n: Element, deleted: boolean) => {
@@ -174,8 +183,14 @@ async function readWord(bytes: Uint8Array) {
   return { items, images };
 }
 
+/** Two runs with the same format (they can be one). */
+export const sameFormat = (a: Omit<Run, "text">, b: Omit<Run, "text">) =>
+  !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.sup === !!b.sup && !!a.sub === !!b.sub && !!a.underline === !!b.underline && a.color === b.color && a.highlight === b.highlight;
 export const inline = (runs: Run[]): PMNode[] => runs.filter((r) => r.text).map((r) => {
-  const marks = [r.bold && { type: "bold" }, r.italic && { type: "italic" }, r.sup && { type: "superscript" }, r.sub && { type: "subscript" }].filter(Boolean) as { type: string }[];
+  const marks = [
+    r.bold && { type: "bold" }, r.italic && { type: "italic" }, r.underline && { type: "underline" }, r.sup && { type: "superscript" }, r.sub && { type: "subscript" },
+    r.color && { type: "textColor", attrs: { color: r.color.toUpperCase() } }, r.highlight && { type: "highlight", attrs: { color: r.highlight } },
+  ].filter(Boolean) as { type: string; attrs?: Record<string, unknown> }[];
   return marks.length ? { type: "text", text: r.text, marks } : { type: "text", text: r.text };
 });
 /** Runs without a leading pattern (the "Tabla 1. " of a caption). */

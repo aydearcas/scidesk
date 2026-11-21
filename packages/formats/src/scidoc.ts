@@ -50,6 +50,12 @@ export const enumOf = <const T extends readonly string[]>(values: T, description
 
 // ------------------------------------------------------------------ marks
 
+/** Word's highlight colours (ST_HighlightColor), the only ones a DOCX can carry as highlight. */
+export const HIGHLIGHT_COLORS = [
+  "yellow", "green", "cyan", "magenta", "blue", "red", "darkBlue", "darkCyan", "darkGreen", "darkMagenta",
+  "darkRed", "darkYellow", "darkGray", "lightGray", "black", "white",
+] as const;
+
 const simpleMark = (name: string, description: string) => Strict({ type: Type.Literal(name) }, { description });
 const SuggestionId = IdOf("ch", "Id of the tracked change; its author, date and origin are in the `changes` registry.");
 
@@ -59,6 +65,8 @@ const markDefs = {
   Underline: simpleMark("underline", "Underline."),
   Superscript: simpleMark("superscript", "Superscript."),
   Subscript: simpleMark("subscript", "Subscript."),
+  TextColor: Strict({ type: Type.Literal("textColor"), attrs: Strict({ color: Type.String({ pattern: "^#[0-9A-F]{6}$", description: "Colour of the text, #RRGGBB in capitals (w:color)." }) }) }, { description: "Colour of the text (record 0043)." }),
+  Highlight: Strict({ type: Type.Literal("highlight"), attrs: Strict({ color: enumOf(HIGHLIGHT_COLORS) }) }, { description: "Highlight, with one of Word's highlight colours (w:highlight, record 0043)." }),
   LangMark: Strict({ type: Type.Literal("lang"), attrs: Strict({ lang: Lang }) }, { description: "Language of a fragment inside a paragraph (spell checking, hyphenation, export)." }),
   Link: Strict({ type: Type.Literal("link"), attrs: Strict({ href: Type.String({ pattern: "^(https?://|mailto:)\\S+$" }) }) }, { description: "Hyperlink (http, https or mailto only)." }),
   CommentMark: Strict({ type: Type.Literal("comment"), attrs: Strict({ id: IdOf("cm") }) }, { description: "Text anchored to a comment of the `comments` registry." }),
@@ -76,7 +84,7 @@ const markDefs = {
   }, { description: "Tracked change of a node attribute (heading level, cell alignment...). A change of text format is a deletion plus an insertion of the same text with the same id." }),
   TextMark: Type.Union([
     Type.Ref("Bold"), Type.Ref("Italic"), Type.Ref("Underline"), Type.Ref("Superscript"), Type.Ref("Subscript"),
-    Type.Ref("LangMark"), Type.Ref("Link"), Type.Ref("CommentMark"),
+    Type.Ref("TextColor"), Type.Ref("Highlight"), Type.Ref("LangMark"), Type.Ref("Link"), Type.Ref("CommentMark"),
     Type.Ref("Insertion"), Type.Ref("Deletion"), Type.Ref("Modification"),
   ]),
   /** Marks a node (block or inline atom) can carry: only tracked changes and comments. */

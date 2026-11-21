@@ -1,7 +1,7 @@
 // Quick citation (PLAN 5.6, record 0037): a search box over the library (author, year,
 // title…); Enter adds the highlighted reference to the citation, Enter with an empty search
 // inserts it. Several references per citation, each with prefix, page and suffix. Opened
-// with Ctrl+Shift+Y or the toolbar; on a selected citation it edits that citation.
+// with Ctrl+Shift+C or the toolbar; on a selected citation it edits that citation.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { searchLibrary, summarize } from "@scidesk/core";

@@ -109,3 +109,10 @@ footer { color: var(--muted); font-size: 11px; padding: 8px 12px; border-top: 1p
 button.link { background: none; border: 0; color: var(--accent); padding: 0; cursor: pointer; text-align: left; }
 .tag.level-blocking { color: var(--del); border-color: var(--del); }
 .tag.level-review { color: #b7791f; border-color: #b7791f; }
+
+/* Word's highlight colours (record 0043) */
+mark { color: #000; padding: 0 1px; }
+.hl-yellow { background: #ffff00; } .hl-green { background: #00ff00; } .hl-cyan { background: #00ffff; } .hl-magenta { background: #ff00ff; }
+.hl-blue { background: #0000ff; color: #fff; } .hl-red { background: #ff0000; } .hl-darkBlue { background: #000080; color: #fff; } .hl-darkCyan { background: #008080; color: #fff; }
+.hl-darkGreen { background: #008000; color: #fff; } .hl-darkMagenta { background: #800080; color: #fff; } .hl-darkRed { background: #800000; color: #fff; }
+.hl-darkYellow { background: #808000; color: #fff; } .hl-darkGray { background: #808080; color: #fff; } .hl-lightGray { background: #c0c0c0; } .hl-black { background: #000; color: #fff; } .hl-white { background: #fff; }
