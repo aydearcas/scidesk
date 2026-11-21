@@ -1,0 +1,4 @@
+# Generated files are written with LF and compared byte for byte: keep LF on every OS.
+* text=auto eol=lf
+*.docx binary
+*.png binary

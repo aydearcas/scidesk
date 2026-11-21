@@ -69,7 +69,8 @@ describe("the published JSON Schema is what SciDesk validates with", () => {
 
   it("schemas/ is up to date (run npm run build:schemas)", () => {
     for (const [name, schema] of Object.entries(published)) {
-      expect(readFileSync(`${root}schemas/${name}.schema.json`, "utf8"), name).toBe(stableStringify(schema));
+      // line endings do not count: a checkout may turn LF into CRLF
+      expect(readFileSync(`${root}schemas/${name}.schema.json`, "utf8").replace(/\r\n/g, "\n"), name).toBe(stableStringify(schema));
     }
   });
 
