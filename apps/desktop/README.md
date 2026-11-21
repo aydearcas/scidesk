@@ -7,7 +7,8 @@ Tauri 2 + React + Tiptap. Estado: **corte vertical de la fase 1** (R42, ficha [0
 - `src/LibraryPanel.tsx`: la pestaña «Biblioteca»: buscar, ver cuántas veces se cita cada referencia, añadir, editar y borrar.
 - `src/AuthorsDialog.tsx`: el diálogo «Autores…»: quién firma y en qué orden, personas y grupos, afiliaciones y matriz CRediT; guarda `people.json` y `authors.json` a la vez (ficha 0038).
 - `src/platform.ts`: en la ventana de Tauri, los archivos van por comandos de Rust limitados a la carpeta abierta; en un navegador, el proyecto vive en memoria (vista para probar la interfaz).
-- `src-tauri/`: los comandos `open_project`, `read_file`, `write_file` (escritura atómica) y `list_files`, sin acceso general al sistema de archivos.
+- `src-tauri/`: los comandos `open_project`, `read_file`, `write_file` (escritura atómica) y `list_files`, sin acceso general al sistema de archivos, y `local_read`, `local_write`, `local_remove` y `local_list`, limitados a la carpeta local de datos de la aplicación (registro de recuperación, ficha 0039).
+- Guardado automático: registro a los 300 ms de cada cambio y guardado tras 2 s de pausa (como mucho, 20 s); al abrir, se ofrece recuperar lo que no llegó al disco. En el navegador, el proyecto de demostración vive en el almacenamiento del navegador: recargar la página es como reabrirlo tras un cierre inesperado.
 
 Vista en el navegador (núcleo de Tauri simulado):
 

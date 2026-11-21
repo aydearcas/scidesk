@@ -1,14 +1,16 @@
-//! SciDesk's Tauri side for the vertical slice: open a project folder and read, write and
-//! list files inside it. Nothing outside the folder the user chose is reachable (PLAN 6.6):
-//! paths are relative, without "..", and resolved under the root. Writes are atomic: a
-//! temporary file next to the target, then a rename (R25).
+//! SciDesk's Tauri side: open a project folder and read, write and list files inside it.
+//! Nothing outside the folder the user chose is reachable (PLAN 6.6): paths are relative,
+//! without "..", and resolved under the root. Writes are atomic: a temporary file next to
+//! the target, then a rename (R25). Besides, a small store in this computer's app local
+//! data folder for what never travels with the project, such as the journal of unsaved
+//! changes (R25, R26, record 0039), with the same rules.
 use std::fs;
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
 
 use tauri::ipc::{InvokeBody, Request, Response};
-use tauri::State;
+use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
 
 #[derive(Default)]
@@ -90,7 +92,12 @@ fn write_file(state: State<ProjectRoot>, request: Request) -> Result<(), String>
 #[tauri::command]
 fn list_files(state: State<ProjectRoot>, dir: String) -> Result<Vec<String>, String> {
     let root = root(&state)?;
-    let start = resolve(&root, &dir)?;
+    list_under(&root, &dir)
+}
+
+/// Every file under `dir` (relative to `root`), as paths relative to `root` with "/".
+fn list_under(root: &Path, dir: &str) -> Result<Vec<String>, String> {
+    let start = resolve(root, dir)?;
     let mut out = Vec::new();
     fn visit(root: &Path, d: &Path, out: &mut Vec<String>) -> std::io::Result<()> {
         let Ok(entries) = fs::read_dir(d) else { return Ok(()) };
@@ -110,9 +117,60 @@ fn list_files(state: State<ProjectRoot>, dir: String) -> Result<Vec<String>, Str
         }
         Ok(())
     }
-    visit(&root, &start, &mut out).map_err(|e| e.to_string())?;
+    visit(root, &start, &mut out).map_err(|e| e.to_string())?;
     out.sort();
     Ok(out)
+}
+
+// ---------------------------------------------------------------- local store (app data)
+
+/// This computer's app local data folder (never synchronised with the project).
+fn local_root(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    app.path().app_local_data_dir().map_err(|e| e.to_string())
+}
+
+/// A key of the local store: a relative path of plain segments.
+fn local_path(root: &Path, key: &str) -> Result<PathBuf, String> {
+    let ok = !key.is_empty()
+        && key.split('/').all(|s| !s.is_empty() && s != "." && s != ".." && s.chars().all(|c| c.is_ascii_alphanumeric() || "._-".contains(c)));
+    if !ok {
+        return Err(format!("bad local key: {key}"));
+    }
+    resolve(root, key)
+}
+
+#[tauri::command]
+fn local_read(app: tauri::AppHandle, key: String) -> Result<Option<String>, String> {
+    let full = local_path(&local_root(&app)?, &key)?;
+    match fs::read_to_string(&full) {
+        Ok(text) => Ok(Some(text)),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+fn local_write(app: tauri::AppHandle, key: String, text: String) -> Result<(), String> {
+    write_atomic(&local_path(&local_root(&app)?, &key)?, text.as_bytes())
+}
+
+#[tauri::command]
+fn local_remove(app: tauri::AppHandle, key: String) -> Result<(), String> {
+    match fs::remove_file(local_path(&local_root(&app)?, &key)?) {
+        Err(e) if e.kind() != std::io::ErrorKind::NotFound => Err(e.to_string()),
+        _ => Ok(()),
+    }
+}
+
+/// Keys under a prefix that is a folder ("" for all), e.g. "projects/<id>/recovery/".
+#[tauri::command]
+fn local_list(app: tauri::AppHandle, prefix: String) -> Result<Vec<String>, String> {
+    let root = local_root(&app)?;
+    let dir = prefix.trim_end_matches('/');
+    if !dir.is_empty() {
+        local_path(&root, dir)?;
+    }
+    Ok(list_under(&root, dir)?.into_iter().filter(|k| k.starts_with(&prefix)).collect())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -120,7 +178,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
-        .invoke_handler(tauri::generate_handler![open_project, read_file, write_file, list_files])
+        .invoke_handler(tauri::generate_handler![open_project, read_file, write_file, list_files, local_read, local_write, local_remove, local_list])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }
@@ -136,6 +194,25 @@ mod tests {
             assert!(resolve(root, bad).is_err(), "{bad}");
         }
         assert_eq!(resolve(root, "articles/main/article.json").unwrap(), root.join("articles/main/article.json"));
+    }
+
+    #[test]
+    fn local_keys_stay_in_the_store() {
+        let root = Path::new("/data");
+        for bad in ["", "../x", "a/../b", "/abs", "C:/x", "a\\b", "a//b", "a/./b", "a b"] {
+            assert!(local_path(root, bad).is_err(), "{bad}");
+        }
+        assert_eq!(local_path(root, "projects/p-1/recovery/main/x.scidoc.json").unwrap(), root.join("projects/p-1/recovery/main/x.scidoc.json"));
+    }
+
+    #[test]
+    fn lists_relative_to_the_root() {
+        let dir = tempfile::tempdir().unwrap();
+        write_atomic(&dir.path().join("projects/p/recovery/main/a.json"), b"{}").unwrap();
+        write_atomic(&dir.path().join("projects/q/state.json"), b"{}").unwrap();
+        assert_eq!(list_under(dir.path(), "projects/p").unwrap(), vec!["projects/p/recovery/main/a.json"]);
+        assert_eq!(list_under(dir.path(), "").unwrap().len(), 2);
+        assert!(list_under(dir.path(), "missing").unwrap().is_empty());
     }
 
     #[test]

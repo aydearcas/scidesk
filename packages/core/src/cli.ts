@@ -11,11 +11,13 @@
 //   scidesk library <dir> [--search <words>]         the library, with how often each is cited
 //   scidesk ref-delete <dir> <reference id>          delete a reference that is not cited
 //   scidesk authors <dir> [--article main]          who signs, with affiliations, CRediT and warnings
+//   scidesk recover <dir> [--apply|--discard] [--store <folder>]   unsaved changes left by a closed window
 //   scidesk styles                                   the citation styles included
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { NodeFs, nodeResources } from "./node-fs.ts";
+import { appLocalDataDir, NodeFs, NodeStore, nodeResources } from "./node-fs.ts";
+import { Recovery } from "./recovery.ts";
 import { createProject, loadProject, ProjectError } from "./project.ts";
 import { createDemoProject } from "./demo.ts";
 import { exportDocx, type ExportProfile } from "./docx-export.ts";
@@ -41,7 +43,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|show> <project folder> …  |  scidesk styles");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|show> <project folder> …  |  scidesk styles");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -134,6 +136,21 @@ async function main() {
       });
       m.affiliations.forEach((line, i) => console.log(`    ${i + 1} ${line}`));
       for (const i of checkAuthorship(p, folder, p.people, art.authors)) console.log(`  ${i.level} ${i.code}${i.id ? ` ${displayName(byId.get(i.id) ?? { kind: "group", name: i.id } as never)}` : ""}${i.detail ? `: ${i.detail}` : ""}`);
+      break;
+    }
+    case "recover": {
+      const p = await loadProject(fs);
+      const r = new Recovery(new NodeStore(opt("store", appLocalDataDir())!), p);
+      const { pending, dropped } = await r.pending();
+      for (const d of dropped) console.log(`dropped (${d.reason}): ${d.key}`);
+      for (const x of pending) {
+        const action = rest.includes("--apply") ? "apply" : rest.includes("--discard") ? "discard" : "list";
+        let note = "";
+        if (action === "apply") { const { snapshot } = await r.apply(x); note = snapshot ? ` -> recovered; the disk's version is in snapshot ${snapshot}` : " -> recovered"; }
+        if (action === "discard") { await r.discard(x); note = " -> discarded"; }
+        console.log(`${x.entry.article}/${x.entry.path}  ${x.entry.recorded}  ${x.state === "clean" ? "clean" : "the file changed on disk since"}${note}`);
+      }
+      if (!pending.length) console.log("nothing to recover");
       break;
     }
     case "show": {

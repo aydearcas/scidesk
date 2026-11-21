@@ -6,8 +6,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BUNDLED_STYLES, createDemoProject, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
-  type Project, type Rendering,
+  Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
+  type PendingRecovery, type Project, type Rendering,
 } from "@scidesk/core";
 import { NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
@@ -15,9 +15,17 @@ import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLa
 import { AuthorsDialog } from "./AuthorsDialog.tsx";
 import { LibraryPanel } from "./LibraryPanel.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
-import { inTauri, memoryFs, openFolder, resources } from "./platform.ts";
+import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources } from "./platform.ts";
 
 const BODY = "manuscript/article.scidoc";
+/**
+ * Autosave (R25, record 0039): the journal of unsaved changes is written shortly after
+ * each change, and the document is saved after a pause in the typing, or at the latest
+ * after a while of continuous typing.
+ */
+const JOURNAL_MS = 300;
+const AUTOSAVE_IDLE_MS = 2000;
+const AUTOSAVE_MAX_MS = 20000;
 
 const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
 
@@ -39,12 +47,20 @@ export function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const refsInput = useRef<HTMLInputElement>(null);
   const [libraryVersion, setLibraryVersion] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [recoveries, setRecoveries] = useState<PendingRecovery[]>([]);
+  const recovery = useRef<Recovery | null>(null);
+  // edits counted, so that a save that ran while typing does not mark newer text as saved
+  const editVersion = useRef(0);
+  const savingNow = useRef(false);
+  const dirtySince = useRef<number | null>(null);
   const article = project?.articles[0] ?? null;
 
   const editor = useEditor({
     extensions,
     content: { type: "doc", content: [] },
-    onUpdate: () => setDirty(true),
+    onUpdate: () => { editVersion.current++; dirtySince.current ??= Date.now(); setDirty(true); },
     // a document with something the editor cannot show is an error, never a blank page
     enableContentCheck: true,
     onContentError: ({ error }) => setError(`${t("cannotShow")}: ${error.message}`),
@@ -83,6 +99,12 @@ export function App() {
     const doc = p.articles[0].documents.get(BODY)!.doc;
     editor?.commands.setContent(doc as never, { emitUpdate: false });
     setDirty(false);
+    dirtySince.current = null;
+    setLastSaved(null);
+    // work that never reached the disk the last time the project was open
+    const rec = new Recovery(await localStore(), p);
+    recovery.current = rec;
+    setRecoveries((await rec.pending()).pending);
   }, [editor]);
   useEffect(() => { void recompute(); }, [project, recompute]);
 
@@ -91,15 +113,65 @@ export function App() {
     try { await f(...a); } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
+  const onScreen = () => ({ ...article!.documents.get(BODY)!, doc: editor!.getJSON() }) as unknown as DocumentFile;
   const save = async () => {
-    if (!project || !article || !editor) return;
-    const file = { ...article.documents.get(BODY)!, doc: editor.getJSON() } as unknown as DocumentFile;
-    await saveDocument(project, article, BODY, file);
-    setDirty(false);
-    setMessage(t("saved"));
+    if (!project || !article || !editor || savingNow.current) return;
+    savingNow.current = true;
+    setSaving(true);
+    const version = editVersion.current;
+    try {
+      await saveDocument(project, article, BODY, onScreen());
+      if (version === editVersion.current) {
+        // everything on screen is on disk: nothing left to recover
+        await recovery.current?.clear(article.folder, BODY);
+        setDirty(false);
+        dirtySince.current = null;
+      }
+      setLastSaved(new Date());
+    } finally {
+      savingNow.current = false;
+      setSaving(false);
+    }
   };
+  const saveRef = useRef(save);
+  saveRef.current = save;
 
-  const openDemo = run(async () => show(await createDemoProject(memoryFs())));
+  // the journal shortly after each change; the save after a pause, or after a while of typing
+  useEffect(() => {
+    if (!editor || !project || !article) return;
+    let journal: ReturnType<typeof setTimeout> | undefined;
+    let autosave: ReturnType<typeof setTimeout> | undefined;
+    const onUpdate = () => {
+      clearTimeout(journal);
+      journal = setTimeout(() => { void recovery.current?.record(article.folder, BODY, onScreen()).catch(() => {}); }, JOURNAL_MS);
+      clearTimeout(autosave);
+      const waited = Date.now() - (dirtySince.current ?? Date.now());
+      autosave = setTimeout(() => {
+        saveRef.current().catch((e) => setError(`${t("autosaveFailed")}: ${e instanceof Error ? e.message : String(e)}`));
+      }, waited > AUTOSAVE_MAX_MS ? 0 : AUTOSAVE_IDLE_MS);
+    };
+    editor.on("update", onUpdate);
+    return () => { editor.off("update", onUpdate); clearTimeout(journal); clearTimeout(autosave); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onScreen reads the current editor and article
+  }, [editor, project, article, t]);
+
+  const recover = run(async (p: PendingRecovery, keep: boolean) => {
+    const rec = recovery.current;
+    if (!rec) return;
+    setRecoveries((list) => list.filter((x) => x.key !== p.key));
+    if (!keep) { await rec.discard(p); setMessage(t("recoveryDiscarded")); return; }
+    const { snapshot } = await rec.apply(p);
+    if (p.entry.article === article?.folder && p.entry.path === BODY) {
+      editor?.commands.setContent(p.entry.file.doc as never, { emitUpdate: false });
+      setDirty(false);
+      void recompute();
+    }
+    setMessage(snapshot ? t("recoveredWithSnapshot", { snapshot }) : t("recovered"));
+  });
+
+  // in the browser preview the demo lives in the browser's storage: reloading the page is reopening it
+  const openDemo = run(async () => show(await createDemoProject(inTauri ? memoryFs() : previewFs(true))));
+  const reopenPreview = run(async () => show(await loadProject(previewFs(false))));
   const wordInput = useRef<HTMLInputElement>(null);
   // a new project from a Word document: in the app, into an empty folder the user chooses
   const fromWord = run(async () => {
@@ -178,6 +250,7 @@ export function App() {
         <strong>SciDesk</strong>
         {inTauri && <button onClick={open}>{t("open")}</button>}
         <button onClick={openDemo}>{t("demo")}</button>
+        {!inTauri && !project && hasPreviewProject() && <button onClick={reopenPreview}>{t("reopenPreview")}</button>}
         <label className="file-button">{t("fromWord")}<input ref={wordInput} type="file" accept=".docx" onChange={fromWord} /></label>
         <span className="spacer" />
         <button onClick={() => void i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}>{t("language")}</button>
@@ -189,7 +262,7 @@ export function App() {
           <section className="editor-column">
             <div className="toolbar">
               <button onClick={run(save)} disabled={!dirty}>{t("save")}</button>
-              <span className="status">{dirty ? t("unsaved") : t("saved")}</span>
+              <span className="status" aria-live="polite">{saving ? t("saving") : dirty ? t("unsaved") : lastSaved ? t("savedAt", { time: lastSaved.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) }) : t("saved")}</span>
               <button onClick={openQuickCite} title={t("quickCiteShortcut")}>{t("cite")}</button>
               <select value={article!.article.citationStyle.id} onChange={(e) => void chooseStyle(e.target.value)} aria-label={t("citationStyle")} title={t("citationStyle")}>
                 {!BUNDLED_STYLES.some((s) => s.id === article!.article.citationStyle.id) && <option value={article!.article.citationStyle.id}>{article!.article.citationStyle.id}</option>}
@@ -241,6 +314,20 @@ export function App() {
       {editingAuthors && project && article && (
         <AuthorsDialog project={project} folder={article.folder} onClose={() => setEditingAuthors(false)}
           onSaved={(n) => { setEditingAuthors(false); setMessage(n ? t("authorsSavedWarnings", { count: n }) : t("authorsSaved")); }} />
+      )}
+      {recoveries[0] && (
+        <div className="overlay">
+          <div className="recovery-dialog" role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">
+            <h2 id="recovery-title">{t("recoveryTitle")}</h2>
+            <p>{t("recoveryText", { doc: recoveries[0].entry.path === BODY ? t("docBody") : recoveries[0].entry.path === "manuscript/abstract.scidoc" ? t("docAbstract") : recoveries[0].entry.path, when: new Date(recoveries[0].entry.recorded).toLocaleString(i18n.language) })}</p>
+            {recoveries[0].state === "disk-changed" && <p className="field-error">{t("recoveryDiskChanged")}</p>}
+            <div className="dialog-actions">
+              <span className="spacer" />
+              <button onClick={() => void recover(recoveries[0], false)}>{t("recoveryDiscard")}</button>
+              <button onClick={() => void recover(recoveries[0], true)} autoFocus>{t("recoveryApply")}</button>
+            </div>
+          </div>
+        </div>
       )}
       {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
       {message && <p className="message">{message}{download && <> · <a href={download.url} download={download.name}>{download.name}</a></>}</p>}

@@ -1,7 +1,9 @@
 // ProjectFs on the disk, for the CLI and the tests (Node only).
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
+import { homedir } from "node:os";
 import { safePath, type ProjectFs } from "./fs.ts";
+import { safeKey, type LocalStore } from "./recovery.ts";
 
 export class NodeFs implements ProjectFs {
   readonly root: string;
@@ -54,4 +56,26 @@ export async function nodeResources() {
   const { bundledResources } = await import("./resources.ts");
   const dir = new URL("../assets/", import.meta.url);
   return bundledResources((file) => readFile(new URL(file, dir), "utf8"), async (file) => new Uint8Array(await readFile(new URL(file, dir))));
+}
+
+/**
+ * The app's local data folder of this computer, where the window keeps what never travels
+ * with the project (R26): the same folder as Tauri's app_local_data_dir for the app's
+ * identifier.
+ */
+export function appLocalDataDir(): string {
+  const id = "app.scidesk.desktop";
+  if (process.platform === "win32") return join(process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"), id);
+  if (process.platform === "darwin") return join(homedir(), "Library", "Application Support", id);
+  return join(process.env.XDG_DATA_HOME ?? join(homedir(), ".local", "share"), id);
+}
+
+/** LocalStore on the disk (CLI, tests): keys are relative paths under a folder. */
+export class NodeStore implements LocalStore {
+  private files: NodeFs;
+  constructor(root: string) { this.files = new NodeFs(root); }
+  async read(key: string) { return this.files.readText(safeKey(key)); }
+  async write(key: string, text: string) { await this.files.write(safeKey(key), text); }
+  async remove(key: string) { await rm(join(this.files.root, safeKey(key)), { force: true }); }
+  async list(prefix: string) { return (await this.files.list("")).filter((k) => k.startsWith(prefix)); }
 }

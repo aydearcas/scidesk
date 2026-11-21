@@ -1,7 +1,7 @@
 // Where the core's files come from. In the Tauri window: commands of the Rust side, which
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
-import { MemoryFs, bundledResources, type ProjectFs } from "@scidesk/core";
+import { MemoryFs, bundledResources, type LocalStore, type ProjectFs } from "@scidesk/core";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
 import templateUrl from "@scidesk/core/assets/reference.dotx?url";
@@ -62,3 +62,79 @@ export async function openFolder(): Promise<{ fs: ProjectFs; name: string } | nu
 }
 
 export const memoryFs = () => new MemoryFs();
+
+// ---------------------------------------------------------------- this computer's store (R26)
+
+class TauriStore implements LocalStore {
+  constructor(private invoke: Invoke) {}
+  async read(key: string) { return (await this.invoke("local_read", { key })) as string | null; }
+  async write(key: string, text: string) { await this.invoke("local_write", { key, text }); }
+  async remove(key: string) { await this.invoke("local_remove", { key }); }
+  async list(prefix: string) { return (await this.invoke("local_list", { prefix })) as string[]; }
+}
+
+/** localStorage, for the browser preview; every access may throw (private window, quota). */
+function storage(): Storage | null {
+  try { return window.localStorage; } catch { return null; }
+}
+class BrowserStore implements LocalStore {
+  constructor(private prefix: string) {}
+  async read(key: string) { return storage()?.getItem(this.prefix + key) ?? null; }
+  async write(key: string, text: string) { storage()?.setItem(this.prefix + key, text); }
+  async remove(key: string) { storage()?.removeItem(this.prefix + key); }
+  async list(prefix: string) {
+    const s = storage();
+    if (!s) return [];
+    const out: string[] = [];
+    for (let i = 0; i < s.length; i++) {
+      const k = s.key(i);
+      if (k?.startsWith(this.prefix + prefix)) out.push(k.slice(this.prefix.length));
+    }
+    return out.sort();
+  }
+}
+
+/** Where the journal of unsaved changes lives: the app's local data folder, or the browser's storage. */
+export async function localStore(): Promise<LocalStore> {
+  if (inTauri) return new TauriStore((await import("@tauri-apps/api/core")).invoke);
+  return new BrowserStore("scidesk-local:");
+}
+
+// ---------------------------------------------------------------- the browser preview's project
+
+const PREVIEW = "scidesk-preview:";
+const b64 = (bytes: Uint8Array) => { let s = ""; for (const b of bytes) s += String.fromCharCode(b); return btoa(s); };
+const unb64 = (text: string) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0));
+
+/**
+ * The preview's project kept in the browser's storage, so that reloading the page is like
+ * reopening the project after the window closed (to try the recovery). Files that do not
+ * fit stay in memory only.
+ */
+class PreviewFs extends MemoryFs {
+  constructor() {
+    super();
+    const s = storage();
+    if (!s) return;
+    for (let i = 0; i < s.length; i++) {
+      const k = s.key(i);
+      if (k?.startsWith(PREVIEW)) this.files.set(k.slice(PREVIEW.length), unb64(s.getItem(k)!));
+    }
+  }
+  override async write(path: string, data: string | Uint8Array) {
+    await super.write(path, data);
+    try { storage()?.setItem(PREVIEW + path, b64((await this.readBytes(path))!)); } catch { /* quota: memory only */ }
+  }
+}
+
+export const hasPreviewProject = () => {
+  const s = storage();
+  if (!s) return false;
+  for (let i = 0; i < s.length; i++) if (s.key(i)?.startsWith(PREVIEW)) return true;
+  return false;
+};
+export function previewFs(fresh: boolean): ProjectFs {
+  const s = storage();
+  if (fresh && s) for (let i = s.length - 1; i >= 0; i--) { const k = s.key(i); if (k?.startsWith(PREVIEW)) s.removeItem(k); }
+  return new PreviewFs();
+}

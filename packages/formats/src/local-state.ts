@@ -1,7 +1,8 @@
 // What a computer keeps about a project, outside the project folder (R26): in the app's
-// data folder (%APPDATA%\SciDesk\projects\<project id>\state.json on Windows,
-// ~/Library/Application Support/SciDesk/projects/<project id>/state.json on macOS).
-// Never synchronised: losing it costs a recomputation, never work.
+// local data folder (Tauri's app_local_data_dir: %LOCALAPPDATA%\app.scidesk.desktop\projects\<project id>\state.json on Windows, ~/Library/Application Support/
+// app.scidesk.desktop/projects/<project id>/state.json on macOS). Never synchronised:
+// losing it costs a recomputation, never work. The journal of unsaved changes lives next
+// to it, in projects/<project id>/recovery/ (record 0039).
 import Type from "typebox";
 import { DateTime, SchemaVersion, Strict, Uuid } from "./common.ts";
 
