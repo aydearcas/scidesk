@@ -12,6 +12,7 @@ Estado: **corte vertical de la fase 1** (R42, ficha [0032](../../docs/decisiones
 | `src/snapshot.ts` | Instantáneas en `.scidesk/history/` (formato **provisional**) |
 | `src/docx-export.ts` | DOCX del manuscrito con la biblioteca `docx` y la plantilla `assets/reference.dotx`: resumen, tablas con notas, figuras, referencias cruzadas y el formato del perfil de revista; perfiles «coautores» (marcas, campos de Zotero con URI, propiedades) y «revista» (ficha 0033) |
 | `src/title-page.ts` | Portada aparte desde `authors.json` y `people.json` (ficha 0034) |
+| `src/authorship.ts` | Directorio de personas y lista de autores de cada artículo: edición, CRediT, comprobación conjunta y guardado de los dos archivos a la vez (ficha 0038) |
 | `src/library-import.ts` | Importar RIS, NBIB, BibTeX y CSL-JSON a la biblioteca propia, con duplicados (ficha 0035) |
 | `src/library.ts` | Usos de cada referencia, búsqueda rápida, campos del formulario, añadir, editar y borrar, y estilo del artículo (ficha 0037) |
 | `src/word-import.ts` | Nuevo artículo a partir de un Word (ficha 0036) |
@@ -27,4 +28,4 @@ npm test --workspace @scidesk/core
 node packages/core/src/cli.ts demo C:\ruta\a\una\carpeta\vacia
 ```
 
-Para un Word existente: `node packages/core/src/cli.ts from-word <carpeta vacía> <archivo.docx>`. Después: `refs <archivo>`, `export` (`--profile coauthors`, `journal` o `title-page`), `import <copia.docx> --by "<nombre>"`, `show <propuestas.json>`, `check`, `library [--search <palabras>]`, `ref-delete <id>` y `style <estilo>`; `scidesk styles` lista los estilos incluidos. Las pruebas con Word de verdad son locales: `tools/word-edit.ps1 <exportado.docx> <copia.docx> [ediciones.json]` hace ediciones de coautor, con y sin control de cambios, y `tools/word-inspect.ps1 <docx> <carpeta> [páginas]` abre el DOCX, comprueba que actualizar los campos no cambia nada y saca imágenes de páginas.
+Para un Word existente: `node packages/core/src/cli.ts from-word <carpeta vacía> <archivo.docx>`. Después: `refs <archivo>`, `export` (`--profile coauthors`, `journal` o `title-page`), `import <copia.docx> --by "<nombre>"`, `show <propuestas.json>`, `check`, `library [--search <palabras>]`, `ref-delete <id>`, `style <estilo>` y `authors`; `scidesk styles` lista los estilos incluidos. Las pruebas con Word de verdad son locales: `tools/word-edit.ps1 <exportado.docx> <copia.docx> [ediciones.json]` hace ediciones de coautor, con y sin control de cambios, y `tools/word-inspect.ps1 <docx> <carpeta> [páginas]` abre el DOCX, comprueba que actualizar los campos no cambia nada y saca imágenes de páginas.

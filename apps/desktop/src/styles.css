@@ -67,3 +67,27 @@ footer { color: var(--muted); font-size: 11px; padding: 8px 12px; border-top: 1p
 .results { list-style: none; margin: 0; padding: 0; max-height: 45vh; overflow-y: auto; }
 .results li { padding: 5px 6px; border-radius: 4px; cursor: pointer; }
 .results li.active { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.authors-dialog { background: var(--page); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 8px 30px rgb(0 0 0 / 0.25); width: min(980px, calc(100vw - 32px)); max-height: 84vh; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.overlay:has(.authors-dialog) { padding-top: 6vh; }
+.authors-dialog h2 { margin: 0; font-size: 16px; }
+.authors-body { overflow-y: auto; flex: 1; min-height: 240px; display: flex; flex-direction: column; gap: 8px; }
+.authors-body label, .entry-form label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+.authors-body label.inline { flex-direction: row; align-items: center; gap: 6px; color: var(--ink); font-size: 13px; }
+.authors-body input:not([type=checkbox]), .authors-body select { color: var(--ink); background: var(--page); border: 1px solid var(--line); padding: 3px 5px; font-size: 13px; }
+.author-list { list-style: none; margin: 0; padding-left: 0; display: flex; flex-direction: column; gap: 10px; }
+.author-row { border-top: 1px solid var(--line); padding-top: 6px; display: flex; flex-direction: column; gap: 6px; }
+.author-head, .author-fields { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.checks { border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; }
+.checks legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.master-detail { display: grid; grid-template-columns: 260px 1fr; gap: 12px; }
+@media (max-width: 700px) { .master-detail { grid-template-columns: 1fr; } }
+.master { display: flex; flex-direction: column; gap: 6px; }
+.ref-item.selected { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.entry-form { display: flex; flex-direction: column; gap: 6px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.credit-wrap { overflow-x: auto; }
+.credit { border-collapse: collapse; font-size: 12px; }
+.credit th, .credit td { border-bottom: 1px solid var(--line); padding: 3px 6px; text-align: left; white-space: nowrap; }
+.credit thead th { font-weight: 600; }
+.credit select { font-size: 12px; }
+.issues { list-style: none; margin: 0; padding: 6px 0 0; border-top: 1px solid var(--line); font-size: 12px; max-height: 18vh; overflow-y: auto; }

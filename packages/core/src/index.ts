@@ -14,3 +14,4 @@ export * from "./title-page.ts";
 export * from "./library-import.ts";
 export * from "./word-import.ts";
 export * from "./library.ts";
+export * from "./authorship.ts";

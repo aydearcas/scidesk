@@ -10,6 +10,7 @@
 //   scidesk from-word <dir> <file.docx>              a new project from a Word document
 //   scidesk library <dir> [--search <words>]         the library, with how often each is cited
 //   scidesk ref-delete <dir> <reference id>          delete a reference that is not cited
+//   scidesk authors <dir> [--article main]          who signs, with affiliations, CRediT and warnings
 //   scidesk styles                                   the citation styles included
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
@@ -24,6 +25,8 @@ import { importReferences } from "./library-import.ts";
 import { projectFromWord } from "./word-import.ts";
 import { deleteReference, referenceUses, searchLibrary, setCitationStyle, summarize } from "./library.ts";
 import { BUNDLED_STYLES, findStyle } from "./resources.ts";
+import { checkAuthorship, displayName } from "./authorship.ts";
+import { titlePageModel } from "./title-page.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -38,7 +41,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|show> <project folder> …  |  scidesk styles");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|show> <project folder> …  |  scidesk styles");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -116,6 +119,21 @@ async function main() {
       const p = await loadProject(fs);
       await setCitationStyle(p, opt("article", "main")!, s.id);
       console.log(`${opt("article", "main")}: ${s.name} (${s.id})`);
+      break;
+    }
+    case "authors": {
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      const art = p.articles.find((a) => a.folder === folder);
+      if (!art) throw new Error(`no article ${folder}`);
+      const m = titlePageModel(p, folder);
+      const byId = new Map(p.people.people.map((x) => [x.id, x]));
+      art.authors.authors.forEach((a, i) => {
+        const t = m.authors[i];
+        console.log(`${String(i + 1).padStart(2)}. ${displayName(byId.get(a.person)!)} ${t.affiliations.join(",")}${a.corresponding ? " *" : ""}${t.equal ?? ""}  CRediT: ${a.credit.map((c) => c.role + (c.degree ? `(${c.degree})` : "")).join(", ") || "—"}`);
+      });
+      m.affiliations.forEach((line, i) => console.log(`    ${i + 1} ${line}`));
+      for (const i of checkAuthorship(p, folder, p.people, art.authors)) console.log(`  ${i.level} ${i.code}${i.id ? ` ${displayName(byId.get(i.id) ?? { kind: "group", name: i.id } as never)}` : ""}${i.detail ? `: ${i.detail}` : ""}`);
       break;
     }
     case "show": {

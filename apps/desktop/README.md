@@ -5,6 +5,7 @@ Tauri 2 + React + Tiptap. Estado: **corte vertical de la fase 1** (R42, ficha [0
 - `src/editor.ts`: el esquema del editor, con los nombres y atributos del formato `.scidoc`; ids de bloque únicos en cada transacción.
 - `src/QuickCite.tsx`: la cita rápida (Ctrl+Mayús+Y o «Citar…»), con varias referencias por cita y prefijo, página y sufijo; sobre una cita seleccionada, la edita (ficha 0037).
 - `src/LibraryPanel.tsx`: la pestaña «Biblioteca»: buscar, ver cuántas veces se cita cada referencia, añadir, editar y borrar.
+- `src/AuthorsDialog.tsx`: el diálogo «Autores…»: quién firma y en qué orden, personas y grupos, afiliaciones y matriz CRediT; guarda `people.json` y `authors.json` a la vez (ficha 0038).
 - `src/platform.ts`: en la ventana de Tauri, los archivos van por comandos de Rust limitados a la carpeta abierta; en un navegador, el proyecto vive en memoria (vista para probar la interfaz).
 - `src-tauri/`: los comandos `open_project`, `read_file`, `write_file` (escritura atómica) y `list_files`, sin acceso general al sistema de archivos.
 

@@ -324,14 +324,14 @@ Reparto de los datos:
 - **[Después]** **Título, resumen y palabras clave en dos idiomas, lado a lado** (R13): vista en dos columnas del resumen en español y en inglés, alineada por apartados y con el recuento de cada lado, y palabras clave con autocompletado de MeSH, que es de dominio público. Para la equivalencia en español están los DeCS de BIREME, cuyo acuerdo de licencia habrá que leer para saber si se pueden incluir en un programa de código abierto o solo consultar por su API.
 
 ### 5.3 Autores, afiliaciones y documentos satélite
-- **[MVP]** Formulario de autores con estos datos:
+- **[MVP]** Formulario de autores con estos datos (**hecho**, ficha 0038):
   - Nombre y apellidos (con forma de cita, p. ej. "Pérez-García J").
   - Grado académico, ORCID y correo.
   - Afiliaciones (reutilizables entre autores) y autor de correspondencia.
   - "Contribución igual" y autoría de grupo o consorcio.
 - **[MVP]** Las fichas de las personas viven en el directorio común del proyecto, y cada artículo elige quién firma, en qué orden y con qué afiliaciones (4.1).
 - **[MVP]** El bloque de autores del artículo y la portada se generan solos: superíndices de afiliación, orden y datos de correspondencia. Si cambias un autor, cambia en todas partes.
-- **[V1]** Matriz CRediT con los 14 roles (autores × roles, con grado de participación: principal, igual o de apoyo). A partir de ella se generan:
+- **[V1]** Matriz CRediT con los 14 roles (autores × roles, con grado de participación: principal, igual o de apoyo). **La matriz ya se rellena en el formulario de autores** (ficha 0038). A partir de ella se generan:
   - El documento de contribuciones en el formato de la revista: tabla CRediT, frase con iniciales ("JPG y AML diseñaron…") o criterios ICMJE.
   - Una comprobación de que cada autor cumple los 4 criterios ICMJE.
 - **[V1]** Carta de presentación con campos combinados (revista, editor, título, tipo de artículo, autor de correspondencia, fecha) y párrafos tipo editables.
@@ -829,7 +829,7 @@ Se desarrolla y se prueba en Windows; la integración continua compila también 
 - Esqueleto Tauri + React con la interfaz en español e inglés, asistente de proyecto con plantilla IMRaD, navegador por conceptos (R28) y esquemas de atajos "Word en español" e "Internacional" (R19).
 - "Nuevo artículo a partir de un Word", en versión básica: secciones, tablas y figuras (R1). **Hecho el 21/11/2026** (ficha 0036), probado con los tres Word reales del usuario en local; faltan autores, listas anidadas, notas al pie e imágenes EMF/WMF.
 - Editor con estilos semánticos, fuente del documento, formato básico, buscar y reemplazar, caracteres especiales, autocorrección científica (R18), pegado de texto como en Word (R23), recuento de palabras por sección (con el resumen aparte), corrector propio (R29) y menú contextual.
-- Autores y afiliaciones: bloque de autores y portada automáticos.
+- Autores y afiliaciones: bloque de autores y portada automáticos. **Portada hecha** (ficha 0034) y **formulario de autores y afiliaciones, con la matriz CRediT, hecho el 21/11/2026** (ficha 0038).
 - Referencias en modo biblioteca propia: importar RIS, NBIB, BibTeX y CSL-JSON (también después de la importación inicial), eliminar duplicados, cita rápida, bibliografía automática y ~15 estilos incluidos, entre ellos el de Reumatología Clínica. **Importar y eliminar duplicados, hecho el 21/11/2026** (ficha 0035). **Ver, buscar, editar y borrar la biblioteca, la cita rápida y los 18 estilos, hechos el 21/11/2026** (ficha 0037); faltan el clic derecho para citar y «omitir autor».
 - Tablas: editor en el documento y en pestaña propia, con notas como objetos (R11), y pegado desde Word. Figuras: insertar y pie. Referencias cruzadas numeradas.
 - Panel de comprobaciones mínimo: límites de palabras, pendientes y elementos sin citar, con tres niveles y avisos que se pueden ignorar (R12, R43).

@@ -12,6 +12,7 @@ import {
 import { NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
+import { AuthorsDialog } from "./AuthorsDialog.tsx";
 import { LibraryPanel } from "./LibraryPanel.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
 import { inTauri, memoryFs, openFolder, resources } from "./platform.ts";
@@ -32,6 +33,7 @@ export function App() {
   const [panel, setPanel] = useState<"library" | "proposals">("library");
   const [uses, setUses] = useState<Map<string, number>>(new Map());
   // the quick citation dialog: the citation being edited (its position), or a new one
+  const [editingAuthors, setEditingAuthors] = useState(false);
   const [citing, setCiting] = useState<{ pos: number | null; items: CiteItem[] } | null>(null);
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -196,6 +198,7 @@ export function App() {
               <label className="file-button">{t("importRefs")}<input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" onChange={onRefs} /></label>
               <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
               <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
+              <button onClick={() => setEditingAuthors(true)}>{t("authors")}</button>
               <button onClick={exportAs("title-page")}>{t("exportTitlePage")}</button>
             </div>
             <EditorContent editor={editor} className="page" />
@@ -234,6 +237,10 @@ export function App() {
             </>}
           </aside>
         </main>
+      )}
+      {editingAuthors && project && article && (
+        <AuthorsDialog project={project} folder={article.folder} onClose={() => setEditingAuthors(false)}
+          onSaved={(n) => { setEditingAuthors(false); setMessage(n ? t("authorsSavedWarnings", { count: n }) : t("authorsSaved")); }} />
       )}
       {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
       {message && <p className="message">{message}{download && <> · <a href={download.url} download={download.name}>{download.name}</a></>}</p>}
