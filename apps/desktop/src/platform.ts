@@ -5,6 +5,7 @@ import { MemoryFs, bundledResources, type ProjectFs } from "@scidesk/core";
 import styleCsl from "@scidesk/core/assets/reumatologia-clinica-2026.csl?raw";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
+import templateUrl from "@scidesk/core/assets/reference.dotx?url";
 
 export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -13,11 +14,14 @@ const ASSETS: Record<string, string> = {
   "locales-es-ES.xml": localeEs,
   "locales-en-US.xml": localeEn,
 };
-export const resources = bundledResources(async (file) => {
-  const text = ASSETS[file];
-  if (text === undefined) throw new Error(`asset ${file} not bundled`);
-  return text;
-});
+export const resources = bundledResources(
+  async (file) => {
+    const text = ASSETS[file];
+    if (text === undefined) throw new Error(`asset ${file} not bundled`);
+    return text;
+  },
+  async () => new Uint8Array(await (await fetch(templateUrl)).arrayBuffer()),
+);
 
 type Invoke = typeof import("@tauri-apps/api/core").invoke;
 

@@ -37,7 +37,7 @@ describe("vertical slice: project -> DOCX -> co-author -> proposals", () => {
     // every block of the body has its bookmark; citations are atoms with their citationID
     const body = p.articles[0].documents.get("manuscript/article.scidoc")!;
     const ids = (body.doc.content as any[]).map((b) => b.attrs.id);
-    expect(read.paragraphs.flatMap((x) => x.blocks)).toEqual(ids);
+    expect(read.paragraphs.flatMap((x) => x.blocks).filter((id) => ids.includes(id))).toEqual(ids);
     const citationIds = JSON.stringify(body.doc).match(/c-[a-z0-9]{10}/g);
     expect(read.paragraphs.flatMap((x) => x.segments.filter((s) => s.citation).map((s) => s.citation))).toEqual(citationIds);
     // the snapshot holds the article as exported

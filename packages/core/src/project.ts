@@ -3,7 +3,7 @@
 import {
   checkProject, formatOfPath, newId, normalize, stableStringify, validate,
   type ArticleFile, type AuthorsFile, type DocumentFile, type Issue, type LibraryFile, type ManifestFile,
-  type PMNode, type PeopleFile,
+  type JournalProfileFile, type PMNode, type PeopleFile,
 } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
 
@@ -21,6 +21,8 @@ export interface Project {
   manifest: ManifestFile;
   library: LibraryFile;
   people: PeopleFile;
+  /** Journal profiles in resources/journals/, by id. */
+  journals: Map<string, JournalProfileFile>;
   articles: ArticleData[];
   /** What the load had to fix (missing or repeated ids) and what the checks found. */
   normalised: string[];
@@ -66,8 +68,10 @@ export async function loadProject(fs: ProjectFs): Promise<Project> {
     for (const [p, v] of files) if (p.startsWith(base) && /\.(scidoc|scitable|scifigure)$/.test(p)) documents.set(p.slice(base.length), v as DocumentFile);
     return { folder, article: files.get(base + "article.json") as ArticleFile, authors: files.get(base + "authors.json") as AuthorsFile, documents };
   });
+  const journals = new Map<string, JournalProfileFile>();
+  for (const [p, v] of files) if (/^resources\/journals\/[^/]+\.json$/.test(p)) journals.set((v as JournalProfileFile).id, v as JournalProfileFile);
   return {
-    fs, manifestPath, manifest, articles, normalised, issues,
+    fs, manifestPath, manifest, articles, normalised, issues, journals,
     library: (files.get("references/library.json") as LibraryFile) ?? { schemaVersion: 1, references: [] },
     people: (files.get("people/people.json") as PeopleFile) ?? { schemaVersion: 1, affiliations: [], people: [] },
   };

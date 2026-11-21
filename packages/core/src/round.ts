@@ -5,14 +5,38 @@
 import { newId, stableStringify, validate, type PMNode, type ProposalSetFile, type RoundFile } from "@scidesk/formats";
 import { readDocx } from "./docx-read.ts";
 import { now, type Project } from "./project.ts";
-import { baseBlocks, proposalsFromCopy } from "./proposals.ts";
+import { baseBlocks, proposalsFromCopy, type BaseBlock } from "./proposals.ts";
 import { loadSnapshot } from "./snapshot.ts";
 
 async function sha256(bytes: Uint8Array) {
   const d = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
-const slug = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "copia";
+const slug = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "copia";
+
+/**
+ * The text blocks of the version sent, in the order the export wrote them: titles, the
+ * abstract, then the body with each table and figure where it is cited (record 0021).
+ */
+export function sentBlocks(files: Record<string, string>, folder: string): BaseBlock[] {
+  const prefix = `articles/${folder}/`;
+  const doc = (p: string) => (files[prefix + p] ? (JSON.parse(files[prefix + p]).doc as PMNode) : null);
+  const body = doc("manuscript/article.scidoc");
+  if (!body) throw new Error("the snapshot has no article.scidoc");
+  const abstract = doc("manuscript/abstract.scidoc");
+  const nodes = body.content ?? [];
+  const out: BaseBlock[] = [];
+  for (const n of nodes) if (n.type === "title") out.push(...baseBlocks("manuscript/article.scidoc", n));
+  if (abstract) out.push(...baseBlocks("manuscript/abstract.scidoc", abstract));
+  for (const n of nodes) {
+    if (n.type === "title") continue;
+    if (n.type === "tableRef" || n.type === "figureRef") {
+      const part = doc(n.attrs!.src as string);
+      if (part) out.push(...baseBlocks(n.attrs!.src as string, part));
+    } else out.push(...baseBlocks("manuscript/article.scidoc", n));
+  }
+  return out;
+}
 
 export interface ImportResult { round: string; roundFolder: string; copyFile: string; proposalsFile: string; set: ProposalSetFile }
 
@@ -26,9 +50,7 @@ export async function importCopy(project: Project, folder: string, bytes: Uint8A
   const snapshotId = prop?.snapshot ?? read.snapshotBookmark;
   if (!snapshotId) throw new Error("the copy does not say which version it was sent from (no SciDesk property or _SDs_ bookmark); the alignment by content without a base (plan B) comes in phase 2");
   const snapshot = await loadSnapshot(project.fs, snapshotId);
-  const bodyPath = `articles/${folder}/manuscript/article.scidoc`;
-  const sentBody = JSON.parse(snapshot.files[bodyPath]);
-  const base = baseBlocks("manuscript/article.scidoc", sentBody.doc as PMNode);
+  const base = sentBlocks(snapshot.files, folder);
 
   // the round of that snapshot, or a new one
   const roundsDir = `articles/${folder}/rounds/`;

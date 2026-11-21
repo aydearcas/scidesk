@@ -1,27 +1,47 @@
-// DOCX export with the `docx` library (record 0025). Vertical slice: title, headings,
-// paragraphs, lists (as paragraphs), citations and bibliography; tables, figures, the
-// reference template and the journal's page format come in phase 1.
+// DOCX export with the `docx` library and a reference template (records 0025 and 0033).
+//
+// The manuscript: titles, the abstract in each language with its keywords, the body, the
+// bibliography where the "references" heading is, tables (caption, table, notes) and
+// figures (image, caption, notes), cross-references and table note calls. Numbers of
+// citations, tables, figures and note letters are computed here, never stored.
 //
 // Profile "coauthors" writes the marks of the format spec (section 9): a hidden bookmark
-// around every block, Zotero citation fields with a URI per reference, the Zotero
-// bibliography field, the ZOTERO_PREF_n and SciDesk properties, and a bookmark with the
-// snapshot the copy is sent from. Profile "journal" writes plain text and no metadata.
+// around every block and every table or figure part, SEQ fields for their numbers with a
+// bookmark that REF fields point to, Zotero citation fields with a URI per reference, the
+// Zotero bibliography field, the ZOTERO_PREF_n and SciDesk properties, and a bookmark with
+// the snapshot the copy is sent from. Tables and figures stay where they are cited.
+// Profile "journal" writes plain text and no metadata, and follows the journal profile:
+// tables in the text or at the end, figure captions as a list at the end.
+// Both take the page format of the journal profile (spacing, size, margins, page and line
+// numbers) on top of the template's styles, which are looked up by their built-in name
+// (Word localises style ids: "Ttulo1" in a Spanish Word).
+import JSZip from "jszip";
 import {
-  BookmarkEnd, BookmarkStart, Document, HeadingLevel, ImportedXmlComponent, Packer, Paragraph,
-  TextRun, bookmarkUniqueNumericId, type ParagraphChild,
+  AlignmentType, BorderStyle, BookmarkEnd, BookmarkStart, Document, Footer, ImageRun, ImportedXmlComponent,
+  LineNumberRestartFormat, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
+  bookmarkUniqueNumericId, type ParagraphChild,
 } from "docx";
 import {
-  FIELDS, SCIDESK_PROPERTY, ZOTERO_PREF_PROPERTY, blockBookmark, ownReferenceUri,
-  snapshotBookmark, validate, type PMNode,
+  FIELDS, SCIDESK_PROPERTY, SEQ_LABELS, ZOTERO_PREF_PROPERTY, blockBookmark, numberBookmark, ownReferenceUri,
+  snapshotBookmark, validate, type JournalProfileFile, type PMNode,
 } from "@scidesk/formats";
 import { renderCitations, type CitationResources, type Rendering, type Run } from "./citations.ts";
-import type { Project } from "./project.ts";
+import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 
 export type ExportProfile = "coauthors" | "journal";
+export interface ExportResources extends CitationResources {
+  /** The reference template (.dotx) whose styles the export takes (R35). */
+  template(): Promise<Uint8Array>;
+}
 export interface ExportResult { bytes: Uint8Array; snapshot: string | null; path: string; warnings: string[] }
 
-const BIB_LABEL: Record<string, string> = { es: "Bibliografía", en: "References" };
+export const LABELS: Record<string, { bib: string; abstract: string; keywords: string; captions: string; table: string; figure: string }> = {
+  es: { bib: "Bibliografía", abstract: "Resumen", keywords: "Palabras clave", captions: "Pies de figura", ...SEQ_LABELS.es },
+  en: { bib: "References", abstract: "Abstract", keywords: "Keywords", captions: "Figure legends", ...SEQ_LABELS.en },
+};
+const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rPr = (r: Omit<Run, "text">) => {
   const p = (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
@@ -29,25 +49,153 @@ const rPr = (r: Omit<Run, "text">) => {
 };
 const runXml = (r: Run) => `<w:r>${rPr(r)}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
 const raw = (xml: string) => ImportedXmlComponent.fromXmlString(xml) as unknown as ParagraphChild;
-/** A complex field with its result already formatted: Word shows it as it is. */
+/** A complex field with its result already formatted: Word shows it as it is (record 0025). */
 const fieldXml = (instr: string, result: string) =>
   `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${esc(instr)} </w:instrText></w:r>` +
   `<w:r><w:fldChar w:fldCharType="separate"/></w:r>${result}<w:r><w:fldChar w:fldCharType="end"/></w:r>`;
 const textRun = (r: Run) => new TextRun({ text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}) });
+const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
 
-export async function exportDocx(project: Project, folder: string, profile: ExportProfile, res: CitationResources): Promise<ExportResult> {
+/** Width and height in pixels of a PNG, JPEG, GIF or BMP, from its header. */
+export function imageSize(b: Uint8Array): { type: "png" | "jpg" | "gif" | "bmp"; width: number; height: number } | null {
+  const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  if (b.length > 24 && b[0] === 0x89 && b[1] === 0x50) return { type: "png", width: dv.getUint32(16), height: dv.getUint32(20) };
+  if (b.length > 10 && b[0] === 0x47 && b[1] === 0x49) return { type: "gif", width: dv.getUint16(6, true), height: dv.getUint16(8, true) };
+  if (b.length > 26 && b[0] === 0x42 && b[1] === 0x4d) return { type: "bmp", width: dv.getInt32(18, true), height: Math.abs(dv.getInt32(22, true)) };
+  if (b.length > 4 && b[0] === 0xff && b[1] === 0xd8) {
+    let i = 2;
+    while (i + 9 < b.length) {
+      if (b[i] !== 0xff) return null;
+      const marker = b[i + 1];
+      const len = dv.getUint16(i + 2);
+      if (marker >= 0xc0 && marker <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(marker)) return { type: "jpg", height: dv.getUint16(i + 5), width: dv.getUint16(i + 7) };
+      i += 2 + len;
+    }
+  }
+  return null;
+}
+
+/** The template's styles.xml with the journal's page format applied to Normal, and the ids of the styles SciDesk uses. */
+export function applyTemplate(stylesXml: string, format: { lineSpacing?: number; fontSizePt?: number; font?: string } = {}) {
+  const ids: Record<string, string> = {};
+  for (const m of stylesXml.matchAll(/<w:style [^>]*w:styleId="([^"]+)"[^>]*>\s*<w:name w:val="([^"]+)"/g)) ids[m[2].toLowerCase()] = m[1];
+  let xml = stylesXml;
+  const normal = new RegExp(`(<w:style [^>]*w:styleId="${ids["normal"] ?? "Normal"}"[^>]*>)([\\s\\S]*?)(</w:style>)`);
+  xml = xml.replace(normal, (_, open: string, body: string, close: string) => {
+    let b = body;
+    if (format.lineSpacing) {
+      const line = Math.round(240 * format.lineSpacing);
+      const spacing = `<w:spacing w:before="0" w:after="0" w:line="${line}" w:lineRule="auto"/>`;
+      if (/<w:pPr>/.test(b)) b = /<w:spacing [^>]*\/>/.test(b.match(/<w:pPr>[\s\S]*?<\/w:pPr>/)![0]) ? b.replace(/(<w:pPr>[\s\S]*?)<w:spacing [^>]*\/>/, `$1${spacing}`) : b.replace("<w:pPr>", `<w:pPr>${spacing}`);
+      else b = b.replace(/(<w:rPr>|$)/, `<w:pPr>${spacing}</w:pPr>$1`);
+    }
+    if (format.fontSizePt || format.font) {
+      const sz = format.fontSizePt ? `<w:sz w:val="${format.fontSizePt * 2}"/><w:szCs w:val="${format.fontSizePt * 2}"/>` : "";
+      const fonts = format.font ? `<w:rFonts w:ascii="${esc(format.font)}" w:hAnsi="${esc(format.font)}" w:cs="${esc(format.font)}"/>` : "";
+      if (/<w:rPr>/.test(b)) {
+        b = b.replace(/(<w:rPr>[\s\S]*?)(<\/w:rPr>)/, (_m, inner: string, end: string) => {
+          let r = inner;
+          if (sz) r = r.replace(/<w:sz [^>]*\/>|<w:szCs [^>]*\/>/g, "") + sz;
+          if (fonts) r = r.replace(/<w:rFonts [^>]*\/>/, "") + fonts;
+          return r + end;
+        });
+      } else b += `<w:rPr>${fonts}${sz}</w:rPr>`;
+    }
+    return open + b + close;
+  });
+  return { xml, style: (name: string) => ids[name] };
+}
+
+/** Body, tables and figures as one tree, in reading order (the composite document, record 0021). */
+function composite(art: ArticleData): { tree: PMNode; tables: Map<string, PMNode>; figures: Map<string, PMNode>; warnings: string[] } {
+  const warnings: string[] = [];
+  const tables = new Map<string, PMNode>();
+  const figures = new Map<string, PMNode>();
+  const body = art.documents.get("manuscript/article.scidoc")!.doc as PMNode;
+  const content: PMNode[] = [];
+  for (const n of body.content ?? []) {
+    if (n.type === "tableRef" || n.type === "figureRef") {
+      const part = art.documents.get(n.attrs!.src as string)?.doc as PMNode | undefined;
+      if (!part) { warnings.push(`${n.attrs!.src} is missing`); continue; }
+      (n.type === "tableRef" ? tables : figures).set(n.attrs!.id as string, part);
+      content.push(part);
+    } else content.push(n);
+  }
+  return { tree: { type: "doc", content }, tables, figures, warnings };
+}
+
+/** Table and figure numbers by order of first cross-reference, then by position (PLAN 5.4). */
+function numbering(tree: PMNode, ids: string[]): Map<string, number> {
+  const order: string[] = [];
+  const visit = (n: PMNode) => {
+    if (n.type === "xref" && ids.includes(n.attrs!.target as string) && !order.includes(n.attrs!.target as string)) order.push(n.attrs!.target as string);
+    n.content?.forEach(visit);
+  };
+  visit(tree);
+  for (const id of ids) if (!order.includes(id)) order.push(id);
+  return new Map(order.map((id, i) => [id, i + 1]));
+}
+
+/** Letters of a part's specific notes, by order of first call (R11). */
+function noteLetters(part: PMNode): Map<string, string> {
+  const specific = new Set((part.content ?? []).filter((n) => /Note$/.test(n.type) && n.attrs!.kind === "specific").map((n) => n.attrs!.id as string));
+  const order: string[] = [];
+  const visit = (n: PMNode) => {
+    if (n.type === "noteRef" && specific.has(n.attrs!.target as string) && !order.includes(n.attrs!.target as string)) order.push(n.attrs!.target as string);
+    n.content?.forEach(visit);
+  };
+  visit(part);
+  for (const id of specific) if (!order.includes(id)) order.push(id);
+  return new Map(order.map((id, i) => [id, letters(i)]));
+}
+
+/** The style of an article: the journal profile's own file if it has one, else a bundled style. */
+export async function styleResources(project: Project, art: ArticleData, res: CitationResources): Promise<CitationResources> {
+  const profile = art.article.journal ? project.journals.get(art.article.journal) : undefined;
+  const own = profile?.citationStyle.value;
+  return {
+    locale: res.locale,
+    style: async (id) => {
+      if (own?.file && own.id === id) {
+        const text = await project.fs.readText(`resources/journals/${own.file}`);
+        if (text) return text;
+      }
+      const local = art.article.citationStyle.file ? await project.fs.readText(art.article.citationStyle.file) : null;
+      return local ?? res.style(id);
+    },
+  };
+}
+
+export async function exportDocx(project: Project, folder: string, profile: ExportProfile, res: ExportResources): Promise<ExportResult> {
   const art = project.articles.find((a) => a.folder === folder);
   if (!art) throw new Error(`no article ${folder}`);
-  const body = art.documents.get("manuscript/article.scidoc")!;
   const markers = profile === "coauthors";
-  const warnings: string[] = [];
   const lang = art.article.lang;
+  const L = label(lang);
+  const journal: JournalProfileFile | undefined = art.article.journal ? project.journals.get(art.article.journal) : undefined;
+  if (art.article.journal && !journal) throw new Error(`journal profile ${art.article.journal} is not in resources/journals/`);
+  const fmt = journal?.manuscriptFormat;
+  const { tree, tables, figures, warnings } = composite(art);
+  const abstract = art.documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
   const style = art.article.citationStyle.id;
-  const rendering: Rendering = await renderCitations(project.library, [body.doc as PMNode], style, art.article.referenceTermsLang ?? lang, res);
+  const rendering: Rendering = await renderCitations(project.library, [...(abstract ? [abstract] : []), tree], style, art.article.referenceTermsLang ?? lang, await styleResources(project, art, res));
   const refById = new Map(project.library.references.map((r) => [r.id, r]));
+  const tableNo = numbering(tree, [...tables.keys()]);
+  const figureNo = numbering(tree, [...figures.keys()]);
 
-  // R42: every export saves a snapshot, the base of the three-way merge
-  const snapshot = markers ? await saveSnapshot(project, folder, `DOCX para coautores`) : null;
+  // template and page format (R35)
+  const tplZip = await JSZip.loadAsync(await res.template());
+  const tplStyles = await tplZip.file("word/styles.xml")?.async("string");
+  if (!tplStyles) throw new Error("the reference template has no styles");
+  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value });
+  const S = (name: string) => tpl.style(name) ?? (warnings.push(`style '${name}' not in the template`), undefined);
+  const marginCm = fmt?.sideMarginsCm?.value ? (fmt.sideMarginsCm.value.max ?? fmt.sideMarginsCm.value.min) : 2.5;
+  const margin = Math.round((marginCm / 2.54) * 1440);
+  const pageWidth = 11906;
+  const textWidth = pageWidth - 2 * margin;
+
+  // R42: every export for co-authors saves a snapshot, the base of the three-way merge
+  const snapshot = markers ? await saveSnapshot(project, folder, "DOCX para coautores") : null;
 
   // BookmarkStart/End work as paragraph children (prototype 3) but are not typed as such
   const bm = (name: string): [ParagraphChild, ParagraphChild] => {
@@ -80,86 +228,212 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     return [raw(fieldXml(`${FIELDS.citation} ${JSON.stringify(code)}`, r.runs.map(runXml).join("")))];
   }
 
-  function inlines(content: PMNode[] = []): ParagraphChild[] {
+  function inlines(content: PMNode[] = [], notes?: Map<string, string>): ParagraphChild[] {
     const out: ParagraphChild[] = [];
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
-      if (marks.has("deletion")) continue; // tracked changes are exported accepted (DOCX with w:ins/w:del: V1)
+      if (marks.has("deletion")) continue; // tracked changes go out accepted (w:ins/w:del: V1)
       if (n.type === "text") out.push(textRun({ text: n.text!, bold: marks.has("bold"), italic: marks.has("italic"), sup: marks.has("superscript"), sub: marks.has("subscript") }));
       else if (n.type === "hardBreak") out.push(new TextRun({ break: 1 }));
       else if (n.type === "citation") out.push(...citation(n));
+      else if (n.type === "xref") {
+        const target = n.attrs!.target as string;
+        const num = tableNo.get(target) ?? figureNo.get(target);
+        if (num === undefined) { warnings.push(`cross-reference to ${target} is not exported yet`); out.push(new TextRun("?")); continue; }
+        out.push(markers ? raw(fieldXml(FIELDS.ref(target), runXml({ text: String(num) }))) : new TextRun(String(num)));
+      } else if (n.type === "noteRef") {
+        const target = n.attrs!.target as string;
+        const letter = notes?.get(target) ?? "?";
+        // a note's letter is its number: the call is a REF to it, like a cross-reference
+        out.push(markers ? raw(fieldXml(FIELDS.ref(target), runXml({ text: letter, sup: true }))) : new TextRun({ text: letter, superScript: true }));
+      }
       else warnings.push(`'${n.type}' is not exported yet`);
     }
     return out;
   }
 
-  const paragraphs: Paragraph[] = [];
-  const block = (n: PMNode, opts: Record<string, unknown> = {}, lead: ParagraphChild[] = []) => {
-    const children = [...lead, ...inlines(n.content)];
+  type Opts = Record<string, unknown>;
+  const para = (n: PMNode, opts: Opts = {}, lead: ParagraphChild[] = [], notes?: Map<string, string>, wrap: { before?: ParagraphChild[]; after?: ParagraphChild[] } = {}) => {
+    // generated text ("Tabla 1. ", a note's letter, "Palabras clave: ") goes before the
+    // block's bookmark: the reader leaves it out, so it never comes back as an edit
+    const children = inlines(n.content, notes);
     if (markers && n.attrs?.id) {
       const [s, e] = bm(blockBookmark(n.attrs.id as string));
       children.unshift(s);
       children.push(e);
     }
-    paragraphs.push(new Paragraph({ ...opts, children }));
+    return new Paragraph({ ...opts, children: [...(wrap.before ?? []), ...lead, ...children, ...(wrap.after ?? [])] });
   };
+
+  const out: (Paragraph | Table)[] = [];
+  const headingStyle = (level: number) => S(`heading ${Math.min(level, 6)}`);
+  const caption = (part: PMNode, kind: "table" | "figure", num: number) => {
+    const lbl = L[kind];
+    if (!markers) return [new TextRun({ text: `${lbl} ${num}. `, bold: true })];
+    const [s, e] = bm(numberBookmark(part.attrs!.id as string));
+    return [new TextRun({ text: `${lbl} `, bold: true }), s, raw(fieldXml(FIELDS.seq(lbl), runXml({ text: String(num), bold: true }))), e, new TextRun({ text: ". ", bold: true })];
+  };
+
+  const border = { style: BorderStyle.SINGLE, size: 8, color: "000000" };
+  const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const ALIGN = { left: AlignmentType.LEFT, center: AlignmentType.CENTER, right: AlignmentType.RIGHT, decimal: AlignmentType.RIGHT } as const;
+  function table(part: PMNode, opts: { pageBreakBefore?: boolean } = {}) {
+    const id = part.attrs!.id as string;
+    const [cap, tbl, ...notes] = part.content!;
+    const letters = noteLetters(part);
+    const [ps, pe] = markers ? bm(blockBookmark(id)) : [undefined, undefined];
+    out.push(para(cap, { style: S("caption"), keepNext: true, pageBreakBefore: opts.pageBreakBefore }, caption(part, "table", tableNo.get(id)!), letters, { before: ps ? [ps] : [] }));
+    const rows = tbl.content ?? [];
+    const isHeader = (r: PMNode) => (r.content ?? []).every((c) => c.type === "tableHeader");
+    const lastHeader = rows.findLastIndex((r, i) => isHeader(r) && rows.slice(0, i + 1).every(isHeader));
+    const widths = (tbl.attrs?.columnWidths as number[] | null) ?? null;
+    const total = widths?.reduce((a, b) => a + b, 0) ?? 0;
+    out.push(new Table({
+      width: { size: textWidth, type: WidthType.DXA },
+      ...(widths ? { columnWidths: widths.map((w) => Math.round((w / total) * textWidth)) } : {}),
+      rows: rows.map((row, i) => new TableRow({
+        tableHeader: i <= lastHeader,
+        children: (row.content ?? []).map((cell) => new TableCell({
+          columnSpan: cell.attrs!.colspan as number, rowSpan: cell.attrs!.rowspan as number,
+          borders: {
+            top: i === 0 ? border : none,
+            bottom: i === lastHeader || i + ((cell.attrs!.rowspan as number) ?? 1) - 1 === rows.length - 1 ? border : none,
+            left: none, right: none,
+          },
+          children: (cell.content ?? []).map((p) => p.type === "paragraph"
+            ? para(p, { alignment: cell.attrs!.align ? ALIGN[cell.attrs!.align as keyof typeof ALIGN] : undefined, spacing: { line: 240 } }, [], letters)
+            : (warnings.push("lists inside table cells are exported as paragraphs"), para({ type: "paragraph", attrs: {}, content: [] }))),
+        })),
+      })),
+    }));
+    notes.forEach((n, i) => {
+      const letter = new TextRun({ text: letters.get(n.attrs!.id as string) ?? "?", superScript: true });
+      const numbered: ParagraphChild[] = markers ? (() => { const [s, e] = bm(numberBookmark(n.attrs!.id as string)); return [s, letter, e]; })() : [letter];
+      const lead = n.attrs!.kind === "specific" ? [...numbered, new TextRun(" ")] : [];
+      out.push(para(n, { spacing: { line: 240 } }, lead, letters, { after: pe && i === notes.length - 1 ? [pe] : [] }));
+    });
+    if (!notes.length && pe) out.push(new Paragraph({ children: [pe] }));
+  }
+
+  const imageBytes = new Map<string, Uint8Array | null>();
+  for (const part of figures.values()) imageBytes.set(part.attrs!.image as string, await project.fs.readBytes(`articles/${folder}/${part.attrs!.image}`));
+  function figure(part: PMNode, withImage: boolean) {
+    const id = part.attrs!.id as string;
+    const [cap, ...notes] = part.content!;
+    const [ps, pe] = markers ? bm(blockBookmark(id)) : [undefined, undefined];
+    if (withImage) {
+      const bytes = imageBytes.get(part.attrs!.image as string);
+      const size = bytes ? imageSize(bytes) : null;
+      if (bytes && size) {
+        const maxPx = (textWidth / 1440) * 96;
+        const w = Math.min(maxPx, Math.max(size.width, 1)), h = (w * size.height) / Math.max(size.width, 1);
+        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: size.type, data: bytes, transformation: { width: Math.round(w), height: Math.round(h) }, altText: { name: L.figure, title: L.figure, description: (part.attrs!.alt as string) ?? "" } }) as unknown as ParagraphChild] }));
+      } else {
+        warnings.push(`${part.attrs!.image}: only PNG, JPEG, GIF and BMP images are embedded for now`);
+        out.push(new Paragraph({ children: [...(ps ? [ps] : []), new TextRun(`[${part.attrs!.image}]`)] }));
+      }
+    }
+    out.push(para(cap, { style: S("caption") }, caption(part, "figure", figureNo.get(id)!), undefined, { before: !withImage && ps ? [ps] : [], after: pe && !notes.length ? [pe] : [] }));
+    notes.forEach((n, i) => out.push(para(n, { spacing: { line: 240 } }, [], undefined, { after: pe && i === notes.length - 1 ? [pe] : [] })));
+  }
+
+  // --- bibliography, where the "references" heading is
   let bibliographyPlaced = false;
   const bibliography = () => {
     bibliographyPlaced = true;
     rendering.bibliography.forEach((e, i) => {
       const runs: ParagraphChild[] = [new TextRun(`${e.label} `), ...e.runs.map(textRun)];
       const first = i === 0, last = i === rendering.bibliography.length - 1;
-      const children = markers
-        ? [
-          ...(first ? [raw(`<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${FIELDS.bibliography} {"uncited":[],"omitted":[],"custom":[]} CSL_BIBLIOGRAPHY </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r>`)] : []),
-          ...runs,
-          ...(last ? [raw('<w:r><w:fldChar w:fldCharType="end"/></w:r>')] : []),
-        ]
-        : runs;
-      paragraphs.push(new Paragraph({ indent: { left: 400, hanging: 400 }, children }));
+      out.push(new Paragraph({
+        indent: { left: 400, hanging: 400 },
+        children: markers
+          ? [
+            ...(first ? [raw(`<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${FIELDS.bibliography} {"uncited":[],"omitted":[],"custom":[]} CSL_BIBLIOGRAPHY </w:instrText></w:r><w:r><w:fldChar w:fldCharType="separate"/></w:r>`)] : []),
+            ...runs,
+            ...(last ? [raw('<w:r><w:fldChar w:fldCharType="end"/></w:r>')] : []),
+          ]
+          : runs,
+      }));
     });
   };
-  const list = (n: PMNode, depth: number) => {
-    n.content?.forEach((item, k) => item.content?.forEach((child, j) => {
-      if (child.type === "paragraph") block(child, { indent: { left: 360 * (depth + 1) } }, j === 0 ? [new TextRun(n.type === "orderedList" ? `${((n.attrs?.start as number) ?? 1) + k}. ` : "• ")] : []);
-      else list(child, depth + 1);
-    }));
+
+  // --- the manuscript
+  const bodyNodes = tree.content ?? [];
+  const tablesAtEnd = !markers && fmt?.tables?.value === "end";
+  const captionsList = !markers && fmt?.figureCaptionsList?.value === true;
+  const list = (n: PMNode, depth: number) => n.content?.forEach((item, k) => item.content?.forEach((child, j) => {
+    if (child.type === "paragraph") out.push(para(child, { indent: { left: 360 * (depth + 1) } }, j === 0 ? [new TextRun(n.type === "orderedList" ? `${((n.attrs?.start as number) ?? 1) + k}. ` : "• ")] : []));
+    else list(child, depth + 1);
+  }));
+  let abstractDone = !abstract;
+  const writeAbstract = () => {
+    abstractDone = true;
+    for (const section of abstract?.content ?? []) {
+      const sl = label((section.attrs!.lang as string) ?? lang);
+      out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun(sl.abstract)] }));
+      for (const n of section.content ?? []) {
+        if (n.type === "heading") out.push(para(n, { style: headingStyle(2) }));
+        else if (n.type === "paragraph") out.push(para(n));
+        else if (n.type === "keywords") {
+          const words = (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).filter(Boolean);
+          const kw = { type: "paragraph", attrs: n.attrs, content: [{ type: "text", text: words.join("; ") }] } as PMNode;
+          out.push(para(kw, {}, [new TextRun({ text: `${sl.keywords}: `, bold: true })]));
+        }
+      }
+    }
   };
-  const HEADINGS = [HeadingLevel.HEADING_1, HeadingLevel.HEADING_2, HeadingLevel.HEADING_3, HeadingLevel.HEADING_4, HeadingLevel.HEADING_5, HeadingLevel.HEADING_6];
-  for (const n of (body.doc as PMNode).content ?? []) {
+  for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
-    if (n.type === "title") block(n, { heading: HeadingLevel.TITLE });
+    if (n.type !== "title" && !abstractDone) writeAbstract();
+    if (n.type === "title") out.push(para(n, { style: S("title") }));
     else if (n.type === "heading") {
-      block(n, { heading: HEADINGS[((n.attrs!.level as number) ?? 1) - 1] });
+      out.push(para(n, { style: headingStyle((n.attrs!.level as number) ?? 1) }));
       if (n.attrs!.role === "references") bibliography();
-    } else if (n.type === "paragraph") block(n);
+    } else if (n.type === "paragraph") out.push(para(n));
     else if (n.type === "bulletList" || n.type === "orderedList") list(n, 0);
-    else warnings.push(`'${n.type}' is not exported in the vertical slice`);
+    else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
+    else if (n.type === "figurePart") { if (!captionsList) figure(n, true); }
+    else warnings.push(`'${n.type}' is not exported yet`);
   }
+  if (!abstractDone) writeAbstract();
   if (!bibliographyPlaced && rendering.bibliography.length) {
-    paragraphs.push(new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun(BIB_LABEL[lang] ?? BIB_LABEL.en)] }));
+    out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun(L.bib)] }));
     bibliography();
   }
-  if (markers && snapshot && paragraphs.length) {
+  if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => table(part, { pageBreakBefore: true }));
+  if (captionsList && figures.size) {
+    out.push(new Paragraph({ style: headingStyle(1), pageBreakBefore: true, children: [new TextRun(L.captions)] }));
+    [...figures.entries()].sort((a, b) => figureNo.get(a[0])! - figureNo.get(b[0])!).forEach(([, part]) => figure(part, false));
+  }
+  if (markers && snapshot && out.length) {
     // the snapshot the copy was sent from, also when the properties are lost (record 0025)
     const [s, e] = bm(snapshotBookmark(snapshot.id));
-    paragraphs.unshift(new Paragraph({ children: [s, e] }));
+    out.unshift(new Paragraph({ children: [s, e] }));
   }
 
+  // --- properties
   const custom: { name: string; value: string }[] = [];
   if (markers && snapshot) {
-    const pref = `<data data-version="3" zotero-version="7.0"><session id="SciDesk01"/><style id="${esc(style)}" locale="${lang === "es" ? "es-ES" : "en-US"}" hasBibliography="1" bibliographyStyleHasBeenSet="1"/><prefs><pref name="fieldType" value="Field"/><pref name="automaticJournalAbbreviations" value="true"/></prefs></data>`;
+    const pref = `<data data-version="3" zotero-version="7.0"><session id="SciDesk01"/><style id="${esc(style)}" locale="${lang.startsWith("es") ? "es-ES" : "en-US"}" hasBibliography="1" bibliographyStyleHasBeenSet="1"/><prefs><pref name="fieldType" value="Field"/><pref name="automaticJournalAbbreviations" value="true"/></prefs></data>`;
     for (let i = 0; i * 255 < pref.length; i++) custom.push({ name: `${ZOTERO_PREF_PROPERTY}${i + 1}`, value: pref.slice(i * 255, (i + 1) * 255) });
     const prop = { format: 1 as const, project: project.manifest.id, article: art.article.id, snapshot: snapshot.id, profile: "coauthors" as const };
     const propIssues = validate("docx-property", prop);
     if (propIssues.length) throw new Error(`invalid SciDesk property: ${propIssues[0].message}`);
     custom.push({ name: SCIDESK_PROPERTY, value: JSON.stringify(prop) });
   }
-  const titleText = ((body.doc as PMNode).content?.find((n) => n.type === "title")?.content ?? []).map((c) => c.text ?? "").join("");
+  const titleText = (bodyNodes.find((n) => n.type === "title")?.content ?? []).map((c) => c.text ?? "").join("");
   const doc = new Document({
+    externalStyles: tpl.xml,
     ...(markers ? { title: titleText, creator: "SciDesk", lastModifiedBy: "SciDesk" } : { title: "", creator: "", lastModifiedBy: "" }),
     customProperties: custom,
-    sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1418, bottom: 1418, left: 1418, right: 1418 } } }, children: paragraphs }],
+    sections: [{
+      properties: {
+        page: { size: { width: pageWidth, height: 16838 }, margin: { top: 1418, bottom: 1418, left: margin, right: margin } },
+        ...(fmt?.lineNumbers?.value ? { lineNumbers: { countBy: 1, restart: LineNumberRestartFormat.NEW_PAGE } } : {}),
+      },
+      ...(fmt?.pageNumbers?.value !== false ? { footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT] })] })] }) } } : {}),
+      children: out,
+    }],
   });
   const bytes = new Uint8Array(await Packer.toArrayBuffer(doc));
   const name = profile === "coauthors" ? "coautores" : "revista";

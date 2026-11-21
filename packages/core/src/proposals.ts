@@ -14,6 +14,10 @@ import { diffWordsWithSpace } from "diff";
 import { newId, validate, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { ATOM, rejectedText, type DocxParagraph, type DocxRead } from "./docx-read.ts";
 import { now } from "./project.ts";
+import { LABELS } from "./docx-export.ts";
+
+/** Headings the export writes itself ("Resumen", "Pies de figura"…): not content. */
+const GENERATED = new Set(Object.values(LABELS).flatMap((l) => [l.abstract, l.bib, l.captions]));
 
 export interface BaseBlock { file: string; id: string; text: string; citations: string[] }
 
@@ -21,7 +25,12 @@ export interface BaseBlock { file: string; id: string; text: string; citations: 
 export function baseBlocks(file: string, doc: PMNode): BaseBlock[] {
   const out: BaseBlock[] = [];
   const visit = (n: PMNode) => {
-    const isTextblock = n.content?.some((c) => c.type === "text" || c.attrs?.target !== undefined || c.type === "citation") || /^(paragraph|heading|title|tableCaption|tableNote|figureCaption|figureNote)$/.test(n.type);
+    if (n.type === "keywords" && n.attrs?.id) {
+      // exported as one paragraph: "a; b; c" (the "Palabras clave: " before it is generated)
+      out.push({ file, id: n.attrs.id as string, text: (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).join("; "), citations: [] });
+      return;
+    }
+    const isTextblock = /^(paragraph|heading|title|tableCaption|tableNote|figureCaption|figureNote)$/.test(n.type);
     if (isTextblock && n.attrs?.id && !(n.marks ?? []).some((m) => m.type === "deletion")) {
       let text = "";
       const citations: string[] = [];
@@ -39,7 +48,7 @@ export function baseBlocks(file: string, doc: PMNode): BaseBlock[] {
   return out;
 }
 
-const norm = (s: string) => s.normalize("NFC").replace(/[   \s]+/g, " ").replace(/[“”«»„]/g, '"').replace(/[‘’]/g, "'").replace(/[‐‑‒–—]/g, "-").trim();
+const norm = (s: string) => s.normalize("NFC").replace(/[\u00a0\u2009\u202f\s]+/g, " ").replace(/[“”«»„]/g, '"').replace(/[‘’]/g, "'").replace(/[‐\u2011‒–—]/g, "-").trim();
 function similarity(a: string, b: string) {
   if (a === b) return 1;
   if (!a || !b) return 0;
@@ -149,6 +158,7 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
       const tracked = p.segments.length > 0 && p.segments.every((s) => s.kind === "ins" || !s.text.trim());
       const author = tracked ? { name: p.segments.find((s) => s.author)!.author! } : info.returnedBy;
       const text = p.segments.filter((s) => s.kind !== "del").map((s) => s.text).join("");
+      if (!p.blocks.length && p.segments.every((s) => s.kind === "same") && GENERATED.has(text.trim())) continue;
       if (text.trim()) push({ author, tracked, kind: "insert-paragraph", anchor: { file: (lastBase ?? base[0]).file, after: lastBase?.id ?? null }, before: "", after: text, date });
       continue;
     }

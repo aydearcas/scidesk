@@ -278,6 +278,8 @@ Un id `<tipo>-<sufijo>` se escribe en un marcador cambiando el guion por `_`: `b
 | Cada tabla o figura | `_SD_t_…` o `_SD_f_…` desde el pie hasta la última nota |
 | Su número | `_SDn_t_…` o `_SDn_f_…` alrededor del campo `SEQ Tabla \* ARABIC` (o `SEQ Figura`, `SEQ Table`, `SEQ Figure`, según el idioma del documento) |
 | Cada referencia cruzada | `REF _SDn_<id> \h`; la palabra «tabla» va fuera, como texto |
+| Cada nota específica de tabla o figura | Su letra dentro de un marcador `_SDn_n_…`; cada llamada desde una celda es `REF _SDn_n_… \h` con la letra en superíndice (ficha 0033) |
+| El texto que genera la exportación | «Tabla 1. », la letra de una nota y «Palabras clave: » van **antes** del marcador del bloque; los encabezados generados («Resumen», «Bibliografía», «Pies de figura») no llevan marcador. Al importar no se comparan (ficha 0033) |
 | Cada cita | `ADDIN ZOTERO_ITEM CSL_CITATION {json}`: `citationID` = id de la cita (`c-…`), y cada referencia con su CSL-JSON y **siempre un URI** (el de Zotero o `https://scidesk.app/ref/<proyecto>/<referencia>`) |
 | La bibliografía | `ADDIN ZOTERO_BIBL` |
 | El documento | Propiedades `ZOTERO_PREF_n` (el estilo, en trozos de 255 caracteres) y `SciDesk` = `{ format: 1, project, article, snapshot, profile: "coauthors" }`, y un marcador `_SDs_s_…` al principio con la instantánea de partida |

@@ -53,5 +53,5 @@ export class NodeFs implements ProjectFs {
 export async function nodeResources() {
   const { bundledResources } = await import("./resources.ts");
   const dir = new URL("../assets/", import.meta.url);
-  return bundledResources((file) => readFile(new URL(file, dir), "utf8"));
+  return bundledResources((file) => readFile(new URL(file, dir), "utf8"), async (file) => new Uint8Array(await readFile(new URL(file, dir))));
 }
