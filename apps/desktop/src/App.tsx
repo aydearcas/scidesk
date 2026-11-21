@@ -5,7 +5,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  createDemoProject, exportDocx, importCopy, loadProject, renderCitations, saveDocument,
+  createDemoProject, exportDocx, exportTitlePage, importCopy, loadProject, renderCitations, saveDocument,
   type Project, type Rendering,
 } from "@scidesk/core";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
@@ -91,13 +91,15 @@ export function App() {
     if (!editor || !refChoice) return;
     editor.chain().focus().insertContent({ type: "citation", attrs: { id: newId("c"), items: [{ ref: refChoice }] } }).run();
   };
-  const exportCopy = run(async () => {
+  const exportAs = (kind: "coauthors" | "journal" | "title-page") => run(async () => {
     if (!project || !article) return;
     await save();
-    const r = await exportDocx(project, article.folder, "coauthors", resources);
+    const r = kind === "title-page"
+      ? { ...(await exportTitlePage(project, article.folder, resources)), snapshot: null }
+      : await exportDocx(project, article.folder, kind, resources);
     // in the browser preview the file is offered as a link, never downloaded on its own
     if (!inTauri) setDownload({ url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
-    setMessage(t("exported", { path: r.path, snapshot: r.snapshot }));
+    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
   });
   const onCopy = run(async () => {
     const file = fileInput.current?.files?.[0];
@@ -137,7 +139,9 @@ export function App() {
                 {refs.map((r) => <option key={r.id} value={r.id}>{refLabel(r.id)}</option>)}
               </select>
               <button onClick={insertCitation} disabled={!refChoice}>{t("insertCitation")}</button>
-              <button onClick={exportCopy}>{t("exportDocx")}</button>
+              <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
+              <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
+              <button onClick={exportAs("title-page")}>{t("exportTitlePage")}</button>
             </div>
             <EditorContent editor={editor} className="page" />
             {rendering && rendering.bibliography.length > 0 && (

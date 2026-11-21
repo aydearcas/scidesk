@@ -100,7 +100,7 @@ rmSync(OUT, { recursive: true, force: true });
   });
   const people = byline.map(([, name, n]) => {
     const [given, ...family] = name.split(" ");
-    return { id: id("p"), kind: "person", given, family: family.join(" "), affiliations: [affiliations.find((a) => a.n === n)!.id], email: `${given.toLowerCase()}.${family[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")}@example.org` };
+    return { id: id("p"), kind: "person", given, family: family.join(" "), affiliations: [affiliations.find((a) => a.n === n)!.id], email: `${given}.${family[0]}@example.org`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") };
   });
   Object.assign(people[0], { degrees: ["MD", "PhD"], orcid: "0000-0002-1825-0097", citationName: "Herrera-Gil L" });
   const group = { id: id("p"), kind: "group", name: "Grupo de Trabajo Ficticio de Artrosis", affiliations: [], members: [people[4].id, people[5].id] };

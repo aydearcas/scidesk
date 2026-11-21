@@ -4,7 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 const es = {
   open: "Abrir proyecto…", demo: "Proyecto de demostración", save: "Guardar", saved: "Guardado", unsaved: "Sin guardar",
-  insertCitation: "Insertar cita", chooseReference: "Elige una referencia", exportDocx: "Exportar DOCX para coautores",
+  insertCitation: "Insertar cita", chooseReference: "Elige una referencia", exportDocx: "Exportar DOCX para coautores", exportJournal: "DOCX para la revista", exportTitlePage: "Portada", exportedPlain: "Exportado: {{path}}",
   importCopy: "Importar copia devuelta…", returnedBy: "¿Quién la devuelve?", needReturnedBy: "Escribe primero quién devuelve la copia.", proposals: "Propuestas de la copia",
   noProposals: "Sin cambios respecto a la versión enviada.", tracked: "marcada", untracked: "sin marcar",
   integrityOk: "Integridad: la copia se reconstruye con estas propuestas.", integrityBad: "Integridad: las propuestas no reconstruyen la copia; revísala.",
@@ -16,7 +16,7 @@ const es = {
 };
 const en: typeof es = {
   open: "Open project…", demo: "Demo project", save: "Save", saved: "Saved", unsaved: "Unsaved",
-  insertCitation: "Insert citation", chooseReference: "Choose a reference", exportDocx: "Export DOCX for co-authors",
+  insertCitation: "Insert citation", chooseReference: "Choose a reference", exportDocx: "Export DOCX for co-authors", exportJournal: "DOCX for the journal", exportTitlePage: "Title page", exportedPlain: "Exported: {{path}}",
   importCopy: "Import returned copy…", returnedBy: "Who returns it?", needReturnedBy: "First write who returns the copy.", proposals: "Proposals of the copy",
   noProposals: "No changes from the version sent.", tracked: "tracked", untracked: "untracked",
   integrityOk: "Integrity: the copy is rebuilt from these proposals.", integrityBad: "Integrity: the proposals do not rebuild the copy; check it.",

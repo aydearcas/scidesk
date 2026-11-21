@@ -3,7 +3,7 @@
 //   scidesk new <dir> --name <name> --title <title> [--lang es]
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project
-//   scidesk export <dir> [--profile coauthors|journal] [--article main]
+//   scidesk export <dir> [--profile coauthors|journal|title-page] [--article main]
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
 //   scidesk show <dir> <proposals.json>
 import { readFile } from "node:fs/promises";
@@ -13,6 +13,7 @@ import { createProject, loadProject, ProjectError } from "./project.ts";
 import { createDemoProject } from "./demo.ts";
 import { exportDocx, type ExportProfile } from "./docx-export.ts";
 import { importCopy } from "./round.ts";
+import { exportTitlePage } from "./title-page.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -46,7 +47,13 @@ async function main() {
     }
     case "export": {
       const p = await loadProject(fs);
-      const r = await exportDocx(p, opt("article", "main")!, (opt("profile", "coauthors") as ExportProfile), await nodeResources());
+      const profile = opt("profile", "coauthors")!;
+      if (profile === "title-page") {
+        const t = await exportTitlePage(p, opt("article", "main")!, await nodeResources());
+        console.log(JSON.stringify({ file: t.path, kb: Math.round(t.bytes.length / 1024), warnings: t.warnings }));
+        break;
+      }
+      const r = await exportDocx(p, opt("article", "main")!, profile as ExportProfile, await nodeResources());
       console.log(JSON.stringify({ file: r.path, snapshot: r.snapshot, kb: Math.round(r.bytes.length / 1024), warnings: r.warnings }));
       break;
     }

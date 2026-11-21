@@ -37,6 +37,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0031](0031-formatos-v1-con-un-solo-esquema.md) | Formatos v1 con un solo esquema (TypeBox, `packages/formats/`): `.scidoc`, `.scitable`, `.scifigure`, proyecto, personas, autores, biblioteca, perfil de revista, propuestas y marcas del DOCX; estado de Zotero en cada equipo | R34, fase 0 | 21/11/2026 | — |
 | [0032](0032-corte-vertical.md) | Corte vertical: monorepo (formats, core, desktop), núcleo con acceso a archivos por interfaz, exportar DOCX con marcas e instantánea e importar la copia devuelta como propuestas; probado con Word real y en la ventana | R42, fase 1 | 21/11/2026 | — |
 | [0033](0033-docx-del-manuscrito.md) | DOCX del manuscrito completo: resumen, tablas con notas, figuras, referencias cruzadas, plantilla de referencia y formato del perfil de revista; texto generado fuera del marcador del bloque y llamadas a notas como REF | Fase 1, R11, R35 | 21/11/2026 | — |
+| [0034](0034-portada-aparte.md) | Portada aparte generada desde autores y directorio de personas (afiliaciones numeradas, correspondencia, contribución igual, conflictos, agradecimientos); manuscrito para la revista sin autores | Fase 1, P12 | 21/11/2026 | — |
 
 ## Plantilla
 
