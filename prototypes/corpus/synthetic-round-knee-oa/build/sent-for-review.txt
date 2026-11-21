@@ -1,0 +1,311 @@
+[TÍTULO] Artrosis de rodilla acelerada: una revisión narrativa sobre su definición, epidemiología, factores de riesgo y manejo
+
+AVISO: este documento es material sintético de prueba, generado con un modelo de lenguaje para probar software. No es un artículo real y no debe citarse ni utilizarse con fines clínicos. Las referencias bibliográficas no se han verificado y pueden ser inexactas o inexistentes, y las cifras del texto y de las tablas son orientativas.
+
+Lucía Herrera Gil1, Marta Ríos Navarro2, Javier Soler Benítez1, Andrés Calvo Mora3, Elena Vidal Ortega2, Pablo Navas Cuesta3
+
+1 Servicio de Reumatología, Hospital Universitario Ficticio de Santa Aurelia, Santa Aurelia, España
+
+2 Unidad de Investigación Musculoesquelética, Instituto Ficticio de Ciencias de la Salud del Norte, Valdoria, España
+
+3 Departamento de Cirugía Ortopédica y Traumatología, Hospital Ficticio del Mar, Puerto Alba, España
+
+Autor para correspondencia: Lucía Herrera Gil, lucia.herrera@example.org
+
+[ENCABEZADO 1] Resumen
+
+Introducción: La artrosis de rodilla acelerada (AKOA, del inglés accelerated knee osteoarthritis) es un fenotipo en el que una rodilla sin artrosis radiográfica establecida evoluciona en menos de cuatro años hacia una enfermedad avanzada. Se trata de una entidad descrita sobre todo a partir de cohortes como la Osteoarthritis Initiative (OAI), y su definición todavía no es universal.
+
+Desarrollo: Se revisan los criterios radiográficos y de resonancia magnética (RM) propuestos, la frecuencia estimada (entre el 4 % y el 10 % de las rodillas en riesgo, según la definición), los factores de riesgo asociados, como la lesión meniscal, el antecedente traumático, la sinovitis y el sobrepeso, y los mecanismos fisiopatológicos candidatos. También se discuten el pronóstico, con una mayor probabilidad de artroplastia, y las implicaciones para el manejo y para el diseño de ensayos clínicos.
+
+Conclusiones: La AKOA parece un fenotipo clínicamente relevante, con más dolor y una evolución estructural más rápida que la artrosis típica. Faltan definiciones consensuadas, estudios fuera de las cohortes estadounidenses y ensayos dirigidos a este subgrupo. Mientras tanto, conviene vigilar de cerca las rodillas de riesgo y tratar los factores modificables.
+
+Palabras clave: artrosis de rodilla; progresión rápida; fenotipo; resonancia magnética; menisco; Osteoarthritis Initiative
+
+[ENCABEZADO 1] Introducción
+
+La artrosis de rodilla es una de las principales causas de dolor y discapacidad en adultos de mediana edad y mayores, y se describe de forma habitual como una enfermedad de evolución lenta que, a lo largo de décadas, deteriora el cartílago, el hueso subcondral y las partes blandas [1,2]. Esta imagen resulta útil en la consulta, pero es incompleta. Los estudios de cohortes con radiografías seriadas muestran que la trayectoria individual es muy heterogénea: muchas rodillas permanecen estables durante años, otras empeoran de forma gradual y un grupo reducido sufre un deterioro llamativamente rápido. A este último grupo se le ha denominado artrosis de rodilla acelerada, abreviada aquí como AKOA por su nombre inglés.
+
+El concepto surgió del análisis de la Osteoarthritis Initiative (OAI), una cohorte observacional multicéntrica estadounidense que reclutó a 4796 participantes de 45-79 años con artrosis de rodilla o con riesgo de padecerla, y que reunió radiografías, resonancias magnéticas (RM) y datos clínicos durante más de ocho años de seguimiento [3,4]. En ese marco se observó que algunos participantes, sin artrosis radiográfica o con cambios mínimos al inicio, alcanzaban en cuatro años o menos los grados 3 o 4 de la escala de Kellgren y Lawrence (KL) [5,6]. La observación importa por dos motivos: sugiere que existe una ventana de intervención temprana y obliga a replantear los ensayos clínicos, en los que se promedian trayectorias muy distintas.
+
+El interés por la AKOA ha crecido en la última década, pero la bibliografía sigue siendo fragmentaria. Hay definiciones que compiten entre sí, estimaciones de frecuencia que oscilan según el umbral elegido y pocos datos procedentes de poblaciones europeas, por ejemplo la cohorte de mujeres de Chingford [7]. El objetivo de esta revisión narrativa es resumir lo que se sabe sobre la definición, la epidemiología, los factores de riesgo, la fisiopatología, el diagnóstico por imagen y el pronóstico de la AKOA, y señalar las lagunas que deberían cubrir los estudios futuros. No se ha seguido una metodología sistemática, de modo que la selección de los trabajos refleja el criterio de los autores.
+
+[ENCABEZADO 1] Definición y criterios
+
+No existe una definición única de AKOA. En términos generales, se entiende como una progresión estructural rápida, en una rodilla que partía de un estado sin enfermedad o con enfermedad leve, hacia una artrosis radiográfica avanzada en un intervalo breve. Las diferencias entre autores afectan al punto de partida (rodillas sin ningún signo o con signos dudosos), al punto de llegada (KL 3 o KL 4) y a la ventana de tiempo permitida (12, 24 o 48 meses). Estas decisiones, aparentemente menores, modifican de manera notable la frecuencia observada y la composición del grupo de casos, y por eso la comparación entre estudios exige leer con atención los métodos [8].
+
+[ENCABEZADO 2] Criterios radiográficos
+
+La definición más utilizada procede del trabajo de Driban y colaboradores, que compararon varios algoritmos en la OAI y propusieron como mejor opción el paso de una rodilla con KL 0 o 1 en la visita basal a una rodilla con KL 3 o 4 en el plazo de 48 meses [6]. La escala KL clasifica la artrosis de 0 a 4 según la presencia de osteofitos, el estrechamiento del espacio articular, la esclerosis y la deformidad ósea, y sigue siendo la referencia pese a su carácter ordinal y a su variabilidad entre lectores [5]. Una variante más estricta exige que la rodilla pase por un estado de enfermedad indeterminada antes de llegar al grado avanzado; otra, más laxa, admite el salto desde KL 2. Las diferencias entre la AKOA y la artrosis de rodilla típica en las cohortes de referencia se resumen más abajo (tabla 1).
+
+Tabla 1. Comparación entre la artrosis de rodilla acelerada y la artrosis de rodilla típica en cohortes de referencia (datos sintéticos orientativos).
+
+[Tabla 1 | fila 1 | columna 1] Característica
+
+[Tabla 1 | fila 1 | columna 2] Fenotipo de rodilla
+
+[Tabla 1 | fila 1 | columna 3] Diferencia
+
+[Tabla 1 | fila 2 | columna 2] Aceleradaa
+
+[Tabla 1 | fila 2 | columna 3] Típica
+
+[Tabla 1 | fila 3 | columna 1] Edad media (años)
+
+[Tabla 1 | fila 3 | columna 2] 60
+
+[Tabla 1 | fila 3 | columna 3] 63
+
+[Tabla 1 | fila 3 | columna 4] Menor en la acelerada
+
+[Tabla 1 | fila 4 | columna 1] IMC medio (kg/m2)
+
+[Tabla 1 | fila 4 | columna 2] 29
+
+[Tabla 1 | fila 4 | columna 3] 27
+
+[Tabla 1 | fila 4 | columna 4] Mayor en la acelerada
+
+[Tabla 1 | fila 5 | columna 1] Lesión meniscal desestabilizadorab
+
+[Tabla 1 | fila 5 | columna 2] 41 %
+
+[Tabla 1 | fila 5 | columna 3] 18 %
+
+[Tabla 1 | fila 5 | columna 4] OR 3,1
+
+[Tabla 1 | fila 6 | columna 1] Pérdida de espacio articular anual
+
+[Tabla 1 | fila 6 | columna 2] 0,5-1,0 mm
+
+[Tabla 1 | fila 6 | columna 3] 0,1-0,2 mm
+
+[Tabla 1 | fila 6 | columna 4] Cinco veces mayor
+
+[Tabla 1 | fila 7 | columna 1] Artroplastia a cinco años
+
+[Tabla 1 | fila 7 | columna 2] 20 %
+
+[Tabla 1 | fila 7 | columna 3] 4 %
+
+[Tabla 1 | fila 7 | columna 4] Riesgo 3-5 veces mayor
+
+[Tabla 1 | fila 8 | columna 1] Dolor basal (escala 0-100)
+
+[Tabla 1 | fila 8 | columna 2] 38
+
+[Tabla 1 | fila 8 | columna 3] 29
+
+[Tabla 1 | fila 8 | columna 4] 9 puntos más
+
+Abreviaturas: IMC, índice de masa corporal; OR, razón de oportunidades; RM, resonancia magnética.
+
+a Paso de KL 0-1 a KL 3-4 en un máximo de 48 meses.
+
+b Desgarro radial, en asa de cubo o complejo, valorado por RM.
+
+Conviene recordar que la clasificación radiográfica tiene un límite intrínseco: la radiografía simple es poco sensible a los cambios precoces del cartílago y del menisco. Una rodilla con KL 1 puede albergar ya lesiones importantes en la RM, de modo que el supuesto salto "de la normalidad a la enfermedad" refleja en parte la incapacidad de la técnica para detectar lo que ocurría antes. Por esta razón, algunos autores prefieren hablar de progresión radiográfica rápida y reservar el término AKOA para los casos en que la evolución es excepcional incluso en comparación con el resto de rodillas en riesgo, por ejemplo, cuando la pérdida anual de espacio articular supera 0,5 mm.
+
+[ENCABEZADO 2] Definiciones basadas en resonancia magnética y otras propuestas
+
+La RM permite una definición alternativa, basada en la evolución de las lesiones del cartílago, la médula ósea y el menisco medidas con sistemas semicuantitativos como el MOAKS [9]. Con esta técnica se ha visto que las rodillas que desarrollan AKOA presentan, antes de que la radiografía sea anormal, más lesiones meniscales con potencial desestabilizador (desgarros radiales, en asa de cubo o complejos) y una mayor carga de lesiones de médula ósea [10]. Otros trabajos describen más derrame-sinovitis y una alteración de la señal de la grasa infrapatelar en los casos que luego progresan con rapidez [11].
+
+Estas observaciones han alimentado propuestas que combinan criterios, es decir, una definición radiográfica del desenlace y un conjunto de marcadores de RM que identifican a priori las rodillas con mayor riesgo. Ninguna de ellas se ha validado todavía en cohortes independientes, y su uso se limita hoy a la investigación. Por otra parte, la AKOA se ha definido también por criterios clínicos, como un empeoramiento del dolor medido con la escala WOMAC de al menos 20 puntos en dos años, aunque esta aproximación mezcla la progresión estructural con la sintomática y no siempre coinciden, de modo que muchos autores prefieren hablar de un "fenotipo doloroso" cuando predominan los síntomas.
+
+[ENCABEZADO 1] Epidemiología
+
+La artrosis de rodilla afecta a más del 10 % de los adultos mayores de 60 años y a cerca de 250 millones de personas en el mundo, con una carga que crece por el envejecimiento y por la epidemia de obesidad [12]. Dentro de ese conjunto, la AKOA es un subgrupo minoritario cuya frecuencia exacta depende de la definición y de la población de partida. En la OAI, el 4 % de las rodillas sin artrosis radiográfica establecida cumplió criterios en los primeros cuatro años, y la frecuencia fue algo mayor, cercana al 9 %, cuando se aceptaron definiciones más laxas con inicio en KL 2 [4,6].
+
+Los datos europeos son escasos. En las mujeres de la cohorte de Chingford, con edad media de unos 54 años al inicio, se estimó una incidencia de AKOA próxima al 5,5 % durante un seguimiento de 15 años, con un perfil de participantes parecido al de la OAI [7]. Estas cifras se calculan sobre rodillas en riesgo y no sobre la población general, lo que explica que parezcan elevadas en comparación con la prevalencia de artrosis grave en adultos de 40-60 años. Hasta la fecha no se dispone de estimaciones poblacionales en España ni en Latinoamérica.
+
+Los pacientes con AKOA tienden a ser algo más jóvenes que los de la artrosis típica de rodilla, con una edad media de 60 años frente a 63, y muestran un índice de masa corporal (IMC) medio de 28-30 kg/m2 [13]. La proporción de mujeres es ligeramente superior a la de la artrosis común, aunque esta diferencia no siempre alcanza significación estadística. Además, el dolor basal suele ser mayor, y el grupo con AKOA, que algunos describen como "de inicio abrupto", refiere más síntomas desde el momento en que aún no hay lesión radiográfica evidente, un rasgo que apunta a un proceso biológicamente más activo [14,15].
+
+[ENCABEZADO 1] Factores de riesgo
+
+La identificación de los factores asociados a la AKOA procede de análisis de cohortes en los que se compara a los casos con rodillas sin enfermedad o con la progresión habitual. Casi todos los factores clásicos de la artrosis de rodilla (edad, sexo femenino, obesidad, lesión previa, alineación) se han explorado en este contexto, pero la magnitud de las asociaciones y su especificidad respecto a la artrosis típica son motivo de debate [16,17]. Los más estudiados, con las medidas de asociación publicadas, figuran más abajo (tabla 2) y deben interpretarse como aproximadas porque cada estudio usa definiciones distintas.
+
+Tabla 2. Factores de riesgo de artrosis de rodilla acelerada y magnitud de la asociación publicada (datos sintéticos orientativos).
+
+[Tabla 2 | fila 1 | columna 1] Factor de riesgo
+
+[Tabla 2 | fila 1 | columna 2] Medida
+
+[Tabla 2 | fila 1 | columna 3] Valor (IC 95 %)
+
+[Tabla 2 | fila 1 | columna 4] Observación
+
+[Tabla 2 | fila 2 | columna 1] Lesión articular previaa
+
+[Tabla 2 | fila 2 | columna 2] OR
+
+[Tabla 2 | fila 2 | columna 3] 2,2 (1,4-3,5)
+
+[Tabla 2 | fila 2 | columna 4] Mayor con rotura de LCA
+
+[Tabla 2 | fila 3 | columna 1] Desgarro meniscal complejo
+
+[Tabla 2 | fila 3 | columna 2] OR
+
+[Tabla 2 | fila 3 | columna 3] 3,1 (1,9-5,0)
+
+[Tabla 2 | fila 3 | columna 4] Valorado por RM
+
+[Tabla 2 | fila 4 | columna 1] Obesidad (IMC mayor de 30)
+
+[Tabla 2 | fila 4 | columna 2] OR
+
+[Tabla 2 | fila 4 | columna 3] 1,9 (1,2-3,0)
+
+[Tabla 2 | fila 4 | columna 4] Relación dosis-respuesta
+
+[Tabla 2 | fila 5 | columna 1] Sinovitis o derrame por RMb
+
+[Tabla 2 | fila 5 | columna 2] OR
+
+[Tabla 2 | fila 5 | columna 3] 2,4 (1,5-3,8)
+
+[Tabla 2 | fila 5 | columna 4] A los 30 meses
+
+[Tabla 2 | fila 6 | columna 1] Sexo femenino
+
+[Tabla 2 | fila 6 | columna 2] OR
+
+[Tabla 2 | fila 6 | columna 3] 1,3 (0,9-1,9)
+
+[Tabla 2 | fila 6 | columna 4] No siempre significativa
+
+[Tabla 2 | fila 7 | columna 1] Edad (por cada 10 años)
+
+[Tabla 2 | fila 7 | columna 2] OR
+
+[Tabla 2 | fila 7 | columna 3] 1,1 (0,9-1,4)
+
+[Tabla 2 | fila 7 | columna 4] Asociación débil
+
+Abreviaturas: IC, intervalo de confianza; IMC, índice de masa corporal; LCA, ligamento cruzado anterior; OR, razón de oportunidades; RM, resonancia magnética.
+
+a Lesión con atención médica o cirugía previa.
+
+b Grado moderado o grave en la RM basal.
+
+[ENCABEZADO 2] Factores demográficos y metabólicos
+
+La edad avanzada es un factor de riesgo clásico de artrosis, pero en la AKOA su papel es menos nítido: los casos son frecuentes entre los 50 y los 65 años, un tramo de edad en que la artrosis típica todavía es poco prevalente [18]. El sobrepeso y la obesidad sí muestran una relación consistente. Un IMC superior a 30 kg/m2 multiplica por 1,5 a 2,5 el riesgo de progresión rápida en varios estudios, y la pérdida de peso sostenida (de al menos un 5 % del peso corporal) se asocia con menos deterioro del cartílago y menos dolor en el seguimiento a cuatro años [19]. Estas cifras no prueban causalidad: parte de la relación podría deberse a la carga mecánica y parte a la inflamación sistémica de bajo grado propia del tejido adiposo.
+
+[ENCABEZADO 2] Lesiones y factores mecánicos
+
+La lesión de rodilla previa, sobre todo la rotura del ligamento cruzado anterior y las lesiones meniscales, es el factor mejor documentado. En la OAI, el antecedente de lesión articular grave duplicó con holgura la probabilidad de AKOA, con una razón de oportunidades (OR) de 2,2 [4,20]. Los desgarros meniscales sin tratamiento quirúrgico incrementan el riesgo de artrosis radiográfica incidente en personas de mediana edad y mayores, y la meniscectomía parcial se asocia con un empeoramiento del cartílago en el año siguiente [21,22]. Estos hallazgos resultan coherentes con la idea de que la pérdida de la función de amortiguación del menisco precipita la degeneración, y explican por qué algunos grupos aconsejan evitar la cirugía meniscal en rodillas sin síntomas mecánicos.
+
+[ENCABEZADO 2] Inflamación y estructura
+
+Por último, varios marcadores de inflamación local y de estructura articular se asocian con la progresión rápida. La sinovitis y el derrame articular detectados por RM anticipan la pérdida de cartílago en rodillas sin artrosis a los 30 meses, y las lesiones de médula ósea y los desgarros meniscales complejos se hallan sobrerrepresentados en los casos de AKOA [23,24]. La alineación en varo, la laxitud ligamentosa y la debilidad del cuádriceps se han propuesto también como factores mecánicos, aunque los datos son menos consistentes. Es probable que la AKOA no tenga una causa única y que resulte de la suma de una rodilla estructuralmente vulnerable y un desencadenante, ya sea traumático, inflamatorio o metabólico.
+
+[ENCABEZADO 1] Fisiopatología
+
+La fisiopatología de la AKOA se conoce de forma parcial. Desde una perspectiva conceptual, la artrosis se entiende hoy como la enfermedad de la articulación como órgano, en la que intervienen el cartílago, el hueso subcondral, el menisco, la sinovial y la grasa infrapatelar [25]. La AKOA sería el extremo rápido de ese espectro, en el que el desequilibrio entre el daño tisular y la capacidad de reparación se establece de forma abrupta. No hay pruebas de que sea una enfermedad distinta per se, y es posible que represente simplemente la cola de una distribución continua de velocidades de progresión.
+
+Entre los mecanismos candidatos, la sobrecarga mecánica tras un daño meniscal ocupa un lugar central. Un menisco desgarrado o resecado transmite peor la carga, el cartílago soporta tensiones mayores y la degeneración se acelera, un proceso que puede reproducirse en modelos animales y observarse in vivo en la RM seriada [26]. Junto a esta vía mecánica opera una inflamatoria: la sinovitis libera citocinas y metaloproteasas que degradan la matriz cartilaginosa y sensibilizan los nociceptores, lo que podría explicar el mayor dolor de los pacientes con AKOA [27,28]. Ambos procesos se retroalimentan, ya que los fragmentos de matriz activan la sinovial, que a su vez perpetúa la destrucción.
+
+Un tercer elemento es el hueso subcondral. Las lesiones de médula ósea, visibles como áreas de edema en la RM, reflejan microfracturas y remodelado acelerado, y se asocian con la pérdida de cartílago adyacente. La hipótesis más aceptada propone que el hueso y el cartílago forman una unidad funcional y que el daño en uno se transmite al otro. También se ha sugerido una predisposición genética o epigenética, pero hoy no existen estudios que la sustenten con solidez. Muchas de estas ideas proceden de estudios observacionales, de modo que deben tomarse como hipótesis de trabajo y no como hechos establecidos.
+
+[ENCABEZADO 1] Diagnóstico e imagen
+
+El diagnóstico de la AKOA es, por definición, retrospectivo: solo se confirma cuando la segunda radiografía muestra el cambio estructural. Esto limita su utilidad clínica inmediata, y el reto actual consiste en reconocer de forma prospectiva a los pacientes que están en riesgo. La sospecha debería surgir ante una persona de 45-65 años con dolor de rodilla de aparición reciente, antecedente de lesión meniscal o ligamentosa, derrame articular recurrente y una radiografía basal normal o casi normal. En esta situación, repetir la radiografía en 12 a 24 meses, en lugar de esperar los intervalos habituales, es una estrategia razonable.
+
+La RM aporta más información que la radiografía en esta fase. Los hallazgos con mayor valor pronóstico son los desgarros meniscales complejos, el derrame-sinovitis moderado o grave, las lesiones de médula ósea de tamaño grande y los defectos del cartílago de espesor completo [9,10]. La medición cuantitativa del grosor del cartílago permite detectar cambios en periodos cortos, con tasas de pérdida de 0,1 a 0,2 mm anuales en la artrosis típica, y muy superiores en las rodillas con progresión rápida [29]. Sin embargo, la RM es costosa, no siempre está disponible y su uso rutinario en rodillas con radiografía normal no está avalado por las guías.
+
+Los biomarcadores bioquímicos de recambio del cartílago y de inflamación (por ejemplo, el CTX-II urinario o el COMP sérico) se han ensayado como complemento, con resultados discretos. Tomados de forma aislada, no discriminan bien a los pacientes con AKOA de los demás. El uso combinado de variables clínicas, estructurales y bioquímicas es una vía prometedora, y se espera que los modelos de predicción construidos con estos datos permitan estimar a priori el riesgo individual de progresión rápida [30]. Por ahora, ninguna de estas herramientas está lista para su aplicación en la práctica clínica.
+
+[ENCABEZADO 1] Pronóstico y manejo
+
+[ENCABEZADO 2] Pronóstico
+
+La AKOA tiene peor pronóstico que la artrosis típica. Los pacientes con AKOA refieren más dolor, con diferencias medias de 5 a 10 puntos en las escalas de 0-100 en el momento del diagnóstico radiográfico, y su dolor se mantiene más intenso durante el seguimiento posterior [14]. También reciben con más frecuencia una artroplastia total de rodilla: en la OAI, cerca del 20 % de los casos con AKOA fue intervenido en los cinco años siguientes, frente a menos del 5 % de las rodillas con progresión típica, lo que implica un riesgo relativo de entre 3 y 5 veces [13]. Estas intervenciones se indican con frecuencia a edades relativamente jóvenes, con las consecuencias que ello conlleva para la durabilidad de la prótesis y para la necesidad de una futura revisión.
+
+[ENCABEZADO 2] Manejo
+
+No existe un tratamiento específico para la AKOA, y las recomendaciones actuales se derivan de las guías de artrosis de rodilla en general. Las guías del American College of Rheumatology, de la OARSI y de la ESCEO coinciden en situar en la base del manejo la educación del paciente, el ejercicio terapéutico y la pérdida de peso en caso de sobrepeso, y reservar los antiinflamatorios no esteroideos (AINE) tópicos u orales, con la precaución habitual, para el control del dolor [31–33]. Estas medidas son especialmente pertinentes en la AKOA, porque actúan sobre dos factores modificables, el peso y la carga mecánica. En la práctica, el seguimiento más estrecho y la individualización del plan de ejercicio son las acciones más razonables.
+
+Cuando el tratamiento conservador no basta, la artroplastia es una opción eficaz, aunque debe sopesarse con cuidado en pacientes jóvenes. Un ensayo aleatorizado mostró que añadir la cirugía al tratamiento no quirúrgico estructurado mejora el dolor y la función, aunque a costa de más acontecimientos adversos graves [34]. Respecto a la investigación, la heterogeneidad de la artrosis de rodilla ha llevado a proponer ensayos que seleccionen a los pacientes por fenotipo, y la AKOA es uno de los candidatos más claros [35,36]. Los avances recientes en epidemiología y tratamiento de la artrosis refuerzan esa línea, pero aún no hay fármacos modificadores de la enfermedad aprobados [37].
+
+[ENCABEZADO 1] Conclusiones
+
+La artrosis de rodilla acelerada es un fenotipo plausible y probablemente infradiagnosticado, que afecta a entre el 4 % y el 10 % de las rodillas en riesgo y se asocia con más dolor, más artroplastias y una pérdida de cartílago más rápida. Sus factores de riesgo principales (lesión meniscal o ligamentosa, sinovitis, sobrepeso) coinciden en buena parte con los de la artrosis típica, lo que obliga a preguntarse si es una entidad aparte o la parte extrema de un continuo. De momento, el término es útil sobre todo para la investigación.
+
+Quedan tareas pendientes: acordar una definición operativa, validar los marcadores de RM en cohortes independientes y europeas, estudiar la AKOA fuera del ámbito de la OAI, y diseñar ensayos que evalúen intervenciones dirigidas, como el control del peso o la protección del menisco, en las rodillas con riesgo alto. En la consulta, la recomendación práctica es mantener un umbral bajo de sospecha, vigilar con radiografías seriadas a las personas con una lesión meniscal reciente y optimizar el tratamiento de los factores modificables.
+
+[ENCABEZADO 1] Referencias
+
+1. Hunter DJ, Bierma-Zeinstra S. Osteoarthritis. Lancet. 2019;393:1745-59.
+
+2. Cross M, Smith E, Hoy D, et al. The global burden of hip and knee osteoarthritis: estimates from the Global Burden of Disease 2010 study. Ann Rheum Dis. 2014;73:1323-30.
+
+3. Eckstein F, Wirth W, Nevitt MC. Recent advances in osteoarthritis imaging: the Osteoarthritis Initiative. Nat Rev Rheumatol. 2012;8:622-30.
+
+4. Driban JB, Eaton CB, Lo GH, et al. Association of knee injuries with accelerated knee osteoarthritis progression: data from the Osteoarthritis Initiative. Arthritis Care Res. 2014;66:1673-9.
+
+5. Kellgren JH, Lawrence JS. Radiological assessment of osteo-arthrosis. Ann Rheum Dis. 1957;16:494-502.
+
+6. Driban JB, Stout AC, Lo GH, et al. Best performing definition of accelerated knee osteoarthritis: data from the Osteoarthritis Initiative. Ther Adv Musculoskelet Dis. 2016;8:165-71.
+
+7. Driban JB, Bannuru RR, Eaton CB, et al. The incidence and characteristics of accelerated knee osteoarthritis among women: the Chingford cohort. BMC Musculoskelet Disord. 2020;21:60.
+
+8. Kraus VB, Blanco FJ, Englund M, et al. Call for standardized definitions of osteoarthritis and risk stratification for clinical trials and clinical use. Osteoarthritis Cartilage. 2015;23:1233-41.
+
+9. Hunter DJ, Guermazi A, Lo GH, et al. Evolution of semi-quantitative whole joint assessment of knee OA: MOAKS (MRI Osteoarthritis Knee Score). Osteoarthritis Cartilage. 2011;19:990-1002.
+
+10. Driban JB, Davis JE, Lu B, et al. Accelerated knee osteoarthritis is characterized by destabilizing meniscal tears and preradiographic MRI features. Arthritis Rheumatol. 2019;71:1089-100.
+
+11. Davis JE, Ward RJ, MacKay JW, et al. Effusion-synovitis and infrapatellar fat pad signal intensity alteration differentiate accelerated knee osteoarthritis. Rheumatology (Oxford). 2019;58:418-26.
+
+12. Zhang Y, Jordan JM. Epidemiology of osteoarthritis. Clin Geriatr Med. 2010;26:355-69.
+
+13. Davis JE, Liu SH, Lapane K, et al. Adults with incident accelerated knee osteoarthritis are more likely to receive a knee replacement: data from the Osteoarthritis Initiative. Clin Rheumatol. 2018;37:3105-10.
+
+14. Driban JB, Price LL, Eaton CB, et al. Individuals with incident accelerated knee osteoarthritis have greater pain than those with common knee osteoarthritis progression: data from the Osteoarthritis Initiative. Clin Rheumatol. 2016;35:1565-71.
+
+15. Neogi T. The epidemiology and impact of pain in osteoarthritis. Osteoarthritis Cartilage. 2013;21:1145-53.
+
+16. Felson DT, Lawrence RC, Dieppe PA, et al. Osteoarthritis: new insights. Part 1: the disease and its risk factors. Ann Intern Med. 2000;133:635-46.
+
+17. Blagojevic M, Jinks C, Jeffery A, Jordan KP. Risk factors for onset of osteoarthritis of the knee in older adults: a systematic review and meta-analysis. Osteoarthritis Cartilage. 2010;18:24-33.
+
+18. Felson DT, Zhang Y, Hannan MT, et al. Risk factors for incident radiographic knee osteoarthritis in the elderly: the Framingham Study. Arthritis Rheum. 1997;40:728-33.
+
+19. Gersing AS, Solka M, Joseph GB, et al. Progression of cartilage degeneration and clinical symptoms in obese and overweight individuals is dependent on the amount of weight loss: 48-month data from the Osteoarthritis Initiative. Osteoarthritis Cartilage. 2016;24:1126-34.
+
+20. Lohmander LS, Englund PM, Dahl LL, Roos EM. The long-term consequence of anterior cruciate ligament and meniscus injuries: osteoarthritis. Am J Sports Med. 2007;35:1756-69.
+
+21. Englund M, Guermazi A, Roemer FW, et al. Meniscal tear in knees without surgery and the development of radiographic osteoarthritis among middle-aged and elderly persons: the MOST study. Arthritis Rheum. 2009;60:831-9.
+
+22. Roemer FW, Kwoh CK, Hannon MJ, et al. Partial meniscectomy is associated with increased risk of incident radiographic osteoarthritis and worsening cartilage damage in the following year. Eur Radiol. 2017;27:404-13.
+
+23. Felson DT, Niu J, Neogi T, et al. Synovitis and the risk of knee osteoarthritis: the MOST Study. Osteoarthritis Cartilage. 2016;24:458-64.
+
+24. Roemer FW, Guermazi A, Felson DT, et al. Presence of MRI-detected joint effusion and synovitis increases risk of cartilage loss in knees without osteoarthritis at 30-month follow-up: the MOST study. Ann Rheum Dis. 2011;70:1804-9.
+
+25. Loeser RF, Goldring SR, Scanzello CR, Goldring MB. Osteoarthritis: a disease of the joint as an organ. Arthritis Rheum. 2012;64:1697-707.
+
+26. Hunter DJ, Zhang YQ, Niu JB, et al. The association of meniscal pathologic changes with cartilage loss in symptomatic knee osteoarthritis. Arthritis Rheum. 2006;54:795-801.
+
+27. Scanzello CR, Goldring SR. The role of synovitis in osteoarthritis pathogenesis. Bone. 2012;51:249-57.
+
+28. Berenbaum F. Osteoarthritis as an inflammatory disease (osteoarthritis is not osteoarthrosis!). Osteoarthritis Cartilage. 2013;21:16-21.
+
+29. Eckstein F, Collins JE, Nevitt MC, et al. Brief report: cartilage thickness change as an imaging biomarker of knee osteoarthritis progression: data from the Foundation for the National Institutes of Health Osteoarthritis Biomarkers Consortium. Arthritis Rheumatol. 2015;67:3184-9.
+
+30. Bierma-Zeinstra SM, Verhagen AP. Osteoarthritis subpopulations and implications for clinical trial design. Arthritis Res Ther. 2011;13:213.
+
+31. Kolasinski SL, Neogi T, Hochberg MC, et al. 2019 American College of Rheumatology/Arthritis Foundation guideline for the management of osteoarthritis of the hand, hip, and knee. Arthritis Care Res. 2020;72:149-62.
+
+32. Bannuru RR, Osani MC, Vaysbrot EE, et al. OARSI guidelines for the non-surgical management of knee, hip, and polyarticular osteoarthritis. Osteoarthritis Cartilage. 2019;27:1578-89.
+
+33. Bruyere O, Honvo G, Veronese N, et al. An updated algorithm recommendation for the management of knee osteoarthritis from the European Society for Clinical and Economic Aspects of Osteoporosis, Osteoarthritis and Musculoskeletal Diseases (ESCEO). Semin Arthritis Rheum. 2019;49:337-50.
+
+34. Skou ST, Roos EM, Laursen MB, et al. A randomized, controlled trial of total knee replacement. N Engl J Med. 2015;373:1597-606.
+
+35. Deveza LA, Melo L, Yamato TP, et al. Knee osteoarthritis phenotypes and their relevance for outcomes: a systematic review. Osteoarthritis Cartilage. 2017;25:1926-41.
+
+36. Dell'Isola A, Allan R, Smith SL, et al. Identification of clinical phenotypes in knee osteoarthritis: a systematic review of the literature. BMC Musculoskelet Disord. 2016;17:425.
+
+37. Kloppenburg M, Berenbaum F. Osteoarthritis year in review 2019: epidemiology and therapy. Osteoarthritis Cartilage. 2020;28:242-8.

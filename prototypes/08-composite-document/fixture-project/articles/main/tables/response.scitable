@@ -1,0 +1,191 @@
+{
+  "changes": {},
+  "doc": {
+    "attrs": {
+      "id": "tab-resp"
+    },
+    "content": [
+      {
+        "content": [
+          {
+            "text": "Respuesta EULAR a los 12 meses",
+            "type": "text"
+          }
+        ],
+        "type": "tableCaption"
+      },
+      {
+        "content": [
+          {
+            "content": [
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "Respuesta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              },
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "n",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableHeader"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "Buena",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "48",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "Moderada",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "40",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          },
+          {
+            "content": [
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "Sin respuesta",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              },
+              {
+                "attrs": {},
+                "content": [
+                  {
+                    "content": [
+                      {
+                        "text": "32",
+                        "type": "text"
+                      }
+                    ],
+                    "type": "paragraph"
+                  }
+                ],
+                "type": "tableCell"
+              }
+            ],
+            "type": "tableRow"
+          }
+        ],
+        "type": "table"
+      },
+      {
+        "attrs": {
+          "id": "n-c"
+        },
+        "content": [
+          {
+            "text": "Criterios de respuesta EULAR.",
+            "type": "text"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "refs": [
+                "fransen2005"
+              ]
+            },
+            "type": "citation"
+          }
+        ],
+        "type": "tableNote"
+      }
+    ],
+    "type": "tablePart"
+  },
+  "documentType": "table",
+  "schemaVersion": 1
+}

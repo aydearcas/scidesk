@@ -1,0 +1,24 @@
+{
+  "name": "proto-08-composite-document",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 8: one editor tree composed from several files on load and split back on save",
+  "dependencies": {
+    "@handlewithcare/prosemirror-suggest-changes": "^0.1.8",
+    "@tiptap/core": "^3.35.0",
+    "@tiptap/extension-table": "^3.35.0",
+    "@tiptap/extension-unique-id": "^3.35.0",
+    "@tiptap/pm": "^3.35.0",
+    "@tiptap/starter-kit": "^3.35.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdom": "^31.0.1",
+    "vite": "^8.3.8"
+  },
+  "scripts": {
+    "postinstall": "node tools/patch-suggest-changes.mjs",
+    "dev": "vite --port 5178 --strictPort",
+    "fixture": "node tools/make-fixture.mjs"
+  }
+}

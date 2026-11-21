@@ -1,0 +1,49 @@
+{
+  "changes": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "level": 2
+        },
+        "content": [
+          {
+            "text": "Resumen",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "content": [
+          {
+            "text": "Objetivo: describir la actividad inflamatoria en la artritis reumatoide de inicio.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "content": [
+          {
+            "text": "Resultados: la actividad inflamatoria disminuyó a los 12 meses.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "content": [
+          {
+            "text": "Palabras clave: artritis reumatoide; actividad inflamatoria; cohorte.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "abstract",
+  "schemaVersion": 1
+}

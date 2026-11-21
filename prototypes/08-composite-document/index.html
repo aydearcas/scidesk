@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prototipo 8: documento compuesto</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <header>
+      <button id="save">Guardar (Ctrl+S)</button>
+      <button id="undo">Deshacer</button>
+      <button id="redo">Rehacer</button>
+      <button id="suggest">Modo sugerencias</button>
+      <select id="author"><option>Ana</option><option>Luis</option></select>
+      <button id="acceptAll">Aceptar todo</button>
+      <button id="rejectAll">Rechazar todo</button>
+      <input id="find" placeholder="Buscar" /> <input id="with" placeholder="Reemplazar por" />
+      <button id="replace">Reemplazar todo</button> <span id="hits"></span>
+      <select id="tableId"><option>tab-basal</option><option>tab-resp</option></select>
+      <button id="openTable">Abrir tabla en pestaña</button>
+      <button id="reset">Volver a los archivos de partida</button>
+      <div id="status"></div>
+      <div id="saved"></div>
+    </header>
+    <main>
+      <section class="pane"><h2>Documento completo</h2><div id="editor"></div></section>
+      <section class="pane"><h2 id="tabTitle">Pestaña de tabla (cerrada)</h2><div id="tab"></div></section>
+      <section class="pane disk"><h2>En el disco</h2><select id="diskfile"></select><pre id="disk"></pre></section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

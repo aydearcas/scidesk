@@ -1,0 +1,174 @@
+{
+  "changes": {},
+  "doc": {
+    "content": [
+      {
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "Introducción",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "content": [
+          {
+            "text": "La artritis reumatoide afecta al 0,5–1 % de la población adulta ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "refs": [
+                "smolen2016"
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "content": [
+          {
+            "text": "El objetivo fue describir la actividad de la enfermedad en una cohorte de pacientes con artritis reumatoide de inicio ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "refs": [
+                "aletaha2010"
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "Resultados",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "content": [
+          {
+            "text": "Las características basales se muestran en la ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "tab-basal"
+            },
+            "type": "xref"
+          },
+          {
+            "text": ". La actividad inflamatoria disminuyó en el seguimiento.",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "tab-basal",
+          "src": "tables/baseline.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "content": [
+          {
+            "text": "La respuesta al tratamiento se resume en la ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "target": "tab-resp"
+            },
+            "type": "xref"
+          },
+          {
+            "text": " ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "refs": [
+                "fransen2005"
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      },
+      {
+        "attrs": {
+          "id": "tab-resp",
+          "src": "tables/response.scitable"
+        },
+        "type": "tableRef"
+      },
+      {
+        "attrs": {
+          "level": 1
+        },
+        "content": [
+          {
+            "text": "Discusión",
+            "type": "text"
+          }
+        ],
+        "type": "heading"
+      },
+      {
+        "content": [
+          {
+            "text": "La actividad inflamatoria en nuestra cohorte fue similar a la descrita en otras series ",
+            "type": "text"
+          },
+          {
+            "attrs": {
+              "refs": [
+                "smolen2016",
+                "aletaha2010"
+              ]
+            },
+            "type": "citation"
+          },
+          {
+            "text": ".",
+            "type": "text"
+          }
+        ],
+        "type": "paragraph"
+      }
+    ],
+    "type": "doc"
+  },
+  "documentType": "article",
+  "schemaVersion": 1
+}

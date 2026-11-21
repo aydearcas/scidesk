@@ -9,11 +9,11 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0003](0003-coautores-con-word-y-fusion.md) | Coautores con Word y fusión a tres bandas de copias devueltas en paralelo | P4, P4b, R2–R5, R44 | 20/11/2026 | 21/11/2026 |
 | [0004](0004-texto-continuo-con-vista-previa.md) | Texto continuo con vista previa paginada, con Typst | P5, R30 | 20/11/2026 | 21/11/2026 |
 | [0005](0005-alcance-e-idiomas.md) | Biomedicina primero; interfaz en español e inglés; código, comentarios y commits en inglés; ecuaciones con la ampliación; nombres de carpeta fijos en inglés; atajos de Word en español | P3, P6, P7, P23, P24, R19, R28 | 20/11/2026 | 21/11/2026 |
-| [0006](0006-estructura-del-proyecto.md) | Tablas y figuras en archivos propios, documentos base y resumen aparte; documento compuesto | P8, P9, R11, R32 | 20/11/2026 | 21/11/2026 |
+| [0006](0006-estructura-del-proyecto.md) | Tablas y figuras en archivos propios, documentos base y resumen aparte; documento compuesto | P8, P9, R11, R32, prototipo 8 | 20/11/2026 | 21/11/2026 |
 | [0007](0007-referencias.md) | Biblioteca propia o vinculada a Zotero; consultas en línea opcionales; estilo de Reumatología Clínica | P11, P13, P14, R1, R10, R24, R45 | 20/11/2026 | 21/11/2026 |
 | [0008](0008-revista-de-prueba.md) | Reumatología Clínica como revista de prueba | P10 | 20/11/2026 | — |
 | [0009](0009-ia-mas-adelante.md) | IA más adelante; sin conexión con revsis-app por ahora | P16, P17 | 20/11/2026 | — |
-| [0010](0010-pila-tecnologica.md) | Pila Tauri + React + TypeScript, con corrector propio, Typst, control de cambios propio y núcleo sin interfaz | P18, R29–R35, R37, R38 | 20/11/2026 | 21/11/2026 |
+| [0010](0010-pila-tecnologica.md) | Pila Tauri + React + TypeScript, con corrector propio, Typst, control de cambios propio y núcleo sin interfaz | P18, R29–R35, R37, R38, prototipo 7 | 20/11/2026 | 21/11/2026 |
 | [0011](0011-fuentes-tipograficas.md) | Fuentes del sistema y equivalentes libres de las de Word | — | 20/11/2026 | — |
 | [0012](0012-licencia-agpl.md) | Licencia AGPL-3.0 con acuerdo de contribución (CLA); sin código GPL ni AGPL de terceros | P1b, R36 | 20/11/2026 | 21/11/2026 |
 | [0013](0013-historial-instantaneas.md) | Historial de versiones con instantáneas propias, no con git; un archivo por instantánea | P15, R26, R42 | 20/11/2026 | 21/11/2026 |
@@ -23,6 +23,8 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0017](0017-adaptacion-sin-ia.md) | Adaptación a revista sin IA; redacción y traducción en la futura versión con IA | P21 | 20/11/2026 | — |
 | [0018](0018-paquetes-llm.md) | Paquetes para LLM con cuatro niveles de confidencialidad | P22 | 20/11/2026 | — |
 | [0019](0019-modelo-unico-de-propuestas.md) | Un único mecanismo de propuestas para todo lo que entra de fuera | R7 | 21/11/2026 | — |
+| [0020](0020-control-de-cambios.md) | Control de cambios sobre suggest-changes (copia propia); cambios como marcas con `id` y registro de autores en `.scidoc`; correspondencia con `w:ins`/`w:del` | R31, prototipo 7 | 21/11/2026 | — |
+| [0021](0021-documento-compuesto.md) | Documento compuesto: composición, reparto, formato de `.scitable` y reglas de ids, bordes, copias y tablas sin referencia | R32, prototipo 8 | 21/11/2026 | — |
 
 ## Plantilla
 

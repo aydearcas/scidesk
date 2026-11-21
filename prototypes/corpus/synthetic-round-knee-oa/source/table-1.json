@@ -1,0 +1,79 @@
+{
+  "id": "table-1",
+  "caption": "Tabla 1. Comparación entre la artrosis de rodilla acelerada y la artrosis de rodilla típica en cohortes de referencia (datos sintéticos orientativos).",
+  "columns": 4,
+  "header": [
+    [
+      {
+        "text": "Característica",
+        "colspan": 1,
+        "rowspan": 2
+      },
+      {
+        "text": "Fenotipo de rodilla",
+        "colspan": 2,
+        "rowspan": 1
+      },
+      {
+        "text": "Diferencia",
+        "colspan": 1,
+        "rowspan": 2
+      }
+    ],
+    [
+      {
+        "text": "Acelerada^{a}",
+        "colspan": 1,
+        "rowspan": 1
+      },
+      {
+        "text": "Típica",
+        "colspan": 1,
+        "rowspan": 1
+      }
+    ]
+  ],
+  "body": [
+    [
+      "Edad media (años)",
+      "60",
+      "63",
+      "Menor en la acelerada"
+    ],
+    [
+      "IMC medio (kg/m2)",
+      "29",
+      "27",
+      "Mayor en la acelerada"
+    ],
+    [
+      "Lesión meniscal desestabilizadora^{b}",
+      "41 %",
+      "18 %",
+      "OR 3,1"
+    ],
+    [
+      "Pérdida de espacio articular anual",
+      "0,5-1,0 mm",
+      "0,1-0,2 mm",
+      "Cinco veces mayor"
+    ],
+    [
+      "Artroplastia a cinco años",
+      "20 %",
+      "4 %",
+      "Riesgo 3-5 veces mayor"
+    ],
+    [
+      "Dolor basal (escala 0-100)",
+      "38",
+      "29",
+      "9 puntos más"
+    ]
+  ],
+  "notes": [
+    "Abreviaturas: IMC, índice de masa corporal; OR, razón de oportunidades; RM, resonancia magnética.",
+    "^{a} Paso de KL 0-1 a KL 3-4 en un máximo de 48 meses.",
+    "^{b} Desgarro radial, en asa de cubo o complejo, valorado por RM."
+  ]
+}

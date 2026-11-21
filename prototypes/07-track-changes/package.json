@@ -1,0 +1,40 @@
+{
+  "name": "proto-07-track-changes",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 7: which free ProseMirror piece to build track changes on, and how changes are stored in .scidoc",
+  "scripts": {
+    "postinstall": "node tools/patch-suggest-changes.mjs",
+    "build": "node tools/build.mjs",
+    "scenarios": "node tools/build.mjs && node out/scenarios.mjs",
+    "edge": "node tools/build.mjs && node out/edge-cases.mjs",
+    "json": "node tools/build.mjs && node out/dump-json.mjs",
+    "roundtrip": "node tools/build.mjs && node out/roundtrip.mjs export"
+  },
+  "dependencies": {
+    "@handlewithcare/prosemirror-suggest-changes": "^0.1.8",
+    "@manuscripts/track-changes-plugin": "^2.4.0",
+    "@manuscripts/transform": "^4.6.0",
+    "jsdom": "^31.0.1",
+    "jszip": "^3.10.2",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-history": "^1.5.2",
+    "prosemirror-model": "^1.25.13",
+    "prosemirror-schema-basic": "^1.2.5",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-tables": "^1.8.5",
+    "prosemirror-transform": "^1.12.7",
+    "prosemirror-view": "^1.43.0"
+  },
+  "overrides": {
+    "prosemirror-model": "$prosemirror-model",
+    "prosemirror-state": "$prosemirror-state",
+    "prosemirror-transform": "$prosemirror-transform",
+    "prosemirror-view": "$prosemirror-view",
+    "prosemirror-history": "$prosemirror-history",
+    "prosemirror-commands": "$prosemirror-commands"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

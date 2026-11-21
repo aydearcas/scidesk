@@ -1,0 +1,72 @@
+{
+  "id": "table-2",
+  "caption": "Tabla 2. Factores de riesgo de artrosis de rodilla acelerada y magnitud de la asociación publicada (datos sintéticos orientativos).",
+  "columns": 4,
+  "header": [
+    [
+      {
+        "text": "Factor de riesgo",
+        "colspan": 1,
+        "rowspan": 1
+      },
+      {
+        "text": "Medida",
+        "colspan": 1,
+        "rowspan": 1
+      },
+      {
+        "text": "Valor (IC 95 %)",
+        "colspan": 1,
+        "rowspan": 1
+      },
+      {
+        "text": "Observación",
+        "colspan": 1,
+        "rowspan": 1
+      }
+    ]
+  ],
+  "body": [
+    [
+      "Lesión articular previa^{a}",
+      "OR",
+      "2,2 (1,4-3,5)",
+      "Mayor con rotura de LCA"
+    ],
+    [
+      "Desgarro meniscal complejo",
+      "OR",
+      "3,1 (1,9-5,0)",
+      "Valorado por RM"
+    ],
+    [
+      "Obesidad (IMC mayor de 30)",
+      "OR",
+      "1,9 (1,2-3,0)",
+      "Relación dosis-respuesta"
+    ],
+    [
+      "Sinovitis o derrame por RM^{b}",
+      "OR",
+      "2,4 (1,5-3,8)",
+      "A los 30 meses"
+    ],
+    [
+      "Sexo femenino",
+      "OR",
+      "1,3 (0,9-1,9)",
+      "No siempre significativa"
+    ],
+    [
+      "Edad (por cada 10 años)",
+      "OR",
+      "1,1 (0,9-1,4)",
+      "Asociación débil"
+    ]
+  ],
+  "notes": [
+    "Abreviaturas: IC, intervalo de confianza; IMC, índice de masa corporal; LCA, ligamento cruzado anterior; OR, razón de oportunidades; RM, resonancia magnética.",
+    "^{a} Lesión con atención médica o cirugía previa.",
+    "^{b} Grado moderado o grave en la RM basal."
+  ]
+}

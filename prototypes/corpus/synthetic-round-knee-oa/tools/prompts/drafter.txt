@@ -1,0 +1,10 @@
+Encargo que recibió el subagente de redacción (modelo Sonnet, esfuerzo medio), resumido en sus puntos esenciales. Salida: source/article.md, source/table-1.json y source/table-2.json.
+
+- Revisión narrativa en español sobre artrosis de rodilla acelerada (AKOA), solo con sus conocimientos y sin buscar en internet. Unas 2500 a 3500 palabras sin contar las referencias, en párrafos de 80 a 200 palabras y sin viñetas.
+- Estructura: título con "# "; un párrafo que empiece por "AVISO: " diciendo que es material sintético de prueba generado con un modelo de lenguaje y que las referencias no se han verificado; los autores ficticios (entre ellos Marta Ríos Navarro y Javier Soler Benítez), sus afiliaciones ficticias y el autor para correspondencia, con un correo en example.org.
+- Secciones con "## ": Resumen (Introducción, Desarrollo, Conclusiones y Palabras clave), Introducción, Definición y criterios, Epidemiología, Factores de riesgo, Fisiopatología, Diagnóstico e imagen, Pronóstico y manejo, Conclusiones y Referencias. Subapartados con "### ".
+- Entre 30 y 40 referencias de estilo Vancouver, en orden de primera cita y escritas de memoria. Citas entre corchetes ([1], [2,3], [4–6], con raya corta en los intervalos), todas citadas al menos una vez.
+- Cifras concretas, términos en latín sin cursiva, siglas definidas, dos o tres pares de comillas rectas y algún guion normal en un intervalo, para que los coautores tengan qué retocar. Sin el carácter ^ en el texto y con frases que no se repitan.
+- Solo dos marcas de formato en línea: *cursiva* y **negrita**. Las tablas se colocan con una línea [[TABLE 1]] o [[TABLE 2]], después del párrafo que las cita.
+- Dos tablas en JSON (id, caption, columns, header con colspan y rowspan, body y notes). Una tiene el encabezado en dos niveles, con celdas combinadas en horizontal y en vertical. Las dos llevan notas al pie con las letras a y b, que se marcan en las celdas como ^{a} y ^{b}.
+- Al final debía comprobar que los JSON son válidos, que todas las referencias se citan y que el número de palabras cae dentro del intervalo.

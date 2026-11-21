@@ -1,7 +1,7 @@
 # 0010. Pila tecnológica
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada, a confirmar con los prototipos de la fase 0. Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38).
+- **Estado:** aceptada, a confirmar con los prototipos de la fase 0. Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38) y con el prototipo 7 ([0020](0020-control-de-cambios.md)).
 - **Pregunta del plan:** P18
 
 ## Qué se decide
@@ -14,7 +14,7 @@ Lo que la v0.4 dejaba por decidir y la revisión ha fijado:
   3. Las pruebas del editor se ejecutan a diario también sobre WebKit (el de Playwright funciona en Windows).
 - **Corrector ortográfico propio** (R29) con diccionarios de Hunspell y subrayados dibujados por el editor. Motor: `spellbook` (Rust, MPL-2.0) o Hunspell compilado a WebAssembly, a elegir con el prototipo 9.
 - **PDF y vista previa con Typst** (R30), con las citas ya formateadas por citeproc-js ([0004](0004-texto-continuo-con-vista-previa.md)).
-- **Comentarios y control de cambios: implementación propia** sobre una pieza libre (R31), `@handlewithcare/prosemirror-suggest-changes` (MIT) o `@manuscripts/track-changes-plugin` (licencia a confirmar), a elegir con el prototipo 7.
+- **Comentarios y control de cambios: implementación propia** sobre una pieza libre (R31). **El prototipo 7 eligió `@handlewithcare/prosemirror-suggest-changes`** (MIT), en una copia propia, con los cambios como marcas con `id` y un registro de autores en `.scidoc` ([0020](0020-control-de-cambios.md)); se descartó `@manuscripts/track-changes-plugin` (Apache-2.0).
 - **Documento compuesto** al cargar y repartido al guardar (R32, [0006](0006-estructura-del-proyecto.md)).
 - **Núcleo sin interfaz** en TypeScript, con una **línea de comandos** (`scidesk export`, `scidesk check`) sobre él (R33).
 - **Un solo esquema por formato**, que genera tipos, validación y JSON Schema; el `.scidoc` es el JSON de ProseMirror tal cual (R34).
@@ -42,4 +42,4 @@ Lo que la v0.4 dejaba por decidir y la revisión ha fijado:
 ## Consecuencias
 - Ninguna pieza de la pila es incompatible con la licencia elegida, y no se usa código GPL ni AGPL de terceros ([0012](0012-licencia-agpl.md), PLAN.md, 6.3).
 - Las bibliotecas jóvenes (control de cambios, corrector) van detrás de una interfaz propia, como el motor de citas, para poder cambiarlas.
-- Los once prototipos de la fase 0 confirman o corrigen esta decisión (PLAN.md, 8).
+- Los once prototipos de la fase 0 confirman o corrigen esta decisión (PLAN.md, 8). Hechos: el 7 (control de cambios, [0020](0020-control-de-cambios.md)) y el 8 (documento compuesto, [0021](0021-documento-compuesto.md)), que confirma Tiptap 3: su enganche `dispatchTransaction` sirve para el modo de sugerencias.

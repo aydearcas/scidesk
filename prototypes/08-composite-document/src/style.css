@@ -1,0 +1,25 @@
+body { font: 14px/1.5 system-ui, sans-serif; margin: 0; background: #fafafa; color: #222; }
+header { padding: 8px 12px; background: #fff; border-bottom: 1px solid #ddd; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#status, #saved { width: 100%; font-size: 12px; color: #555; }
+main { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; padding: 12px; }
+.pane { background: #fff; border: 1px solid #ddd; padding: 8px 14px; min-width: 0; }
+.pane h2 { font-size: 13px; margin: 0 0 6px; color: #666; }
+.disk pre { font-size: 11px; max-height: 75vh; overflow: auto; white-space: pre-wrap; }
+.ProseMirror { outline: none; min-height: 200px; font-family: Calibri, Carlito, sans-serif; font-size: 15px; }
+.part { border-left: 3px solid #c9d7f0; padding-left: 10px; margin: 10px 0; position: relative; }
+.part::before { position: absolute; top: -9px; right: 0; font: 10px system-ui; color: #7a8fb5; }
+.part-abstract::before { content: "abstract.scidoc"; }
+.part-table::before { content: attr(data-src); }
+figure.part-table { margin: 12px 0; }
+figure.part-table > figcaption::before { content: "Tabla " attr(data-num) ". "; font-weight: bold; }
+figcaption { font-weight: 600; }
+table { border-collapse: collapse; margin: 4px 0; }
+td, th { border: 1px solid #bbb; padding: 2px 6px; min-width: 40px; vertical-align: top; }
+td p, th p { margin: 0; }
+.table-note { font-size: 13px; margin: 2px 0; }
+.table-note::before { content: attr(data-letter) " "; vertical-align: super; font-size: 10px; }
+cite.citation::after { content: attr(data-num); color: #1a5fb4; font-style: normal; }
+a.xref::after { content: attr(data-num); color: #1a5fb4; }
+ins { background: #dff3e4; text-decoration: none; border-bottom: 1px solid #2e7d32; }
+del { background: #fde2e2; color: #a33; }
+.selectedCell { background: #e6eefc; }

@@ -1,0 +1,706 @@
+{
+ "coauthor": "Dra. Marta Ríos Navarro",
+ "returned_file": "returned-rios.docx",
+ "base_file": "sent.docx",
+ "edits": [
+  {
+   "id": "R01",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "una rodilla sin artrosis radiográfica establecida evoluciona en menos de cuatro años hacia una enfermedad avanzada",
+   "target": "en menos de cuatro años",
+   "text": "en cuatro años o menos",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "clínica"
+   ],
+   "rationale": "La definición de Driban admite hasta 48 meses incluidos; además, así coincide con la introducción.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 8,
+   "applied_ok": true
+  },
+  {
+   "id": "R02",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "(entre el 4 % y el 10 % de las rodillas en riesgo, según la definición)",
+   "target": "10 %",
+   "text": "9 %",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra"
+   ],
+   "rationale": "En Epidemiología la cifra más alta que damos es cercana al 9 %, no el 10 %.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 9,
+   "applied_ok": true
+  },
+  {
+   "id": "R03",
+   "type": "insert",
+   "tracked": true,
+   "anchor": "La AKOA parece un fenotipo clínicamente relevante, con más dolor",
+   "target": "con más dolor",
+   "position": "after",
+   "text": ", más artroplastias",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "clínica",
+    "redacción"
+   ],
+   "rationale": "El mayor riesgo de artroplastia es uno de los hallazgos principales y falta en las conclusiones del resumen.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 10,
+   "applied_ok": true
+  },
+  {
+   "id": "R04",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "Los estudios de cohortes con radiografías seriadas muestran que la trayectoria individual es muy heterogénea",
+   "comment": "Falta cita. ¿Podemos poner aquí algún trabajo de trayectorias de progresión (OAI o CHECK)? Si no, el revisor nos lo va a pedir.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita"
+   ],
+   "rationale": "Afirmación empírica sin referencia.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 13,
+   "applied_ok": true
+  },
+  {
+   "id": "R05",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "datos clínicos durante más de ocho años de seguimiento [3,4]",
+   "target": "[3,4]",
+   "text": "[3]",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita"
+   ],
+   "rationale": "La referencia 4 trata de lesiones y AKOA, no describe la cohorte OAI.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 14,
+   "applied_ok": true
+  },
+  {
+   "id": "R06",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "pocos datos procedentes de poblaciones europeas, por ejemplo la cohorte de mujeres de Chingford [7]",
+   "target": "por ejemplo",
+   "text": "con la excepción de",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "redacción"
+   ],
+   "rationale": "Chingford no es un ejemplo de la escasez de datos, sino la excepción.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 15,
+   "applied_ok": true
+  },
+  {
+   "id": "R07",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "a la ventana de tiempo permitida (12, 24 o 48 meses)",
+   "target": "(12, 24 o 48 meses)",
+   "comment": "¿Hay alguna definición publicada con 12 meses? Yo solo conozco las de 24 y 48 meses. Si la hay, citarla; si no, quitaría el 12.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita",
+    "clínica"
+   ],
+   "rationale": "Dato de definición que no está respaldado por las referencias citadas.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 17,
+   "applied_ok": true
+  },
+  {
+   "id": "R08",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "a una rodilla con KL 3 o 4 en el plazo de 48 meses [6]",
+   "target": "en el plazo de 48 meses",
+   "text": "en un plazo máximo de 48 meses",
+   "shared_passage": "S2",
+   "noise": false,
+   "categories": [
+    "clínica",
+    "redacción"
+   ],
+   "rationale": "Precisa que 48 meses es el máximo, como en la nota a de la tabla 1.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 19,
+   "applied_ok": true
+  },
+  {
+   "id": "R09",
+   "type": "format",
+   "tracked": true,
+   "anchor": "Tabla 1. Comparación entre la artrosis de rodilla acelerada",
+   "target": "Tabla 1.",
+   "format": "bold",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "formato"
+   ],
+   "rationale": "La revista pide la etiqueta de la tabla en negrita.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 20,
+   "applied_ok": true
+  },
+  {
+   "id": "R10",
+   "type": "replace",
+   "tracked": true,
+   "table": 1,
+   "row": 7,
+   "col": 3,
+   "anchor": "4 %",
+   "target": "4 %",
+   "text": "<5 %",
+   "shared_passage": "S3",
+   "noise": false,
+   "categories": [
+    "cifra",
+    "tabla"
+   ],
+   "rationale": "En el texto de Pronóstico decimos «menos del 5 %»; unifico la tabla con el texto.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 44,
+   "applied_ok": true
+  },
+  {
+   "id": "R11",
+   "type": "comment",
+   "tracked": true,
+   "table": 1,
+   "row": 7,
+   "col": 4,
+   "anchor": "Riesgo 3-5 veces mayor",
+   "comment": "¿De dónde sale el 3-5? Con 20 % frente a 4-5 % el riesgo relativo es de 4 a 5. Si es un IC 95 %, indicarlo; si no, pondría el valor de la referencia 13.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "tabla"
+   ],
+   "rationale": "El intervalo no cuadra con las proporciones de las columnas 2 y 3.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 45,
+   "applied_ok": true
+  },
+  {
+   "id": "R12",
+   "type": "insert",
+   "tracked": true,
+   "anchor": "Abreviaturas: IMC, índice de masa corporal; OR, razón de oportunidades",
+   "target": "OR, razón",
+   "position": "before",
+   "text": "KL, Kellgren y Lawrence; ",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "tabla",
+    "formato"
+   ],
+   "rationale": "La nota a usa KL y la abreviatura no estaba definida al pie de la tabla.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 50,
+   "applied_ok": true
+  },
+  {
+   "id": "R13",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "el supuesto salto \"de la normalidad a la enfermedad\" refleja",
+   "target": "\"de la normalidad a la enfermedad\"",
+   "text": "“de la normalidad a la enfermedad”",
+   "shared_passage": null,
+   "noise": true,
+   "categories": [
+    "ruido"
+   ],
+   "rationale": "Comillas rectas cambiadas por tipográficas.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 53,
+   "applied_ok": true
+  },
+  {
+   "id": "R14",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "cuando la pérdida anual de espacio articular supera 0,5 mm",
+   "comment": "¿Referencia para el umbral de 0,5 mm al año? No lo encuentro en Driban 2016 [6]. Si es propuesta nuestra, decirlo.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita",
+    "cifra"
+   ],
+   "rationale": "Umbral numérico sin fuente.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 53,
+   "applied_ok": true
+  },
+  {
+   "id": "R15",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "Otros trabajos describen más derrame-sinovitis",
+   "target": "Otros trabajos describen",
+   "text": "Davis y colaboradores describieron",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita",
+    "redacción"
+   ],
+   "rationale": "Solo se cita un trabajo [11], así que «otros trabajos» sobra.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 55,
+   "applied_ok": true
+  },
+  {
+   "id": "R16",
+   "type": "format",
+   "tracked": true,
+   "anchor": "marcadores de RM que identifican a priori las rodillas",
+   "target": "a priori",
+   "format": "italic",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "formato"
+   ],
+   "rationale": "Latinismo en cursiva.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 56,
+   "applied_ok": true
+  },
+  {
+   "id": "R17",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "medido con la escala WOMAC de al menos 20 puntos en dos años",
+   "comment": "¿En qué escala? La subescala de dolor del WOMAC va de 0 a 20 en la versión Likert; 20 puntos solo tiene sentido si está normalizada a 0-100. Precisarlo y poner la cita de esta definición clínica.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "cita",
+    "clínica"
+   ],
+   "rationale": "La cifra es ambigua sin indicar la escala y falta la referencia.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 56,
+   "applied_ok": true
+  },
+  {
+   "id": "R18",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "En la OAI, el 4 % de las rodillas sin artrosis radiográfica establecida cumplió criterios en los primeros cuatro años",
+   "target": "criterios en los primeros cuatro años",
+   "text": "los criterios de AKOA en los primeros 48 meses",
+   "shared_passage": "S1",
+   "noise": false,
+   "categories": [
+    "clínica",
+    "redacción"
+   ],
+   "rationale": "Expreso el plazo como en la definición (48 meses) y aclaro qué criterios.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 58,
+   "applied_ok": true
+  },
+  {
+   "id": "R19",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "cercana al 9 %, cuando se aceptaron definiciones más laxas",
+   "target": "cercana al 9 %",
+   "comment": "Comprobar este 9 % con el original [6]; recuerdo una cifra algo más baja con inicio en KL 2. Además, la referencia 4 no da frecuencias con definiciones laxas.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "cita"
+   ],
+   "rationale": "Cifra que condiciona el resumen y las conclusiones; conviene verificarla.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 58,
+   "applied_ok": true
+  },
+  {
+   "id": "R20",
+   "type": "delete",
+   "tracked": true,
+   "anchor": "durante un seguimiento de 15 años, con un perfil de participantes parecido al de la OAI [7]",
+   "target": ", con un perfil de participantes parecido al de la OAI",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "clínica"
+   ],
+   "rationale": "Chingford solo incluye mujeres y más jóvenes que la OAI; el perfil no es parecido.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 59,
+   "applied_ok": true
+  },
+  {
+   "id": "R21",
+   "type": "insert",
+   "tracked": true,
+   "anchor": "medio de 28-30 kg/m2 [13]",
+   "target": "28-30 kg/m2",
+   "position": "after",
+   "text": " (frente a unos 27 kg/m2 en la artrosis típica)",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "redacción"
+   ],
+   "rationale": "Falta el término de comparación que sí está en la tabla 1.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 60,
+   "applied_ok": true
+  },
+  {
+   "id": "R22",
+   "type": "move",
+   "tracked": true,
+   "anchor": "La proporción de mujeres es ligeramente superior a la de la artrosis común, aunque esta diferencia no siempre alcanza significación estadística. ",
+   "destination": {
+    "anchor": "todavía es poco prevalente [18]. El sobrepeso y la obesidad sí muestran",
+    "target": "El sobrepeso y la obesidad sí muestran",
+    "position": "before"
+   },
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "estructura"
+   ],
+   "rationale": "El sexo es un factor demográfico y encaja mejor junto a la edad, antes de la obesidad.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 60,
+   "applied_ok": true
+  },
+  {
+   "id": "R23",
+   "type": "replace",
+   "tracked": true,
+   "table": 2,
+   "row": 4,
+   "col": 1,
+   "anchor": "Obesidad (IMC mayor de 30)",
+   "target": "IMC mayor de 30",
+   "text": "IMC > 30 kg/m2",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "tabla",
+    "cifra"
+   ],
+   "rationale": "Faltan las unidades del IMC.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 76,
+   "applied_ok": true
+  },
+  {
+   "id": "R24",
+   "type": "replace",
+   "tracked": true,
+   "table": 2,
+   "row": 7,
+   "col": 4,
+   "anchor": "Asociación débil",
+   "target": "Asociación débil",
+   "text": "No significativa",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "tabla",
+    "cifra"
+   ],
+   "rationale": "El IC 95 % (0,9-1,4) incluye el 1, así que no hay asociación significativa.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 91,
+   "applied_ok": true
+  },
+  {
+   "id": "R25",
+   "type": "comment",
+   "tracked": true,
+   "table": 2,
+   "row": 5,
+   "col": 4,
+   "anchor": "A los 30 meses",
+   "comment": "Este dato es del estudio MOST [24], no de la OAI. Indicaría la cohorte en la observación o en una nota.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "tabla",
+    "cita"
+   ],
+   "rationale": "La tabla mezcla cohortes sin indicarlo.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 83,
+   "applied_ok": true
+  },
+  {
+   "id": "R26",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "multiplica por 1,5 a 2,5 el riesgo de progresión rápida en varios estudios",
+   "comment": "¿Qué estudios? Falta la cita. Además, en la tabla 2 damos OR 1,9 (1,2-3,0), que no coincide del todo con 1,5 a 2,5.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita",
+    "cifra"
+   ],
+   "rationale": "Cifra sin referencia y no coherente con la tabla 2.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 96,
+   "applied_ok": true
+  },
+  {
+   "id": "R27",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "el antecedente de lesión articular grave duplicó con holgura la probabilidad",
+   "target": "duplicó con holgura",
+   "text": "duplicó aproximadamente",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "redacción"
+   ],
+   "rationale": "Una OR de 2,2 no es duplicar «con holgura».",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 98,
+   "applied_ok": true
+  },
+  {
+   "id": "R28",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "con una razón de oportunidades (OR) de 2,2 [4,20]",
+   "target": "[4,20]",
+   "text": "[4]",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita"
+   ],
+   "rationale": "La referencia 20 es una revisión sobre LCA y menisco, no un dato de la OAI.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 98,
+   "applied_ok": true
+  },
+  {
+   "id": "R29",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "algunos grupos aconsejan evitar la cirugía meniscal en rodillas sin síntomas mecánicos",
+   "comment": "Esto es más que «algunos grupos»: hay ensayos aleatorizados de meniscectomía artroscópica frente a placebo o fisioterapia y recomendaciones en las guías. Habría que citarlos.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita",
+    "clínica"
+   ],
+   "rationale": "Recomendación clínica sin respaldo bibliográfico.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 98,
+   "applied_ok": true
+  },
+  {
+   "id": "R30",
+   "type": "format",
+   "tracked": true,
+   "anchor": "una enfermedad distinta per se",
+   "target": "per se",
+   "format": "italic",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "formato"
+   ],
+   "rationale": "Latinismo en cursiva.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 102,
+   "applied_ok": true
+  },
+  {
+   "id": "R31",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "en lugar de esperar los intervalos habituales, es una estrategia razonable",
+   "target": "es una estrategia razonable",
+   "text": "nos parece una estrategia razonable, aunque no se ha validado",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "clínica",
+    "redacción"
+   ],
+   "rationale": "Es una opinión de los autores sin evidencia; hay que matizarla.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 106,
+   "applied_ok": true
+  },
+  {
+   "id": "R32",
+   "type": "comment",
+   "tracked": true,
+   "anchor": "con tasas de pérdida de 0,1 a 0,2 mm anuales en la artrosis típica",
+   "comment": "La pérdida de grosor del cartílago por RM suele darse en µm o en % al año; 0,1-0,2 mm me parece alto. Revisarlo con [29]. Ojo también: en la tabla 1 el mismo intervalo aparece como pérdida de espacio articular radiográfico, que es otra medida.",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cifra",
+    "tabla"
+   ],
+   "rationale": "Posible confusión entre grosor de cartílago por RM y espacio articular radiográfico.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 107,
+   "applied_ok": true
+  },
+  {
+   "id": "R33",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "los antiinflamatorios no esteroideos (AINE) tópicos u orales",
+   "target": "tópicos u orales",
+   "text": "tópicos (de elección en la rodilla) u orales",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "clínica"
+   ],
+   "rationale": "La OARSI y la ESCEO dan prioridad a los AINE tópicos en la rodilla.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 113,
+   "applied_ok": true
+  },
+  {
+   "id": "R34",
+   "type": "split_paragraph",
+   "tracked": true,
+   "anchor": "Respecto a la investigación, la heterogeneidad de la artrosis de rodilla",
+   "target": "Respecto a la investigación",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "estructura"
+   ],
+   "rationale": "La parte de investigación es un tema distinto del tratamiento quirúrgico y merece párrafo propio.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 114,
+   "applied_ok": true
+  },
+  {
+   "id": "R35",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "la AKOA es uno de los candidatos más claros [35,36]",
+   "target": "[35,36]",
+   "text": "[30,35,36]",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita"
+   ],
+   "rationale": "La referencia 30 trata precisamente de subpoblaciones y diseño de ensayos.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 114,
+   "applied_ok": true
+  },
+  {
+   "id": "R36",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "que afecta a entre el 4 % y el 10 % de las rodillas en riesgo",
+   "target": "10 %",
+   "text": "9 %",
+   "shared_passage": "S4",
+   "noise": false,
+   "categories": [
+    "cifra"
+   ],
+   "rationale": "Coherencia con Epidemiología, donde la frecuencia máxima es cercana al 9 %.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 116,
+   "applied_ok": true
+  },
+  {
+   "id": "R37",
+   "type": "replace",
+   "tracked": true,
+   "anchor": "33. Bruyere O, Honvo G",
+   "target": "Bruyere",
+   "text": "Bruyère",
+   "shared_passage": null,
+   "noise": false,
+   "categories": [
+    "cita"
+   ],
+   "rationale": "El apellido del autor lleva tilde grave.",
+   "applied": true,
+   "applied_with_track_changes": true,
+   "sent_paragraph": 151,
+   "applied_ok": true
+  }
+ ]
+}

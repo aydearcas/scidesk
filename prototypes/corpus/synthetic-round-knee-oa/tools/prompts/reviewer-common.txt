@@ -1,0 +1,72 @@
+Eres coautor de un artículo de revisión narrativa en español sobre artrosis de rodilla acelerada y te han enviado por correo el Word para que lo revises. Es un corpus SINTÉTICO de pruebas para el programa SciDesk (fusión de copias devueltas por coautores): el artículo es ficticio y sus referencias no están verificadas. No busques en internet. No leas ningún otro archivo del repositorio aparte de los que se indican aquí. No escribas nada fuera del archivo de salida indicado (y, si los necesitas, archivos temporales en tu scratchpad). No hagas commit.
+
+## Qué leer
+Carpeta: prototypes/corpus/synthetic-round-knee-oa
+- build\sent-for-review.txt: el texto de la versión enviada tal como lo ve Word, un párrafo por bloque. Las etiquetas entre corchetes al principio ([TÍTULO], [ENCABEZADO 1], [ENCABEZADO 2], [Tabla t | fila r | columna c]) NO forman parte del texto. En las tablas, las marcas de nota en superíndice salen como letras pegadas (por ejemplo "Aceleradaa" es "Acelerada" con la marca "a"), y hay celdas combinadas: usa siempre los números de fila y columna que da la etiqueta.
+- build\sent-paragraphs.json: lo mismo en JSON (lo usa el comprobador).
+- tools\check_edits.py: el comprobador de tu lista de ediciones.
+
+## Qué hacer
+Revisa el artículo como lo haría un reumatólogo coautor con experiencia en artrosis: corrige imprecisiones clínicas o de cifras, matiza afirmaciones, mejora la redacción, pide aclaraciones o referencias con comentarios, retoca las tablas. Tono y criterio realistas, con cambios de todos los tamaños (desde una coma hasta una frase nueva). Tus comentarios, en español, como los que escribiría un coautor en el margen de Word.
+
+Devuelve entre 25 y 40 ediciones en un JSON con este esquema (UTF-8):
+{
+  "coauthor": "<tu nombre>",
+  "edits": [
+    {
+      "id": "<prefijo>01",
+      "type": "insert | delete | replace | comment | format | split_paragraph | merge_paragraphs | move",
+      "tracked": true,
+      "anchor": "fragmento EXACTO y ÚNICO del texto enviado",
+      "target": "subcadena del anchor sobre la que actúa la edición (opcional; si falta, es el anchor entero)",
+      "text": "texto nuevo (insert y replace)",
+      "position": "before | after (insert: antes o después del target)",
+      "comment": "texto del comentario (solo en type=comment)",
+      "format": "italic | bold (solo en type=format)",
+      "destination": { "anchor": "...", "target": "...", "position": "before | after" },
+      "table": 1, "row": 7, "col": 2,
+      "shared_passage": "S1 | S2 | S3 | S4 | null",
+      "noise": false,
+      "categories": ["cifra", "cita", "redacción", "clínica", "tabla", "formato", "estructura", "ruido"],
+      "rationale": "por qué haces el cambio, en una frase"
+    }
+  ]
+}
+
+Significado de cada tipo:
+- insert: inserta "text" antes o después de "target" (incluye tú los espacios que hagan falta dentro de "text").
+- delete: borra "target" (cuida los espacios: si borras una palabra, incluye un espacio en el target).
+- replace: sustituye "target" por "text".
+- comment: comentario anclado al fragmento "target" (el texto no cambia).
+- format: pone "target" en cursiva o en negrita.
+- split_paragraph: parte el párrafo justo antes de "target", que debe ser el comienzo de una frase; se quita el espacio que la precede.
+- merge_paragraphs: une el párrafo que empieza por "target" con el anterior (con un espacio); "anchor" y "target" deben ser el comienzo exacto de ese segundo párrafo.
+- move: mueve "target" (una frase completa con su espacio final) al sitio indicado por "destination" (antes o después de su "target"). El texto movido se inserta tal cual, así que elige bien los espacios.
+- Edición en una tabla: añade "table", "row" y "col" (de la etiqueta) a cualquier edición; entonces el anchor solo se busca en esa celda y puede ser el texto entero de la celda. En "destination" también puedes usar table/row/col, aunque no hace falta.
+
+Reglas de las anclas (las comprueba el programa; si fallan, la edición no se aplica):
+- "anchor" es una copia literal del texto enviado (mayúsculas, tildes, espacios, comillas, rayas y números exactamente iguales), dentro de un solo párrafo, de 15 a 200 caracteres (salvo en celdas de tabla, donde puede ser corto), sin el carácter ^, y aparece UNA sola vez en todo el documento. "target" es una subcadena del anchor; se usa su primera aparición dentro del anchor.
+- Las zonas que cambian dos ediciones distintas no pueden solaparse (tampoco dos inserciones en el mismo punto). Un comentario o un cambio de formato sí puede caer sobre un fragmento que otra edición modifica, pero evita que un cambio de formato caiga sobre texto que otra edición borra o sustituye.
+- Ancla siempre en el texto ENVIADO, no en el que resulta de tus otras ediciones.
+- No edites el párrafo de AVISO ni la lista de autores y afiliaciones.
+
+Mínimos obligatorios (además, todo lo que te parezca bien como coautor):
+- Las cuatro zonas compartidas S1 a S4 de abajo: haz en cada una al menos una edición que cambie el texto (no solo un comentario), y marca esas ediciones con "shared_passage". Decide tú qué cambias.
+- Al menos 1 párrafo partido o unido (split_paragraph o merge_paragraphs).
+- Al menos 1 frase movida a otro sitio (move).
+- Al menos 2 ediciones en celdas de tabla (alguna en la tabla 2).
+- Al menos 2 cambios de formato: cursiva de un término en latín (in vivo, a priori, per se…) y alguna negrita.
+- Al menos 1 corrección de una cifra y 1 corrección de una cita (por ejemplo, [13] → [13,14] o [5] → [6]); puedes tocar también la lista de referencias.
+- Al menos 1 edición de "ruido" que solo cambie espacios, comillas (rectas a tipográficas) o guiones (guion a raya corta en un intervalo), sin cambiar nada más en ese pasaje; márcala con "noise": true y la categoría "ruido".
+- Inserciones, borrados y sustituciones de redacción repartidos por todo el texto, no solo al principio.
+
+Zonas compartidas (otros coautores también las revisan, pero no sabes qué harán):
+- S1: en Epidemiología, la frase que empieza "En la OAI, el 4 % de las rodillas sin artrosis radiográfica establecida cumplió criterios".
+- S2: en Criterios radiográficos, la frase que empieza "La definición más utilizada procede del trabajo de Driban y colaboradores".
+- S3: en la tabla 1, la fila 7 ("Artroplastia a cinco años"), cualquiera de sus celdas.
+- S4: en Conclusiones, la primera frase ("La artrosis de rodilla acelerada es un fenotipo plausible y probablemente infradiagnosticado…").
+
+## Comprobación
+Cuando tengas el archivo, ejecuta desde la carpeta del corpus:
+  python tools/check_edits.py <tu archivo>
+(con PYTHONIOENCODING=utf-8 si la consola da problemas de codificación). Corrige hasta que diga OK y los mínimos se cumplan. Devuelve un resumen breve: número de ediciones por tipo, cuáles van sin control de cambios y qué has hecho en S1 a S4.
