@@ -5,14 +5,15 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  BUNDLED_STYLES, createDemoProject, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  BUNDLED_STYLES, checkArticle, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
-  type PendingRecovery, type Project, type Rendering,
+  type CheckReport, type CheckWarning, type PendingRecovery, type Project, type Rendering,
 } from "@scidesk/core";
 import { NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
 import { AuthorsDialog } from "./AuthorsDialog.tsx";
+import { ChecksPanel } from "./ChecksPanel.tsx";
 import { LibraryPanel } from "./LibraryPanel.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
 import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
@@ -38,7 +39,8 @@ export function App() {
   const [rendering, setRendering] = useState<Rendering | null>(null);
   const [proposals, setProposals] = useState<ProposalSetFile | null>(null);
   const [returnedBy, setReturnedBy] = useState("");
-  const [panel, setPanel] = useState<"library" | "proposals">("library");
+  const [panel, setPanel] = useState<"library" | "checks" | "proposals">("library");
+  const [report, setReport] = useState<CheckReport | null>(null);
   const [uses, setUses] = useState<Map<string, number>>(new Map());
   // the quick citation dialog: the citation being edited (its position), or a new one
   const [editingAuthors, setEditingAuthors] = useState(false);
@@ -78,6 +80,8 @@ export function App() {
       setRendering(r);
       // how often each reference is cited, with what is on screen and not saved yet
       setUses(new Map([...referenceUses(project, { [`${article.folder}/${BODY}`]: doc })].map(([id, u]) => [id, u.length])));
+      // the checks, with what is on screen (record 0041)
+      setReport(checkArticle(project, article.folder, { [BODY]: doc }));
     } catch (e) {
       setError(String(e));
     }
@@ -209,6 +213,30 @@ export function App() {
     await setCitationStyle(project, article.folder, id);
     await recompute();
   });
+  // a warning takes to its block: in the text, or to the table or figure it is in
+  const goTo = (w: CheckWarning) => {
+    if (!editor || !w.where) return;
+    let target = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (target >= 0) return false;
+      if (w.where!.path === BODY ? node.attrs.id === w.where!.block : (node.type.name === "tableRef" || node.type.name === "figureRef") && node.attrs.src === w.where!.path) target = pos;
+      return true;
+    });
+    if (target < 0) return;
+    const node = editor.state.doc.nodeAt(target)!;
+    const chain = editor.chain().focus();
+    (node.isAtom ? chain.setNodeSelection(target) : chain.setTextSelection(target + 1)).scrollIntoView().run();
+  };
+  const ignore = async (w: CheckWarning, status: "correct" | "not-applicable", note: string) => {
+    if (!project || !article) return;
+    await ignoreWarning(project, article.folder, w.id, status, note);
+    await recompute();
+  };
+  const restore = async (w: CheckWarning) => {
+    if (!project || !article) return;
+    await restoreWarning(project, article.folder, w.id);
+    await recompute();
+  };
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
   const removeReference = async (id: string) => {
     if (!project || !article || !editor) return;
@@ -304,9 +332,13 @@ export function App() {
           <aside>
             <div className="tabs" role="tablist">
               <button role="tab" aria-selected={panel === "library"} onClick={() => setPanel("library")}>{t("library")}</button>
+              <button role="tab" aria-selected={panel === "checks"} onClick={() => setPanel("checks")}>
+                {t("checksTab")}{report && report.warnings.some((w) => !w.ignored && w.level !== "info") ? ` (${report.warnings.filter((w) => !w.ignored && w.level !== "info").length})` : ""}
+              </button>
               <button role="tab" aria-selected={panel === "proposals"} onClick={() => setPanel("proposals")}>{t("proposals")}</button>
             </div>
-            {panel === "library" ? <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} /> : <>
+            {panel === "checks" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} />}
+            {panel === "library" ? <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} /> : panel === "checks" ? null : <>
             <label>{t("returnedBy")} <input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
             <label className="file">{t("importCopy")} <input ref={fileInput} type="file" accept=".docx" onChange={onCopy} /></label>
             {proposals && (proposals.proposals.filter((p) => p.status !== "noise-hidden").length === 0

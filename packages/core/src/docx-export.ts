@@ -436,6 +436,11 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     }],
   });
   const bytes = new Uint8Array(await Packer.toArrayBuffer(doc));
+  if (!markers) {
+    // pending markers should not reach the journal (R12); imported here to avoid a cycle
+    const pending = (await import("./checks.ts")).pendingCount(project, folder);
+    if (pending) warnings.push(`${pending} pending marker(s) left in the text (XX, ??, [REF]…)`);
+  }
   const name = profile === "coauthors" ? "coautores" : "revista";
   const path = `articles/${folder}/exports/${folder}-${name}${snapshot ? `-${snapshot.id}` : ""}.docx`;
   await project.fs.write(path, bytes);

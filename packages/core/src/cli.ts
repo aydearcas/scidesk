@@ -2,7 +2,8 @@
 // SciDesk's command line (R33), on the same core as the app.
 //   scidesk new <dir> --name <name> --title <title> [--lang es]
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
-//   scidesk check <dir>                validate the project
+//   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited)
+//   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
 //   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
 //                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
@@ -30,6 +31,7 @@ import { projectFromWord } from "./word-import.ts";
 import { deleteReference, referenceUses, searchLibrary, setCitationStyle, summarize } from "./library.ts";
 import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 import { checkAuthorship, displayName } from "./authorship.ts";
+import { checkArticle, ignoreWarning, restoreWarning } from "./checks.ts";
 import { titlePageModel } from "./title-page.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
@@ -45,7 +47,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|show> <project folder> …  |  scidesk styles");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -64,6 +66,16 @@ async function main() {
       const p = await loadProject(fs);
       console.log(`${p.manifest.name}: ${p.articles.length} article(s), ${p.library.references.length} reference(s); ${p.issues.length} warning(s)${p.normalised.length ? `; normalised on load: ${p.normalised.length}` : ""}`);
       for (const i of p.issues) console.log(`  ${i.level} ${i.file ?? ""} ${i.path ?? ""}: ${i.message}`);
+      for (const a of p.articles) {
+        const r = checkArticle(p, a.folder);
+        const lim = (k: string) => (r.limits[k] !== undefined ? ` / ${r.limits[k]}` : "");
+        console.log(`
+${a.folder}: ${r.counts.main}${lim("words")} words in the text; abstract ${r.counts.abstract.map((x) => `${x.lang} ${x.words}${lim("abstractWords")}`).join(", ") || "-"}; ${r.counts.references}${lim("references")} references, ${r.counts.tables} tables, ${r.counts.figures} figures`);
+        for (const s of r.counts.sections) console.log(`    ${String(s.words).padStart(5)}  ${s.heading || "(before the first heading)"}${s.counted ? "" : "  (not counted)"}`);
+        for (const w of r.warnings.filter((x) => !x.ignored)) console.log(`  ${w.level.padEnd(8)} ${w.id}  ${JSON.stringify(w.params)}`);
+        const ignored = r.warnings.filter((x) => x.ignored).length;
+        if (ignored) console.log(`  (${ignored} ignored)`);
+      }
       break;
     }
     case "export": {
@@ -169,6 +181,17 @@ async function main() {
         console.log(`${x.entry.article}/${x.entry.path}  ${x.entry.recorded}  ${x.state === "clean" ? "clean" : "the file changed on disk since"}${note}`);
       }
       if (!pending.length) console.log("nothing to recover");
+      break;
+    }
+    case "ignore": {
+      const id = positional[0];
+      if (!id) throw new Error("usage: scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore]");
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      if (rest.includes("--restore")) { await restoreWarning(p, folder, id); console.log(`restored ${id}`); break; }
+      const as = opt("as", "correct") as "correct" | "not-applicable";
+      await ignoreWarning(p, folder, id, as, opt("note"));
+      console.log(`${id}: ${as}`);
       break;
     }
     case "show": {

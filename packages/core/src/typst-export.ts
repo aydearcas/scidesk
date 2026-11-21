@@ -13,6 +13,7 @@ import type { JournalProfileFile, PMNode } from "@scidesk/formats";
 import { renderCitations, type CitationResources, type Run } from "./citations.ts";
 import { composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
 import type { Project } from "./project.ts";
+import { pendingCount } from "./checks.ts";
 
 export interface TypstBundle {
   /** main.typ */
@@ -274,5 +275,6 @@ export async function exportPdf(project: Project, folder: string, res: CitationR
   const art = project.articles.find((a) => a.folder === folder)!;
   const path = `articles/${folder}/exports/${folder}-${art.article.lang.startsWith("es") ? "revista" : "journal"}.pdf`;
   await project.fs.write(path, r.pdf);
-  return { bytes: r.pdf, path, pages: r.pages, warnings: [...bundle.warnings, ...r.warnings] };
+  const pending = pendingCount(project, folder);
+  return { bytes: r.pdf, path, pages: r.pages, warnings: [...(pending ? [`${pending} pending marker(s) left in the text (XX, ??, [REF]…)`] : []), ...bundle.warnings, ...r.warnings] };
 }
