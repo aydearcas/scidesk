@@ -1,0 +1,12 @@
+{
+  "name": "scidesk",
+  "private": true,
+  "description": "SciDesk: desktop word processor for scientific articles.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

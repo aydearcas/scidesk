@@ -35,6 +35,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0029](0029-fusion-de-copias-devueltas.md) | Fusión de las copias devueltas: propuestas de la enviada a cada copia (marcadas con su autor, no marcadas atribuidas a quien la devolvió), ruido oculto y fusión sobre tu copia por zonas con acuerdos y conflictos; mejor que «Combinar» de Word | R2–R4, prototipo 6 | 21/11/2026 | — |
 | [0030](0030-tauri-confirmado.md) | Tauri confirmado frente a Electron: las tres condiciones de R37 se cumplen (prototipo 11 en el MacBook); composición del teclado en el modo sugerencias, limpiador para Word para Mac y citas pegadas en el Mac por el portapapeles nativo | R37, P18, prototipo 11 | 21/11/2026 | — |
 | [0031](0031-formatos-v1-con-un-solo-esquema.md) | Formatos v1 con un solo esquema (TypeBox, `packages/formats/`): `.scidoc`, `.scitable`, `.scifigure`, proyecto, personas, autores, biblioteca, perfil de revista, propuestas y marcas del DOCX; estado de Zotero en cada equipo | R34, fase 0 | 21/11/2026 | — |
+| [0032](0032-corte-vertical.md) | Corte vertical: monorepo (formats, core, desktop), núcleo con acceso a archivos por interfaz, exportar DOCX con marcas e instantánea e importar la copia devuelta como propuestas; probado con Word real y en la ventana | R42, fase 1 | 21/11/2026 | — |
 
 ## Plantilla
 

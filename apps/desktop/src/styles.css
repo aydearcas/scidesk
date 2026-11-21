@@ -1,0 +1,29 @@
+:root { color-scheme: light dark; --bg: #f4f4f2; --page: #fff; --ink: #1d1d1f; --muted: #666; --line: #d8d8d4; --accent: #2d5b8a; --ins: #1f7a3a; --del: #a33; }
+@media (prefers-color-scheme: dark) { :root { --bg: #1c1c1e; --page: #262628; --ink: #eee; --muted: #aaa; --line: #3a3a3c; --accent: #7fb0e0; --ins: #6fcf8a; --del: #f08080; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, "Segoe UI", sans-serif; }
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+header { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+.spacer { flex: 1; }
+button, select, input { font: inherit; }
+main { display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px; flex: 1; }
+@media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+.toolbar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.toolbar select { max-width: 320px; }
+.status { color: var(--muted); }
+.page { background: var(--page); border: 1px solid var(--line); padding: 32px 48px; min-height: 60vh; font-family: Carlito, Calibri, sans-serif; font-size: 12pt; }
+.page .ProseMirror { outline: none; }
+.page h1.title { font-size: 20pt; }
+sup.citation { color: var(--accent); cursor: default; }
+.bibliography { background: var(--page); border: 1px solid var(--line); border-top: 0; margin: 0; padding: 12px 48px 24px 72px; font-size: 11pt; }
+aside { background: var(--page); border: 1px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+aside h2 { margin: 0; font-size: 15px; }
+aside label { display: flex; flex-direction: column; gap: 4px; }
+.proposals { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.proposals li { border-top: 1px solid var(--line); padding-top: 6px; }
+.tag { font-size: 11px; border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; color: var(--muted); }
+.tag.tracked { color: var(--accent); border-color: var(--accent); }
+ins { color: var(--ins); } del { color: var(--del); }
+.note, .empty, .message, .integrity { color: var(--muted); padding: 0 12px; }
+.error { color: var(--del); padding: 0 12px; white-space: pre-wrap; }
+footer { color: var(--muted); font-size: 11px; padding: 8px 12px; border-top: 1px solid var(--line); }

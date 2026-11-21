@@ -1,0 +1,159 @@
+// Reads a DOCX the way the merge needs it (records 0025, 0028 and 0029): paragraphs in order
+// (body and table cells), the SciDesk bookmarks that start in each, and its content as
+// segments that are unchanged, inserted or deleted (with w:author and w:date). A citation
+// field becomes one atom segment (U+FFFC) carrying its citationID, so that it counts 1, as
+// a citation node does in ProseMirror. The paragraphs of the Zotero bibliography field are
+// left out: the bibliography is generated, never imported. XML is parsed without DTDs or
+// external entities (PLAN 6.6).
+import { DOMParser, type Element, type Node } from "@xmldom/xmldom";
+import JSZip from "jszip";
+import { parseBookmark } from "@scidesk/formats";
+
+const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+export const ATOM = "￼";
+
+export interface Segment {
+  text: string;
+  kind: "same" | "ins" | "del";
+  author: string | null;
+  date: string | null;
+  /** citationID of a citation atom. */
+  citation?: string;
+}
+export interface DocxParagraph {
+  index: number;
+  /** Ids of the SciDesk block bookmarks that start in this paragraph (in order). */
+  blocks: string[];
+  segments: Segment[];
+  /** The paragraph mark was inserted or deleted with tracked changes. */
+  mark: { kind: "ins" | "del"; author: string; date: string | null } | null;
+  inTable: boolean;
+}
+export interface DocxRead {
+  paragraphs: DocxParagraph[];
+  /** The custom property "SciDesk", parsed, if it is there. */
+  scidesk: Record<string, unknown> | null;
+  /** The snapshot bookmark (_SDs_), the fallback when properties were lost. */
+  snapshotBookmark: string | null;
+  lastModifiedBy: string;
+}
+
+const kids = (n: Node): Element[] => {
+  const o: Element[] = [];
+  for (let c = n.firstChild; c; c = c.nextSibling) if (c.nodeType === 1) o.push(c as Element);
+  return o;
+};
+const attr = (e: Element, a: string) => e.getAttributeNS(W, a) || e.getAttribute(`w:${a}`) || "";
+const MAX_XML = 50 * 1024 * 1024;
+
+function parseXml(xml: string) {
+  if (xml.length > MAX_XML) throw new Error("document.xml is too large");
+  if (/<!DOCTYPE/i.test(xml)) throw new Error("DOCX with a DTD refused");
+  return new DOMParser().parseFromString(xml, "text/xml");
+}
+
+export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
+  const zip = await JSZip.loadAsync(bytes);
+  const docXml = await zip.file("word/document.xml")?.async("string");
+  if (!docXml) throw new Error("not a Word document (no word/document.xml)");
+  const dom = parseXml(docXml);
+  const custom = await zip.file("docProps/custom.xml")?.async("string");
+  let scidesk: Record<string, unknown> | null = null;
+  if (custom) {
+    const m = /<property [^>]*name="SciDesk"[^>]*>\s*<vt:lpwstr>([^<]*)<\/vt:lpwstr>/.exec(custom);
+    if (m) try { scidesk = JSON.parse(m[1].replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")); } catch { scidesk = null; }
+  }
+  const core = await zip.file("docProps/core.xml")?.async("string");
+  const lastModifiedBy = /<cp:lastModifiedBy>([^<]*)</.exec(core ?? "")?.[1] ?? "";
+
+  const paragraphs: DocxParagraph[] = [];
+  let snapshotBookmark: string | null = null;
+  let inBibliography = false;
+  let inTable = 0;
+
+  function paragraph(p: Element) {
+    const P: DocxParagraph = { index: paragraphs.length, blocks: [], segments: [], mark: null, inTable: inTable > 0 };
+    const pPr = kids(p).find((e) => e.localName === "pPr");
+    const markRPr = pPr && kids(pPr).find((e) => e.localName === "rPr");
+    const markRev = markRPr && kids(markRPr).find((e) => e.localName === "ins" || e.localName === "del");
+    if (markRev) P.mark = { kind: markRev.localName as "ins" | "del", author: attr(markRev, "author"), date: attr(markRev, "date") || null };
+
+    // complex fields: begin → instruction → separate → result → end, possibly over many runs
+    type Field = { instr: string; phase: "instr" | "result"; kind: "citation" | "bibliography" | "other"; citation?: string; emitted: boolean };
+    const stack: Field[] = [];
+    const push = (text: string, kind: Segment["kind"], rev: { author: string; date: string } | null, citation?: string) => {
+      if (!text) return;
+      const last = P.segments.at(-1);
+      if (!citation && last && !last.citation && last.kind === kind && last.author === (rev?.author ?? null)) last.text += text;
+      else P.segments.push({ text, kind, author: rev?.author ?? null, date: rev?.date || null, ...(citation ? { citation } : {}) });
+    };
+    const run = (r: Element, kind: Segment["kind"], rev: { author: string; date: string } | null) => {
+      for (const e of kids(r)) {
+        const ln = e.localName;
+        if (ln === "fldChar") {
+          const t = attr(e, "fldCharType");
+          if (t === "begin") stack.push({ instr: "", phase: "instr", kind: "other", emitted: false });
+          else if (t === "separate" && stack.length) {
+            const f = stack.at(-1)!;
+            f.phase = "result";
+            const instr = f.instr.trim();
+            if (/^ADDIN ZOTERO_ITEM CSL_CITATION|^ADDIN CSL_CITATION/.test(instr)) {
+              f.kind = "citation";
+              try { f.citation = String(JSON.parse(instr.slice(instr.indexOf("{"))).citationID); } catch { f.citation = "?"; }
+            } else if (/^ADDIN ZOTERO_BIBL/.test(instr)) { f.kind = "bibliography"; inBibliography = true; }
+          } else if (t === "end" && stack.length) {
+            const f = stack.pop()!;
+            if (f.kind === "bibliography") inBibliography = false;
+          }
+          continue;
+        }
+        const f = stack.at(-1);
+        if (ln === "instrText" || ln === "delInstrText") { if (f && f.phase === "instr") f.instr += e.textContent ?? ""; continue; }
+        if (f?.kind === "citation" && f.phase === "result") {
+          if (!f.emitted) { push(ATOM, kind, rev, f.citation); f.emitted = true; }
+          continue; // the formatted result is citeproc-js', not the co-author's text
+        }
+        if (f && f.phase === "instr") continue;
+        if (ln === "t" || ln === "delText") push(e.textContent ?? "", kind, rev);
+        else if (ln === "tab") push("\t", kind, rev);
+        else if (ln === "br") push("\n", kind, rev);
+        else if (ln === "noBreakHyphen") push("‑", kind, rev);
+      }
+    };
+    const walk = (n: Element, kind: Segment["kind"], rev: { author: string; date: string } | null) => {
+      for (const e of kids(n)) {
+        const ln = e.localName;
+        if (ln === "r") run(e, kind, rev);
+        else if (ln === "ins" || ln === "moveTo") walk(e, "ins", { author: attr(e, "author"), date: attr(e, "date") });
+        else if (ln === "del" || ln === "moveFrom") walk(e, "del", { author: attr(e, "author"), date: attr(e, "date") });
+        else if (ln === "bookmarkStart") {
+          const b = parseBookmark(attr(e, "name"));
+          if (b?.marker === "block") P.blocks.push(b.id);
+          if (b?.marker === "snapshot") snapshotBookmark = b.id;
+        } else if (ln === "hyperlink" || ln === "smartTag" || ln === "sdt" || ln === "sdtContent" || ln === "fldSimple" || ln === "customXml") walk(e, kind, rev);
+      }
+    };
+    const startsInBibliography = inBibliography;
+    walk(p, "same", null);
+    if (startsInBibliography || (inBibliography && !P.blocks.length)) return; // generated text
+    paragraphs.push(P);
+  }
+  function blocks(n: Element) {
+    for (const e of kids(n)) {
+      if (e.localName === "p") paragraph(e);
+      else if (e.localName === "tbl") { inTable++; for (const tr of kids(e).filter((x) => x.localName === "tr")) for (const tc of kids(tr).filter((x) => x.localName === "tc")) blocks(tc); inTable--; }
+      else if (e.localName === "sdt" || e.localName === "sdtContent" || e.localName === "customXml") blocks(e);
+    }
+  }
+  const body = dom.getElementsByTagNameNS(W, "body")[0];
+  if (!body) throw new Error("document.xml has no body");
+  blocks(body as unknown as Element);
+  // a paragraph with the snapshot bookmark only is not content
+  const content = paragraphs.filter((p) => p.blocks.length || p.segments.some((s) => s.text.trim()));
+  return { paragraphs: content.map((p, i) => ({ ...p, index: i })), scidesk, snapshotBookmark, lastModifiedBy };
+}
+
+/** Text of a paragraph with every tracked change rejected (as it was sent, plus untracked edits). */
+export const rejectedText = (p: DocxParagraph) => p.segments.filter((s) => s.kind !== "ins").map((s) => s.text).join("");
+/** Text with every tracked change accepted. */
+export const acceptedText = (p: DocxParagraph) => p.segments.filter((s) => s.kind !== "del").map((s) => s.text).join("");

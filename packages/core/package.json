@@ -1,0 +1,28 @@
+{
+  "name": "@scidesk/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SciDesk headless core: project, citations, DOCX export and import, proposals. Runs in Node (CLI) and in the app's webview.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node-fs.ts",
+    "./assets/*": "./assets/*"
+  },
+  "bin": {
+    "scidesk": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@scidesk/formats": "0.1.0",
+    "@xmldom/xmldom": "0.9.12",
+    "citeproc": "github:juris-m/citeproc-js#56e7ef310154748368665cc8a2be124e3c141832",
+    "diff": "9.0.0",
+    "docx": "9.16.0",
+    "jszip": "3.10.2"
+  }
+}
