@@ -31,6 +31,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0025](0025-docx-con-marcas-y-campos.md) | DOCX con la biblioteca `docx` y plantilla de referencia; marcas especificadas (marcadores de rango por bloque, citas en formato de Zotero, `REF` y `SEQ`); identidad confirmada por contenido al importar | R3, R35, prototipo 3 | 21/11/2026 | 21/11/2026 |
 | [0026](0026-citas-con-citeproc-js.md) | Citas con citeproc-js (desde su repositorio, sin modificar): renumeración en vivo en ~2 ms, estilo propio de Reumatología Clínica que sigue su guía actual, y licencia AGPL-3.0 o CPAL con atribución | P13, 6.3, prototipo 2 | 21/11/2026 | — |
 | [0027](0027-zotero-por-su-api-local.md) | Zotero por su API local (colección, sincronización por versiones, `Zotero-Server-ID`) y un URI por referencia en las citas del DOCX, porque sin él Zotero duplica referencias al actualizar | Prototipo 5 | 21/11/2026 | — |
+| [0028](0028-importar-citas-de-un-word.md) | Importar las citas de un Word desde el propio documento (EndNote `EN.CITE`/`EN.CITE.DATA`, Zotero, Mendeley Desktop), con EndNote XML convertido a CSL-JSON y la importación comprobada contra la bibliografía del documento | R1, prototipo 10 | 21/11/2026 | — |
 
 ## Plantilla
 

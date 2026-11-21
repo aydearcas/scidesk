@@ -1,0 +1,11 @@
+{
+  "name": "proto-10-import-word-citations",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 10: import a Word document with EndNote (or Zotero) citations: recover the citations and the library",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
+    "citeproc": "^2.4.63",
+    "jszip": "^3.10.2"
+  }
+}
