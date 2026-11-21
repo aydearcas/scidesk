@@ -1,7 +1,7 @@
 # 0025. DOCX con marcas y campos: biblioteca `docx`, plantilla de referencia y especificación de las marcas
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada (resultado del prototipo 3 de la fase 0). Concreta las marcas de [0003](0003-coautores-con-word-y-fusion.md) (R3) y confirma la exportación a DOCX de [0010](0010-pila-tecnologica.md) (R35).
+- **Estado:** aceptada (resultado del prototipo 3 de la fase 0). Corregida el 21/11/2026 con el prototipo 5: cada referencia de una cita lleva un URI ([0027](0027-zotero-por-su-api-local.md)). Concreta las marcas de [0003](0003-coautores-con-word-y-fusion.md) (R3) y confirma la exportación a DOCX de [0010](0010-pila-tecnologica.md) (R35).
 - **Pregunta del plan:** R3 y R35 (prototipo 3 de la sección 8)
 
 ## Qué se decide
@@ -20,7 +20,7 @@
 | Cada tabla o figura | `_SD_t_<id>` o `_SD_f_<id>` desde el pie hasta la última nota |
 | Su número | `_SDn_<id>` alrededor del campo `SEQ Tabla \* ARABIC` (o `SEQ Figura`), con la etiqueta del idioma del documento |
 | Cada referencia cruzada | `REF _SDn_<id> \h` con el número como resultado; «tabla» va fuera, como texto |
-| Cada cita | Campo de Zotero `ADDIN ZOTERO_ITEM CSL_CITATION {json}` con `citationID` = id de la cita en SciDesk, el CSL-JSON de cada referencia y el resultado de citeproc-js con su formato |
+| Cada cita | Campo de Zotero `ADDIN ZOTERO_ITEM CSL_CITATION {json}` con `citationID` = id de la cita en SciDesk, el CSL-JSON de cada referencia **con su URI** (el de Zotero o uno propio; [0027](0027-zotero-por-su-api-local.md)) y el resultado de citeproc-js con su formato |
 | La bibliografía | `ADDIN ZOTERO_BIBL` con las entradas de citeproc-js |
 | El documento | Propiedades `ZOTERO_PREF_n` (estilo de la revista) y `SciDesk` (proyecto, artículo e instantánea de partida); **además**, un marcador `_SDs_<instantánea>` al principio, porque las propiedades se pierden al copiar el texto a otro documento |
 
@@ -60,7 +60,7 @@ Sin marcadores, campos ni propiedades personalizadas, con el autor vacío. Las c
 - **Formatos de la fase 0:** la especificación de las marcas (tabla de arriba) entra en el esquema único de formatos.
 - **Corte vertical y fase 2a:** el lector (`read-docx.mjs` del prototipo) da los párrafos con sus marcadores, el texto aceptando o rechazando los cambios marcados y los campos clasificados. Es la base del importador.
 - **Prototipo 5 (Zotero):**
-  - Comprobar con Zotero abierto que su complemento reconoce estas citas y la bibliografía y las actualiza («Refresh») sin perder el `citationID`, y qué hace con referencias que no están en su biblioteca (`uris` vacíos).
+  - Comprobar con Zotero abierto que su complemento reconoce estas citas y la bibliografía y las actualiza («Refresh») sin perder el `citationID`, y qué hace con referencias que no están en su biblioteca (`uris` vacíos). **Hecho en el prototipo 5 ([0027](0027-zotero-por-su-api-local.md)):** conserva los `citationID`, los marcadores y las propiedades, pero sin URI duplica las referencias en la bibliografía y renumera; con URI no cambia nada. Desde entonces, cada referencia de una cita lleva su URI.
   - Comprobar también en Word visible que un coautor con Zotero instalado abre y guarda la copia sin problemas. Desde COM, `SaveAs2` se colgaba en algunos casos, también sin el complemento, y no se averiguó la causa.
 - **Prototipo 6:** las copias pasadas por Google Docs, LibreOffice o Word para Mac quedan para él, con el plan B. El lector y la comparación de este prototipo sirven de punto de partida.
 - **Pendiente en la exportación:** comentarios y cambios marcados (con la correspondencia de [0020](0020-control-de-cambios.md)), notas al pie, ecuaciones, portada aparte y el perfil de formato de la revista más allá de la plantilla.

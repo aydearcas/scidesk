@@ -1,7 +1,7 @@
 # 0007. Referencias: biblioteca propia o vinculada a Zotero
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada. La biblioteca es común a todo el proyecto y no hay biblioteca global ([0015](0015-varios-articulos-por-proyecto.md)). Actualizada el 21/11/2026 con la revisión de la v0.4 (R1, R10, R24 y R45).
+- **Estado:** aceptada. La biblioteca es común a todo el proyecto y no hay biblioteca global ([0015](0015-varios-articulos-por-proyecto.md)). Actualizada el 21/11/2026 con la revisión de la v0.4 (R1, R10, R24 y R45) y con el prototipo 5 ([0027](0027-zotero-por-su-api-local.md)).
 - **Preguntas del plan:** P11, P13 y P14
 
 ## Qué se decide
@@ -23,7 +23,7 @@
 
 ## Consecuencias
 - El proyecto guarda una copia de cada referencia citada (con su clave de Zotero si está vinculada), para abrirse y exportarse sin Zotero.
-- La conexión con Zotero va detrás de una interfaz propia para añadir otros gestores después.
+- La conexión con Zotero va detrás de una interfaz propia para añadir otros gestores después. El prototipo 5 fijó cómo se lee (colección con sus subcolecciones, sincronización incremental por versiones, `Zotero-Server-ID`) y qué guarda `library.json` de cada referencia ([0027](0027-zotero-por-su-api-local.md)).
 - Escribir en Zotero desde SciDesk queda para más adelante (Zotero 10 lo permite con permiso del usuario).
 - El estilo CSL de Reumatología Clínica es de 2012 y deriva del de la NLM; hay que compararlo en la fase 0 con los ejemplos de la guía actual, que siguen el formato de Elsevier con DOI.
 - La biblioteca vinculada a EndNote y a Mendeley sigue para más adelante (fase 4): el modo Zotero y la importación de archivos cubren casi todo (R45).

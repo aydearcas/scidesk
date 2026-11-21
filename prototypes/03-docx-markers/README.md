@@ -100,7 +100,7 @@ Un marcador que se pierde lleva a alinear por contenido; uno que cambia de sitio
   - Si el complemento de Zotero para Word reconoce estas citas y la bibliografía, y las actualiza con «Refresh» sin perder el `citationID`.
   - Qué hace con `uris` vacíos, que corresponden a referencias que no están en la biblioteca de Zotero.
   
-  Se comprueba en el prototipo 5, con Zotero abierto y con el usuario delante.
+  **Comprobado en el prototipo 5 ([ficha 0027](../../docs/decisiones/0027-zotero-por-su-api-local.md)):** el «Refresh» de Zotero conserva los `citationID`, los marcadores y las propiedades, pero con `uris` vacíos duplica las referencias en la bibliografía y renumera las citas. Desde entonces, cada referencia lleva un URI. El exportador de este prototipo no se ha cambiado.
 - **Guardar con el complemento de Zotero cargado.** Guardar desde COM se colgó en Word oculto. Al aislarlo, el bloqueo también se dio sin el complemento: dependía de llamar a `SaveAs2` dentro del script. No se llegó a saber la causa y se rodeó copiando el archivo y guardando con `Save()`. Falta comprobar en Word visible que un coautor con Zotero instalado puede abrir y guardar la copia sin problemas (prototipo 5).
 - **Google Docs, LibreOffice, Pages y Word para Mac:** no se han probado. Es la parte del prototipo 6, que ya prevé el plan B.
 - **Fusión:** aquí solo se lee lo que queda en cada copia. Fusionar es el prototipo 6.

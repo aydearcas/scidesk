@@ -15,6 +15,6 @@ Orden aprobado el 21/11/2026: primero los que fijan el formato, después los que
 | — | | **Decisión Tauri o Electron** | | | |
 | 7 | 3 | [DOCX con marcas y campos](03-docx-markers/) | Word de escritorio | Hecho | [0025](../docs/decisiones/0025-docx-con-marcas-y-campos.md) |
 | 8 | 2 | [citeproc-js y estilos](02-citeproc/) | — | Hecho | [0026](../docs/decisiones/0026-citas-con-citeproc-js.md) |
-| 9 | 5 | Zotero por su API local | Zotero instalado | Pendiente | |
+| 9 | 5 | [Zotero por su API local](05-zotero/) | Zotero instalado (se usa una instancia de prueba aparte) | Hecho | [0027](../docs/decisiones/0027-zotero-por-su-api-local.md) |
 | 10 | 10 | Importar un Word con citas | Word del usuario con citas (recibidos: EndNote) | Pendiente | |
 | 11 | 6 | Fusión de tres copias devueltas | Ronda sintética en [`corpus/synthetic-round-knee-oa/`](corpus/synthetic-round-knee-oa/) (hecha; sin copia de LibreOffice, que no está instalado) | Pendiente | |

@@ -373,6 +373,7 @@ Reparto de los datos:
 - Eliges una biblioteca o una colección de Zotero y SciDesk la lee a través de la API local de Zotero (Zotero 7 o posterior). Hace falta tener Zotero abierto en el mismo equipo y activar en Zotero la opción "Permitir que otras aplicaciones de este equipo se comuniquen con Zotero".
 - Lo que añades en Zotero (por ejemplo, con su conector del navegador) aparece en SciDesk.
 - El proyecto guarda una copia de cada referencia citada con su clave de Zotero. Así se abre y se exporta en otro equipo o sin Zotero. Al volver a abrirlo con Zotero, se actualizan los cambios y se avisa de las referencias borradas allí.
+- Cómo se lee y se sincroniza (colección con subcolecciones, versiones por clave, `Zotero-Server-ID`, normalización del CSL-JSON de Zotero) sale del prototipo 5 (ficha 0027): una colección de 30 referencias se lee en ~60 ms.
 - **[Después]** Escribir en Zotero desde SciDesk, por ejemplo al añadir una referencia por DOI. Zotero 10 lo permite a través de su API local, con un permiso que concedes en un diálogo de Zotero.
 - **[Después]** EndNote no tiene una API comparable: lo razonable es usar su exportación EndNote XML y reimportarla para actualizar. Mendeley Reference Manager tiene una API en la nube que habrá que estudiar.
 
@@ -500,7 +501,7 @@ Esta tabla ya muestra el problema: la guía es buena, pero le falta un dato impo
   - Aplica interlineado, fuente, márgenes, números de línea y numeración de páginas según el perfil.
 - **[MVP]** **Marcas invisibles, especificadas** (R3). Son las que permiten reconocer el documento al reimportarlo (5.11):
   - **Cada bloque** lleva un marcador de Word (*bookmark*) oculto con su identificador.
-  - **Cada cita** es un campo con sus datos dentro. Si se usa el formato de campo de Zotero, los coautores que usan Zotero pueden trabajar con esas citas, que la v0.4 dejaba para [Después].
+  - **Cada cita** es un campo con sus datos dentro. Si se usa el formato de campo de Zotero, los coautores que usan Zotero pueden trabajar con esas citas, que la v0.4 dejaba para [Después]. Cada referencia lleva un URI (el de Zotero o uno propio): sin él, Zotero duplica las referencias al actualizar el documento (prototipo 5, ficha 0027).
   - **Cada referencia cruzada** es un campo `REF` de Word que apunta al marcador de la tabla o figura, y la numeración de los pies usa campos `SEQ`. Así, si un coautor añade una tabla en Word, los números se actualizan allí también.
   - La especificación exacta (nombres, qué abarca cada marcador, propiedades del documento) y las reglas para importar salen del prototipo 3 (ficha 0025). Las marcas son pistas: la identidad de cada bloque se confirma siempre por contenido.
 - **[MVP]** **Dos perfiles de exportación a DOCX** (R3):

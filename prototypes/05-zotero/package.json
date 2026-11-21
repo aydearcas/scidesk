@@ -1,0 +1,11 @@
+{
+  "name": "proto-05-zotero",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 5: read a Zotero collection through its local API and convert it to CSL-JSON; check Zotero with the DOCX citation fields of prototype 3",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
+    "citeproc": "^2.4.63",
+    "jszip": "^3.10.2"
+  }
+}
