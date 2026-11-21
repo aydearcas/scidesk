@@ -18,3 +18,4 @@ export * from "./authorship.ts";
 export * from "./recovery.ts";
 export * from "./typst-export.ts";
 export * from "./checks.ts";
+export * from "./paste-table.ts";

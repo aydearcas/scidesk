@@ -7,6 +7,7 @@ Tauri 2 + React + Tiptap. Estado: **corte vertical de la fase 1** (R42, ficha [0
 - `src/LibraryPanel.tsx`: la pestaña «Biblioteca»: buscar, ver cuántas veces se cita cada referencia, añadir, editar y borrar.
 - `src/AuthorsDialog.tsx`: el diálogo «Autores…»: quién firma y en qué orden, personas y grupos, afiliaciones y matriz CRediT; guarda `people.json` y `authors.json` a la vez (ficha 0038).
 - `src/ChecksPanel.tsx`: la pestaña «Comprobaciones»: recuentos frente a los límites, palabras por sección, avisos con «Ir», «Es correcto» y «No aplica», e ignorados (ficha 0041).
+- `src/paste.ts`: el limpiador del HTML de Office (prototipo 1) y la lectura de las tablas pegadas con su pie y sus notas, que el núcleo guarda como `.scitable` (ficha 0042).
 - `src/platform.ts`: en la ventana de Tauri, los archivos van por comandos de Rust limitados a la carpeta abierta; en un navegador, el proyecto vive en memoria (vista para probar la interfaz).
 - `src-tauri/`: los comandos `open_project`, `read_file`, `write_file` (escritura atómica) y `list_files`, sin acceso general al sistema de archivos, y `local_read`, `local_write`, `local_remove` y `local_list`, limitados a la carpeta local de datos de la aplicación (registro de recuperación, ficha 0039).
 - `src-tauri/src/pdf.rs`: el PDF con Typst 0.15 como biblioteca (comando `compile_pdf`) y el binario `scidesk-pdf` para la línea de comandos (`cargo build --bin scidesk-pdf`), ficha 0040. En el navegador, el botón «PDF para la revista» ofrece la fuente de Typst.

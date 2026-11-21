@@ -7,6 +7,7 @@
 // Tracked changes are taken as accepted. Citations stay as their text for now: turning
 // EndNote, Zotero and Mendeley fields into live citations is phase 2 (record 0028).
 // Styles are recognised by their built-in name (Word localises the ids: "Ttulo1").
+import type { Run } from "./citations.ts";
 import { DOMParser, type Element, type Node } from "@xmldom/xmldom";
 import JSZip from "jszip";
 import { newId, type PMNode } from "@scidesk/formats";
@@ -43,13 +44,12 @@ const ROLES: [RegExp, string][] = [
 const roleOf = (text: string) => ROLES.find(([re]) => re.test(text.trim().replace(/[.:]$/, "")))?.[1] ?? null;
 const ABSTRACT = /^(resumen|abstract|summary)$/i;
 const KEYWORDS = /^\s*(palabras? clave|key ?words)\s*[:.]\s*/i;
-const TABLE_CAPTION = /^\s*(tabla|table)\s+(\d+)\s*[.:\-–—]?\s*/i;
+export const TABLE_CAPTION = /^\s*(tabla|table)\s+(\d+)\s*[.:\-–—]?\s*/i;
 const FIGURE_CAPTION = /^\s*(figura|figure|fig\.)\s*(\d+)\s*[.:\-–—]?\s*/i;
 // a table note: "Abreviaturas: …", "Fuente: …", "a …", "a. …", "* …", or an abbreviation line ("CI: …", "DAS28: …")
-const NOTE_START = /^\s*((abreviaturas|abbreviations|notas?|notes?|fuente|source)\b|[a-z*†‡§¶][.)]?\s|[A-Z][A-Za-z0-9-]{0,11}\s?:\s)/;
+export const NOTE_START = /^\s*((abreviaturas|abbreviations|notas?|notes?|fuente|source)\b|[a-z*†‡§¶][.)]?\s|[A-Z][A-Za-z0-9-]{0,11}\s?:\s)/;
 const IMAGE_EXT: Record<string, string> = { png: "png", jpg: "jpg", jpeg: "jpg", gif: "gif", tif: "tiff", tiff: "tiff", svg: "svg", eps: "eps", pdf: "pdf" };
 
-interface Run { text: string; bold?: boolean; italic?: boolean; sup?: boolean; sub?: boolean }
 interface Para { kind: "p"; style: string; outline: number | null; runs: Run[]; text: string; list: { num: string; ordered: boolean } | null; images: string[]; align: string | null }
 interface Tbl { kind: "t"; rows: { header: boolean; cells: { colspan: number; vmerge: "restart" | "continue" | null; paras: Para[]; align: string | null }[] }[]; grid: number[] }
 type Item = Para | Tbl;
@@ -174,12 +174,12 @@ async function readWord(bytes: Uint8Array) {
   return { items, images };
 }
 
-const inline = (runs: Run[]): PMNode[] => runs.filter((r) => r.text).map((r) => {
+export const inline = (runs: Run[]): PMNode[] => runs.filter((r) => r.text).map((r) => {
   const marks = [r.bold && { type: "bold" }, r.italic && { type: "italic" }, r.sup && { type: "superscript" }, r.sub && { type: "subscript" }].filter(Boolean) as { type: string }[];
   return marks.length ? { type: "text", text: r.text, marks } : { type: "text", text: r.text };
 });
 /** Runs without a leading pattern (the "Tabla 1. " of a caption). */
-function stripLead(runs: Run[], re: RegExp): Run[] {
+export function stripLead(runs: Run[], re: RegExp): Run[] {
   const text = runs.map((r) => r.text).join("");
   const m = re.exec(text);
   if (!m || m.index !== 0) return runs;

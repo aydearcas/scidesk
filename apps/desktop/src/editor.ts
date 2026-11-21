@@ -163,9 +163,12 @@ const partRef = (name: "tableRef" | "figureRef", label: string) => Node.create({
   atom: true,
   selectable: true,
   draggable: false,
-  addAttributes: () => ({ id: { default: null }, src: { default: null } }),
+  addAttributes: () => ({
+    id: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name.toLowerCase()}`) },
+    src: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute("data-src") },
+  }),
   parseHTML: () => [{ tag: `div[data-${name}]` }],
-  renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, class: "part-ref", contenteditable: "false" }, `${label} · ${node.attrs.src}`],
+  renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, "data-src": node.attrs.src, class: "part-ref", contenteditable: "false" }, `${label} · ${node.attrs.src}`],
 });
 
 /**

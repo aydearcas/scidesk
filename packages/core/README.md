@@ -11,6 +11,7 @@ Estado: **corte vertical de la fase 1** (R42, ficha [0032](../../docs/decisiones
 | `src/citations.ts`, `src/resources.ts` | citeproc-js (commit fijo de su repositorio, sin modificar) y los 18 estilos (`assets/styles/`, con su procedencia en el README de esa carpeta, catálogo en `BUNDLED_STYLES`) y locales incluidos |
 | `src/snapshot.ts` | Instantáneas en `.scidesk/history/` (formato **provisional**) |
 | `src/docx-export.ts` | DOCX del manuscrito con la biblioteca `docx` y la plantilla `assets/reference.dotx`: resumen, tablas con notas, figuras, referencias cruzadas y el formato del perfil de revista; perfiles «coautores» (marcas, campos de Zotero con URI, propiedades) y «revista» (ficha 0033) |
+| `src/paste-table.ts` | Una tabla pegada desde Word (datos que lee la ventana) como `.scitable` con pie, notas y llamadas (ficha 0042) |
 | `src/checks.ts` | Comprobaciones antes del envío: límites, palabras por sección, pendientes y elementos sin citar, con avisos ignorables (ficha 0041) |
 | `src/typst-export.ts` | Fuente de Typst del manuscrito para la revista y `exportPdf` con un compilador que se le da: Rust en la ventana, `scidesk-pdf` en Node (ficha 0040) |
 | `src/title-page.ts` | Portada aparte desde `authors.json` y `people.json` (ficha 0034) |

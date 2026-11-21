@@ -5,7 +5,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  BUNDLED_STYLES, checkArticle, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addTablePart, BUNDLED_STYLES, checkArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
   type CheckReport, type CheckWarning, type PendingRecovery, type Project, type Rendering,
 } from "@scidesk/core";
@@ -14,6 +14,7 @@ import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@sc
 import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
 import { AuthorsDialog } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
+import { cleanOfficeHtml, isOfficeHtml, readPaste } from "./paste.ts";
 import { LibraryPanel } from "./LibraryPanel.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
 import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
@@ -58,8 +59,22 @@ export function App() {
   const savingNow = useRef(false);
   const dirtySince = useRef<number | null>(null);
   const article = project?.articles[0] ?? null;
+  // pasting from Word with tables (record 0042): set below, called by the editor
+  const pasteTables = useRef<(html: string) => boolean>(() => false);
 
   const editor = useEditor({
+    editorProps: {
+      // Word's HTML, cleaned (prototype 1); with tables, each becomes a .scitable
+      transformPastedHTML: cleanOfficeHtml,
+      handlePaste: (view, event) => {
+        // Ctrl+Shift+V: only the text, as ProseMirror does by itself
+        if ((view as unknown as { input?: { shiftKey?: boolean } }).input?.shiftKey) return false;
+        const html = event.clipboardData?.getData("text/html") ?? "";
+        if (!isOfficeHtml(html) || !/<table\b/i.test(html)) return false;
+        event.preventDefault();
+        return pasteTables.current(html);
+      },
+    },
     extensions,
     content: { type: "doc", content: [] },
     onUpdate: () => { editVersion.current++; dirtySince.current ??= Date.now(); setDirty(true); },
@@ -236,6 +251,30 @@ export function App() {
     if (!project || !article) return;
     await restoreWarning(project, article.folder, w.id);
     await recompute();
+  };
+  pasteTables.current = (html: string) => {
+    if (!project || !article || !editor) return false;
+    const images = (html.match(/<img\b/gi) ?? []).length;
+    void run(async () => {
+      const segments = readPaste(cleanOfficeHtml(html));
+      const warnings: string[] = [];
+      // the tables' files first (each saved and valid), then everything inserted in one step
+      const content: ({ kind: "html"; html: string } | { kind: "node"; node: object })[] = [];
+      let tables = 0;
+      for (const s of segments) {
+        if (s.kind === "html") { content.push(s); continue; }
+        const { part, warnings: w } = tablePartFromPaste(s.table);
+        const { ref } = await addTablePart(project, article.folder, part);
+        warnings.push(...w);
+        content.push({ kind: "node", node: ref });
+        tables++;
+      }
+      let chain = editor.chain().focus();
+      for (const c of content) chain = chain.insertContent(c.kind === "html" ? c.html : (c.node as never));
+      chain.run();
+      setMessage(t("pastedTables", { count: tables }) + (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${[...new Set(warnings)].join("; ")}` : ""));
+    })();
+    return true;
   };
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
   const removeReference = async (id: string) => {
