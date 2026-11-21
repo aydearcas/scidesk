@@ -12,3 +12,4 @@ export * from "./resources.ts";
 export * from "./demo.ts";
 export * from "./title-page.ts";
 export * from "./library-import.ts";
+export * from "./word-import.ts";

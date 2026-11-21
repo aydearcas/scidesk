@@ -3,7 +3,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 const es = {
-  open: "Abrir proyecto…", demo: "Proyecto de demostración", save: "Guardar", saved: "Guardado", unsaved: "Sin guardar",
+  open: "Abrir proyecto…", demo: "Proyecto de demostración", fromWord: "Nuevo desde Word…", cannotShow: "El editor no puede mostrar este documento todavía", fromWordDone: "Proyecto creado desde el Word: {{headings}} encabezados, {{tables}} tablas, {{figures}} figuras", save: "Guardar", saved: "Guardado", unsaved: "Sin guardar",
   insertCitation: "Insertar cita", chooseReference: "Elige una referencia", exportDocx: "Exportar DOCX para coautores", exportJournal: "DOCX para la revista", exportTitlePage: "Portada", importRefs: "Importar referencias…", refsImported: "{{format}}: {{added}} referencias añadidas, {{duplicates}} duplicadas sin añadir", keptAside: "{{n}} con campos guardados aparte", exportedPlain: "Exportado: {{path}}",
   importCopy: "Importar copia devuelta…", returnedBy: "¿Quién la devuelve?", needReturnedBy: "Escribe primero quién devuelve la copia.", proposals: "Propuestas de la copia",
   noProposals: "Sin cambios respecto a la versión enviada.", tracked: "marcada", untracked: "sin marcar",
@@ -15,7 +15,7 @@ const es = {
   language: "English",
 };
 const en: typeof es = {
-  open: "Open project…", demo: "Demo project", save: "Save", saved: "Saved", unsaved: "Unsaved",
+  open: "Open project…", demo: "Demo project", fromWord: "New from Word…", cannotShow: "The editor cannot show this document yet", fromWordDone: "Project created from the Word document: {{headings}} headings, {{tables}} tables, {{figures}} figures", save: "Save", saved: "Saved", unsaved: "Unsaved",
   insertCitation: "Insert citation", chooseReference: "Choose a reference", exportDocx: "Export DOCX for co-authors", exportJournal: "DOCX for the journal", exportTitlePage: "Title page", importRefs: "Import references…", refsImported: "{{format}}: {{added}} references added, {{duplicates}} duplicates not added", keptAside: "{{n}} with fields kept aside", exportedPlain: "Exported: {{path}}",
   importCopy: "Import returned copy…", returnedBy: "Who returns it?", needReturnedBy: "First write who returns the copy.", proposals: "Proposals of the copy",
   noProposals: "No changes from the version sent.", tracked: "tracked", untracked: "untracked",

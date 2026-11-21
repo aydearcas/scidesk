@@ -7,6 +7,7 @@
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
 //   scidesk show <dir> <proposals.json>
 //   scidesk refs <dir> <file.ris|.nbib|.bib|.json>   import references into the own library
+//   scidesk from-word <dir> <file.docx>              a new project from a Word document
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { NodeFs, nodeResources } from "./node-fs.ts";
@@ -16,6 +17,7 @@ import { exportDocx, type ExportProfile } from "./docx-export.ts";
 import { importCopy } from "./round.ts";
 import { exportTitlePage } from "./title-page.ts";
 import { importReferences } from "./library-import.ts";
+import { projectFromWord } from "./word-import.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -26,7 +28,7 @@ const positional = rest.filter((a, i) => !a.startsWith("--") && !rest[i - 1]?.st
 
 async function main() {
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|check|export|import|refs|show> <project folder> …");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|show> <project folder> …");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -67,6 +69,13 @@ async function main() {
       const r = await importCopy(p, opt("article", "main")!, new Uint8Array(await readFile(file)), { fileName: basename(file), returnedBy: { name: by } });
       const s = r.set;
       console.log(JSON.stringify({ round: r.roundFolder, proposals: r.proposalsFile, count: s.proposals.length, tracked: s.proposals.filter((x) => x.tracked).length, untracked: s.proposals.filter((x) => !x.tracked).length, hiddenNoise: s.hiddenNoise, integrity: s.integrity }));
+      break;
+    }
+    case "from-word": {
+      const file = positional[0];
+      if (!file) throw new Error("usage: scidesk from-word <empty folder> <file.docx>");
+      const { report } = await projectFromWord(fs, new Uint8Array(await readFile(file)), { fileName: basename(file) });
+      console.log(JSON.stringify(report));
       break;
     }
     case "refs": {

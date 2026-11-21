@@ -5,11 +5,11 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  createDemoProject, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, renderCitations, saveDocument,
+  createDemoProject, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord, renderCitations, saveDocument,
   type Project, type Rendering,
 } from "@scidesk/core";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { citationLabels, extensions, refreshCitationLabels } from "./editor.ts";
+import { citationLabels, extensions, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
 import { inTauri, memoryFs, openFolder, resources } from "./platform.ts";
 
 const BODY = "manuscript/article.scidoc";
@@ -36,12 +36,16 @@ export function App() {
     extensions,
     content: { type: "doc", content: [] },
     onUpdate: () => setDirty(true),
+    // a document with something the editor cannot show is an error, never a blank page
+    enableContentCheck: true,
+    onContentError: ({ error }) => setError(`${t("cannotShow")}: ${error.message}`),
   }, []);
 
   const recompute = useCallback(async () => {
     if (!project || !article || !editor) return;
     try {
       const r = await renderCitations(project.library, [editor.getJSON() as PMNode], article.article.citationStyle.id, article.article.referenceTermsLang ?? article.article.lang, resources);
+      refreshXrefLabels(editor.getJSON() as never);
       citationLabels.clear();
       for (const [id, c] of r.citations) citationLabels.set(id, c.plain);
       refreshCitationLabels();
@@ -85,6 +89,18 @@ export function App() {
   };
 
   const openDemo = run(async () => show(await createDemoProject(memoryFs())));
+  const wordInput = useRef<HTMLInputElement>(null);
+  // a new project from a Word document: in the app, into an empty folder the user chooses
+  const fromWord = run(async () => {
+    const file = wordInput.current?.files?.[0];
+    if (wordInput.current) wordInput.current.value = "";
+    if (!file) return;
+    const target = inTauri ? (await openFolder())?.fs : memoryFs();
+    if (!target) return;
+    const { project: p, report } = await projectFromWord(target, new Uint8Array(await file.arrayBuffer()), { fileName: file.name });
+    await show(p);
+    setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${report.warnings.join("; ")}` : ""));
+  });
   const open = run(async () => {
     const r = await openFolder();
     if (r) show(await loadProject(r.fs));
@@ -136,6 +152,7 @@ export function App() {
         <strong>SciDesk</strong>
         {inTauri && <button onClick={open}>{t("open")}</button>}
         <button onClick={openDemo}>{t("demo")}</button>
+        <label className="file-button">{t("fromWord")}<input ref={wordInput} type="file" accept=".docx" onChange={fromWord} /></label>
         <span className="spacer" />
         <button onClick={() => void i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}>{t("language")}</button>
       </header>
