@@ -1,9 +1,13 @@
 // ProjectFs on the disk, for the CLI and the tests (Node only).
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { existsSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { dirname, join, relative, resolve, sep } from "node:path";
-import { homedir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { safePath, type ProjectFs } from "./fs.ts";
 import { safeKey, type LocalStore } from "./recovery.ts";
+import type { TypstCompiler } from "./typst-export.ts";
 
 export class NodeFs implements ProjectFs {
   readonly root: string;
@@ -78,4 +82,48 @@ export class NodeStore implements LocalStore {
   async write(key: string, text: string) { await this.files.write(safeKey(key), text); }
   async remove(key: string) { await rm(join(this.files.root, safeKey(key)), { force: true }); }
   async list(prefix: string) { return (await this.files.list("")).filter((k) => k.startsWith(prefix)); }
+}
+
+/**
+ * The scidesk-pdf binary (apps/desktop/src-tauri, record 0040): SCIDESK_PDF, or the one
+ * cargo built in this repository (release first). Null if there is none.
+ */
+export function scideskPdfBinary(): string | null {
+  const exe = process.platform === "win32" ? "scidesk-pdf.exe" : "scidesk-pdf";
+  const target = fileURLToPath(new URL("../../../apps/desktop/src-tauri/target/", import.meta.url));
+  for (const p of [process.env.SCIDESK_PDF, join(target, "release", exe), join(target, "debug", exe)]) if (p && existsSync(p)) return p;
+  return null;
+}
+
+/** A TypstCompiler that runs scidesk-pdf on a temporary copy of the bundle (Node only). */
+export function nodeTypstCompiler(binary: string): TypstCompiler {
+  return async (bundle, standard) => {
+    const dir = await mkdtemp(join(tmpdir(), "scidesk-typst-"));
+    try {
+      await writeFile(join(dir, "main.typ"), bundle.source);
+      for (const [p, bytes] of Object.entries(bundle.files)) {
+        const full = join(dir, safePath(p));
+        await mkdir(dirname(full), { recursive: true });
+        await writeFile(full, bytes);
+      }
+      const pdfPath = join(dir, "out.pdf");
+      const { stdout } = await run(binary, [join(dir), pdfPath, "--standard", standard]);
+      const report = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { pages: number; warnings: string[] };
+      return { pdf: new Uint8Array(await readFile(pdfPath)), pages: report.pages, warnings: report.warnings ?? [] };
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  };
+}
+
+function run(cmd: string, args: string[]): Promise<{ stdout: string }> {
+  return new Promise((resolveRun, reject) => {
+    execFile(cmd, args, { maxBuffer: 16 * 1024 * 1024 }, (err, stdout) => {
+      if (err) {
+        let detail = stdout;
+        try { detail = (JSON.parse(stdout.trim().split("\n").pop() ?? "{}").errors ?? []).join("; ") || stdout; } catch { /* plain text */ }
+        reject(new Error(`Typst could not compile the manuscript: ${detail || err.message}`));
+      } else resolveRun({ stdout });
+    });
+  });
 }

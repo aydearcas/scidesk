@@ -4,7 +4,7 @@ import { initReactI18next } from "react-i18next";
 
 const es = {
   open: "Abrir proyecto…", demo: "Proyecto de demostración", fromWord: "Nuevo desde Word…", cannotShow: "El editor no puede mostrar este documento todavía", fromWordDone: "Proyecto creado desde el Word: {{headings}} encabezados, {{tables}} tablas, {{figures}} figuras", save: "Guardar", saved: "Guardado", unsaved: "Sin guardar",
-  exportDocx: "Exportar DOCX para coautores", exportJournal: "DOCX para la revista", exportTitlePage: "Portada", importRefs: "Importar referencias…", refsImported: "{{format}}: {{added}} referencias añadidas, {{duplicates}} duplicadas sin añadir", keptAside: "{{n}} con campos guardados aparte", exportedPlain: "Exportado: {{path}}",
+  exportDocx: "Exportar DOCX para coautores", exportJournal: "DOCX para la revista", exportPdf: "PDF para la revista", pdfExported: "PDF exportado: {{path}} ({{pages}} páginas)", pdfInBrowser: "La vista en el navegador no compila el PDF (lo hace Typst en la ventana de escritorio); aquí se ofrece la fuente de Typst", exportTitlePage: "Portada", importRefs: "Importar referencias…", refsImported: "{{format}}: {{added}} referencias añadidas, {{duplicates}} duplicadas sin añadir", keptAside: "{{n}} con campos guardados aparte", exportedPlain: "Exportado: {{path}}",
   importCopy: "Importar copia devuelta…", returnedBy: "¿Quién la devuelve?", needReturnedBy: "Escribe primero quién devuelve la copia.", proposals: "Propuestas de la copia",
   noProposals: "Sin cambios respecto a la versión enviada.", tracked: "marcada", untracked: "sin marcar",
   integrityOk: "Integridad: la copia se reconstruye con estas propuestas.", integrityBad: "Integridad: las propuestas no reconstruyen la copia; revísala.",
@@ -70,7 +70,7 @@ const es = {
 };
 const en: typeof es = {
   open: "Open project…", demo: "Demo project", fromWord: "New from Word…", cannotShow: "The editor cannot show this document yet", fromWordDone: "Project created from the Word document: {{headings}} headings, {{tables}} tables, {{figures}} figures", save: "Save", saved: "Saved", unsaved: "Unsaved",
-  exportDocx: "Export DOCX for co-authors", exportJournal: "DOCX for the journal", exportTitlePage: "Title page", importRefs: "Import references…", refsImported: "{{format}}: {{added}} references added, {{duplicates}} duplicates not added", keptAside: "{{n}} with fields kept aside", exportedPlain: "Exported: {{path}}",
+  exportDocx: "Export DOCX for co-authors", exportJournal: "DOCX for the journal", exportPdf: "PDF for the journal", pdfExported: "PDF exported: {{path}} ({{pages}} pages)", pdfInBrowser: "The browser preview does not compile the PDF (Typst does it in the desktop window); here is the Typst source", exportTitlePage: "Title page", importRefs: "Import references…", refsImported: "{{format}}: {{added}} references added, {{duplicates}} duplicates not added", keptAside: "{{n}} with fields kept aside", exportedPlain: "Exported: {{path}}",
   importCopy: "Import returned copy…", returnedBy: "Who returns it?", needReturnedBy: "First write who returns the copy.", proposals: "Proposals of the copy",
   noProposals: "No changes from the version sent.", tracked: "tracked", untracked: "untracked",
   integrityOk: "Integrity: the copy is rebuilt from these proposals.", integrityBad: "Integrity: the proposals do not rebuild the copy; check it.",

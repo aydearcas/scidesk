@@ -4,6 +4,9 @@
 //! the target, then a rename (R25). Besides, a small store in this computer's app local
 //! data folder for what never travels with the project, such as the journal of unsaved
 //! changes (R25, R26, record 0039), with the same rules.
+pub mod pdf;
+
+use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::{Component, Path, PathBuf};
@@ -173,12 +176,36 @@ fn local_list(app: tauri::AppHandle, prefix: String) -> Result<Vec<String>, Stri
     Ok(list_under(&root, dir)?.into_iter().filter(|k| k.starts_with(&prefix)).collect())
 }
 
+// ---------------------------------------------------------------- PDF (record 0040)
+
+#[derive(serde::Serialize)]
+struct PdfOut {
+    /// The PDF, in base64.
+    pdf: String,
+    pages: usize,
+    warnings: Vec<String>,
+}
+
+/// Compiles the Typst source the core wrote, with its files (base64), to a PDF. It runs off
+/// the window's thread; it reads nothing from the disk.
+#[tauri::command]
+async fn compile_pdf(source: String, files: HashMap<String, String>, standard: Option<String>) -> Result<PdfOut, String> {
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD;
+    let mut decoded = HashMap::new();
+    for (path, data) in files {
+        decoded.insert(path, b64.decode(data).map_err(|e| e.to_string())?);
+    }
+    let out = pdf::compile(&source, decoded, standard.as_deref()).map_err(|e| e.join("\n"))?;
+    Ok(PdfOut { pdf: b64.encode(&out.pdf), pages: out.pages, warnings: out.warnings })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
-        .invoke_handler(tauri::generate_handler![open_project, read_file, write_file, list_files, local_read, local_write, local_remove, local_list])
+        .invoke_handler(tauri::generate_handler![open_project, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }

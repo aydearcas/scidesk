@@ -3,7 +3,8 @@
 //   scidesk new <dir> --name <name> --title <title> [--lang es]
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project
-//   scidesk export <dir> [--profile coauthors|journal|title-page] [--article main]
+//   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
+//                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
 //   scidesk show <dir> <proposals.json>
 //   scidesk refs <dir> <file.ris|.nbib|.bib|.json>   import references into the own library
@@ -16,7 +17,8 @@
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { appLocalDataDir, NodeFs, NodeStore, nodeResources } from "./node-fs.ts";
+import { appLocalDataDir, NodeFs, NodeStore, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
+import { exportPdf, manuscriptTypst, type PdfStandard } from "./typst-export.ts";
 import { Recovery } from "./recovery.ts";
 import { createProject, loadProject, ProjectError } from "./project.ts";
 import { createDemoProject } from "./demo.ts";
@@ -67,6 +69,22 @@ async function main() {
     case "export": {
       const p = await loadProject(fs);
       const profile = opt("profile", "coauthors")!;
+      if (profile === "pdf") {
+        const folder = opt("article", "main")!;
+        if (rest.includes("--typst")) {
+          // the Typst source and its files, to look at or compile by hand
+          const b = await manuscriptTypst(p, folder, await nodeResources());
+          const base = `articles/${folder}/exports/${folder}-typst`;
+          await fs.write(`${base}/main.typ`, b.source);
+          for (const [f, bytes] of Object.entries(b.files)) await fs.write(`${base}/${f}`, bytes);
+          console.log(`Typst source in ${base}/`);
+        }
+        const bin = scideskPdfBinary();
+        if (!bin) throw new Error("the scidesk-pdf binary is not built: cargo build --release --bin scidesk-pdf --manifest-path apps/desktop/src-tauri/Cargo.toml (or set SCIDESK_PDF)");
+        const r = await exportPdf(p, folder, await nodeResources(), nodeTypstCompiler(bin), { standard: opt("standard", "tagged") as PdfStandard });
+        console.log(JSON.stringify({ file: r.path, pages: r.pages, kb: Math.round(r.bytes.length / 1024), warnings: r.warnings }));
+        break;
+      }
       if (profile === "title-page") {
         const t = await exportTitlePage(p, opt("article", "main")!, await nodeResources());
         console.log(JSON.stringify({ file: t.path, kb: Math.round(t.bytes.length / 1024), warnings: t.warnings }));

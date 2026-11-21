@@ -16,3 +16,4 @@ export * from "./word-import.ts";
 export * from "./library.ts";
 export * from "./authorship.ts";
 export * from "./recovery.ts";
+export * from "./typst-export.ts";

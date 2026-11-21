@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   BUNDLED_STYLES, createDemoProject, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
+  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
   type PendingRecovery, type Project, type Rendering,
 } from "@scidesk/core";
 import { NodeSelection } from "@tiptap/pm/state";
@@ -15,7 +15,7 @@ import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLa
 import { AuthorsDialog } from "./AuthorsDialog.tsx";
 import { LibraryPanel } from "./LibraryPanel.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
-import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources } from "./platform.ts";
+import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -225,6 +225,20 @@ export function App() {
     if (!inTauri) setDownload({ url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
     setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
   });
+  // the PDF for the journal (record 0040): Typst in Rust; the browser preview offers the Typst source instead
+  const exportPdfFile = run(async () => {
+    if (!project || !article) return;
+    await save();
+    const compile = await typstCompiler();
+    if (!compile) {
+      const b = await manuscriptTypst(project, article.folder, resources);
+      setDownload({ url: URL.createObjectURL(new Blob([b.source], { type: "text/plain" })), name: `${article.folder}.typ` });
+      setMessage(t("pdfInBrowser") + (b.warnings.length ? ` — ${b.warnings.join("; ")}` : ""));
+      return;
+    }
+    const r = await exportPdf(project, article.folder, resources, compile);
+    setMessage(t("pdfExported", { path: r.path, pages: r.pages }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
+  });
   const onCopy = run(async () => {
     const file = fileInput.current?.files?.[0];
     if (!file || !project || !article) return;
@@ -271,6 +285,7 @@ export function App() {
               <label className="file-button">{t("importRefs")}<input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" onChange={onRefs} /></label>
               <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
               <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
+              <button onClick={exportPdfFile}>{t("exportPdf")}</button>
               <button onClick={() => setEditingAuthors(true)}>{t("authors")}</button>
               <button onClick={exportAs("title-page")}>{t("exportTitlePage")}</button>
             </div>

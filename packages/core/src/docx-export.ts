@@ -40,7 +40,7 @@ export const LABELS: Record<string, { bib: string; abstract: string; keywords: s
   es: { bib: "Bibliografía", abstract: "Resumen", keywords: "Palabras clave", captions: "Pies de figura", ...SEQ_LABELS.es },
   en: { bib: "References", abstract: "Abstract", keywords: "Keywords", captions: "Figure legends", ...SEQ_LABELS.en },
 };
-const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
+export const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rPr = (r: Omit<Run, "text">) => {
@@ -54,7 +54,7 @@ const fieldXml = (instr: string, result: string) =>
   `<w:r><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:instrText xml:space="preserve"> ${esc(instr)} </w:instrText></w:r>` +
   `<w:r><w:fldChar w:fldCharType="separate"/></w:r>${result}<w:r><w:fldChar w:fldCharType="end"/></w:r>`;
 const textRun = (r: Run) => new TextRun({ text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}) });
-const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
+export const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
 
 /** Width and height in pixels of a PNG, JPEG, GIF or BMP, from its header. */
 export function imageSize(b: Uint8Array): { type: "png" | "jpg" | "gif" | "bmp"; width: number; height: number } | null {
@@ -107,7 +107,7 @@ export function applyTemplate(stylesXml: string, format: { lineSpacing?: number;
 }
 
 /** Body, tables and figures as one tree, in reading order (the composite document, record 0021). */
-function composite(art: ArticleData): { tree: PMNode; tables: Map<string, PMNode>; figures: Map<string, PMNode>; warnings: string[] } {
+export function composite(art: ArticleData): { tree: PMNode; tables: Map<string, PMNode>; figures: Map<string, PMNode>; warnings: string[] } {
   const warnings: string[] = [];
   const tables = new Map<string, PMNode>();
   const figures = new Map<string, PMNode>();
@@ -125,7 +125,7 @@ function composite(art: ArticleData): { tree: PMNode; tables: Map<string, PMNode
 }
 
 /** Table and figure numbers by order of first cross-reference, then by position (PLAN 5.4). */
-function numbering(tree: PMNode, ids: string[]): Map<string, number> {
+export function numbering(tree: PMNode, ids: string[]): Map<string, number> {
   const order: string[] = [];
   const visit = (n: PMNode) => {
     if (n.type === "xref" && ids.includes(n.attrs!.target as string) && !order.includes(n.attrs!.target as string)) order.push(n.attrs!.target as string);
@@ -137,7 +137,7 @@ function numbering(tree: PMNode, ids: string[]): Map<string, number> {
 }
 
 /** Letters of a part's specific notes, by order of first call (R11). */
-function noteLetters(part: PMNode): Map<string, string> {
+export function noteLetters(part: PMNode): Map<string, string> {
   const specific = new Set((part.content ?? []).filter((n) => /Note$/.test(n.type) && n.attrs!.kind === "specific").map((n) => n.attrs!.id as string));
   const order: string[] = [];
   const visit = (n: PMNode) => {

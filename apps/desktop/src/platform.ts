@@ -1,7 +1,7 @@
 // Where the core's files come from. In the Tauri window: commands of the Rust side, which
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
-import { MemoryFs, bundledResources, type LocalStore, type ProjectFs } from "@scidesk/core";
+import { MemoryFs, bundledResources, type LocalStore, type ProjectFs, type TypstCompiler } from "@scidesk/core";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
 import templateUrl from "@scidesk/core/assets/reference.dotx?url";
@@ -137,4 +137,17 @@ export function previewFs(fresh: boolean): ProjectFs {
   const s = storage();
   if (fresh && s) for (let i = s.length - 1; i >= 0; i--) { const k = s.key(i); if (k?.startsWith(PREVIEW)) s.removeItem(k); }
   return new PreviewFs();
+}
+
+// ---------------------------------------------------------------- PDF (record 0040)
+
+/** Typst in Rust, in the app; null in the browser preview, which has no Rust side. */
+export async function typstCompiler(): Promise<TypstCompiler | null> {
+  if (!inTauri) return null;
+  const { invoke } = await import("@tauri-apps/api/core");
+  return async (bundle, standard) => {
+    const files = Object.fromEntries(Object.entries(bundle.files).map(([k, v]) => [k, b64(v)]));
+    const r = (await invoke("compile_pdf", { source: bundle.source, files, standard })) as { pdf: string; pages: number; warnings: string[] };
+    return { pdf: unb64(r.pdf), pages: r.pages, warnings: r.warnings };
+  };
 }
