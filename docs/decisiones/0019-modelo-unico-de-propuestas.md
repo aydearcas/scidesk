@@ -1,7 +1,7 @@
 # 0019. Un único mecanismo de propuestas para todo lo que entra de fuera
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada
+- **Estado:** aceptada. Actualizada el 21/11/2026 con el prototipo 6 ([0029](0029-fusion-de-copias-devueltas.md)).
 - **Pregunta del plan:** R7 de la revisión de la v0.4
 
 ## Qué se decide
@@ -23,5 +23,6 @@ Todo lo que propone cambios sobre tu texto desde fuera se trata con **un solo mo
 ## Consecuencias
 - El modelo se fija en la fase 0, junto con el formato, porque los cambios marcados se guardan en `.scidoc` ([0010](0010-pila-tecnologica.md)).
 - La fase 2a lo prueba con una sola copia devuelta antes de complicarlo con la ronda completa ([0003](0003-coautores-con-word-y-fusion.md)).
+- El prototipo 6 fijó lo que cada propuesta lleva para la ronda de coautores: autor, si venía marcada, tipo, zona y estado (aplicable, acuerdo, conflicto entre coautores, conflicto con tu copia, ruido oculto), y el grupo «misma frase» ([0029](0029-fusion-de-copias-devueltas.md)).
 - Las respuestas de los paquetes para LLM que propongan cambios en el texto llegan a esta vista ([0018](0018-paquetes-llm.md)).
 - Detalle en PLAN.md, 6.5.

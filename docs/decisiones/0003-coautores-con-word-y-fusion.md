@@ -1,7 +1,7 @@
 # 0003. Coautores con Word y fusión de copias devueltas en paralelo
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada. Actualizada el 21/11/2026 con la revisión de la v0.4 (R2 a R5 y R44) y con el prototipo 3 ([0025](0025-docx-con-marcas-y-campos.md)). El mecanismo de propuestas se decide en [0019](0019-modelo-unico-de-propuestas.md).
+- **Estado:** aceptada. Actualizada el 21/11/2026 con la revisión de la v0.4 (R2 a R5 y R44) con el prototipo 3 ([0025](0025-docx-con-marcas-y-campos.md)) y con el prototipo 6 ([0029](0029-fusion-de-copias-devueltas.md)). El mecanismo de propuestas se decide en [0019](0019-modelo-unico-de-propuestas.md).
 - **Preguntas del plan:** P4 y P4b
 
 ## Qué se decide
@@ -27,6 +27,7 @@ Comparar cada copia solo con la versión de partida funciona si no tocas tu copi
 - Hay que detectar también los cambios hechos sin control de cambios, comparando con la versión de partida. Se atribuyen a quien devolvió el archivo; los cambios marcados, al autor de la marca de Word (`w:author`).
 - **Marcas del DOCX especificadas** (R3): un marcador oculto con el identificador de cada bloque, cada cita como campo con sus datos (en el formato de Zotero) y cada referencia cruzada como campo `REF`, con los pies numerados con campos `SEQ`. Dos perfiles de exportación: para coautores, con marcas y metadatos, y para la revista, sin ellos. El prototipo 3 fijó la especificación y las reglas para importar: la identidad de cada bloque se confirma siempre por contenido ([0025](0025-docx-con-marcas-y-campos.md)).
 - **Plan B** (R3): si las marcas se pierden (Google Docs, Pages, LibreOffice, Word en línea o texto copiado a otro documento), se alinea por contenido y las citas se reconocen por su texto.
+- **Cómo se fusiona** (prototipo 6, [0029](0029-fusion-de-copias-devueltas.md)): propuestas de la enviada a cada copia (lo marcado, con su autor; lo no marcado, atribuido a quien devolvió la copia) y fusión sobre tu copia por zonas, con acuerdos, conflictos entre coautores, conflictos con tu copia y cambios en la misma frase.
 - **Filtro de ruido** (R4): por defecto se ocultan los cambios que solo afectan al formato, a los espacios y a la tipografía de comillas y guiones, con un contador y la opción de verlos. La referencia a batir es "Combinar" de Word.
 - Vista de propuestas de todos los coautores, por párrafo, con conflictos cuando dos tocan la misma frase ([0019](0019-modelo-unico-de-propuestas.md)), y un tablero de la ronda con quién ha devuelto su copia y cuántas propuestas quedan (R5).
 - La fase 2 se divide en dos (R44): **2a**, una sola copia con control de cambios y comentarios; **2b**, varias copias, cambios sin marcar, conflictos y copias que llegan tarde.

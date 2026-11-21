@@ -22,7 +22,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0016](0016-nombre-scidesk.md) | El programa se llama SciDesk | P19 | 20/11/2026 | — |
 | [0017](0017-adaptacion-sin-ia.md) | Adaptación a revista sin IA; redacción y traducción en la futura versión con IA | P21 | 20/11/2026 | — |
 | [0018](0018-paquetes-llm.md) | Paquetes para LLM con cuatro niveles de confidencialidad | P22 | 20/11/2026 | — |
-| [0019](0019-modelo-unico-de-propuestas.md) | Un único mecanismo de propuestas para todo lo que entra de fuera | R7 | 21/11/2026 | — |
+| [0019](0019-modelo-unico-de-propuestas.md) | Un único mecanismo de propuestas para todo lo que entra de fuera | R7 | 21/11/2026 | 21/11/2026 |
 | [0020](0020-control-de-cambios.md) | Control de cambios sobre suggest-changes (copia propia); cambios como marcas con `id` y registro de autores en `.scidoc`; correspondencia con `w:ins`/`w:del` | R31, prototipo 7 | 21/11/2026 | — |
 | [0021](0021-documento-compuesto.md) | Documento compuesto: composición, reparto, formato de `.scitable` y reglas de ids, bordes, copias y tablas sin referencia | R32, prototipo 8 | 21/11/2026 | — |
 | [0022](0022-pegar-tablas-de-word.md) | Pegar tablas de Word con un limpiador de HTML de Office (135/135 tablas reales); qué formato de celda se conserva; citas del portapapeles por HTML y RTF | 7.1, R23, prototipo 1 | 21/11/2026 | — |
@@ -32,6 +32,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0026](0026-citas-con-citeproc-js.md) | Citas con citeproc-js (desde su repositorio, sin modificar): renumeración en vivo en ~2 ms, estilo propio de Reumatología Clínica que sigue su guía actual, y licencia AGPL-3.0 o CPAL con atribución | P13, 6.3, prototipo 2 | 21/11/2026 | — |
 | [0027](0027-zotero-por-su-api-local.md) | Zotero por su API local (colección, sincronización por versiones, `Zotero-Server-ID`) y un URI por referencia en las citas del DOCX, porque sin él Zotero duplica referencias al actualizar | Prototipo 5 | 21/11/2026 | — |
 | [0028](0028-importar-citas-de-un-word.md) | Importar las citas de un Word desde el propio documento (EndNote `EN.CITE`/`EN.CITE.DATA`, Zotero, Mendeley Desktop), con EndNote XML convertido a CSL-JSON y la importación comprobada contra la bibliografía del documento | R1, prototipo 10 | 21/11/2026 | — |
+| [0029](0029-fusion-de-copias-devueltas.md) | Fusión de las copias devueltas: propuestas de la enviada a cada copia (marcadas con su autor, no marcadas atribuidas a quien la devolvió), ruido oculto y fusión sobre tu copia por zonas con acuerdos y conflictos; mejor que «Combinar» de Word | R2–R4, prototipo 6 | 21/11/2026 | — |
 
 ## Plantilla
 

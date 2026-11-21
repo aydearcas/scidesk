@@ -17,4 +17,4 @@ Orden aprobado el 21/11/2026: primero los que fijan el formato, después los que
 | 8 | 2 | [citeproc-js y estilos](02-citeproc/) | — | Hecho | [0026](../docs/decisiones/0026-citas-con-citeproc-js.md) |
 | 9 | 5 | [Zotero por su API local](05-zotero/) | Zotero instalado (se usa una instancia de prueba aparte) | Hecho | [0027](../docs/decisiones/0027-zotero-por-su-api-local.md) |
 | 10 | 10 | [Importar un Word con citas](10-import-word-citations/) | Word del usuario con citas (recibidos: EndNote) | Hecho | [0028](../docs/decisiones/0028-importar-citas-de-un-word.md) |
-| 11 | 6 | Fusión de tres copias devueltas | Ronda sintética en [`corpus/synthetic-round-knee-oa/`](corpus/synthetic-round-knee-oa/) (hecha; sin copia de LibreOffice, que no está instalado) | Pendiente | |
+| 11 | 6 | [Fusión de tres copias devueltas](06-merge-copies/) | Ronda sintética en [`corpus/synthetic-round-knee-oa/`](corpus/synthetic-round-knee-oa/) (hecha; sin copia de LibreOffice, que no está instalado) | Hecho (sin copias de Google Docs, LibreOffice ni Word para Mac) | [0029](../docs/decisiones/0029-fusion-de-copias-devueltas.md) |
