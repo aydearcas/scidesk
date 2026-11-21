@@ -1,0 +1,9 @@
+dicts/*.aff
+dicts/*.dic
+dicts/*.txt
+dicts/*.md
+private/
+target/
+node_modules/
+out/
+pkg/

@@ -1,0 +1,21 @@
+{
+  "name": "proto-09-spellcheck",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 9: which spell-checking engine for SciDesk (spellbook native, spellbook in WebAssembly, Hunspell in WebAssembly)",
+  "dependencies": {
+    "@tiptap/core": "^3.35.0",
+    "@tiptap/pm": "^3.35.0",
+    "@tiptap/starter-kit": "^3.35.0",
+    "hunspell-asm": "^4.0.2"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  },
+  "scripts": {
+    "dicts": "sh tools/get-dicts.sh",
+    "wasm": "cargo build --release --manifest-path rust-wasm/Cargo.toml --target wasm32-unknown-unknown",
+    "native": "cargo build --release --manifest-path rust/Cargo.toml",
+    "dev": "vite --port 5180 --strictPort"
+  }
+}

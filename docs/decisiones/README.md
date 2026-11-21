@@ -7,7 +7,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0001](0001-codigo-abierto.md) | Código abierto público con posible versión de pago | P1 | 20/11/2026 | — |
 | [0002](0002-plataformas-windows-primero.md) | Windows y macOS, desarrollando primero en Windows; Mac probado ya en la fase 0; firma de Windows como el software libre habitual | P2, R37, R40 | 20/11/2026 | 21/11/2026 |
 | [0003](0003-coautores-con-word-y-fusion.md) | Coautores con Word y fusión a tres bandas de copias devueltas en paralelo | P4, P4b, R2–R5, R44 | 20/11/2026 | 21/11/2026 |
-| [0004](0004-texto-continuo-con-vista-previa.md) | Texto continuo con vista previa paginada, con Typst | P5, R30 | 20/11/2026 | 21/11/2026 |
+| [0004](0004-texto-continuo-con-vista-previa.md) | Texto continuo con vista previa paginada, con Typst | P5, R30, prototipo 4 | 20/11/2026 | 21/11/2026 |
 | [0005](0005-alcance-e-idiomas.md) | Biomedicina primero; interfaz en español e inglés; código, comentarios y commits en inglés; ecuaciones con la ampliación; nombres de carpeta fijos en inglés; atajos de Word en español | P3, P6, P7, P23, P24, R19, R28 | 20/11/2026 | 21/11/2026 |
 | [0006](0006-estructura-del-proyecto.md) | Tablas y figuras en archivos propios, documentos base y resumen aparte; documento compuesto | P8, P9, R11, R32, prototipo 8 | 20/11/2026 | 21/11/2026 |
 | [0007](0007-referencias.md) | Biblioteca propia o vinculada a Zotero; consultas en línea opcionales; estilo de Reumatología Clínica | P11, P13, P14, R1, R10, R24, R45 | 20/11/2026 | 21/11/2026 |
@@ -25,6 +25,9 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0019](0019-modelo-unico-de-propuestas.md) | Un único mecanismo de propuestas para todo lo que entra de fuera | R7 | 21/11/2026 | — |
 | [0020](0020-control-de-cambios.md) | Control de cambios sobre suggest-changes (copia propia); cambios como marcas con `id` y registro de autores en `.scidoc`; correspondencia con `w:ins`/`w:del` | R31, prototipo 7 | 21/11/2026 | — |
 | [0021](0021-documento-compuesto.md) | Documento compuesto: composición, reparto, formato de `.scitable` y reglas de ids, bordes, copias y tablas sin referencia | R32, prototipo 8 | 21/11/2026 | — |
+| [0022](0022-pegar-tablas-de-word.md) | Pegar tablas de Word con un limpiador de HTML de Office (135/135 tablas reales); qué formato de celda se conserva; citas del portapapeles por HTML y RTF | 7.1, R23, prototipo 1 | 21/11/2026 | — |
+| [0023](0023-corrector-ortografico.md) | Corrector: spellbook en WebAssembly en un *worker*, idioma por fragmento, diccionario del proyecto y diccionario de especialidad imprescindible | R29, prototipo 9 | 21/11/2026 | — |
+| [0024](0024-vista-previa-y-pdf-con-typst.md) | Vista previa y PDF con Typst 0.15 como biblioteca de Rust: recompilación incremental en 8–10 ms, citas de citeproc-js, PDF/UA y PDF/A | R30, prototipo 4 | 21/11/2026 | — |
 
 ## Plantilla
 

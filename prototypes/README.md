@@ -8,10 +8,10 @@ Orden aprobado el 21/11/2026: primero los que fijan el formato, después los que
 |---|---|---|---|---|---|
 | 1 | 7 | [Control de cambios](07-track-changes/) | — | Hecho | [0020](../docs/decisiones/0020-control-de-cambios.md) |
 | 2 | 8 | [Documento compuesto](08-composite-document/) | — | Hecho | [0021](../docs/decisiones/0021-documento-compuesto.md) |
-| 3 | 1 | Pegar tablas de Word | Tablas reales del usuario (recibidas) | Pendiente | |
-| 4 | 11 | Repetir el 1 y la edición básica en el MacBook | El MacBook Air | Pendiente | |
-| 5 | 9 | Corrector ortográfico | — | Pendiente | |
-| 6 | 4 | Vista previa y PDF con Typst | — | Pendiente | |
+| 3 | 1 | [Pegar tablas de Word](01-paste-word-tables/) | Tablas reales del usuario (recibidas) | Hecho (con Ctrl+V real) | [0022](../docs/decisiones/0022-pegar-tablas-de-word.md) |
+| 4 | 11 | Repetir el 1 y la edición básica en el MacBook | El MacBook Air | Pendiente (aplazado al 22/11, cuando el usuario tenga el Mac; incluye el corrector en WKWebView) | |
+| 5 | 9 | [Corrector ortográfico](09-spellcheck/) | — | Hecho | [0023](../docs/decisiones/0023-corrector-ortografico.md) |
+| 6 | 4 | [Vista previa y PDF con Typst](04-typst-preview/) | — | Hecho | [0024](../docs/decisiones/0024-vista-previa-y-pdf-con-typst.md) |
 | — | | **Decisión Tauri o Electron** | | | |
 | 7 | 3 | DOCX con marcas y campos | — | Pendiente | |
 | 8 | 2 | citeproc-js y estilos | — | Pendiente | |

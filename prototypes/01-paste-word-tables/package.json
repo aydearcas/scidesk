@@ -1,0 +1,20 @@
+{
+  "name": "proto-01-paste-word-tables",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 1: how many real Word tables survive a paste into Tiptap",
+  "scripts": {
+    "dev": "vite --port 5179 --strictPort"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.35.0",
+    "@tiptap/extension-subscript": "^3.35.0",
+    "@tiptap/extension-superscript": "^3.35.0",
+    "@tiptap/extension-table": "^3.35.0",
+    "@tiptap/pm": "^3.35.0",
+    "@tiptap/starter-kit": "^3.35.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}

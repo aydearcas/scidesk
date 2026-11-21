@@ -1,0 +1,8 @@
+{
+  "name": "proto-04-typst-preview",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "citeproc": "^2.4.63"
+  }
+}

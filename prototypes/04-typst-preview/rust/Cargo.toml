@@ -1,0 +1,15 @@
+[package]
+name = "typstbench"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+typst = "0.15"
+typst-kit = { version = "0.15", features = ["scan-fonts", "embedded-fonts"] }
+typst-layout = "0.15"
+typst-pdf = "0.15"
+typst-render = "0.15"
+typst-utils = "0.15"
+
+[profile.release]
+codegen-units = 4

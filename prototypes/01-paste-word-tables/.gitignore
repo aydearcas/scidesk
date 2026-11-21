@@ -1,0 +1,4 @@
+node_modules/
+out/
+# Material derived from the user's private Word documents: never commit.
+private/

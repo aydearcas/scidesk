@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prototipo 1: pegado real</title>
+    <style>
+      body { font: 13px/1.4 system-ui, sans-serif; margin: 12px; }
+      #editor { border: 1px solid #999; min-height: 120px; padding: 6px; }
+      .ProseMirror { outline: none; min-height: 100px; }
+      td, th { border: 1px solid #bbb; padding: 1px 4px; vertical-align: top; }
+      th { background: #eef; }
+      table { border-collapse: collapse; }
+      pre { white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div>Haz clic en el recuadro y pulsa Ctrl+V. Tabla esperada: <b id="which"></b></div>
+    <div id="editor"></div>
+    <pre id="out"></pre>
+    <script type="module" src="/src/paste.js"></script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prototipo 9: corrector</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 12px; }
+      header { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+      #editor { border: 1px solid #bbb; padding: 8px 14px; max-height: 70vh; overflow: auto; }
+      .ProseMirror { outline: none; font-family: Calibri, Carlito, sans-serif; font-size: 15px; }
+      .misspelled { text-decoration: underline wavy #d33; text-decoration-skip-ink: none; }
+      span[lang="en_US"], p[lang="en_US"] { background: #eef5ff; }
+      #menu { position: fixed; display: none; background: #fff; border: 1px solid #999; box-shadow: 0 2px 8px #0003; font-size: 13px; z-index: 10; }
+      #menu div { padding: 3px 12px; cursor: pointer; }
+      #menu div:hover { background: #e6eefc; }
+      #log { font-size: 12px; color: #444; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <button id="long">Cargar un artículo largo (corpus privado)</button>
+      <button id="markEn">Marcar la selección como inglés</button>
+      <span id="status"></span>
+    </header>
+    <div id="editor"></div>
+    <div id="menu"></div>
+    <pre id="log"></pre>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

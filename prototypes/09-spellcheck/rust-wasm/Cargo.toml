@@ -1,0 +1,16 @@
+[package]
+name = "spellwasm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spellbook = "0.4"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

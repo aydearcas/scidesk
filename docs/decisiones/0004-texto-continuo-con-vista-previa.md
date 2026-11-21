@@ -1,7 +1,7 @@
 # 0004. Texto continuo con vista previa paginada
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada. Actualizada el 21/11/2026 con la revisión de la v0.4 (R30): la vista previa y el PDF se hacen con Typst.
+- **Estado:** aceptada. Actualizada el 21/11/2026 con la revisión de la v0.4 (R30): la vista previa y el PDF se hacen con Typst. Confirmada con el prototipo 4 ([0024](0024-vista-previa-y-pdf-con-typst.md)).
 - **Pregunta del plan:** P5
 
 ## Qué se decide
@@ -24,4 +24,4 @@ Para enviar a una revista importa el DOCX, no cómo se ve la página mientras se
 - No hay paginación en vivo en el editor.
 - Las citas y la bibliografía llegan a Typst ya formateadas por citeproc-js, como texto, para que el PDF y el DOCX coincidan. Hace falta un exportador propio del documento a Typst.
 - **La vista previa no es Word.** La paginación del PDF de SciDesk no coincidirá con la del DOCX abierto en Word; la interfaz lo dice. Para una revista que limite páginas, la referencia es Word.
-- El prototipo 4 de la fase 0 confirma la velocidad de la compilación incremental, los números de línea y el paso de las citas ya formateadas.
+- El prototipo 4 de la fase 0 lo confirmó ([0024](0024-vista-previa-y-pdf-con-typst.md)): recompilar un artículo de 13 páginas tras escribir un carácter tarda 8–10 ms, con números de línea, citas de citeproc-js y PDF/UA-1 o PDF/A.
