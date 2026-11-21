@@ -13,7 +13,7 @@ Orden aprobado el 21/11/2026: primero los que fijan el formato, después los que
 | 5 | 9 | [Corrector ortográfico](09-spellcheck/) | — | Hecho | [0023](../docs/decisiones/0023-corrector-ortografico.md) |
 | 6 | 4 | [Vista previa y PDF con Typst](04-typst-preview/) | — | Hecho | [0024](../docs/decisiones/0024-vista-previa-y-pdf-con-typst.md) |
 | — | | **Decisión Tauri o Electron** | | | |
-| 7 | 3 | DOCX con marcas y campos | — | Pendiente | |
+| 7 | 3 | [DOCX con marcas y campos](03-docx-markers/) | Word de escritorio | Hecho | [0025](../docs/decisiones/0025-docx-con-marcas-y-campos.md) |
 | 8 | 2 | citeproc-js y estilos | — | Pendiente | |
 | 9 | 5 | Zotero por su API local | Zotero instalado | Pendiente | |
 | 10 | 10 | Importar un Word con citas | Word del usuario con citas (recibidos: EndNote) | Pendiente | |

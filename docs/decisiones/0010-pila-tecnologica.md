@@ -1,7 +1,7 @@
 # 0010. Pila tecnológica
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada, a confirmar con los prototipos de la fase 0. Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38) y con el prototipo 7 ([0020](0020-control-de-cambios.md)).
+- **Estado:** aceptada, a confirmar con los prototipos de la fase 0. Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38) con el prototipo 7 ([0020](0020-control-de-cambios.md)) y con el prototipo 3 ([0025](0025-docx-con-marcas-y-campos.md)).
 - **Pregunta del plan:** P18
 
 ## Qué se decide
@@ -18,7 +18,7 @@ Lo que la v0.4 dejaba por decidir y la revisión ha fijado:
 - **Documento compuesto** al cargar y repartido al guardar (R32, [0006](0006-estructura-del-proyecto.md)).
 - **Núcleo sin interfaz** en TypeScript, con una **línea de comandos** (`scidesk export`, `scidesk check`) sobre él (R33).
 - **Un solo esquema por formato**, que genera tipos, validación y JSON Schema; el `.scidoc` es el JSON de ProseMirror tal cual (R34).
-- **DOCX** con plantilla de referencia, validación contra el esquema de OOXML, prueba local con Word real y prueba de ida y vuelta (R35).
+- **DOCX** con plantilla de referencia, validación contra el esquema de OOXML, prueba local con Word real y prueba de ida y vuelta (R35). **El prototipo 3 confirmó la biblioteca `docx`**, con los campos complejos escritos como fragmentos de OOXML propios y los estilos de la plantilla buscados por su nombre interno ([0025](0025-docx-con-marcas-y-campos.md)).
 - **Rendimiento y seguridad desde el primer día** (R38): citas y referencias cruzadas como nodos sencillos, no componentes de React; comprobaciones como funciones puras fuera del hilo de la interfaz; política de contenido estricta, permisos de Tauri limitados a la carpeta del proyecto, SVG solo como imagen y lectura de ZIP y XML protegida.
 
 ## Por qué

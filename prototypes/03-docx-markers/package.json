@@ -1,0 +1,12 @@
+{
+  "name": "proto-03-docx-markers",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 3: can the docx library write bookmarks and arbitrary fields, and do they survive a co-author's edits in Word",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
+    "citeproc": "^2.4.63",
+    "docx": "^9.16.0",
+    "jszip": "^3.10.2"
+  }
+}

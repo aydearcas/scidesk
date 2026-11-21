@@ -28,6 +28,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0022](0022-pegar-tablas-de-word.md) | Pegar tablas de Word con un limpiador de HTML de Office (135/135 tablas reales); qué formato de celda se conserva; citas del portapapeles por HTML y RTF | 7.1, R23, prototipo 1 | 21/11/2026 | — |
 | [0023](0023-corrector-ortografico.md) | Corrector: spellbook en WebAssembly en un *worker*, idioma por fragmento, diccionario del proyecto y diccionario de especialidad imprescindible | R29, prototipo 9 | 21/11/2026 | — |
 | [0024](0024-vista-previa-y-pdf-con-typst.md) | Vista previa y PDF con Typst 0.15 como biblioteca de Rust: recompilación incremental en 8–10 ms, citas de citeproc-js, PDF/UA y PDF/A | R30, prototipo 4 | 21/11/2026 | — |
+| [0025](0025-docx-con-marcas-y-campos.md) | DOCX con la biblioteca `docx` y plantilla de referencia; marcas especificadas (marcadores de rango por bloque, citas en formato de Zotero, `REF` y `SEQ`); identidad confirmada por contenido al importar | R3, R35, prototipo 3 | 21/11/2026 | — |
 
 ## Plantilla
 
