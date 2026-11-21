@@ -1,14 +1,14 @@
 # 0010. Pila tecnológica
 
 - **Fecha:** 20/11/2026
-- **Estado:** aceptada, a confirmar con los prototipos de la fase 0. Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38) con el prototipo 7 ([0020](0020-control-de-cambios.md)) con el prototipo 3 ([0025](0025-docx-con-marcas-y-campos.md)) y con el prototipo 2 ([0026](0026-citas-con-citeproc-js.md)).
+- **Estado:** aceptada y confirmada por los prototipos de la fase 0; **Tauri confirmado frente a Electron** ([0030](0030-tauri-confirmado.md)). Actualizada el 21/11/2026 con la revisión de la v0.4 (R29 a R35, R37 y R38) con el prototipo 7 ([0020](0020-control-de-cambios.md)) con el prototipo 3 ([0025](0025-docx-con-marcas-y-campos.md)) y con el prototipo 2 ([0026](0026-citas-con-citeproc-js.md)).
 - **Pregunta del plan:** P18
 
 ## Qué se decide
 Tauri 2 (Rust) para la aplicación de escritorio, React + TypeScript + Vite para la interfaz, ProseMirror (vía Tiptap, solo piezas libres) como editor, citeproc-js como motor de citas y la biblioteca `docx` más un traductor propio para exportar a Word. El detalle está en PLAN.md, 6.1.
 
 Lo que la v0.4 dejaba por decidir y la revisión ha fijado:
-- **Tauri se mantiene con tres condiciones** (R37); si falla alguna, se pasa a Electron al final de la fase 0:
+- **Tauri se mantiene con tres condiciones** (R37); si falla alguna, se pasa a Electron al final de la fase 0. **Se cumplen las tres** (prototipo 11, [0030](0030-tauri-confirmado.md)):
   1. Lo que más cambia entre motores web no depende del motor: corrector propio y PDF con Typst.
   2. El pegado de tablas y la edición básica se prueban en el MacBook en la fase 0.
   3. Las pruebas del editor se ejecutan a diario también sobre WebKit (el de Playwright funciona en Windows).

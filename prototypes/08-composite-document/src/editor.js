@@ -205,15 +205,55 @@ const plainAttr = () => ({ default: null, renderHTML: () => ({}) });
 
 // Tiptap 3 lets an extension intercept every transaction before it is applied
 // (`dispatchTransaction({ transaction, next })`): that is where suggestion mode lives.
+// Composition (prototype 11): on macOS a dead key ("´" then "i") opens a composition: WebKit
+// shows a provisional "´" and replaces it with "í" at the end. Turning each step of that into
+// a suggestion breaks ProseMirror's tracking of the composition and leaves "´í". So while
+// composing, transactions pass through untouched (and out of the undo history); when the
+// composition ends, the net change since it started is undone and applied again as one
+// ordinary transaction, which becomes a suggestion.
+const compositionKey = new PluginKey("suggestComposition");
+function compositionPlugin(storage) {
+  const finish = (view, tries = 0) => {
+    // WebKit may still report the composition as open right after compositionend: wait
+    if (view.composing && tries < 40) return setTimeout(() => finish(view, tries + 1), 25);
+    const start = storage.compositionStart;
+    storage.compositionStart = null;
+    if (!start) return;
+    console.debug("[suggest] composition finished", { tries });
+    const cur = view.state.doc;
+    const a = start.content.findDiffStart(cur.content);
+    if (a == null) return;
+    let { a: endA, b: endB } = start.content.findDiffEnd(cur.content);
+    const over = a - Math.min(endA, endB);
+    if (over > 0) { endA += over; endB += over; }
+    const inserted = cur.slice(a, endB);
+    const revert = view.state.tr.replace(a, endB, start.slice(a, endA)).setMeta(suggestChangesKey, { skip: true }).setMeta("addToHistory", false);
+    view.dispatch(revert);
+    const tr = view.state.tr.replace(a, endA, inserted);
+    tr.setSelection(TextSelection.near(tr.doc.resolve(a + inserted.size)));
+    view.dispatch(tr); // goes through dispatchTransaction: becomes a suggestion
+  };
+  return new Plugin({
+    key: compositionKey,
+    props: {
+      handleDOMEvents: {
+        compositionstart: (view) => { if (isSuggestChangesEnabled(view.state) && !storage.compositionStart) storage.compositionStart = view.state.doc; return false; },
+        compositionend: (view) => { setTimeout(() => finish(view), 0); return false; },
+      },
+    },
+  });
+}
+
 export const SuggestChanges = Extension.create({
   name: "suggestChangesBridge",
-  addStorage: () => ({ author: "Ana", registry: {} }),
-  addProseMirrorPlugins: () => [suggestChanges()],
+  addStorage: () => ({ author: "Ana", registry: {}, compositionStart: null }),
+  addProseMirrorPlugins() { return [suggestChanges(), compositionPlugin(this.storage)]; },
   dispatchTransaction({ transaction, next }) {
     const { editor, storage } = this;
     const state = editor.state;
     const skip = "skip" in (transaction.getMeta(suggestChangesKey) ?? {}) || transaction.getMeta("history$") || transaction.getMeta("fromOutside");
     if (!transaction.docChanged || skip || !isSuggestChangesEnabled(state)) return next(transaction);
+    if (storage.compositionStart) return next(transaction.setMeta("addToHistory", false)); // composing: see compositionPlugin
     setCanJoinSuggestion((id) => !storage.registry[id] || storage.registry[id].author === storage.author);
     const tracked = transformToSuggestionTransaction(transaction, state, () => randomId("c"));
     setCanJoinSuggestion(null);

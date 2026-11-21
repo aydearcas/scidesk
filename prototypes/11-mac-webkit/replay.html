@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Reproducir lo pegado en el Mac</title></head>
+<body><div id="editor"></div><pre id="out"></pre>
+<script type="module">
+// Replays the HTML that Safari on the Mac handed over, through the same cleaner and editor,
+// on this PC's browser (needs the replay key, which only this PC has). Results to /api/paste.
+import { createEditor } from "../01-paste-word-tables/src/editor.js";
+import { cleanOfficeHtml } from "../01-paste-word-tables/src/clean.js";
+import { tablesIn, gridOf } from "../01-paste-word-tables/src/measure.js";
+window.replay = async (key) => {
+  const h = { "x-replay-key": key };
+  const count = await (await fetch("/api/replay", { headers: h })).json();
+  const out = [];
+  for (let n = 0; n < count; n++) {
+    const { html } = await (await fetch(`/api/replay?n=${n}`, { headers: h })).json();
+    const el = document.createElement("div"); document.body.append(el);
+    const ed = createEditor(el, { transformPastedHTML: cleanOfficeHtml });
+    ed.view.pasteHTML(html);
+    const grids = tablesIn(ed.state.doc).map(gridOf);
+    const r = await (await fetch("/api/paste", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ua: "replay-of-mac-html", types: [], html: "", cleaned: grids, raw: [] }) })).json();
+    out.push(r.cleaned.map((t) => `t${t.table} (${t.match}) ${t.ok ? "OK" : "FALLOS " + Object.entries(t.checks).filter(([, v]) => !v).map(([k]) => k).join(",")}`).join("; "));
+    ed.destroy(); el.remove();
+  }
+  return out;
+};
+</script></body></html>

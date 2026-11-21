@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prototipo 11</title>
+<style>body{font:16px/1.5 -apple-system,system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem}a{display:block;margin:.6rem 0;font-size:1.1rem}code{background:#eee;padding:0 .3em}</style></head>
+<body>
+<h1>Prototipo 11 · SciDesk en WebKit</h1>
+<p id="ua"></p>
+<a href="/paste.html">1. Pegar tablas desde Word (prototipo 1)</a>
+<a id="p8">2. Edición básica y control de cambios (prototipo 8)</a>
+<a id="p9">3. Corrector ortográfico (prototipo 9)</a>
+<a href="/bench.html">4. Mediciones: citeproc-js y corrector (prototipos 2 y 9)</a>
+<script>
+  document.getElementById("ua").textContent = navigator.userAgent;
+  document.getElementById("p8").href = `https://${location.hostname}:5444/`;
+  document.getElementById("p9").href = `https://${location.hostname}:5445/`;
+</script>
+</body></html>

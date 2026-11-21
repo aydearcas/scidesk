@@ -1,7 +1,7 @@
 # 0020. Control de cambios sobre suggest-changes y cómo se guardan en `.scidoc`
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada (resultado del prototipo 7 de la fase 0)
+- **Estado:** aceptada (resultado del prototipo 7 de la fase 0). Actualizada el 21/11/2026 con el prototipo 11 (composición del teclado).
 - **Pregunta del plan:** R31 (prototipo 7 de la sección 8)
 
 ## Qué se decide
@@ -34,6 +34,7 @@
 - Al partir un párrafo, el nuevo hereda el `id` del bloque: la capa de identificadores tiene que regenerarlo, como ya preveía 3.2.
 - El esquema de `.scidoc` v1 incluye las tres marcas, el registro `changes` y que `doc` y las celdas de tabla admitan las marcas en sus bloques.
 - Quedan para el prototipo 8 y el corte vertical de la fase 1: probar el modo de sugerencias con el teclado real (Intro, Retroceso, IME) y encajarlo en el `dispatchTransaction` de Tiptap.
+- **Composición del teclado** (prototipo 11, [0030](0030-tauri-confirmado.md)): en el Mac, las teclas de acento abren una composición y el modo sugerencias dejaba «s´í». La copia propia de la pieza no convierte en sugerencia lo que ocurre durante la composición y, al terminar, aplica el cambio neto como una sola sugerencia (código de partida en `prototypes/08-composite-document/src/editor.js`, `compositionPlugin`; comprobado en Safari).
 - Quedan para la fase 2a: comentarios (`w:comment`), cambios en la estructura de las tablas, movimientos (`w:moveFrom`/`w:moveTo`), cambios de estilo de párrafo y qué hacer cuando un autor borra la inserción de otro (la pieza la elimina sin dejar rastro).
 - La exportación del prototipo está escrita a mano; la definitiva usa la biblioteca `docx` (prototipo 3) con la misma correspondencia.
 - Detalle, casos y resultados en [`prototypes/07-track-changes/README.md`](../../prototypes/07-track-changes/README.md). Actualiza [0010](0010-pila-tecnologica.md).

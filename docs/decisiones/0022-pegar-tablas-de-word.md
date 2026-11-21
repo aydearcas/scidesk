@@ -1,7 +1,7 @@
 # 0022. Pegar tablas de Word: limpiador de HTML de Office y citas del portapapeles
 
 - **Fecha:** 21/11/2026
-- **Estado:** aceptada (resultado del prototipo 1 de la fase 0, confirmado con Ctrl+V real). La parte de formato de celda es una propuesta que se cierra al especificar `.scitable`.
+- **Estado:** aceptada (resultado del prototipo 1 de la fase 0, confirmado con Ctrl+V real; repetido en el Mac con el prototipo 11). La parte de formato de celda es una propuesta que se cierra al especificar `.scitable`.
 - **Pregunta del plan:** riesgo 7.1 y R23 (prototipo 1 de la sección 8)
 
 ## Qué se decide
@@ -35,7 +35,11 @@
 
 ## Consecuencias
 - **El RTF llega en el propio evento de pegado** (`text/rtf`), así que el limpiador y el lector de citas pueden trabajar en la interfaz, sin leer el portapapeles desde Rust. Falta comprobarlo en WKWebView.
-- **WebKit y Word para Mac** se prueban en el prototipo 11 con las mismas tablas.
+- **WebKit y Word para Mac** (prototipo 11, [0030](0030-tauri-confirmado.md)):
+  - 10 de 12 tablas quedan perfectas.
+  - El limpiador reconoce también los símbolos de Wingdings en el bloque privado de Unicode y descarta las marcas `<o:p>`. Windows sigue en 135/135.
+  - Safari pierde dos espacios al reescribir el HTML de Word: se reponen contrastando con el `text/plain`.
+  - **Safari no entrega `text/rtf`, ni los campos de las citas:** las citas de EndNote pegadas llegan solo como texto. En el Mac se necesita el portapapeles nativo desde Rust (fase 1) o tratarlas como citas escritas a mano (R24).
 - **Fase 1:**
   - Al pegar pie, tabla y notas juntos, crear una tabla de SciDesk con su pie y sus notas como objetos (R11).
   - Recuperar las citas de los campos.

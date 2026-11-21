@@ -23,9 +23,9 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0017](0017-adaptacion-sin-ia.md) | Adaptación a revista sin IA; redacción y traducción en la futura versión con IA | P21 | 20/11/2026 | — |
 | [0018](0018-paquetes-llm.md) | Paquetes para LLM con cuatro niveles de confidencialidad | P22 | 20/11/2026 | — |
 | [0019](0019-modelo-unico-de-propuestas.md) | Un único mecanismo de propuestas para todo lo que entra de fuera | R7 | 21/11/2026 | 21/11/2026 |
-| [0020](0020-control-de-cambios.md) | Control de cambios sobre suggest-changes (copia propia); cambios como marcas con `id` y registro de autores en `.scidoc`; correspondencia con `w:ins`/`w:del` | R31, prototipo 7 | 21/11/2026 | — |
+| [0020](0020-control-de-cambios.md) | Control de cambios sobre suggest-changes (copia propia); cambios como marcas con `id` y registro de autores en `.scidoc`; correspondencia con `w:ins`/`w:del` | R31, prototipo 7 | 21/11/2026 | 21/11/2026 |
 | [0021](0021-documento-compuesto.md) | Documento compuesto: composición, reparto, formato de `.scitable` y reglas de ids, bordes, copias y tablas sin referencia | R32, prototipo 8 | 21/11/2026 | — |
-| [0022](0022-pegar-tablas-de-word.md) | Pegar tablas de Word con un limpiador de HTML de Office (135/135 tablas reales); qué formato de celda se conserva; citas del portapapeles por HTML y RTF | 7.1, R23, prototipo 1 | 21/11/2026 | — |
+| [0022](0022-pegar-tablas-de-word.md) | Pegar tablas de Word con un limpiador de HTML de Office (135/135 tablas reales); qué formato de celda se conserva; citas del portapapeles por HTML y RTF | 7.1, R23, prototipo 1 | 21/11/2026 | 21/11/2026 |
 | [0023](0023-corrector-ortografico.md) | Corrector: spellbook en WebAssembly en un *worker*, idioma por fragmento, diccionario del proyecto y diccionario de especialidad imprescindible | R29, prototipo 9 | 21/11/2026 | — |
 | [0024](0024-vista-previa-y-pdf-con-typst.md) | Vista previa y PDF con Typst 0.15 como biblioteca de Rust: recompilación incremental en 8–10 ms, citas de citeproc-js, PDF/UA y PDF/A | R30, prototipo 4 | 21/11/2026 | — |
 | [0025](0025-docx-con-marcas-y-campos.md) | DOCX con la biblioteca `docx` y plantilla de referencia; marcas especificadas (marcadores de rango por bloque, citas en formato de Zotero, `REF` y `SEQ`); identidad confirmada por contenido al importar | R3, R35, prototipo 3 | 21/11/2026 | 21/11/2026 |
@@ -33,6 +33,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0027](0027-zotero-por-su-api-local.md) | Zotero por su API local (colección, sincronización por versiones, `Zotero-Server-ID`) y un URI por referencia en las citas del DOCX, porque sin él Zotero duplica referencias al actualizar | Prototipo 5 | 21/11/2026 | — |
 | [0028](0028-importar-citas-de-un-word.md) | Importar las citas de un Word desde el propio documento (EndNote `EN.CITE`/`EN.CITE.DATA`, Zotero, Mendeley Desktop), con EndNote XML convertido a CSL-JSON y la importación comprobada contra la bibliografía del documento | R1, prototipo 10 | 21/11/2026 | — |
 | [0029](0029-fusion-de-copias-devueltas.md) | Fusión de las copias devueltas: propuestas de la enviada a cada copia (marcadas con su autor, no marcadas atribuidas a quien la devolvió), ruido oculto y fusión sobre tu copia por zonas con acuerdos y conflictos; mejor que «Combinar» de Word | R2–R4, prototipo 6 | 21/11/2026 | — |
+| [0030](0030-tauri-confirmado.md) | Tauri confirmado frente a Electron: las tres condiciones de R37 se cumplen (prototipo 11 en el MacBook); composición del teclado en el modo sugerencias, limpiador para Word para Mac y citas pegadas en el Mac por el portapapeles nativo | R37, P18, prototipo 11 | 21/11/2026 | — |
 
 ## Plantilla
 

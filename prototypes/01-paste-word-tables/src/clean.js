@@ -33,13 +33,20 @@ export function cleanOfficeHtml(html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   const body = doc.body;
 
+  // 0. <o:p> only marks the end of a Word paragraph (empty, or a non-breaking space so that
+  // an empty paragraph keeps its height); Word for Mac may put replacement characters in it
+  for (const op of [...body.getElementsByTagName("o:p")]) op.remove();
+
   // 1. symbol fonts -> Unicode
   for (const el of body.querySelectorAll("span[style]")) {
     const st = el.getAttribute("style");
     const m = /mso-symbol-font-family:\s*"?([^";']+)"?/i.exec(st) ?? /font-family:\s*"?(Wingdings 2|Wingdings|Symbol)"?\s*(;|$)/i.exec(st);
     const map = m && SYMBOLS[m[1].trim().toLowerCase()];
     if (!map) continue;
-    for (const t of textNodes(el)) t.data = [...t.data].map((ch) => map[ch] ?? ch).join("");
+    // Word for Windows writes the font's letter ("P"); Word for Mac writes it shifted to the
+    // private use area (U+F050 = 0xF000 + "P"): both are mapped
+    const sym = (ch) => { const c = ch.codePointAt(0); return c >= 0xf020 && c <= 0xf0ff ? String.fromCharCode(c - 0xf000) : ch; };
+    for (const t of textNodes(el)) t.data = [...t.data].map((ch) => map[ch] ?? map[sym(ch)] ?? ch).join("");
     el.removeAttribute("style");
   }
 

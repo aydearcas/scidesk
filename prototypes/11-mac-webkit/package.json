@@ -1,0 +1,13 @@
+{
+  "name": "proto-11-mac-webkit",
+  "private": true,
+  "type": "module",
+  "description": "Phase 0 prototype 11: prototypes 1, 8, 9 and 2 in WebKit (Safari on the MacBook), served from the Windows PC through an authenticated HTTPS proxy",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "citeproc": "^2.4.63",
+    "vite": "^8.3.8"
+  }
+}

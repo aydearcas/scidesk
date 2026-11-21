@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Pegar tablas</title>
+<style>
+body{font:15px/1.45 -apple-system,system-ui,sans-serif;max-width:60rem;margin:1.5rem auto;padding:0 1rem}
+#editor{border:2px dashed #888;min-height:8rem;padding:.6rem;margin:.6rem 0}
+#editor table{border-collapse:collapse}#editor td,#editor th{border:1px solid #bbb;padding:2px 4px;vertical-align:top}
+#raw{display:none}#out{white-space:pre-wrap;background:#f4f4f4;padding:.6rem;font:13px/1.4 ui-monospace,monospace}
+button{font-size:1rem}
+</style></head>
+<body>
+<h1>Pegar tablas desde Word para Mac</h1>
+<ol>
+<li>En Word, selecciona una tabla entera (con su título si quieres) y pulsa <b>⌘C</b>.</li>
+<li>Haz clic en el recuadro y pulsa <b>⌘V</b>. El resultado sale abajo y el recuadro se vacía para la siguiente.</li>
+</ol>
+<div id="editor"></div><div id="raw"></div>
+<p><button id="clear">Vaciar el recuadro</button></p>
+<div id="out">Esperando una tabla…</div>
+<script type="module" src="/src/paste.js"></script>
+</body></html>
