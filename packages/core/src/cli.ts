@@ -8,6 +8,10 @@
 //   scidesk show <dir> <proposals.json>
 //   scidesk refs <dir> <file.ris|.nbib|.bib|.json>   import references into the own library
 //   scidesk from-word <dir> <file.docx>              a new project from a Word document
+//   scidesk library <dir> [--search <words>]         the library, with how often each is cited
+//   scidesk ref-delete <dir> <reference id>          delete a reference that is not cited
+//   scidesk styles                                   the citation styles included
+//   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { NodeFs, nodeResources } from "./node-fs.ts";
@@ -18,6 +22,8 @@ import { importCopy } from "./round.ts";
 import { exportTitlePage } from "./title-page.ts";
 import { importReferences } from "./library-import.ts";
 import { projectFromWord } from "./word-import.ts";
+import { deleteReference, referenceUses, searchLibrary, setCitationStyle, summarize } from "./library.ts";
+import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -27,8 +33,12 @@ const opt = (name: string, def?: string) => {
 const positional = rest.filter((a, i) => !a.startsWith("--") && !rest[i - 1]?.startsWith("--"));
 
 async function main() {
+  if (cmd === "styles") {
+    for (const s of BUNDLED_STYLES) console.log(`${s.file.replace(/\.csl$/, "").padEnd(36)} ${s.format.padEnd(12)} ${s.name}${s.parent ? ` (uses ${s.parent})` : ""}`);
+    return;
+  }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|show> <project folder> …");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|show> <project folder> …  |  scidesk styles");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -84,6 +94,28 @@ async function main() {
       const p = await loadProject(fs);
       const r = await importReferences(p, { name: basename(file), text: await readFile(file, "utf8") });
       console.log(JSON.stringify({ format: r.format, added: r.added.length, duplicates: r.duplicates.length, copy: r.importedCopy, keptAside: r.unmapped }));
+      break;
+    }
+    case "library": {
+      const p = await loadProject(fs);
+      const uses = referenceUses(p);
+      const hits = searchLibrary(p.library, opt("search", "")!, Infinity);
+      for (const { entry } of hits) console.log(`${entry.id}  ${String(uses.get(entry.id)?.length ?? 0).padStart(3)}×  ${summarize(entry.csl).line}`);
+      console.log(`${hits.length} of ${p.library.references.length} reference(s)`);
+      break;
+    }
+    case "ref-delete": {
+      const p = await loadProject(fs);
+      await deleteReference(p, positional[0] ?? "");
+      console.log(`deleted ${positional[0]}`);
+      break;
+    }
+    case "style": {
+      const s = findStyle(positional[0] ?? "");
+      if (!s) throw new Error(`unknown style ${positional[0] ?? ""}: see 'scidesk styles'`);
+      const p = await loadProject(fs);
+      await setCitationStyle(p, opt("article", "main")!, s.id);
+      console.log(`${opt("article", "main")}: ${s.name} (${s.id})`);
       break;
     }
     case "show": {

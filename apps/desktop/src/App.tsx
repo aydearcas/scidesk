@@ -2,14 +2,18 @@
 // co-authors and import the copy that comes back, with its proposals. No styled interface
 // yet: that is the rest of phase 1.
 import { EditorContent, useEditor } from "@tiptap/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  createDemoProject, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord, renderCitations, saveDocument,
+  BUNDLED_STYLES, createDemoProject, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
   type Project, type Rendering,
 } from "@scidesk/core";
+import { NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { citationLabels, extensions, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
+import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
+import { LibraryPanel } from "./LibraryPanel.tsx";
+import { QuickCite, type CiteItem } from "./QuickCite.tsx";
 import { inTauri, memoryFs, openFolder, resources } from "./platform.ts";
 
 const BODY = "manuscript/article.scidoc";
@@ -25,7 +29,10 @@ export function App() {
   const [rendering, setRendering] = useState<Rendering | null>(null);
   const [proposals, setProposals] = useState<ProposalSetFile | null>(null);
   const [returnedBy, setReturnedBy] = useState("");
-  const [refChoice, setRefChoice] = useState("");
+  const [panel, setPanel] = useState<"library" | "proposals">("library");
+  const [uses, setUses] = useState<Map<string, number>>(new Map());
+  // the quick citation dialog: the citation being edited (its position), or a new one
+  const [citing, setCiting] = useState<{ pos: number | null; items: CiteItem[] } | null>(null);
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const refsInput = useRef<HTMLInputElement>(null);
@@ -44,12 +51,15 @@ export function App() {
   const recompute = useCallback(async () => {
     if (!project || !article || !editor) return;
     try {
-      const r = await renderCitations(project.library, [editor.getJSON() as PMNode], article.article.citationStyle.id, article.article.referenceTermsLang ?? article.article.lang, resources);
-      refreshXrefLabels(editor.getJSON() as never);
+      const doc = editor.getJSON() as PMNode;
+      const r = await renderCitations(project.library, [doc], article.article.citationStyle.id, article.article.referenceTermsLang ?? article.article.lang, await styleResources(project, article, resources));
+      refreshXrefLabels(doc as never);
       citationLabels.clear();
-      for (const [id, c] of r.citations) citationLabels.set(id, c.plain);
+      for (const [id, c] of r.citations) citationLabels.set(id, c.runs);
       refreshCitationLabels();
       setRendering(r);
+      // how often each reference is cited, with what is on screen and not saved yet
+      setUses(new Map([...referenceUses(project, { [`${article.folder}/${BODY}`]: doc })].map(([id, u]) => [id, u.length])));
     } catch (e) {
       setError(String(e));
     }
@@ -71,13 +81,12 @@ export function App() {
     const doc = p.articles[0].documents.get(BODY)!.doc;
     editor?.commands.setContent(doc as never, { emitUpdate: false });
     setDirty(false);
-    setRefChoice(p.library.references[0]?.id ?? "");
   }, [editor]);
   useEffect(() => { void recompute(); }, [project, recompute]);
 
-  const run = (f: () => Promise<void>) => async () => {
+  const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {
     setError("");
-    try { await f(); } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+    try { await f(...a); } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
   const save = async () => {
@@ -105,9 +114,32 @@ export function App() {
     const r = await openFolder();
     if (r) show(await loadProject(r.fs));
   });
-  const insertCitation = () => {
-    if (!editor || !refChoice) return;
-    editor.chain().focus().insertContent({ type: "citation", attrs: { id: newId("c"), items: [{ ref: refChoice }] } }).run();
+  // quick citation: on a selected citation it edits that one, otherwise it inserts a new one
+  const openQuickCite = useCallback(() => {
+    if (!editor || !project) return;
+    const sel = editor.state.selection;
+    if (sel instanceof NodeSelection && sel.node.type.name === "citation") setCiting({ pos: sel.from, items: sel.node.attrs.items as CiteItem[] });
+    else setCiting({ pos: null, items: [] });
+  }, [editor, project]);
+  useEffect(() => { hooks.quickCite = openQuickCite; }, [openQuickCite]);
+  const finishCitation = (items: CiteItem[]) => {
+    if (!editor || !citing) return;
+    const pos = citing.pos;
+    setCiting(null);
+    if (pos === null) editor.chain().focus().insertContent({ type: "citation", attrs: { id: newId("c"), items } }).run();
+    else editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { ...tr.doc.nodeAt(pos)!.attrs, items }); return true; }).run();
+  };
+  const closeQuickCite = () => { setCiting(null); editor?.commands.focus(); };
+  const chooseStyle = run(async (id: string) => {
+    if (!project || !article) return;
+    await setCitationStyle(project, article.folder, id);
+    await recompute();
+  });
+  const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
+  const removeReference = async (id: string) => {
+    if (!project || !article || !editor) return;
+    await deleteReference(project, id, { [`${article.folder}/${BODY}`]: editor.getJSON() as PMNode });
+    libraryChanged(t("refDeleted"));
   };
   const exportAs = (kind: "coauthors" | "journal" | "title-page") => run(async () => {
     if (!project || !article) return;
@@ -128,23 +160,15 @@ export function App() {
     if (fileInput.current) fileInput.current.value = "";
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- the library is changed in place by the import
-  const refs = useMemo(() => [...(project?.library.references ?? [])], [project, libraryVersion]);
   const onRefs = run(async () => {
     const file = refsInput.current?.files?.[0];
     if (!file || !project) return;
     const r = await importReferences(project, { name: file.name, text: await file.text() });
     setLibraryVersion((v) => v + 1);
-    if (!refChoice && r.added[0]) setRefChoice(r.added[0].id);
+    void recompute();
     setMessage(t("refsImported", { added: r.added.length, duplicates: r.duplicates.length, format: r.format.toUpperCase() }) + (r.unmapped.length ? ` — ${t("keptAside", { n: r.unmapped.length })}` : ""));
     if (refsInput.current) refsInput.current.value = "";
   });
-  const refLabel = (id: string) => {
-    const r = refs.find((x) => x.id === id);
-    const a = r?.csl.author as { family?: string; literal?: string }[] | undefined;
-    const year = (r?.csl.issued as { "date-parts"?: number[][] } | undefined)?.["date-parts"]?.[0]?.[0];
-    return `${a?.[0]?.family ?? a?.[0]?.literal ?? "?"} ${year ?? ""} · ${String(r?.csl.title ?? "").slice(0, 60)}`;
-  };
 
   return (
     <div className="app">
@@ -164,10 +188,11 @@ export function App() {
             <div className="toolbar">
               <button onClick={run(save)} disabled={!dirty}>{t("save")}</button>
               <span className="status">{dirty ? t("unsaved") : t("saved")}</span>
-              <select value={refChoice} onChange={(e) => setRefChoice(e.target.value)} aria-label={t("chooseReference")}>
-                {refs.map((r) => <option key={r.id} value={r.id}>{refLabel(r.id)}</option>)}
+              <button onClick={openQuickCite} title={t("quickCiteShortcut")}>{t("cite")}</button>
+              <select value={article!.article.citationStyle.id} onChange={(e) => void chooseStyle(e.target.value)} aria-label={t("citationStyle")} title={t("citationStyle")}>
+                {!BUNDLED_STYLES.some((s) => s.id === article!.article.citationStyle.id) && <option value={article!.article.citationStyle.id}>{article!.article.citationStyle.id}</option>}
+                {BUNDLED_STYLES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
-              <button onClick={insertCitation} disabled={!refChoice}>{t("insertCitation")}</button>
               <label className="file-button">{t("importRefs")}<input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" onChange={onRefs} /></label>
               <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
               <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
@@ -176,12 +201,21 @@ export function App() {
             <EditorContent editor={editor} className="page" />
             {rendering && rendering.bibliography.length > 0 && (
               <ol className="bibliography">
-                {rendering.bibliography.map((b) => <li key={b.ref} value={Number(b.label.replace(/\D/g, "")) || undefined}>{b.runs.map((r, i) => <span key={i} style={{ fontWeight: r.bold ? 700 : undefined, fontStyle: r.italic ? "italic" : undefined }}>{r.text}</span>)}</li>)}
+                {rendering.bibliography.map((b) => (
+                  <li key={b.ref}>
+                    {b.label && <span className="bib-label">{b.label}</span>}
+                    <span>{b.runs.map((r, i) => <span key={i} style={{ fontWeight: r.bold ? 700 : undefined, fontStyle: r.italic ? "italic" : undefined, verticalAlign: r.sup ? "super" : r.sub ? "sub" : undefined, fontSize: r.sup || r.sub ? "smaller" : undefined }}>{r.text}</span>)}</span>
+                  </li>
+                ))}
               </ol>
             )}
           </section>
           <aside>
-            <h2>{t("proposals")}</h2>
+            <div className="tabs" role="tablist">
+              <button role="tab" aria-selected={panel === "library"} onClick={() => setPanel("library")}>{t("library")}</button>
+              <button role="tab" aria-selected={panel === "proposals"} onClick={() => setPanel("proposals")}>{t("proposals")}</button>
+            </div>
+            {panel === "library" ? <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} /> : <>
             <label>{t("returnedBy")} <input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
             <label className="file">{t("importCopy")} <input ref={fileInput} type="file" accept=".docx" onChange={onCopy} /></label>
             {proposals && (proposals.proposals.filter((p) => p.status !== "noise-hidden").length === 0
@@ -197,9 +231,11 @@ export function App() {
                 </ul>
               ))}
             {proposals && <p className="integrity">{proposals.integrity === "ok" ? t("integrityOk") : t("integrityBad")}</p>}
+            </>}
           </aside>
         </main>
       )}
+      {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
       {message && <p className="message">{message}{download && <> · <a href={download.url} download={download.name}>{download.name}</a></>}</p>}
       <footer>{t("attribution")}</footer>
     </div>

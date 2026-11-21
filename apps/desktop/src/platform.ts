@@ -2,7 +2,6 @@
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
 import { MemoryFs, bundledResources, type ProjectFs } from "@scidesk/core";
-import styleCsl from "@scidesk/core/assets/reumatologia-clinica-2026.csl?raw";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
 import templateUrl from "@scidesk/core/assets/reference.dotx?url";
@@ -10,12 +9,17 @@ import templateUrl from "@scidesk/core/assets/reference.dotx?url";
 export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
 const ASSETS: Record<string, string> = {
-  "reumatologia-clinica-2026.csl": styleCsl,
   "locales-es-ES.xml": localeEs,
   "locales-en-US.xml": localeEn,
 };
+// each style is its own chunk, loaded the first time it is used (record 0037)
+const STYLES = import.meta.glob<string>("../../../packages/core/assets/styles/*.csl", { query: "?raw", import: "default" });
 export const resources = bundledResources(
   async (file) => {
+    if (file.startsWith("styles/")) {
+      const load = Object.entries(STYLES).find(([k]) => k.endsWith(`/${file}`))?.[1];
+      if (load) return load();
+    }
     const text = ASSETS[file];
     if (text === undefined) throw new Error(`asset ${file} not bundled`);
     return text;

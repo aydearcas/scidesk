@@ -40,6 +40,7 @@ Un archivo corto por decisión importante: qué se decidió, por qué y qué se 
 | [0034](0034-portada-aparte.md) | Portada aparte generada desde autores y directorio de personas (afiliaciones numeradas, correspondencia, contribución igual, conflictos, agradecimientos); manuscrito para la revista sin autores | Fase 1, P12 | 21/11/2026 | — |
 | [0035](0035-importar-referencias.md) | Importar referencias a la biblioteca propia: RIS, BibTeX y CSL-JSON con citation-js (formato forzado, sin red), NBIB con lector propio, normalización al CSL-JSON de SciDesk y duplicados por DOI, PMID o autor, año y título | Fase 1, P11 | 21/11/2026 | — |
 | [0036](0036-nuevo-articulo-desde-word.md) | Nuevo artículo a partir de un Word (básico): estilos por nombre interno, título, resumen por idioma, encabezados con papel, tablas con pie y notas, figuras, listas y referencias cruzadas vivas; probado con los Word reales del usuario en local | R1, fase 1 | 21/11/2026 | — |
+| [0037](0037-biblioteca-cita-rapida-y-estilos.md) | Ver, buscar, editar y borrar la biblioteca con los usos de cada referencia, cita rápida (Ctrl+Mayús+Y, varias referencias con página), 18 estilos CSL incluidos (con procedencia y licencia) y cambio de estilo al momento | Fase 1, P13 | 21/11/2026 | — |
 
 ## Plantilla
 

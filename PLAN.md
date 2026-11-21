@@ -370,7 +370,7 @@ Reparto de los datos:
   - EndNote etiquetado (.enw) **[V1]**.
 - **[MVP]** **Añadir más referencias en cualquier momento** importando nuevos archivos. Cada importación se guarda en `references/imports/` y muestra un resumen: cuántas referencias son nuevas, cuántas ya estaban y cuáles han cambiado.
 - **[MVP]** Eliminar duplicados al importar (por DOI, PMID y título normalizado) y avisar.
-- **[MVP]** Ver, buscar, editar y borrar referencias. Para cada una se ve en cuántos sitios está citada.
+- **[MVP]** Ver, buscar, editar y borrar referencias. Para cada una se ve en cuántos sitios está citada. **Hecho** (ficha 0037): una referencia citada no se puede borrar.
 
 *Modo vinculado a Zotero* **[V1]** (después vendrán EndNote y Mendeley)
 - Eliges una biblioteca o una colección de Zotero y SciDesk la lee a través de la API local de Zotero (Zotero 7 o posterior). Hace falta tener Zotero abierto en el mismo equipo y activar en Zotero la opción "Permitir que otras aplicaciones de este equipo se comuniquen con Zotero".
@@ -401,7 +401,7 @@ Reparto de los datos:
 - **[MVP]** Numeración automática por orden de aparición. Los rangos se compactan ([1–3, 5]) y se recalculan al mover texto.
 - **[MVP]** Bloque de bibliografía que se actualiza solo. Puede ir en el artículo o en el suplementario.
 - **[MVP]** Cambiar de estilo de cita al instante.
-- **[MVP]** Estilos incluidos de serie: Vancouver/ICMJE, AMA 11, APA 7, Harvard, NLM, Nature, Science, Cell, The Lancet, NEJM, BMJ, JAMA, IEEE, Chicago, Elsevier Vancouver y **Reumatología Clínica** (P13; estilo propio, ficha 0026).
+- **[MVP]** Estilos incluidos de serie: Vancouver/ICMJE, AMA 11, APA 7, Harvard, NLM, Nature, Science, Cell, The Lancet, NEJM, BMJ, JAMA, IEEE, Chicago, Elsevier Vancouver y **Reumatología Clínica** (P13; estilo propio, ficha 0026). **Hecho** (ficha 0037): los 18 están en `packages/core/assets/styles/`, con su procedencia y su licencia.
 - **[MVP]** Las palabras fijas de las referencias («En:»/«In:», «editores»/«editors», «ed.», «consultada el»/«accessed», «En prensa»/«In press») salen en el idioma del manuscrito. Un ajuste del artículo permite elegir otro (ficha 0026).
 - **[V1]** Buscador del repositorio oficial de estilos CSL (más de 10 000 estilos, uno por revista), con descarga.
 - **[V1]** Avisos de referencias de la biblioteca sin citar, citas rotas y referencias incompletas (sin año, sin revista…).
@@ -830,7 +830,7 @@ Se desarrolla y se prueba en Windows; la integración continua compila también 
 - "Nuevo artículo a partir de un Word", en versión básica: secciones, tablas y figuras (R1). **Hecho el 21/11/2026** (ficha 0036), probado con los tres Word reales del usuario en local; faltan autores, listas anidadas, notas al pie e imágenes EMF/WMF.
 - Editor con estilos semánticos, fuente del documento, formato básico, buscar y reemplazar, caracteres especiales, autocorrección científica (R18), pegado de texto como en Word (R23), recuento de palabras por sección (con el resumen aparte), corrector propio (R29) y menú contextual.
 - Autores y afiliaciones: bloque de autores y portada automáticos.
-- Referencias en modo biblioteca propia: importar RIS, NBIB, BibTeX y CSL-JSON (también después de la importación inicial), eliminar duplicados, cita rápida, bibliografía automática y ~15 estilos incluidos, entre ellos el de Reumatología Clínica. **Importar y eliminar duplicados, hecho el 21/11/2026** (ficha 0035); faltan ver y editar la biblioteca en la ventana, la cita rápida y los estilos.
+- Referencias en modo biblioteca propia: importar RIS, NBIB, BibTeX y CSL-JSON (también después de la importación inicial), eliminar duplicados, cita rápida, bibliografía automática y ~15 estilos incluidos, entre ellos el de Reumatología Clínica. **Importar y eliminar duplicados, hecho el 21/11/2026** (ficha 0035). **Ver, buscar, editar y borrar la biblioteca, la cita rápida y los 18 estilos, hechos el 21/11/2026** (ficha 0037); faltan el clic derecho para citar y «omitir autor».
 - Tablas: editor en el documento y en pestaña propia, con notas como objetos (R11), y pegado desde Word. Figuras: insertar y pie. Referencias cruzadas numeradas.
 - Panel de comprobaciones mínimo: límites de palabras, pendientes y elementos sin citar, con tres niveles y avisos que se pueden ignorar (R12, R43).
 - Exportar DOCX, con plantilla de referencia, marcas invisibles y los dos perfiles (R3, R35), y PDF con Typst (R30), con el formato que pide Reumatología Clínica (doble espacio, 12 puntos, páginas numeradas, portada aparte). Instantánea en cada exportación (R42). **DOCX del manuscrito hecho el 21/11/2026** (ficha 0033): resumen, tablas con notas, figuras, referencias cruzadas, plantilla y formato del perfil; comprobado en Word real. **Portada aparte hecha** (ficha 0034). Faltan las comprobaciones de cegado del texto (R9, V1), TIFF y SVG, y el PDF.

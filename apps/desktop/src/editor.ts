@@ -28,12 +28,31 @@ const Title = Node.create({
   renderHTML: ({ HTMLAttributes }) => ["h1", mergeAttributes(HTMLAttributes, { class: "title" }), 0],
 });
 
-/** Labels of the citations ("1", "1,2"), computed by citeproc-js; never stored. */
-export const citationLabels = new Map<string, string>();
+/**
+ * Labels of the citations ("1", "(1,2)", "(Alonso et al., 2025)"), computed by citeproc-js
+ * as formatted runs; never stored. Superscript only where the style asks for it.
+ */
+export type LabelRun = { text: string; sup?: boolean; italic?: boolean; bold?: boolean };
+export const citationLabels = new Map<string, LabelRun[]>();
 const citationViews = new Map<string, Set<HTMLElement>>();
-export function refreshCitationLabels() {
-  for (const [id, els] of citationViews) for (const el of els) el.textContent = citationLabels.get(id) ?? "?";
+function fillCitation(el: HTMLElement, id: string) {
+  const runs = citationLabels.get(id) ?? [{ text: "?" }];
+  // built from text nodes, never from citeproc's HTML: reference data comes from imported files
+  el.replaceChildren(...runs.map((r) => {
+    if (!r.sup && !r.italic && !r.bold) return document.createTextNode(r.text);
+    const e = document.createElement(r.sup ? "sup" : "span");
+    e.textContent = r.text;
+    if (r.italic) e.style.fontStyle = "italic";
+    if (r.bold) e.style.fontWeight = "700";
+    return e;
+  }));
 }
+export function refreshCitationLabels() {
+  for (const [id, els] of citationViews) for (const el of els) fillCitation(el, id);
+}
+
+/** What the quick-citation shortcut opens (set by the window). */
+export const hooks = { quickCite: () => {} };
 
 /** Numbers of tables and figures by first cross-reference, then position (as the export). */
 export const xrefLabels = new Map<string, string>();
@@ -88,14 +107,15 @@ const Citation = Node.create({
   atom: true,
   selectable: true,
   addAttributes: () => ({ id: { default: null }, items: { default: [] } }),
-  parseHTML: () => [{ tag: "sup[data-citation]" }],
-  renderHTML: ({ node }) => ["sup", { "data-citation": node.attrs.id, class: "citation" }, citationLabels.get(node.attrs.id) ?? "?"],
+  parseHTML: () => [{ tag: "span[data-citation]" }, { tag: "sup[data-citation]" }],
+  renderHTML: ({ node }) => ["span", { "data-citation": node.attrs.id, class: "citation" }, (citationLabels.get(node.attrs.id) ?? [{ text: "?" }]).map((r) => r.text).join("")],
   // a plain DOM node view, not a React component (PLAN 6.6: hundreds of citations)
   addNodeView: () => ({ node }) => {
-    const dom = document.createElement("sup");
+    const dom = document.createElement("span");
     dom.className = "citation";
     const id = node.attrs.id as string;
-    dom.textContent = citationLabels.get(id) ?? "?";
+    dom.dataset.citation = id;
+    fillCitation(dom, id);
     if (!citationViews.has(id)) citationViews.set(id, new Set());
     citationViews.get(id)!.add(dom);
     return { dom, destroy: () => citationViews.get(id)?.delete(dom) };
@@ -148,8 +168,18 @@ const partRef = (name: "tableRef" | "figureRef", label: string) => Node.create({
   renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, class: "part-ref", contenteditable: "false" }, `${label} · ${node.attrs.src}`],
 });
 
+/**
+ * Quick citation: Ctrl+Shift+Y (Cmd+Shift+Y on the Mac). Provisional until the two
+ * shortcut schemes (R19, D6); never Ctrl+Alt (AltGr on Spanish keyboards).
+ */
+const QuickCiteKey = Extension.create({
+  name: "quickCiteKey",
+  addKeyboardShortcuts: () => ({ "Mod-Shift-y": () => { hooks.quickCite(); return true; } }),
+});
+
 export const extensions = [
   BlockIds,
+  QuickCiteKey,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
   Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | tableRef | figureRef)*" }),
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),
