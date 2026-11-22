@@ -12,6 +12,7 @@ import {
   type AffiliationEntry, type ArticleAuthor, type AuthorshipIssue, type CreditDegree, type PersonEntry, type Project,
 } from "@scidesk/core";
 import { CREDIT_ROLES, type AuthorsFile, type PeopleFile } from "@scidesk/formats";
+import { HelpTip } from "./HelpTip.tsx";
 
 export type Tab = "authors" | "people" | "affiliations" | "credit";
 const EQUAL_TOKENS = ["e1", "e2", "e3"];
@@ -162,7 +163,7 @@ export function AuthorsDialog({ project, folder, onClose, onSaved, asView = fals
             <label>{t("family")}<input value={p.family} onChange={(e) => updPerson(p.id, (x) => ({ ...x, family: e.target.value }) as PersonEntry)} /></label>
           </div>
           <div className="row2">
-            <label>{t("citationName")}<input value={p.citationName ?? ""} placeholder={defaultCitationName(p.given, p.family)} onChange={(e) => updPerson(p.id, (x) => opt(x, "citationName", e.target.value))} /></label>
+            <label><span className="label-row">{t("citationName")}<HelpTip text={t("citationNameHelp")} label={t("whatIsThis")} /></span><input value={p.citationName ?? ""} placeholder={defaultCitationName(p.given, p.family)} onChange={(e) => updPerson(p.id, (x) => opt(x, "citationName", e.target.value))} /></label>
             <label>{t("degrees")}<input value={(p.degrees ?? []).join(", ")} placeholder="MD, PhD" onChange={(e) => updPerson(p.id, (x) => opt(x, "degrees", e.target.value.split(",").map((s) => s.trim()).filter(Boolean)))} /></label>
           </div>
           <label>ORCID<input value={p.orcid ?? ""} placeholder="0000-0002-1825-0097" onChange={(e) => updPerson(p.id, (x) => opt(x, "orcid", e.target.value.trim()))} onBlur={(e) => updPerson(p.id, (x) => opt(x, "orcid", normalizeOrcid(e.target.value)))} /></label>

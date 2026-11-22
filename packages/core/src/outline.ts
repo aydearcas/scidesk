@@ -21,6 +21,65 @@ export interface OutlinePart {
   notes: number;
   /** Figures: the image file, relative to the article folder. */
   image?: string;
+  /** Where the text cites it: the block, its section and which paragraph of the section (from 1). */
+  citedIn: { block: string; section: string | null; paragraph: number }[];
+  /** Tables: their shape (sheet 8, record 0048). */
+  shape?: TableShape;
+}
+
+export interface TableShape {
+  columns: number;
+  headerRows: number;
+  dataRows: number;
+  /** Cells that span more than one row or column. */
+  merged: number;
+  /** Cells with their own alignment (centre, right, decimal). */
+  aligned: number;
+  /** Relative widths of the columns, or null when the export decides. */
+  widths: number[] | null;
+  specificNotes: number;
+  generalNotes: number;
+  captioned: boolean;
+}
+
+/** The shape of a table part: columns, header and data rows, merged and aligned cells, widths and notes. */
+export function tableShape(part: PMNode): TableShape {
+  const table = (part.content ?? []).find((n) => n.type === "table");
+  const rows = table?.content ?? [];
+  const cells = rows.flatMap((r) => r.content ?? []);
+  let headerRows = 0;
+  while (headerRows < rows.length && (rows[headerRows].content ?? []).every((c) => c.type === "tableHeader")) headerRows++;
+  const notes = (part.content ?? []).filter((n) => n.type === "tableNote");
+  const caption = (part.content ?? []).find((n) => n.type === "tableCaption");
+  return {
+    columns: Math.max(0, ...rows.map((r) => (r.content ?? []).reduce((n, c) => n + Number(c.attrs?.colspan ?? 1), 0))),
+    headerRows, dataRows: rows.length - headerRows,
+    merged: cells.filter((c) => Number(c.attrs?.colspan ?? 1) > 1 || Number(c.attrs?.rowspan ?? 1) > 1).length,
+    aligned: cells.filter((c) => c.attrs?.align).length,
+    widths: (table?.attrs?.columnWidths as number[] | null | undefined) ?? null,
+    specificNotes: notes.filter((n) => n.attrs?.kind === "specific").length,
+    generalNotes: notes.filter((n) => n.attrs?.kind !== "specific").length,
+    captioned: !!caption && blockText(caption).trim().length > 0,
+  };
+}
+
+/** Where each table or figure is cited: block, section heading and paragraph number in the section. */
+function citationSites(tree: PMNode): Map<string, OutlinePart["citedIn"]> {
+  const out = new Map<string, OutlinePart["citedIn"]>();
+  let section: string | null = null;
+  let paragraph = 0;
+  for (const n of tree.content ?? []) {
+    if (n.type === "heading" && Number(n.attrs?.level ?? 1) === 1) { section = blockText(n).trim() || null; paragraph = 0; continue; }
+    if (n.type === "paragraph") paragraph++;
+    const targets = new Set<string>();
+    const visit = (x: PMNode) => { if (x.type === "xref") targets.add(x.attrs!.target as string); x.content?.forEach(visit); };
+    visit(n);
+    for (const id of targets) {
+      if (!out.has(id)) out.set(id, []);
+      out.get(id)!.push({ block: String(n.attrs?.id ?? ""), section, paragraph: Math.max(1, paragraph) });
+    }
+  }
+  return out;
 }
 export interface ArticleOutline {
   title: { block: string; text: string } | null;
@@ -47,6 +106,7 @@ export function articleOutline(project: Project, folder: string, live: Record<st
   visit(tree);
   const abstractDoc = documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
   abstractDoc && visit(abstractDoc);
+  const sites = citationSites(tree);
   const refs = (body.content ?? []).filter((n) => n.type === "tableRef" || n.type === "figureRef");
   const src = new Map(refs.map((n) => [n.attrs!.id as string, n.attrs!.src as string]));
   const parts = (map: Map<string, PMNode>, captionType: string, noteType: string): OutlinePart[] => {
@@ -56,7 +116,8 @@ export function articleOutline(project: Project, folder: string, live: Record<st
       caption: blockText((part.content ?? []).find((n) => n.type === captionType) ?? { type: "text", text: "" }).trim(),
       cited: targets.has(id),
       notes: (part.content ?? []).filter((n) => n.type === noteType).length,
-      ...(part.type === "figurePart" ? { image: part.attrs!.image as string } : {}),
+      citedIn: sites.get(id) ?? [],
+      ...(part.type === "figurePart" ? { image: part.attrs!.image as string } : { shape: tableShape(part) }),
     })).sort((a, b) => a.number - b.number);
   };
   const placed = new Set(refs.map((n) => n.attrs!.src as string));

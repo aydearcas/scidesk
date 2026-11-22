@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // SciDesk's command line (R33), on the same core as the app.
-//   scidesk new <dir> --name <name> --title <title> [--lang es]
+//   scidesk new <dir> --name <name> --title <title> [--lang es] [--type original] [--also en]
+//                [--journal reumatologia-clinica] [--style <style>]   (the wizard's choices; journals: scidesk journals)
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
@@ -15,14 +16,16 @@
 //   scidesk authors <dir> [--article main]          who signs, with affiliations, CRediT and warnings
 //   scidesk recover <dir> [--apply|--discard] [--store <folder>]   unsaved changes left by a closed window
 //   scidesk styles                                   the citation styles included
+//   scidesk journals                                 the journals SciDesk knows (with a profile or only their style)
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { appLocalDataDir, NodeFs, NodeStore, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
+import { appLocalDataDir, readAsset, NodeFs, NodeStore, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
 import { exportPdf, manuscriptTypst, type PdfStandard } from "./typst-export.ts";
 import { Recovery } from "./recovery.ts";
 import { createProject, loadProject, ProjectError } from "./project.ts";
 import { createDemoProject } from "./demo.ts";
+import { JOURNAL_CATALOG, journalTranslations } from "./new-article.ts";
 import { exportDocx, type ExportProfile } from "./docx-export.ts";
 import { importCopy } from "./round.ts";
 import { exportTitlePage } from "./title-page.ts";
@@ -46,14 +49,28 @@ async function main() {
     for (const s of BUNDLED_STYLES) console.log(`${s.file.replace(/\.csl$/, "").padEnd(36)} ${s.format.padEnd(12)} ${s.name}${s.parent ? ` (uses ${s.parent})` : ""}`);
     return;
   }
+  if (cmd === "journals") {
+    for (const j of JOURNAL_CATALOG) console.log(`${j.id.padEnd(38)} ${j.profile ? "profile" : "style only"}  ${j.title}`);
+    return;
+  }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles");
+    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
   switch (cmd) {
     case "new": {
-      const p = await createProject(fs, { name: opt("name", basename(dir))!, fileName: basename(fs.root), title: opt("title", "Título del artículo")!, lang: opt("lang", "es") });
+      const lang = opt("lang", "es")!;
+      const entry = opt("journal") ? JOURNAL_CATALOG.find((j) => j.id === opt("journal")) : undefined;
+      if (opt("journal") && !entry) throw new Error(`unknown journal ${opt("journal")} (see: scidesk journals)`);
+      const profile = entry?.profile ? JSON.parse(await readAsset(`journals/${entry.profile}`)) : null;
+      const style = opt("style") ? findStyle(opt("style")!)?.id : entry?.styleId;
+      if (opt("style") && !style) throw new Error(`unknown style ${opt("style")} (see: scidesk styles)`);
+      const p = await createProject(fs, {
+        name: opt("name", basename(dir))!, fileName: basename(fs.root), title: opt("title", "Título del artículo")!, lang,
+        articleType: opt("type", "original"), translations: opt("also")?.split(",") ?? (profile ? journalTranslations(profile, lang) : []),
+        journal: profile, citationStyle: style, readStyle: (file) => readAsset(`styles/${file}`),
+      });
       console.log(`created ${p.manifestPath} (project ${p.manifest.id})`);
       break;
     }

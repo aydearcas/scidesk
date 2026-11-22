@@ -6,12 +6,12 @@
 export type SchemeId = "word-es" | "international";
 export type Action =
   | "bold" | "italic" | "underline" | "superscript" | "subscript" | "undo" | "redo"
-  | "cite" | "xref" | "save" | "find" | "replace"
+  | "cite" | "xref" | "save" | "find" | "replace" | "newArticle" | "openProject"
   // listed and reserved, not built yet (phase 1 V1 and phase 2)
   | "comment" | "suggestions" | "palette";
 
 /** Actions that work today; the others show "coming later" in Settings. */
-export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace"];
+export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject"];
 /** Actions that act on the text, run by the editor when it has the focus. */
 export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref"];
 
@@ -20,12 +20,13 @@ const COMMON: Partial<Record<Action, string>> = {
   cite: "Mod-Shift-c", xref: "Mod-Shift-r", comment: "Mod-Shift-m", suggestions: "Mod-Shift-e", palette: "Mod-Shift-p",
 };
 export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
-  // as Word in Spanish: N(egrita), K (cursiva), S(ubrayado), G(uardar), B(uscar), L (reemplazar)
-  "word-es": { ...COMMON, bold: "Mod-n", italic: "Mod-k", underline: "Mod-s", save: "Mod-g", find: "Mod-b", replace: "Mod-l" } as Record<Action, string>,
-  international: { ...COMMON, bold: "Mod-b", italic: "Mod-i", underline: "Mod-u", save: "Mod-s", find: "Mod-f", replace: "Mod-h" } as Record<Action, string>,
+  // as Word in Spanish: N(egrita), K (cursiva), S(ubrayado), G(uardar), B(uscar), L (reemplazar),
+  // U (nuevo), A(brir); in the text, Ctrl+A still selects everything (record 0048)
+  "word-es": { ...COMMON, bold: "Mod-n", italic: "Mod-k", underline: "Mod-s", save: "Mod-g", find: "Mod-b", replace: "Mod-l", newArticle: "Mod-u", openProject: "Mod-a" } as Record<Action, string>,
+  international: { ...COMMON, bold: "Mod-b", italic: "Mod-i", underline: "Mod-u", save: "Mod-s", find: "Mod-f", replace: "Mod-h", newArticle: "Mod-n", openProject: "Mod-o" } as Record<Action, string>,
 };
 /** Order of the actions in the table of Settings. */
-export const ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
+export const ACTIONS: readonly Action[] = ["newArticle", "openProject", "bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
 
 /**
  * Keys that open the web view's own tools: its find bar (which searches the whole window,

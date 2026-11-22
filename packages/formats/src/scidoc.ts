@@ -274,7 +274,7 @@ const envelopeCommon = {
 
 const docDefs = {
   BodyDoc: Strict({ type: Type.Literal("doc"), content: Type.Array(Type.Ref("Body")) }),
-  AbstractDoc: Strict({ type: Type.Literal("doc"), content: Type.Array(Type.Ref("AbstractSection"), { minItems: 1 }) }),
+  AbstractDoc: Strict({ type: Type.Literal("doc"), content: Type.Array(Type.Ref("AbstractSection"), { description: "One section per language; none for an article without abstract (a letter, record 0048)." }) }),
   CompositeDoc: Strict({
     type: Type.Literal("doc"),
     content: Type.Array(Type.Union([Type.Ref("AbstractPart"), Type.Ref("Body"), Type.Ref("TablePart"), Type.Ref("FigurePart")])),

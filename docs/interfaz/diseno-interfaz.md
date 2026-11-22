@@ -4,7 +4,7 @@
 - fuera los recortes, los envíos anteriores y la aprobación de la versión final por los coautores;
 - la hoja de envío queda marcada «más adelante»;
 - la cinta va a todo el ancho bajo la barra de título, con color del texto y resaltado;
-- «Ajustes» es un menú propio (decisiones del usuario del 22/11, ficha 0044).
+- La barra de título va en el verde azulado del programa, con menús e iconos en blanco, y los botones de la barra de vistas son cuadrados de ese color. «Ajustes» es un engranaje en la barra de título, a la izquierda de Exportar, sin menú propio; «Guardar ahora» es un disquete al principio de la cinta (decisiones del usuario del 22/11, fichas 0044 y 0048).
 
 La maqueta está en un lienzo de diseño con diez láminas: [Interfaz de SciDesk](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x). Es privada, solo la ves tú. En el lienzo puedes comentar sobre cada lámina, cambiar textos y probar otros colores de acento en la lámina de estilo.
 

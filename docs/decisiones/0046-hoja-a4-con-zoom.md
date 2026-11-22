@@ -1,7 +1,7 @@
 # 0046. La hoja del editor es un A4 con zoom al ancho
 
 - **Fecha:** 22/11/2026
-- **Estado:** aceptada (decisión del usuario del 22/11/2026, al probar la ventana).
+- **Estado:** aceptada (decisión del usuario del 22/11/2026, al probar la ventana). La hoja continua y el zoom mínimo del 50 % los cambia la ficha 0049: páginas A4, varias por fila al alejar, zoom desde el 20 % y anclado.
 - **Pregunta del plan:** fase 1, editor (PLAN.md 5.2); propuesta de interfaz, sección 4.1.
 
 ## Qué se decide

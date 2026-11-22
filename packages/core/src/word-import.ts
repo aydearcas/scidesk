@@ -335,7 +335,8 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
     if (abstractLevel !== null) {
       if (KEYWORDS.test(it.text)) {
         const words = it.text.replace(KEYWORDS, "").replace(/\.\s*$/, "").split(/\s*[;,]\s*/).filter(Boolean);
-        abstract.push({ type: "keywords", attrs: { id: newId("b") }, content: words.map((w) => ({ type: "keyword", content: [{ type: "text", text: w }] })) });
+        // "Palabras clave:" alone (a new article's empty line) gives one empty keyword
+        abstract.push({ type: "keywords", attrs: { id: newId("b") }, content: words.length ? words.map((w) => ({ type: "keyword", content: [{ type: "text", text: w }] })) : [{ type: "keyword" }] });
         return;
       }
       abstract.push(block("paragraph", it));

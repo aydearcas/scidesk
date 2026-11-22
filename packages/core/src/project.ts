@@ -6,6 +6,8 @@ import {
   type JournalProfileFile, type PMNode, type PeopleFile,
 } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
+import { articleDocs } from "./new-article.ts";
+import { REUMATOLOGIA_CLINICA } from "./resources.ts";
 
 export interface ArticleData {
   folder: string;
@@ -102,32 +104,33 @@ export async function saveJson(project: Project, path: string, value: unknown) {
 }
 
 const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-const paragraph = (text: string, lang: string | null = null): PMNode => ({ type: "paragraph", attrs: { id: newId("b"), lang }, content: text ? [{ type: "text", text }] : undefined });
 
-/** Headings of a new article: IMRaD, or a letter's single body (record 0015). */
-const HEADINGS: Record<string, [string, string][]> = {
-  es: [["Introducción", "introduction"], ["Métodos", "methods"], ["Resultados", "results"], ["Discusión", "discussion"], ["Bibliografía", "references"]],
-  en: [["Introduction", "introduction"], ["Methods", "methods"], ["Results", "results"], ["Discussion", "discussion"], ["References", "references"]],
-};
-const LETTER_HEADINGS: Record<string, [string, string][]> = { es: [["Bibliografía", "references"]], en: [["References", "references"]] };
+export interface ArticleCreateOptions {
+  title: string;
+  lang?: string;
+  articleType?: string;
+  /** Other languages of the title, the abstract and the keywords. */
+  translations?: string[];
+  /** The target journal: its profile is copied to resources/journals/ (with its own style, if it has one). */
+  journal?: JournalProfileFile | null;
+  /** CSL id of the citation style; by default the journal's, or Reumatología Clínica's. */
+  citationStyle?: string;
+}
 
 /** The files of a new article, by path in the project (validated before they are written). */
-function articleFiles(id: string, folder: string, opts: { title: string; lang: string; articleType: string }): Record<string, unknown> {
-  const { lang } = opts;
-  const headings = (opts.articleType === "letter" ? LETTER_HEADINGS : HEADINGS)[lang] ?? HEADINGS.en;
-  const body: PMNode[] = [{ type: "title", attrs: { id: newId("b"), lang }, content: [{ type: "text", text: opts.title }] }];
-  if (opts.articleType === "letter") body.push(paragraph(""));
-  for (const [text, role] of headings) {
-    body.push({ type: "heading", attrs: { id: newId("b"), level: 1, role, lang: null }, content: [{ type: "text", text }] });
-    if (role !== "references") body.push(paragraph(""));
-  }
-  const doc = (documentType: string, content: PMNode[]) => ({ schemaVersion: 1, documentType, lang, doc: { type: "doc", content }, changes: {}, comments: {} });
+function articleFiles(id: string, folder: string, opts: ArticleCreateOptions): Record<string, unknown> {
+  const lang = opts.lang ?? "es";
+  const articleType = opts.articleType ?? "original";
+  const translations = (opts.translations ?? []).filter((l) => l !== lang);
+  const { body, abstract } = articleDocs({ title: opts.title, lang, translations, articleType, journal: opts.journal });
+  const doc = (documentType: string, d: PMNode) => ({ schemaVersion: 1, documentType, lang, doc: d, changes: {}, comments: {} });
   const base = `articles/${folder}`;
+  const style = opts.citationStyle ?? opts.journal?.citationStyle.value.id ?? REUMATOLOGIA_CLINICA;
   return {
-    [`${base}/article.json`]: { schemaVersion: 1, id, articleType: opts.articleType, lang, translations: [], journal: null, citationStyle: { id: "http://www.zotero.org/styles/reumatologia-clinica-scidesk-prototype" }, referenceTermsLang: null, ignoredWarnings: [] },
+    [`${base}/article.json`]: { schemaVersion: 1, id, articleType, lang, translations, journal: opts.journal?.id ?? null, citationStyle: { id: style }, referenceTermsLang: null, ignoredWarnings: [] },
     [`${base}/authors.json`]: { schemaVersion: 1, authors: [] },
     [`${base}/manuscript/article.scidoc`]: doc("article", body),
-    [`${base}/manuscript/abstract.scidoc`]: doc("abstract", [{ type: "abstractSection", attrs: { id: newId("b"), lang }, content: [paragraph("")] }]),
+    [`${base}/manuscript/abstract.scidoc`]: doc("abstract", abstract),
   };
 }
 
@@ -139,17 +142,27 @@ async function writeValidated(fs: ProjectFs, files: Record<string, unknown>) {
   for (const [p, v] of Object.entries(files)) await fs.write(p, stableStringify(v));
 }
 
-/** A new project with one article: what the "new article" wizard creates (IMRaD, minimal). */
-export async function createProject(fs: ProjectFs, opts: { name: string; fileName: string; title: string; lang?: string }) {
+/**
+ * A new project with one article: what the "new article" wizard creates (record 0048). The
+ * journal's profile goes to resources/journals/ and its own style next to it, read with
+ * `readStyle` (the bundled file of the same name).
+ */
+export async function createProject(fs: ProjectFs, opts: ArticleCreateOptions & { name: string; fileName: string; readStyle?: (file: string) => Promise<string> }) {
   if ((await fs.list("")).length) throw new Error("the folder is not empty");
-  const lang = opts.lang ?? "es";
   const articleId = newId("a");
+  const journal = opts.journal ? { [`resources/journals/${opts.journal.id}.json`]: opts.journal } : {};
   await writeValidated(fs, {
     [`${opts.fileName}.scidesk`]: { format: "scidesk-project", schemaVersion: 1, id: crypto.randomUUID(), name: opts.name, created: now(), articles: [{ id: articleId, folder: "main" }], library: { mode: "own" } },
     "references/library.json": { schemaVersion: 1, references: [] },
     "people/people.json": { schemaVersion: 1, affiliations: [], people: [] },
-    ...articleFiles(articleId, "main", { title: opts.title, lang, articleType: "original" }),
+    ...journal,
+    ...articleFiles(articleId, "main", opts),
   });
+  const own = opts.journal?.citationStyle.value.file;
+  if (own) {
+    if (!opts.readStyle) throw new Error(`the journal's own style ${own} needs readStyle`);
+    await fs.write(`resources/journals/${own}`, await opts.readStyle(own.replace(/^styles\//, "")));
+  }
   return loadProject(fs);
 }
 
@@ -158,11 +171,11 @@ export async function createProject(fs: ProjectFs, opts: { name: string; fileNam
  * project's library and directory of people in common. The manifest is written last, so a
  * failure leaves the project as it was. Gives the project loaded again.
  */
-export async function addArticle(project: Project, opts: { folder: string; title: string; lang?: string; articleType?: string }): Promise<Project> {
+export async function addArticle(project: Project, opts: ArticleCreateOptions & { folder: string }): Promise<Project> {
   if (project.manifest.articles.some((a) => a.folder === opts.folder) || (await project.fs.list(`articles/${opts.folder}`)).length) throw new Error(`there is already an article in articles/${opts.folder}`);
   const id = newId("a");
   const manifest = { ...project.manifest, articles: [...project.manifest.articles, { id, folder: opts.folder }] };
-  await writeValidated(project.fs, articleFiles(id, opts.folder, { title: opts.title, lang: opts.lang ?? "es", articleType: opts.articleType ?? "original" }));
+  await writeValidated(project.fs, articleFiles(id, opts.folder, opts));
   await writeValidated(project.fs, { [project.manifestPath]: manifest });
   return loadProject(project.fs);
 }

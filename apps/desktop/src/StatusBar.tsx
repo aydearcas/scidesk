@@ -7,9 +7,11 @@ import { LevelIcon } from "./icons.tsx";
 
 /** The zoom of the sheet: fit to the width or a percentage, with − and +. */
 export interface ZoomControl { value: number; fit: boolean; set: (z: "fit" | number) => void; step: (dir: 1 | -1) => void }
-const ZOOMS = [50, 75, 100, 125, 150, 175, 200, 250, 300];
+const ZOOMS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
 
-export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode }: {
+export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home }: {
+  /** On the start screen: the interface language and the shortcut scheme, changed from here (sheet 6). */
+  home?: { lang: string; scheme: string; onLang: () => void; onScheme: () => void };
   zoom: ZoomControl;
   fontMode: "journal" | "free";
   onFontMode: () => void;
@@ -25,7 +27,17 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
 }) {
   const { t, i18n } = useTranslation();
   const attribution = <span className="status-item attribution" title={t("attribution")}>{t("attribution")}</span>;
-  if (!project || !article) return <footer className="statusbar">{attribution}</footer>;
+  if (!project || !article) return (
+    <footer className="statusbar">
+      {home && <>
+        <button className="status-item" onClick={home.onLang} title={t("ui.home.changeLang")}>{t("ui.home.interface", { lang: home.lang })}</button>
+        <button className="status-item" onClick={home.onScheme} title={t("ui.home.changeScheme")}>{t("ui.home.shortcuts", { scheme: home.scheme })}</button>
+      </>}
+      <span className="spacer" />
+      <span className="status-item">SciDesk 0.1 · AGPL-3.0</span>
+      {attribution}
+    </footer>
+  );
   const a = article.article;
   const journal = a.journal ? project.journals.get(a.journal)?.journal.title.value ?? a.journal : null;
   const active = report?.warnings.filter((w) => !w.ignored) ?? [];
@@ -57,7 +69,7 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
       <span className="spacer" />
       <button className="status-item" onClick={onFontMode} title={t("ui.fontModeHint")} aria-pressed={fontMode === "free"}>{t(`ui.fontModes.${fontMode}`)}</button>
       <span className="status-zoom" role="group" aria-label={t("ui.zoom")}>
-        <button className="status-item" onClick={() => zoom.step(-1)} disabled={zoom.value <= 50} aria-label={t("ui.zoomOut")} title={t("ui.zoomOut")}>−</button>
+        <button className="status-item" onClick={() => zoom.step(-1)} disabled={zoom.value <= 20} aria-label={t("ui.zoomOut")} title={t("ui.zoomOut")}>−</button>
         <label className="status-item status-select" title={t("ui.zoomHint")}>
           <span aria-hidden="true">{zoom.fit ? t("ui.zoomFitN", { n: zoom.value }) : `${zoom.value} %`}</span>
           <select aria-label={t("ui.zoom")} value={zoom.fit ? "fit" : String(zoom.value)} onChange={(e) => zoom.set(e.target.value === "fit" ? "fit" : Number(e.target.value))}>

@@ -62,6 +62,9 @@ export async function nodeResources() {
   return bundledResources((file) => readFile(new URL(file, dir), "utf8"), async (file) => new Uint8Array(await readFile(new URL(file, dir))));
 }
 
+/** A bundled asset as text: "styles/x.csl", "journals/x.json" (Node only). */
+export const readAsset = (file: string) => readFile(new URL(file, new URL("../assets/", import.meta.url)), "utf8");
+
 /**
  * The app's local data folder of this computer, where the window keeps what never travels
  * with the project (R26): the same folder as Tauri's app_local_data_dir for the app's

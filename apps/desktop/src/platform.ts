@@ -2,6 +2,7 @@
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
 import { MemoryFs, bundledResources, type LocalStore, type ProjectFs, type TypstCompiler } from "@scidesk/core";
+import type { JournalProfileFile } from "@scidesk/formats";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
 import templateUrl from "@scidesk/core/assets/reference.dotx?url";
@@ -53,12 +54,67 @@ class TauriFs implements ProjectFs {
   }
 }
 
-/** Asks for a project folder (Tauri) and gives its file system and name. */
-export async function openFolder(): Promise<{ fs: ProjectFs; name: string } | null> {
-  const { invoke } = await import("@tauri-apps/api/core");
-  const name = (await invoke("open_project")) as string | null;
-  if (!name) return null;
-  return { fs: new TauriFs(invoke), name };
+/** A project folder the window works in: its file system, its name and where it is. */
+export interface Place { fs: ProjectFs; name: string; path: string }
+const tauri = async () => (await import("@tauri-apps/api/core")).invoke;
+const place = (invoke: Invoke, r: { name: string; path: string }): Place => ({ fs: new TauriFs(invoke), name: r.name, path: r.path });
+
+/** Asks for a project folder (Tauri) and gives its file system, name and path. */
+export async function openFolder(): Promise<Place | null> {
+  const invoke = await tauri();
+  const r = (await invoke("open_project")) as { name: string; path: string } | null;
+  return r ? place(invoke, r) : null;
+}
+
+/** Reopens a recent project's folder; "missing" if it is not there (not synchronised yet, or moved). */
+export async function openRecentFolder(path: string): Promise<Place | "missing"> {
+  const invoke = await tauri();
+  try {
+    return place(invoke, (await invoke("open_recent", { path })) as { name: string; path: string });
+  } catch (e) {
+    if (String(e) === "ENOENT") return "missing";
+    throw e;
+  }
+}
+export async function foldersExist(paths: string[]): Promise<boolean[]> {
+  return (await (await tauri())("recent_exists", { paths })) as boolean[];
+}
+export async function forgetFolder(path: string) { await (await tauri())("forget_folder", { path }); }
+
+// ---------------------------------------------------------------- a new project's folder (record 0048)
+
+/** The user's Documents folder, where the wizard proposes new projects. */
+export async function defaultLocation(): Promise<string | null> {
+  return (await (await tauri())("default_location")) as string | null;
+}
+/** Asks for the folder that will hold a new project. */
+export async function pickLocation(): Promise<string | null> {
+  return (await (await tauri())("pick_location")) as string | null;
+}
+/** Whether location/name can hold a new project. */
+export async function folderState(location: string, name: string): Promise<"free" | "empty" | "used" | "bad"> {
+  try { return (await (await tauri())("folder_state", { location, name })) as "free" | "empty" | "used"; } catch { return "bad"; }
+}
+/** Creates location/name (or takes it if empty) and opens it. */
+export async function createProjectFolder(location: string, name: string): Promise<Place> {
+  const invoke = await tauri();
+  return place(invoke, (await invoke("create_project_folder", { location, name })) as { name: string; path: string });
+}
+
+// ---------------------------------------------------------------- journals and styles for a new project
+
+const JOURNALS = import.meta.glob<string>("../../../packages/core/assets/journals/*.json", { query: "?raw", import: "default" });
+/** A journal profile included with SciDesk (assets/journals/<file>). */
+export async function journalProfile(file: string): Promise<JournalProfileFile> {
+  const load = Object.entries(JOURNALS).find(([k]) => k.endsWith(`/${file}`))?.[1];
+  if (!load) throw new Error(`journal profile ${file} not bundled`);
+  return JSON.parse(await load()) as JournalProfileFile;
+}
+/** A bundled style's text by its file name (a journal's own style is copied into the project). */
+export async function styleText(file: string): Promise<string> {
+  const load = Object.entries(STYLES).find(([k]) => k.endsWith(`/${file}`))?.[1];
+  if (!load) throw new Error(`style ${file} not bundled`);
+  return load();
 }
 
 export const memoryFs = () => new MemoryFs();

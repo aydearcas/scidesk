@@ -21,3 +21,4 @@ export * from "./checks.ts";
 export * from "./paste-table.ts";
 export * from "./outline.ts";
 export * from "./compose.ts";
+export * from "./new-article.ts";

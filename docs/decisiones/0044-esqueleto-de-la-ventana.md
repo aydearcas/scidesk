@@ -21,7 +21,7 @@ La ventana provisional (una barra de botones, el editor y tres pestañas a la de
   - la cinta queda en un sitio fijo, como en Word.
 
   Con otra pestaña delante (biblioteca, autores o ajustes), la cinta sigue a la vista con todos sus botones desactivados, para que la ventana no salte al cambiar de pestaña.
-- **Barra de vistas** de 72 px con icono y nombre (D2): **Artículo** y **Biblioteca**, que son las vistas que existen en la fase 1, y **Ajustes** abajo.
+- **Barra de vistas** de 72 px con icono y nombre (D2): **Artículo** y **Biblioteca**, que son las vistas que existen en la fase 1, y **Ajustes** abajo. *(Cambiado el 22/11/2026 por decisión del usuario, ficha 0048: Ajustes es un engranaje en la barra de título, a la izquierda de Exportar, y ya no hay menú «Ajustes».)*
 - **Navegador por conceptos** (D1), en el panel izquierdo de la vista Artículo:
   - **Manuscrito**, con las palabras frente al límite (en ámbar si lo pasan). Debajo:
     - el título, con sus caracteres solo si la revista los limita;

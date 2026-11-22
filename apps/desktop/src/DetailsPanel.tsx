@@ -6,8 +6,10 @@
 // alternative text, source and licence, the table's own tab, notes and removing a part.
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { summarize, type ArticleOutline, type Project, type Rendering, type ReferenceUse } from "@scidesk/core";
+import { summarize, type ArticleOutline, type CheckWarning, type OutlinePart, type Project, type Rendering, type ReferenceUse } from "@scidesk/core";
 import type { CiteItem } from "./QuickCite.tsx";
+import type { CellInfo } from "./TableTab.tsx";
+import { LevelIcon } from "./icons.tsx";
 
 export type Selected =
   | { kind: "citation"; id: string; items: CiteItem[] }
@@ -17,7 +19,13 @@ export type Selected =
   | { kind: "abstract"; lang: string }
   | { kind: "title-page" };
 
-export function DetailsPanel({ selected, project, folder, outline, rendering, uses, onEditCitation, onGoCitation, onGoPart, onGoBlock, onOpenReference, onExportTitlePage, onOpenAuthors, partAttrs, onSetPartAttrs, onOpenTableTab, onRemovePart, onAddNote }: {
+export function DetailsPanel({ selected, project, folder, outline, rendering, uses, onEditCitation, onGoCitation, onGoPart, onGoBlock, onOpenReference, onExportTitlePage, onOpenAuthors, partAttrs, onSetPartAttrs, onOpenTableTab, onRemovePart, onAddNote, cells, warnings, onGoWarning, onWarningCorrect }: {
+  /** The cells selected in the table on screen (the manuscript's or the table's tab). */
+  cells: CellInfo | null;
+  /** The article's warnings, to show a table's own. */
+  warnings: CheckWarning[];
+  onGoWarning: (w: CheckWarning) => void;
+  onWarningCorrect: (w: CheckWarning) => void;
   onGoBlock: (block: string) => void;
   /** The attributes of a part as they are in the text now. */
   partAttrs: (id: string) => Record<string, unknown> | null;
@@ -95,6 +103,16 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
     const id = selected.kind === "part" ? selected.id : selected.target;
     const p = partOf(id);
     if (!p) return <div className="details empty-state"><p>{t("ui.xrefMissing")}</p></div>;
+    if (p.kind === "table" && p.shape) {
+      const art = project.articles.find((x) => x.folder === folder);
+      const profile = art?.article.journal ? project.journals.get(art.article.journal) : undefined;
+      const own = warnings.filter((w) => !w.ignored && (w.where?.path === p.src || (w.code === "uncited-table" && w.where?.block === p.id)));
+      return (
+        <TableDetails p={p} xref={selected.kind === "xref"} cells={cells?.tableId === p.id || cells?.tableId === null ? cells : null} warnings={own}
+          atEnd={profile?.manuscriptFormat?.tables?.value === "end"} onGoBlock={onGoBlock} onGoPart={onGoPart} onOpenTableTab={onOpenTableTab}
+          onRemovePart={onRemovePart} onGoWarning={onGoWarning} onWarningCorrect={onWarningCorrect} />
+      );
+    }
     return (
       <div className="details">
         <h3>{t(p.kind === "table" ? "ui.tableN" : "ui.figureN", { n: p.number })}</h3>
@@ -194,6 +212,74 @@ function FigureFields({ attrs, onSet }: { attrs: Record<string, unknown> | null;
       {field("alt", "ui.altText", true, t("ui.altHint"))}
       {field("credit", "ui.credit")}
       {field("license", "ui.license")}
+    </div>
+  );
+}
+
+/** A table's details (sheet 8): where it is cited, its size, notes and file, the cells selected, the widths, what the export does and its warnings. */
+function TableDetails({ p, xref, cells, warnings, atEnd, onGoBlock, onGoPart, onOpenTableTab, onRemovePart, onGoWarning, onWarningCorrect }: {
+  p: OutlinePart & { kind: "table" }; xref: boolean; cells: CellInfo | null; warnings: CheckWarning[]; atEnd: boolean;
+  onGoBlock: (block: string) => void; onGoPart: (id: string) => void; onOpenTableTab: (id: string) => void; onRemovePart: (id: string) => void;
+  onGoWarning: (w: CheckWarning) => void; onWarningCorrect: (w: CheckWarning) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const s = p.shape!;
+  const list = (items: string[]) => { try { return new Intl.ListFormat(i18n.language, { type: "conjunction" }).format(items); } catch { return items.join(", "); } };
+  const size = `${t("ui.tableInfo.columns", { count: s.columns })} · ${s.headerRows ? `${t("ui.tableInfo.headerRows", { count: s.headerRows })} ${i18n.language.startsWith("es") ? "y" : "and"} ${t("ui.tableInfo.dataRows", { count: s.dataRows })}` : `${t("ui.tableInfo.dataRows", { count: s.dataRows })}, ${t("ui.tableInfo.noHeader")}`}`;
+  const range = (a: number, b: number, one: string, many: string) => (a === b ? t(one, { a }) : t(many, { a, b }));
+  return (
+    <div className="details table-details">
+      <h3>{t("ui.tableN", { n: p.number })}</h3>
+      {xref && <p className="muted">{t("ui.xrefTo")}</p>}
+      <p className="muted small">{t("ui.tableInfo.numberFrom")}</p>
+      <dl className="props">
+        <dt>{t("ui.tableInfo.citedIn")}</dt>
+        <dd>{p.citedIn.length ? p.citedIn.map((c, i) => (
+          <span key={`${c.block}-${i}`}>{i > 0 && ", "}<button className="link" onClick={() => onGoBlock(c.block)}>{t("ui.tableInfo.paragraphN", { section: c.section ?? t("ui.tableInfo.beforeSections"), n: c.paragraph })}</button></span>
+        )) : <span className="warn-text">{t("ui.tableInfo.notCited")}</span>}</dd>
+        <dt>{t("ui.caption")}</dt><dd>{p.caption || <span className="muted">{t("ui.noCaption")}</span>}</dd>
+        <dt>{t("ui.tableInfo.size")}</dt><dd>{size}</dd>
+        <dt>{t("ui.notes")}</dt><dd>{s.specificNotes + s.generalNotes ? list([s.specificNotes ? t("ui.tableInfo.notesSpecific", { count: s.specificNotes }) : "", s.generalNotes ? t("ui.tableInfo.notesGeneral", { count: s.generalNotes }) : ""].filter(Boolean)) : t("ui.tableInfo.noNotes")}</dd>
+        <dt>{t("ui.file")}</dt><dd className="mono">{p.src}</dd>
+      </dl>
+      <h4>{t("ui.tableInfo.selected")}</h4>
+      {cells ? (
+        <p className="cells-line">
+          <span>{range(cells.rows[0], cells.rows[1], "ui.tableInfo.row", "ui.tableInfo.rows")}, {range(cells.cols[0], cells.cols[1], "ui.tableInfo.col", "ui.tableInfo.cols")}</span>
+          <span className="muted">{t(`ui.tableInfo.align.${cells.align ?? "left"}`)}</span>
+        </p>
+      ) : <p className="muted small">{t("ui.tableInfo.selectHint")}</p>}
+      <h4>{t("ui.tableInfo.widths")}</h4>
+      {s.widths ? <>
+        <div className="width-bar" aria-label={t("ui.tableInfo.widths")}>
+          {s.widths.map((w, i) => {
+            const on = cells && i + 1 >= cells.cols[0] && i + 1 <= cells.cols[1];
+            return <span key={i} className={on ? "on" : ""} style={{ flexGrow: w }} title={`${Math.round(w)} %`}>{Math.round(w)}</span>;
+          })}
+        </div>
+        <p className="muted small">{t("ui.tableInfo.widthsHint")}</p>
+      </> : <p className="muted small">{t("ui.tableInfo.noWidths")}</p>}
+      <h4>{t("ui.tableInfo.atExport")}</h4>
+      <p className="small">{[s.headerRows ? t("ui.tableInfo.repeatHeader") : "", atEnd ? t("ui.tableInfo.atEnd") : t("ui.tableInfo.inPlace")].filter(Boolean).join(" ")}</p>
+      {warnings.length > 0 && <>
+        <h4 className="review-head">{t("ui.tableInfo.worthChecking")} · {warnings.length}</h4>
+        <ul className="table-warnings">
+          {warnings.map((w) => (
+            <li key={w.id} className={`check ${w.level}`}>
+              <div className="check-text"><LevelIcon level={w.level} /><span>{t(`checks.${w.code}`, w.params as Record<string, string>)}</span></div>
+              <div className="check-actions">
+                {w.code !== "uncited-table" && <button className="btn" onClick={() => onGoWarning(w)}>{t("ui.goToText")}</button>}
+                <button className="btn quiet" onClick={() => onWarningCorrect(w)}>{t("ignoreAs.correct")}</button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>}
+      <div className="dialog-actions wrap">
+        <button className="btn" onClick={() => onGoPart(p.id)}>{t("ui.tableInfo.showInManuscript")}</button>
+        <button className="btn" onClick={() => onOpenTableTab(p.id)}>{t("ui.openInTab")}</button>
+        <button className="btn quiet" onClick={() => onRemovePart(p.id)}>{t("ui.removeFromText")}</button>
+      </div>
     </div>
   );
 }

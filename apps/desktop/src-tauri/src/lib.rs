@@ -42,15 +42,174 @@ fn root(state: &State<ProjectRoot>) -> Result<PathBuf, String> {
     state.0.lock().map_err(|e| e.to_string())?.clone().ok_or_else(|| "no project is open".to_string())
 }
 
-/// Asks for a folder and makes it the project root. Returns its name, or None if cancelled.
-#[tauri::command]
-async fn open_project(app: tauri::AppHandle, state: State<'_, ProjectRoot>) -> Result<Option<String>, String> {
-    let Some(picked) = app.dialog().file().blocking_pick_folder() else { return Ok(None) };
-    let path = picked.into_path().map_err(|e| e.to_string())?;
-    let path = fs::canonicalize(&path).map_err(|e| e.to_string())?;
+#[derive(serde::Serialize)]
+struct Opened {
+    name: String,
+    path: String,
+}
+
+/// A path as the user knows it (without Windows' "\\?\" prefix of canonical paths).
+fn shown(path: &Path) -> String {
+    path.to_string_lossy().trim_start_matches(r"\\?\").to_string()
+}
+
+fn opened(path: PathBuf, state: &State<'_, ProjectRoot>) -> Result<Opened, String> {
     let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let out = Opened { name, path: shown(&path) };
     *state.0.lock().map_err(|e| e.to_string())? = Some(path);
-    Ok(Some(name))
+    Ok(out)
+}
+
+/// Asks for a folder and makes it the project root. Returns its name and path, or None if cancelled.
+#[tauri::command]
+async fn open_project(app: tauri::AppHandle, state: State<'_, ProjectRoot>) -> Result<Option<Opened>, String> {
+    let Some(picked) = app.dialog().file().blocking_pick_folder() else { return Ok(None) };
+    let path = fs::canonicalize(picked.into_path().map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    trust(&app, &path)?;
+    opened(path, &state).map(Some)
+}
+
+// ---------------------------------------------------------------- folders the user chose (record 0048)
+//
+// The window can reopen a recent project, or create a project's folder, only in a folder the
+// user picked in the system dialog at some point (or in their Documents folder, the wizard's
+// default place). The list lives in this computer's app data under a name the local store
+// cannot write ("trusted folders.json" has a space), so the web view cannot add to it.
+
+const TRUSTED: &str = "trusted folders.json";
+
+fn trusted_list(app: &tauri::AppHandle) -> Vec<String> {
+    let Ok(root) = local_root(app) else { return Vec::new() };
+    fs::read_to_string(root.join(TRUSTED)).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default()
+}
+
+fn key(path: &Path) -> String {
+    shown(path).to_lowercase()
+}
+
+fn save_trusted(app: &tauri::AppHandle, list: &[String]) -> Result<(), String> {
+    write_atomic(&local_root(app)?.join(TRUSTED), serde_json::to_string(list).map_err(|e| e.to_string())?.as_bytes())
+}
+
+fn trust(app: &tauri::AppHandle, path: &Path) -> Result<(), String> {
+    let mut list = trusted_list(app);
+    let k = key(path);
+    if !list.contains(&k) {
+        list.push(k);
+        save_trusted(app, &list)?;
+    }
+    Ok(())
+}
+
+fn documents(app: &tauri::AppHandle) -> Option<PathBuf> {
+    app.path().document_dir().ok().map(|d| fs::canonicalize(&d).unwrap_or(d))
+}
+
+fn is_trusted(app: &tauri::AppHandle, path: &Path) -> bool {
+    let k = key(path);
+    trusted_list(app).contains(&k) || documents(app).map(|d| key(&d)) == Some(k)
+}
+
+/// The canonical form of a folder path from the window, if it is there.
+fn existing(path: &str) -> Option<PathBuf> {
+    fs::canonicalize(path).ok().filter(|p| p.is_dir())
+}
+
+/// A folder name for a new project: one plain segment that Windows and macOS accept.
+fn valid_folder_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 120
+        && name.trim() == name
+        && !name.ends_with('.')
+        && !name.chars().any(|c| c.is_control() || "<>:\"/\\|?*".contains(c))
+}
+
+/// Reopens a recent project. "ENOENT" when its folder is not there (a synchronised folder not
+/// yet downloaded, or moved), "not chosen" when the user never picked it.
+#[tauri::command]
+fn open_recent(app: tauri::AppHandle, state: State<'_, ProjectRoot>, path: String) -> Result<Opened, String> {
+    let Some(p) = existing(&path) else { return Err("ENOENT".into()) };
+    if !is_trusted(&app, &p) {
+        return Err("not chosen".into());
+    }
+    opened(p, &state)
+}
+
+/// For each recent folder, whether it is there now (a folder the user never chose is "not there":
+/// the window cannot probe the disk with it).
+#[tauri::command]
+fn recent_exists(app: tauri::AppHandle, paths: Vec<String>) -> Vec<bool> {
+    paths.iter().map(|p| existing(p).is_some_and(|d| is_trusted(&app, &d))).collect()
+}
+
+/// Where the wizard proposes new projects: the user's Documents folder.
+#[tauri::command]
+fn default_location(app: tauri::AppHandle) -> Option<String> {
+    documents(&app).map(|d| shown(&d))
+}
+
+/// Asks for the place of a new project (the folder that will hold it). None if cancelled.
+#[tauri::command]
+async fn pick_location(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let Some(picked) = app.dialog().file().blocking_pick_folder() else { return Ok(None) };
+    let path = fs::canonicalize(picked.into_path().map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    trust(&app, &path)?;
+    Ok(Some(shown(&path)))
+}
+
+/// Whether `<location>/<name>` can hold a new project: "free" (not there), "empty" or "used".
+/// Only in a place the user chose.
+#[tauri::command]
+fn folder_state(app: tauri::AppHandle, location: String, name: String) -> Result<String, String> {
+    match existing(&location) {
+        Some(parent) if is_trusted(&app, &parent) => state_of(&location, &name),
+        _ => Err("not chosen".into()),
+    }
+}
+
+fn state_of(location: &str, name: &str) -> Result<String, String> {
+    if !valid_folder_name(name) {
+        return Err("bad name".into());
+    }
+    let p = Path::new(location).join(name);
+    Ok(match fs::read_dir(&p) {
+        Ok(mut entries) => if entries.next().is_none() { "empty" } else { "used" },
+        Err(_) if !p.exists() => "free",
+        Err(_) => "used",
+    }
+    .into())
+}
+
+/// Creates `<location>/<name>` (or takes it if it is empty) and makes it the project root.
+#[tauri::command]
+fn create_project_folder(app: tauri::AppHandle, state: State<'_, ProjectRoot>, location: String, name: String) -> Result<Opened, String> {
+    if !valid_folder_name(&name) {
+        return Err("bad name".into());
+    }
+    let Some(parent) = existing(&location) else { return Err("ENOENT".into()) };
+    if !is_trusted(&app, &parent) {
+        return Err("not chosen".into());
+    }
+    let dir = parent.join(&name);
+    match fs::read_dir(&dir) {
+        Ok(mut entries) => {
+            if entries.next().is_some() {
+                return Err("the folder is not empty".into());
+            }
+        }
+        Err(_) => fs::create_dir(&dir).map_err(|e| e.to_string())?,
+    }
+    let dir = fs::canonicalize(&dir).map_err(|e| e.to_string())?;
+    trust(&app, &dir)?;
+    opened(dir, &state)
+}
+
+/// Takes a folder off the list of places the user chose ("Remove from the list").
+#[tauri::command]
+fn forget_folder(app: tauri::AppHandle, path: String) -> Result<(), String> {
+    let k = existing(&path).map(|p| key(&p)).unwrap_or_else(|| path.to_lowercase());
+    let list: Vec<String> = trusted_list(&app).into_iter().filter(|x| *x != k).collect();
+    save_trusted(&app, &list)
 }
 
 /// The bytes of a file; the error "ENOENT" if it does not exist.
@@ -205,7 +364,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
-        .invoke_handler(tauri::generate_handler![open_project, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf])
+        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }
@@ -221,6 +380,33 @@ mod tests {
             assert!(resolve(root, bad).is_err(), "{bad}");
         }
         assert_eq!(resolve(root, "articles/main/article.json").unwrap(), root.join("articles/main/article.json"));
+    }
+
+    #[test]
+    fn folder_names_are_one_plain_segment() {
+        for bad in ["", " x", "x ", "a/b", "a\\b", "..", ".", "x.", "a:b", "a*b", "a?b", "a|b", "<a>", "a\"b", "a\u{1}b"] {
+            assert!(!valid_folder_name(bad), "{bad:?}");
+        }
+        for good in ["remision-ar", "Remisión sostenida", "cohorte (2026)", "a.b"] {
+            assert!(valid_folder_name(good), "{good}");
+        }
+    }
+
+    #[test]
+    fn the_trusted_list_is_out_of_the_local_store() {
+        assert!(local_path(Path::new("/data"), TRUSTED).is_err());
+    }
+
+    #[test]
+    fn a_new_folder_is_free_empty_or_used() {
+        let dir = tempfile::tempdir().unwrap();
+        let loc = dir.path().to_string_lossy().to_string();
+        assert_eq!(state_of(&loc, "nuevo").unwrap(), "free");
+        fs::create_dir(dir.path().join("nuevo")).unwrap();
+        assert_eq!(state_of(&loc, "nuevo").unwrap(), "empty");
+        write_atomic(&dir.path().join("nuevo/x.txt"), b"x").unwrap();
+        assert_eq!(state_of(&loc, "nuevo").unwrap(), "used");
+        assert!(state_of(&loc, "../x").is_err());
     }
 
     #[test]

@@ -1,4 +1,4 @@
-// The editor's toolbar, one row (design proposal 4.3, record 0044): undo and redo, paragraph
+// The editor's toolbar, one row (design proposal 4.3, record 0044): save now, undo and redo, paragraph
 // style, bold, italic, underline, superscript, subscript, font colour and highlight with
 // Word's colours (record 0043), and the insertions: citation, cross-reference, table,
 // figure and special character. Bold and italic read N and K in "Word en español", as in
@@ -27,7 +27,10 @@ export const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36];
 const DOC_FONT = "Calibri";
 const DOC_SIZE = 12;
 
-export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled, freeFonts, onAdapt }: {
+export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled, freeFonts, onAdapt, onSave, saveState }: {
+  /** Save now (Ctrl+G or Ctrl+S): it works in every tab, as the menu and the shortcut do. */
+  onSave: () => void;
+  saveState: { dirty: boolean; saving: boolean; lastSaved: Date | null };
   /** The free font mode (record 0047): font, size and "Adapt to the journal". */
   freeFonts: boolean;
   onAdapt: () => void;
@@ -69,6 +72,10 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
 
   return (
     <div className={`ribbon${freeFonts ? " free-fonts" : ""}`} role="toolbar" aria-label={t("ui.ribbon")}>
+      <button className={`tool save-tool${saveState.dirty ? " dirty" : ""}`} onMouseDown={keep} onClick={onSave} disabled={saveState.saving} aria-label={t("ui.saveNow")}
+        title={`${tip(t("ui.saveNow"), "save")} · ${saveState.saving ? t("saving") : saveState.dirty ? t("unsaved") : saveState.lastSaved ? t("savedAt", { time: saveState.lastSaved.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" }) }) : t("saved")}`}>
+        <Icon name="save" size={21} />{saveState.dirty && <span className="unsaved-dot" aria-hidden="true" />}
+      </button>
       <button className="tool" title={tip(t("ui.undo"), "undo")} aria-label={t("ui.undo")} onMouseDown={keep} disabled={disabled || !s.canUndo} onClick={() => editor.chain().focus().undo().run()}><Icon name="undo" /></button>
       <button className="tool" title={tip(t("ui.redo"), "redo")} aria-label={t("ui.redo")} onMouseDown={keep} disabled={disabled || !s.canRedo} onClick={() => editor.chain().focus().redo().run()}><Icon name="redo" /></button>
       <span className="tool-sep" />

@@ -4,20 +4,21 @@
 // bar. All the work (open, write, cite, save, export, import a copy, paste from Word,
 // autosave and recovery) is the vertical slice's and later records', unchanged.
 import { EditorContent, useEditor } from "@tiptap/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   addEmptyTable, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources,
+  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { closeHistory } from "@tiptap/pm/history";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, deleteColumn, deleteRow, isInTable, mergeCells, splitCell, toggleHeaderRow } from "@tiptap/pm/tables";
 import { newId, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { citationLabels, extensions, findStep, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels, xrefLabels } from "./editor.ts";
 import { FindBar } from "./FindBar.tsx";
 import { addNote, blockInsertPos, clearImages, partAround, partContext, placed, relabel, setAlign, setPartAttrs } from "./parts.ts";
-import { TableTabView, type TableCommand } from "./TableTab.tsx";
+import { cellInfo, TableTabView, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
 import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
@@ -34,7 +35,10 @@ import { SettingsView } from "./SettingsView.tsx";
 import { StatusBar } from "./StatusBar.tsx";
 import { actionFor, BROWSER_KEYS, comboOf, EDITOR_ACTIONS, plainKeyOf, SCHEMES, shortcutLabel, type Action } from "./shortcuts.ts";
 import { effectiveScheme, useSettings } from "./settings.ts";
-import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
+import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inTauri, localStore, memoryFs, openFolder, openRecentFolder, previewFs, resources, styleText, typstCompiler } from "./platform.ts";
+import { Home, shortPath } from "./Home.tsx";
+import { NewArticle, type NewArticleChoice } from "./NewArticle.tsx";
+import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, updateRecentArticle, type RecentArticle, type RecentProject } from "./recent.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -45,10 +49,18 @@ const BODY = "manuscript/article.scidoc";
 const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
-/** The sheet is A4: 21 cm wide, in CSS px. Zoom goes from 50 % to 300 %; "fit" fills the width of the desk. */
+/** The sheet is A4: 21 cm wide, in CSS px. Zoom goes from 20 % (several pages side by side, record 0049) to 300 %; "fit" fills the width of the desk. */
 const A4_PX = (210 / 25.4) * 96;
-export const ZOOM_STEPS = [50, 75, 100, 125, 150, 175, 200, 250, 300];
-const clampZoom = (z: number) => Math.round(Math.min(300, Math.max(50, z)));
+export const ZOOM_STEPS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
+export const MIN_ZOOM = 20;
+const clampZoom = (z: number) => Math.round(Math.min(300, Math.max(MIN_ZOOM, z)));
+/**
+ * Pages (record 0049) need CSS columns that wrap into rows (column-height, column-wrap):
+ * Chromium, so WebView2 in Windows. Elsewhere (WebKit, for now) the sheet stays continuous.
+ */
+const PAGED = typeof CSS !== "undefined" && CSS.supports("column-wrap", "wrap") && CSS.supports("column-height", "1px");
+/** Grey space between two sheets, in CSS px (not zoomed, as in Word). */
+const SHEET_GAP = 16;
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 type CenterTab = `doc:${string}` | `table:${string}` | "library" | "authors" | "settings";
@@ -89,7 +101,8 @@ export function App() {
   const [finding, setFinding] = useState<{ replace: boolean; focus: number } | null>(null);
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   // every message replaces the previous one, with its file link or none
-  const setMessage = (text: string, file: { url: string; name: string } | null = null) => { setMessageState(text); setDownload(file); };
+  const [messageAction, setMessageAction] = useState<{ label: string; run: () => void } | null>(null);
+  const setMessage = (text: string, file: { url: string; name: string } | null = null, action: { label: string; run: () => void } | null = null) => { setMessageState(text); setDownload(file); setMessageAction(action); };
   const refsInput = useRef<HTMLInputElement>(null);
   const figureInput = useRef<HTMLInputElement>(null);
   const [libraryVersion, setLibraryVersion] = useState(0);
@@ -112,6 +125,16 @@ export function App() {
   const [authorsDirty, setAuthorsDirty] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [showSections, setShowSections] = useState(false);
+  // the start screen (record 0048): where the open project is, the recent projects, the wizard
+  const place = useRef<string | null>(null);
+  const rounds = useRef(new Map<string, RecentArticle["round"]>());
+  const [recent, setRecent] = useState<RecentProject[]>([]);
+  const [missing, setMissing] = useState<Set<string>>(new Set());
+  const [wizard, setWizard] = useState(false);
+  // the table cells selected (Details, sheet 8), and what each paste from Word kept and dropped
+  const [cells, setCells] = useState<CellInfo | null>(null);
+  const [pasteNotices, setPasteNotices] = useState<Map<string, PasteNotice>>(new Map());
+  const lastPaste = useRef<{ doc: unknown; tables: string[] } | null>(null);
   const recovery = useRef<Recovery | null>(null);
   // edits counted, so that a save that ran while typing does not mark newer text as saved
   const editVersion = useRef(0);
@@ -164,10 +187,12 @@ export function App() {
       setUseSites(sites);
       setUses(new Map([...sites].map(([id, u]) => [id, u.length])));
       // the checks, with what is on screen (record 0041)
-      setReport(checkArticle(project, article.folder, live));
+      const rep = checkArticle(project, article.folder, live);
+      setReport(rep);
       // the navigator, and the places of tables and figures with their numbers
       const o = articleOutline(project, article.folder, live);
       setOutline(o);
+      if (place.current) void localStore().then((st) => updateRecentArticle(st, place.current!, summaryOf(project, article, rep.counts.main, rep.limits.words, o.title?.text ?? ""))).catch(() => {});
       // a reference left in the text whose file is missing
       partInfo.clear();
       doc.content?.forEach((n) => {
@@ -196,6 +221,7 @@ export function App() {
     const dom = editor.view.dom;
     const down = () => { pointerInEditor.current = true; };
     const onSelection = () => {
+      setCells(cellInfo(editor.state));
       const sel = editor.state.selection;
       let next: Selected | null = null;
       let atom = false;
@@ -253,13 +279,15 @@ export function App() {
     return c.doc;
   }, []);
   // the texts of the parts follow the interface language
+  useEffect(() => { document.documentElement.style.setProperty("--ph-title", JSON.stringify(t("ui.titlePlaceholder"))); }, [t]);
   useEffect(() => {
     partContext.uncited = t("ui.notCitedFlag");
     partContext.noImage = (path) => t("ui.noImage", { path });
     if (editor) relabel(editor.view);
   }, [editor, t]);
 
-  const show = useCallback(async (p: Project) => {
+  const show = useCallback(async (p: Project, where: string | null = null) => {
+    place.current = where;
     setProject(p);
     setProposals(null);
     setError("");
@@ -277,10 +305,28 @@ export function App() {
     dirtySince.current = null;
     setLastSaved(null);
     // work that never reached the disk the last time the project was open
-    const rec = new Recovery(await localStore(), p);
+    const store = await localStore();
+    const rec = new Recovery(store, p);
     recovery.current = rec;
     setRecoveries((await rec.pending()).pending);
-  }, [loadDoc, composed]);
+    // first in the recent projects of this computer, with a summary of each article
+    rounds.current.clear();
+    if (where) {
+      const articles: RecentArticle[] = [];
+      for (const a of p.articles) {
+        rounds.current.set(a.folder, await roundOf(p, a.folder));
+        const r = checkArticle(p, a.folder);
+        articles.push(summaryOf(p, a, r.counts.main, r.limits.words, savedTitle(a)));
+      }
+      await rememberProject(store, { path: where, id: p.manifest.id, name: p.manifest.name, articles }).catch(() => {});
+    }
+  }, [loadDoc, composed]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** What the start screen shows of an article. */
+  const summaryOf = (p: Project, a: ArticleData, words: number, limit: number | undefined, title: string): RecentArticle => ({
+    folder: a.folder, title, articleType: a.article.articleType, words, limit: limit ?? null,
+    journal: a.article.journal ? p.journals.get(a.article.journal)?.journal.title.value ?? a.article.journal : null,
+    round: rounds.current.get(a.folder) ?? null,
+  });
   useEffect(() => { void recompute(); }, [project, recompute]);
 
   const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {
@@ -359,25 +405,104 @@ export function App() {
   const openDemo = run(async () => {
     if (opening.current) return;
     opening.current = true;
-    try { await show(await createDemoProject(inTauri ? memoryFs() : previewFs(true), "corte-vertical", { letter: true, parts: true })); } finally { opening.current = false; }
+    try { await show(await createDemoProject(inTauri ? memoryFs() : previewFs(true), "corte-vertical", { letter: true, parts: true }), inTauri ? null : PREVIEW_PLACE); } finally { opening.current = false; }
   });
-  const reopenPreview = run(async () => show(await loadProject(previewFs(false))));
+  const reopenPreview = run(async () => show(await loadProject(previewFs(false)), PREVIEW_PLACE));
   const wordInput = useRef<HTMLInputElement>(null);
   // a new project from a Word document: in the app, into an empty folder the user chooses
   const fromWord = run(async () => {
     const file = wordInput.current?.files?.[0];
     if (wordInput.current) wordInput.current.value = "";
     if (!file) return;
-    const target = inTauri ? (await openFolder())?.fs : memoryFs();
+    const target = inTauri ? await openFolder() : { fs: memoryFs(), path: null };
     if (!target) return;
-    const { project: p, report } = await projectFromWord(target, new Uint8Array(await file.arrayBuffer()), { fileName: file.name });
-    await show(p);
+    const { project: p, report } = await projectFromWord(target.fs, new Uint8Array(await file.arrayBuffer()), { fileName: file.name });
+    await show(p, target.path);
     setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${report.warnings.join("; ")}` : ""));
   });
   const open = run(async () => {
+    if (!inTauri) return;
+    if (dirty) await save();
     const r = await openFolder();
-    if (r) await show(await loadProject(r.fs));
+    if (r) await show(await loadProject(r.fs), r.path);
   });
+
+  // ---------------------------------------------------------------- the start screen (record 0048)
+
+  const refreshRecent = useCallback(async () => {
+    const list = await loadRecent(await localStore());
+    setRecent(list);
+    const folders = list.filter((r) => r.path !== PREVIEW_PLACE);
+    const there = inTauri && folders.length ? await foldersExist(folders.map((r) => r.path)).catch(() => folders.map(() => true)) : [];
+    const gone = new Set(folders.filter((_, i) => inTauri && !there[i]).map((r) => r.path));
+    if (!inTauri) for (const r of folders) gone.add(r.path); // a folder cannot be opened from the browser preview
+    if (list.some((r) => r.path === PREVIEW_PLACE) && !hasPreviewProject()) gone.add(PREVIEW_PLACE);
+    setMissing(gone);
+  }, []);
+  useEffect(() => { if (!project) void refreshRecent(); }, [project, refreshRecent]);
+  const openRecent = run(async (r: RecentProject) => {
+    if (r.path === PREVIEW_PLACE) { await show(await loadProject(previewFs(false)), PREVIEW_PLACE); return; }
+    const found = await openRecentFolder(r.path);
+    if (found === "missing") { setMissing((m) => new Set(m).add(r.path)); setMessage(t("ui.home.missingNow", { name: r.name })); return; }
+    await show(await loadProject(found.fs), found.path);
+  });
+  const locateRecent = run(async (r: RecentProject) => {
+    const found = await openFolder();
+    if (!found) return;
+    const p = await loadProject(found.fs);
+    // the same project somewhere else: it takes the old entry's place
+    if (!r.id || r.id === p.manifest.id) await forgetRecent(await localStore(), r.path);
+    else setMessage(t("ui.home.locatedOther", { name: p.manifest.name, old: r.name }));
+    await show(p, found.path);
+  });
+  const forgetRecentProject = run(async (r: RecentProject) => {
+    await forgetRecent(await localStore(), r.path);
+    if (inTauri && r.path !== PREVIEW_PLACE) await forgetFolder(r.path).catch(() => {});
+    await refreshRecent();
+  });
+  const closeProject = run(async () => {
+    if (!project) return;
+    if (dirty) await save();
+    place.current = null;
+    recovery.current = null;
+    editorStates.current.clear();
+    setProject(null);
+    setTabs((ts) => ts.filter((k) => k === "settings"));
+    setTab("doc:");
+    setActiveFolder(null);
+    setReport(null);
+    setOutline(null);
+    setRendering(null);
+    setProposals(null);
+    setRecoveries([]);
+    setSelected(null);
+  });
+  const newArticle = run(async () => {
+    if (project && dirty) await save();
+    setWizard(true);
+  });
+  /** What the wizard chose: the folder, the project, and the references from a file. */
+  const createArticle = async (c: NewArticleChoice) => {
+    const target = inTauri ? await createProjectFolder(c.location!, c.folder) : { fs: previewFs(true), path: PREVIEW_PLACE, name: c.folder };
+    let p = await createProject(target.fs, {
+      name: c.title.slice(0, 80), fileName: c.folder, title: c.title, lang: c.lang, translations: c.translations, articleType: c.articleType,
+      journal: c.profile, citationStyle: c.citationStyle, readStyle: styleText,
+    });
+    const where = target.path === PREVIEW_PLACE ? t("ui.home.previewPlace") : shortPath(target.path);
+    let note = t("ui.wizard.created", { path: where });
+    let failed = "";
+    if (c.references) {
+      try {
+        const r = await importReferences(p, { name: c.references.name, text: await c.references.text() });
+        note = t("ui.wizard.createdRefs", { path: where, added: r.added.length, duplicates: r.duplicates.length });
+        p = await loadProject(target.fs);
+      } catch (e) { failed = e instanceof Error ? e.message : String(e); }
+    }
+    setWizard(false);
+    await show(p, target.path);
+    setMessage(note);
+    if (failed) setError(failed);
+  };
 
   // ---------------------------------------------------------------- tabs and panels
 
@@ -597,23 +722,81 @@ export function App() {
       // the tables' files first (each saved and valid), then everything inserted in one step
       const content: ({ kind: "html"; html: string } | { kind: "node"; node: object })[] = [];
       let tables = 0;
+      const pasted: { id: string; path: string; part: PMNode }[] = [];
       for (const s of segments) {
         if (s.kind === "html") { content.push(s); continue; }
         const { part, warnings: w } = tablePartFromPaste(s.table);
         const { path } = await addTablePart(project, article.folder, part);
         warnings.push(...w);
         content.push({ kind: "node", node: placed(part, path) });
+        pasted.push({ id: String(part.attrs!.id), path, part });
         tables++;
       }
       // inside a table, a figure or the abstract, the pasted tables go after it
       const at = blockInsertPos(editor.state);
-      let chain = editor.chain().focus();
+      // the paste is a step of its own in the undo history: "Undo the paste" (and Ctrl+Z) never
+      // takes with it what was typed just before (ProseMirror joins edits less than 500 ms apart)
+      let chain = editor.chain().focus().command(({ tr }) => { closeHistory(tr); return true; });
       if (at !== null) chain = chain.insertContentAt(at, { type: "paragraph" }).setTextSelection(at + 1);
       for (const c of content) chain = chain.insertContent(c.kind === "html" ? c.html : (c.node as never));
       chain.run();
-      setMessage(t("pastedTables", { count: tables }) + (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${[...new Set(warnings)].join("; ")}` : ""));
+      // what each table kept and dropped, shown in its tab with "Undo the paste" (sheet 8)
+      lastPaste.current = { doc: editor.state.doc, tables: pasted.map((x) => x.id) };
+      const dropped = droppedFormatting(html);
+      setPasteNotices((m) => {
+        const next = new Map(m);
+        for (const x of pasted) next.set(x.id, { tables: pasted.map((y) => y.id), number: null, path: x.path, kept: keptOf(x.part), dropped });
+        return next;
+      });
+      const extra = (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${[...new Set(warnings)].join("; ")}` : "");
+      setMessage(`${t("ui.pasteNotice.toast", { count: tables })}${dropped ? `. ${t("ui.pasteNotice.dropped")} ${dropped}` : ""}${extra}`, null, { label: t("ui.pasteNotice.undo"), run: () => undoPaste(pasted.map((x) => x.id)) });
     })();
     return true;
+  };
+  /** What a pasted table kept, in words: caption, header rows, merged cells, alignment, widths, notes. */
+  const keptOf = (part: PMNode) => {
+    const s = tableShape(part);
+    const items = [
+      s.captioned ? t("ui.pasteNotice.caption") : "",
+      s.headerRows ? t("ui.pasteNotice.headerRows", { count: s.headerRows }) : "",
+      s.merged ? t("ui.pasteNotice.merged", { count: s.merged }) : "",
+      s.aligned ? t("ui.pasteNotice.alignment") : "",
+      s.widths ? t("ui.pasteNotice.widths") : "",
+      s.specificNotes ? t("ui.pasteNotice.notes", { count: s.specificNotes }) : "",
+      s.generalNotes ? t("ui.pasteNotice.generalNotes", { count: s.generalNotes }) : "",
+    ].filter(Boolean);
+    try { return new Intl.ListFormat(i18n.language, { type: "conjunction" }).format(items); } catch { return items.join(", "); }
+  };
+  /** The formatting of Word's HTML that a table of SciDesk does not keep (record 0022): shading, vertical borders, fonts. */
+  const droppedFormatting = (all: string) => {
+    // only the tables: Word's <style> before them names fonts (Cambria Math…) that no cell uses
+    const at = all.search(/<table\b/i);
+    const html = at >= 0 ? all.slice(at) : "";
+    const items: string[] = [];
+    if (/(background(-color)?\s*:\s*(?!transparent|white|#fff(fff)?\b|auto|none)[^;"']+|mso-shading|bgcolor=)/i.test(html)) items.push(t("ui.pasteNotice.shading"));
+    if (/border-(left|right)\s*:\s*(?!none)[^;"']*(solid|windowtext|\dpt)/i.test(html)) items.push(t("ui.pasteNotice.borders"));
+    const font = /font-family\s*:\s*(?:&quot;|["'])?([^;"',&]+)/i.exec(html)?.[1]?.trim();
+    if (font) items.push(t("ui.pasteNotice.font", { font }));
+    if (!items.length) return "";
+    let text = items.join(", ");
+    try { text = new Intl.ListFormat(i18n.language, { type: "conjunction" }).format(items); } catch { /* the plain list */ }
+    return text + t("ui.pasteNotice.journalFormat");
+  };
+  /**
+   * Undo the paste: Ctrl+Z's step if nothing changed since; otherwise the pasted tables leave
+   * the text. Their files stay, as for any table taken out of the text (rule 4, record 0021).
+   */
+  const undoPaste = (ids: string[]) => {
+    if (!editor) return;
+    if (lastPaste.current && lastPaste.current.doc === editor.state.doc && ids.every((id) => lastPaste.current!.tables.includes(id))) {
+      editor.commands.undo();
+      setMessage(t("ui.pasteNotice.undone"));
+    } else {
+      for (const id of ids) removePart(id);
+      setMessage(t("ui.pasteNotice.undoneRemoved"));
+    }
+    lastPaste.current = null;
+    setPasteNotices((m) => { const next = new Map(m); for (const id of ids) next.delete(id); return next; });
   };
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
   const removeReference = async (id: string) => {
@@ -684,6 +867,14 @@ export function App() {
     if (e.key === "Escape" && finding && !document.querySelector(".overlay, .context-menu, .menu-list")) { e.preventDefault(); setFinding(null); editor?.commands.focus(); return; }
     // not the web view's own find bar or print dialog, which act on the whole window (record 0044)
     if (!action) { if (BROWSER_KEYS.includes(combo ?? plain ?? "")) e.preventDefault(); return; }
+    // new and open (record 0048), but not over the wizard, nor Ctrl+A in a text field
+    if (action === "newArticle" || action === "openProject") {
+      const field = e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable=true]");
+      if (wizard || (field && action === "openProject")) return;
+      e.preventDefault();
+      if (action === "newArticle") void newArticle(); else void open();
+      return;
+    }
     if (action === "save") { e.preventDefault(); void run(save)(); }
     else if (action === "cite" && project && !citing) { e.preventDefault(); openQuickCite(); }
     else if (action === "xref" && project) { e.preventDefault(); openXref(); }
@@ -715,33 +906,116 @@ export function App() {
     return () => ro.disconnect();
   }, [project]);
   const zoom = settings.zoom === "fit" ? fitZoom : settings.zoom;
-  useEffect(() => { document.documentElement.style.setProperty("--zoom", String(zoom / 100)); }, [zoom]);
-  const setZoom = (z: "fit" | number) => updateSettings({ zoom: z === "fit" ? "fit" : clampZoom(z) });
+  // pages as in Word (the user's request, record 0049): A4 sheets, and as many side by side as
+  // fit in the desk when zooming out (1, 2, 3…); the browser splits the text into the pages
+  const [deskWidth, setDeskWidth] = useState(0);
+  useEffect(() => {
+    const desk = deskRef.current;
+    if (!desk) return;
+    const measure = () => { const st = getComputedStyle(desk); setDeskWidth(desk.clientWidth - parseFloat(st.paddingLeft) - parseFloat(st.paddingRight)); };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(desk);
+    return () => ro.disconnect();
+  }, [project]);
+  const perRow = PAGED ? Math.max(1, Math.min(6, Math.floor((deskWidth + SHEET_GAP) / ((A4_PX * zoom) / 100 + SHEET_GAP)))) : 1;
+  /**
+   * Zoom keeps still what is under the pointer (Ctrl + wheel) or at the centre of the desk
+   * (buttons, menu): the text position there is noted before and scrolled back after.
+   */
+  const zoomAnchor = useRef<{ x: number; y: number; pos: number | null; before: { left: number; top: number } | null; rx: number; ry: number } | null>(null);
+  const noteZoomAnchor = (clientX?: number, clientY?: number) => {
+    const desk = deskRef.current;
+    if (!desk || !editor) return;
+    const r = desk.getBoundingClientRect();
+    const x = clientX ?? r.left + desk.clientWidth / 2;
+    const y = clientY ?? r.top + desk.clientHeight / 2;
+    const at = editor.view.posAtCoords({ left: x, top: y });
+    let before: { left: number; top: number } | null = null;
+    try { before = at ? editor.view.coordsAtPos(at.pos) : null; } catch { before = null; }
+    zoomAnchor.current = { x, y, pos: at?.pos ?? null, before, rx: (desk.scrollLeft + x - r.left) / Math.max(1, desk.scrollWidth), ry: (desk.scrollTop + y - r.top) / Math.max(1, desk.scrollHeight) };
+  };
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty("--zoom", String(zoom / 100));
+    const a = zoomAnchor.current;
+    zoomAnchor.current = null;
+    const desk = deskRef.current;
+    if (!a || !desk || !editor) return;
+    let after: { left: number; top: number } | null = null;
+    try { after = a.pos !== null && a.before ? editor.view.coordsAtPos(a.pos) : null; } catch { after = null; }
+    if (after && a.before) {
+      desk.scrollLeft += after.left - a.before.left;
+      desk.scrollTop += after.top - a.before.top;
+    } else {
+      const r = desk.getBoundingClientRect();
+      desk.scrollLeft = a.rx * desk.scrollWidth - (a.x - r.left);
+      desk.scrollTop = a.ry * desk.scrollHeight - (a.y - r.top);
+    }
+  }, [zoom, perRow, editor]);
+  const setZoom = (z: "fit" | number) => { noteZoomAnchor(); updateSettings({ zoom: z === "fit" ? "fit" : clampZoom(z) }); };
   const zoomStep = (dir: 1 | -1) => {
-    const next = dir > 0 ? ZOOM_STEPS.find((s) => s > zoom) ?? 300 : [...ZOOM_STEPS].reverse().find((s) => s < zoom) ?? 50;
+    const next = dir > 0 ? ZOOM_STEPS.find((s) => s > zoom) ?? 300 : [...ZOOM_STEPS].reverse().find((s) => s < zoom) ?? MIN_ZOOM;
     setZoom(next);
   };
   // Ctrl + wheel zooms the sheet, as in Word (not the whole window, which the web view would do)
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
+  const noteZoomAnchorRef = useRef(noteZoomAnchor);
+  noteZoomAnchorRef.current = noteZoomAnchor;
   useEffect(() => {
     const desk = deskRef.current;
     if (!desk) return;
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
+      noteZoomAnchorRef.current(e.clientX, e.clientY);
       updateSettings({ zoom: clampZoom(zoomRef.current + (e.deltaY < 0 ? 10 : -10)) });
     };
     desk.addEventListener("wheel", onWheel, { passive: false });
     return () => desk.removeEventListener("wheel", onWheel);
   }, [project, updateSettings]);
+  const pagesRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLSpanElement>(null);
+  const [pageCount, setPageCount] = useState(1);
+  /** The sheet (row and column of the grid) a point of the window falls in. */
+  const sheetAt = (clientX: number, clientY: number) => {
+    const box = pagesRef.current?.getBoundingClientRect();
+    if (!box) return null;
+    const w = (A4_PX * zoom) / 100 + SHEET_GAP;
+    const h = (A4_PX * 297 / 210 * zoom) / 100 + SHEET_GAP;
+    return { col: Math.floor((clientX - box.left) / w), row: Math.floor((clientY - box.top) / h) };
+  };
+  useLayoutEffect(() => {
+    if (!PAGED || !editor) return;
+    const count = () => {
+      const end = endRef.current?.getBoundingClientRect();
+      const at = end ? sheetAt(end.left + 1, end.top + 1) : null;
+      setPageCount(at ? Math.max(1, at.row * perRow + Math.min(at.col, perRow - 1) + 1) : 1);
+    };
+    count();
+    editor.on("update", count);
+    const ro = new ResizeObserver(count);
+    if (pagesRef.current) ro.observe(pagesRef.current);
+    return () => { editor.off("update", count); ro.disconnect(); };
+  });
   // a click on the empty part of the sheet, below the text, puts the cursor at the end
   const onPaperDown = (e: React.MouseEvent) => {
     if (!editor || e.button !== 0) return;
     const t = e.target as HTMLElement;
     if (!t.classList.contains("paper") && !t.classList.contains("page")) return;
-    const pm = editor.view.dom.getBoundingClientRect();
-    if (e.clientY < pm.bottom) return;
+    if (PAGED) {
+      // only after the end of the text: on its page below it, or on a later page
+      const end = endRef.current?.getBoundingClientRect();
+      const at = sheetAt(e.clientX, e.clientY);
+      const last = end ? sheetAt(end.left + 1, end.top + 1) : null;
+      if (!at || !last || !end) return;
+      const page = at.row * perRow + at.col;
+      const lastPage = last.row * perRow + last.col;
+      if (page < lastPage || (page === lastPage && e.clientY < end.top)) return;
+    } else {
+      const pm = editor.view.dom.getBoundingClientRect();
+      if (e.clientY < pm.bottom) return;
+    }
     e.preventDefault();
     editor.commands.focus("end");
   };
@@ -757,10 +1031,13 @@ export function App() {
   const noProject = !project;
   const menus: MenuDef[] = [
     { id: "file", label: t("ui.menu.file"), items: [
-      ...(inTauri ? [{ label: t("open"), onSelect: () => void open() }] : []),
+      { label: t("ui.newArticle"), shortcut: keys("newArticle"), onSelect: () => void newArticle() },
+      { label: t("fromWord"), onSelect: () => wordInput.current?.click() },
+      ...(inTauri ? [{ label: t("ui.openFolder"), shortcut: keys("openProject"), onSelect: () => void open() }] : []),
+      "-",
       { label: t("demo"), onSelect: () => void openDemo() },
       ...(!inTauri && hasPreviewProject() ? [{ label: t("reopenPreview"), onSelect: () => void reopenPreview() }] : []),
-      { label: t("fromWord"), onSelect: () => wordInput.current?.click() },
+      { label: t("ui.closeProject"), onSelect: () => void closeProject(), disabled: noProject },
       "-",
       { label: t("ui.saveNow"), shortcut: keys("save"), onSelect: () => void run(save)(), disabled: noProject },
       "-",
@@ -807,16 +1084,7 @@ export function App() {
       { label: t("ui.zoomFit"), checked: settings.zoom === "fit", onSelect: () => setZoom("fit") },
       { label: "100 %", checked: settings.zoom === 100, onSelect: () => setZoom(100) },
       { label: t("ui.zoomIn"), onSelect: () => zoomStep(1), disabled: zoom >= 300 },
-      { label: t("ui.zoomOut"), onSelect: () => zoomStep(-1), disabled: zoom <= 50 },
-    ] },
-    { id: "settings", label: t("ui.settings"), items: [
-      { label: t("ui.openSettings"), onSelect: () => openTab("settings") },
-      "-",
-      { label: "Español", checked: settings.lang === "es", onSelect: () => updateSettings({ lang: "es" }) },
-      { label: "English", checked: settings.lang === "en", onSelect: () => updateSettings({ lang: "en" }) },
-      "-",
-      { label: t("ui.schemes.word-es"), checked: scheme === "word-es", onSelect: () => updateSettings({ scheme: "word-es" }) },
-      { label: t("ui.schemes.international"), checked: scheme === "international", onSelect: () => updateSettings({ scheme: "international" }) },
+      { label: t("ui.zoomOut"), onSelect: () => zoomStep(-1), disabled: zoom <= MIN_ZOOM },
     ] },
     { id: "help", label: t("ui.menu.help"), items: [
       { label: t("ui.shortcutsHelp"), onSelect: () => openTab("settings") },
@@ -927,6 +1195,10 @@ export function App() {
           {project && <><span>{project.manifest.name}</span><Icon name="chevronRight" size={14} /><b>{titleText}</b></>}
         </span>
         {!inTauri && <span className="preview-badge" title={t("previewNote")}>{t("ui.browserPreview")}</span>}
+        {/* Settings at the top right, left of Export, with a gear (the user's choice, 22/11/2026) */}
+        <button className={`icon-button settings-button${tab === "settings" ? " on" : ""}`} aria-pressed={tab === "settings"} title={t("ui.settings")} aria-label={t("ui.settings")} onClick={() => openTab("settings")}>
+          <Icon name="settings" size={23} />
+        </button>
         <MenuButton id="export-button" label={t("ui.export.button")} className="btn primary export" items={exportItems} align="right">
           {t("ui.export.button")} <Icon name="chevronDown" size={14} />
         </MenuButton>
@@ -936,7 +1208,8 @@ export function App() {
       {project && editor && (
         <div className="ribbon-row">
           <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)}
-            freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()} />
+            freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()}
+            onSave={() => void run(save)()} saveState={{ dirty, saving, lastSaved }} />
         </div>
       )}
       <div className="workspace">
@@ -946,8 +1219,6 @@ export function App() {
               <Icon name={v === "article" ? "article" : "library"} size={20} /><span>{t(`ui.views.${v}`)}</span>
             </button>
           ))}
-          <span className="spacer" />
-          <button className={`view-button${tab === "settings" ? " active" : ""}`} onClick={() => openTab("settings")}><Icon name="settings" size={20} /><span>{t("ui.settings")}</span></button>
         </nav>
 
         {left && (
@@ -961,7 +1232,7 @@ export function App() {
         {left && <div className="resizer" role="separator" aria-orientation="vertical" aria-label={t("ui.leftPanel")} onPointerDown={drag("left")} />}
 
         <main className="center">
-          <div className="tabbar" role="tablist" aria-label={t("ui.openTabs")}>
+          <div className="tabbar" role="tablist" aria-label={t("ui.openTabs")} hidden={!project && !tabs.includes("settings")}>
             {(project ? tabs : tabs.filter((k) => k === "settings")).map((k) => (
               <div key={k} className={`tab${tab === k ? " active" : ""}`}>
                 <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : isTableTab(k) ? "table" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
@@ -979,7 +1250,15 @@ export function App() {
           {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
           <div className="tab-body manuscript-tab" hidden={!project || !isDoc(tab)}>
             <div className="desk" ref={deskRef}>
-              <div className="paper" onContextMenu={onContextMenu} onMouseDown={onPaperDown}>
+              <div className={PAGED ? "pages-wrap" : undefined} ref={pagesRef} style={PAGED ? ({ "--per-row": perRow } as React.CSSProperties) : undefined}>
+              {PAGED && (
+                <div className="sheets" aria-hidden="true">
+                  {Array.from({ length: pageCount }, (_, i) => (
+                    <div key={i} className="sheet" style={{ "--row": Math.floor(i / perRow), "--col": i % perRow } as React.CSSProperties}><span className="sheet-number">{i + 1}</span></div>
+                  ))}
+                </div>
+              )}
+              <div className={`paper${PAGED ? " paged" : ""}`} onContextMenu={onContextMenu} onMouseDown={onPaperDown}>
                 <EditorContent editor={editor} className="page" />
                 {rendering && rendering.bibliography.length > 0 && (
                   <section className="bibliography" aria-label={t("ui.bibliography")}>
@@ -994,6 +1273,8 @@ export function App() {
                     </ol>
                   </section>
                 )}
+                <span className="text-end" ref={endRef} />
+              </div>
               </div>
             </div>
             {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} />}
@@ -1005,7 +1286,10 @@ export function App() {
 
           {project && editor && tabs.filter(isTableTab).map((k) => (
             <div key={k} className="tab-body table-tab" hidden={tab !== k}>
-              <TableTabView editor={editor} id={k.slice(6)} title={tabLabel(k)} onGone={() => tableGone(k)} />
+              <TableTabView editor={editor} id={k.slice(6)} title={tabLabel(k)} onGone={() => tableGone(k)} onCells={setCells}
+                notice={(() => { const n = pasteNotices.get(k.slice(6)); return n ? { ...n, number: outline?.tables.find((x) => x.id === k.slice(6))?.number ?? null } : null; })()}
+                onUndoPaste={() => { const n = pasteNotices.get(k.slice(6)); if (n) undoPaste(n.tables); }}
+                onDismissNotice={() => setPasteNotices((m) => { const next = new Map(m); next.delete(k.slice(6)); return next; })} />
             </div>
           ))}
           {project && tab === "library" && (
@@ -1025,18 +1309,9 @@ export function App() {
 
           {!project && tab !== "settings" && (
             <div className="tab-body start">
-              <div className="start-card">
-                <h1>SciDesk</h1>
-                <p className="muted">{t("noProject")}</p>
-                <div className="start-actions">
-                  <button className="btn primary" onClick={() => void openDemo()}>{t("demo")}</button>
-                  <button className="btn" onClick={() => wordInput.current?.click()}>{t("fromWord")}</button>
-                  {inTauri && <button className="btn" onClick={() => void open()}>{t("open")}</button>}
-                  {!inTauri && hasPreviewProject() && <button className="btn" onClick={() => void reopenPreview()}>{t("reopenPreview")}</button>}
-                </div>
-                {!inTauri && <p className="muted small">{t("previewNote")}</p>}
-                <p className="muted small">{t("ui.startLater")}</p>
-              </div>
+              <Home recent={recent} missing={missing} canOpenFolder={inTauri} keys={{ newArticle: keys("newArticle"), openProject: keys("openProject") }}
+                onNew={() => void newArticle()} onFromWord={() => wordInput.current?.click()} onOpen={() => void open()} onDemo={() => void openDemo()}
+                onOpenRecent={(r) => void openRecent(r)} onLocate={(r) => void locateRecent(r)} onForget={(r) => void forgetRecentProject(r)} />
             </div>
           )}
         </main>
@@ -1062,23 +1337,27 @@ export function App() {
                   onAddNote={(id) => { goToPart(id); if (editor) { addNote(editor.state, editor.view.dispatch, "general"); editor.commands.focus(); } }}
                   onOpenReference={(id) => { setSelected({ kind: "reference", id }); }}
                   onExportTitlePage={() => void exportAs("title-page")()}
-                  onOpenAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }} />
+                  onOpenAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }}
+                  cells={cells} warnings={report?.warnings ?? []} onGoWarning={goTo} onWarningCorrect={(w) => void ignore(w, "correct", "")} />
               )}
             </div>
           </aside>
         )}
       </div>
 
+      {wizard && <NewArticle uiLang={i18n.language} onCancel={() => setWizard(false)} onCreate={createArticle} />}
       {message && (
         <div className="toast" role="status">
           <span>{message}{download && <> · <a href={download.url} download={download.name}><Icon name="download" size={14} /> {download.name}</a></>}</span>
+          {messageAction && <button className="btn small" onClick={() => { const a = messageAction; setMessage(""); a.run(); }}>{messageAction.label}</button>}
           <button className="icon-button" aria-label={t("ui.close")} onClick={() => setMessage("")}><Icon name="close" size={14} /></button>
         </div>
       )}
       <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
         onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }}
         zoom={{ value: zoom, fit: settings.zoom === "fit", set: setZoom, step: zoomStep }}
-        fontMode={settings.fontMode} onFontMode={() => updateSettings({ fontMode: settings.fontMode === "free" ? "journal" : "free" })} />
+        fontMode={settings.fontMode} onFontMode={() => updateSettings({ fontMode: settings.fontMode === "free" ? "journal" : "free" })}
+        home={{ lang: settings.lang === "es" ? "español" : "English", scheme: t(`ui.schemes.${scheme}`), onLang: () => updateSettings({ lang: settings.lang === "es" ? "en" : "es" }), onScheme: () => updateSettings({ scheme: scheme === "word-es" ? "international" : "word-es" }) }} />
 
       {/* hidden file inputs, opened from the menus and buttons */}
       <input ref={wordInput} type="file" accept=".docx" hidden onChange={() => void fromWord()} aria-label={t("fromWord")} />

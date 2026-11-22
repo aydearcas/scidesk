@@ -4,7 +4,7 @@ import type { PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
 import { createDemoProject } from "../src/demo.ts";
 import { loadProject } from "../src/project.ts";
-import { addEmptyTable, addFigure, articleOutline } from "../src/outline.ts";
+import { addEmptyTable, addFigure, articleOutline, tableShape } from "../src/outline.ts";
 import { checkArticle } from "../src/checks.ts";
 
 const PNG = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
@@ -29,7 +29,10 @@ describe("article outline", () => {
     const o = articleOutline(p, "main", { "manuscript/article.scidoc": body });
     expect(o.title?.text).toMatch(/^Actividad inflamatoria/);
     expect(o.tables.map((t) => [t.src, t.number, t.cited])).toEqual([["tables/tabla-2.scitable", 1, true], ["tables/tabla-1.scitable", 2, false]]);
-    expect(o.figures).toEqual([{ id: f1.ref.attrs!.id, src: "figures/figura-1.scifigure", number: 1, caption: "", cited: false, notes: 0, image: "figures/figura-1.png" }]);
+    expect(o.figures).toEqual([{ id: f1.ref.attrs!.id, src: "figures/figura-1.scifigure", number: 1, caption: "", cited: false, notes: 0, image: "figures/figura-1.png", citedIn: [] }]);
+    // where it is cited, and the shape of a table (sheet 8, record 0048)
+    expect(o.tables[0].citedIn).toEqual([{ block: "b-outline01", section: "Bibliografía", paragraph: 1 }]);
+    expect(o.tables[1].shape).toMatchObject({ columns: 2, headerRows: 1, dataRows: 2, merged: 0, widths: null, specificNotes: 0, generalNotes: 0, captioned: false });
     expect(o.abstract.map((a) => a.lang)).toEqual(["es"]);
     // the same numbers as the checks
     const r = checkArticle(p, "main", { "manuscript/article.scidoc": body });
@@ -45,6 +48,18 @@ describe("article outline", () => {
     await expect(addFigure(p, "main", { name: "graph.bmp", bytes: PNG })).rejects.toThrow(/PNG, JPEG/);
     await fs.write("articles/main/figures/figura-1.jpg", PNG);
     expect((await addFigure(p, "main", { name: "a.jpg", bytes: PNG })).path).toBe("figures/figura-2.scifigure");
+  });
+});
+
+describe("table shape", () => {
+  it("counts header and data rows, merged and aligned cells, and the two kinds of notes", async () => {
+    const p = await createDemoProject(new MemoryFs(), "demo", { parts: true });
+    const o = articleOutline(p, "main");
+    expect(o.tables[0].shape).toEqual({ columns: 2, headerRows: 1, dataRows: 3, merged: 0, aligned: 4, widths: [60, 40], specificNotes: 1, generalNotes: 1, captioned: true });
+    expect(o.tables[0].citedIn).toEqual([expect.objectContaining({ section: "Resultados", paragraph: 1 })]);
+    const cell = (colspan: number) => ({ type: "tableHeader", attrs: { colspan, rowspan: 1, align: null }, content: [{ type: "paragraph" }] });
+    expect(tableShape({ type: "tablePart", content: [{ type: "table", content: [{ type: "tableRow", content: [cell(2)] }, { type: "tableRow", content: [cell(1), cell(1)] }] }] }))
+      .toMatchObject({ columns: 2, headerRows: 2, dataRows: 0, merged: 1 });
   });
 });
 

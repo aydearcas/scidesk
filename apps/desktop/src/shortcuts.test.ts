@@ -14,6 +14,11 @@ describe("shortcut schemes", () => {
     expect(actionFor("international", comboOf(key("b")))).toBe("bold");
     expect(actionFor("international", comboOf(key("i")))).toBe("italic");
     expect(actionFor("international", comboOf(key("s")))).toBe("save");
+    // new and open as Word: Ctrl+U and Ctrl+A in Spanish, Ctrl+N and Ctrl+O otherwise (record 0048)
+    expect(actionFor("word-es", comboOf(key("u")))).toBe("newArticle");
+    expect(actionFor("word-es", comboOf(key("a")))).toBe("openProject");
+    expect(actionFor("international", comboOf(key("n")))).toBe("newArticle");
+    expect(actionFor("international", comboOf(key("o")))).toBe("openProject");
   });
 
   it("cite with Ctrl+Shift+C in both (D6)", () => {

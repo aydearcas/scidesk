@@ -4,10 +4,10 @@
       "additionalProperties": false,
       "properties": {
         "content": {
+          "description": "One section per language; none for an article without abstract (a letter, record 0048).",
           "items": {
             "$ref": "#/$defs/AbstractSection"
           },
-          "minItems": 1,
           "type": "array"
         },
         "type": {

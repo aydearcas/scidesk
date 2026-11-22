@@ -116,7 +116,7 @@ Esto corrige el ejemplo de PLAN.md 3.2, que guardaba `refs` como cadenas y envol
 
 ### 3.5 El resumen (`abstract.scidoc`)
 
-El `doc` del resumen contiene una `abstractSection {id, lang}` por idioma. Cada una lleva sus encabezados (con el `role` del apartado del resumen estructurado), sus párrafos y un bloque `keywords {id}` con un `keyword` por palabra clave. Así el recuento de palabras, el número de palabras clave y la comparación de cifras entre idiomas (R8) trabajan sobre la estructura y no sobre texto como «Palabras clave: …».
+El `doc` del resumen contiene una `abstractSection {id, lang}` por idioma. Cada una lleva sus encabezados (con el `role` del apartado del resumen estructurado), sus párrafos y un bloque `keywords {id}` con un `keyword` por palabra clave. Así el recuento de palabras, el número de palabras clave y la comparación de cifras entre idiomas (R8) trabajan sobre la estructura y no sobre texto como «Palabras clave: …». Un artículo sin resumen (una carta) tiene el `doc` sin ninguna sección (ficha 0048); entonces el documento compuesto no lleva `abstractPart`.
 
 ### 3.6 Documento compuesto
 
