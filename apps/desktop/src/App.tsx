@@ -7,7 +7,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addEmptyTable, addFigure, addTablePart, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addEmptyTable, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -45,6 +45,10 @@ const BODY = "manuscript/article.scidoc";
 const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
+/** The sheet is A4: 21 cm wide, in CSS px. Zoom goes from 50 % to 300 %; "fit" fills the width of the desk. */
+const A4_PX = (210 / 25.4) * 96;
+export const ZOOM_STEPS = [50, 75, 100, 125, 150, 175, 200, 250, 300];
+const clampZoom = (z: number) => Math.round(Math.min(300, Math.max(50, z)));
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 type CenterTab = `doc:${string}` | `table:${string}` | "library" | "authors" | "settings";
@@ -533,6 +537,23 @@ export function App() {
   });
   // a table or figure that left the text (its file was kept) comes back at the cursor
   const placeAgain = (path: string) => { insertPart(path); setMessage(t("ui.placedAgain", { path })); };
+  /**
+   * "Adapt to the journal" (record 0047): a fragment's own font and size are removed from the
+   * whole article in one step (Ctrl+Z undoes it), after saving and keeping a snapshot.
+   */
+  const adaptFonts = run(async () => {
+    if (!project || !article || !editor) return;
+    const types = [editor.schema.marks.fontFamily, editor.schema.marks.fontSize];
+    let count = 0;
+    editor.state.doc.descendants((n) => { if (n.isText && n.marks.some((m) => types.includes(m.type))) count++; });
+    if (!count) { setMessage(t("ui.adaptNothing")); return; }
+    await save();
+    const snap = await saveSnapshot(project, article.folder, t("ui.adaptSnapshot"));
+    const tr = editor.state.tr;
+    for (const type of types) tr.removeMark(0, tr.doc.content.size, type);
+    editor.view.dispatch(tr);
+    setMessage(t("ui.adapted", { count, snapshot: snap.id }));
+  });
   const removePart = (id: string) => {
     if (!editor) return;
     let at = -1;
@@ -675,6 +696,56 @@ export function App() {
     return () => window.removeEventListener("keydown", on);
   }, []);
 
+  // ---------------------------------------------------------------- zoom of the sheet
+
+  // "fit": the A4 sheet fills the width of the desk (Word's "page width"), between 50 and 200 %
+  const deskRef = useRef<HTMLDivElement>(null);
+  const [fitZoom, setFitZoom] = useState(100);
+  useEffect(() => {
+    const desk = deskRef.current;
+    if (!desk) return;
+    const measure = () => {
+      const style = getComputedStyle(desk);
+      const room = desk.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 2;
+      if (room > 0) setFitZoom(Math.floor(Math.min(200, Math.max(50, (room / A4_PX) * 100))));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(desk);
+    return () => ro.disconnect();
+  }, [project]);
+  const zoom = settings.zoom === "fit" ? fitZoom : settings.zoom;
+  useEffect(() => { document.documentElement.style.setProperty("--zoom", String(zoom / 100)); }, [zoom]);
+  const setZoom = (z: "fit" | number) => updateSettings({ zoom: z === "fit" ? "fit" : clampZoom(z) });
+  const zoomStep = (dir: 1 | -1) => {
+    const next = dir > 0 ? ZOOM_STEPS.find((s) => s > zoom) ?? 300 : [...ZOOM_STEPS].reverse().find((s) => s < zoom) ?? 50;
+    setZoom(next);
+  };
+  // Ctrl + wheel zooms the sheet, as in Word (not the whole window, which the web view would do)
+  const zoomRef = useRef(zoom);
+  zoomRef.current = zoom;
+  useEffect(() => {
+    const desk = deskRef.current;
+    if (!desk) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      updateSettings({ zoom: clampZoom(zoomRef.current + (e.deltaY < 0 ? 10 : -10)) });
+    };
+    desk.addEventListener("wheel", onWheel, { passive: false });
+    return () => desk.removeEventListener("wheel", onWheel);
+  }, [project, updateSettings]);
+  // a click on the empty part of the sheet, below the text, puts the cursor at the end
+  const onPaperDown = (e: React.MouseEvent) => {
+    if (!editor || e.button !== 0) return;
+    const t = e.target as HTMLElement;
+    if (!t.classList.contains("paper") && !t.classList.contains("page")) return;
+    const pm = editor.view.dom.getBoundingClientRect();
+    if (e.clientY < pm.bottom) return;
+    e.preventDefault();
+    editor.commands.focus("end");
+  };
+
   // ---------------------------------------------------------------- menus
 
   const exportItems: MenuEntry[] = [
@@ -729,6 +800,14 @@ export function App() {
       "-",
       { label: t("ui.leftPanel"), checked: settings.left, onSelect: () => updateSettings({ left: !settings.left }) },
       { label: t("ui.rightPanel"), checked: settings.right, onSelect: () => updateSettings({ right: !settings.right }) },
+      "-",
+      { label: t("ui.fontModes.journal"), checked: settings.fontMode === "journal", onSelect: () => updateSettings({ fontMode: "journal" }) },
+      { label: t("ui.fontModes.free"), checked: settings.fontMode === "free", onSelect: () => updateSettings({ fontMode: "free" }) },
+      "-",
+      { label: t("ui.zoomFit"), checked: settings.zoom === "fit", onSelect: () => setZoom("fit") },
+      { label: "100 %", checked: settings.zoom === 100, onSelect: () => setZoom(100) },
+      { label: t("ui.zoomIn"), onSelect: () => zoomStep(1), disabled: zoom >= 300 },
+      { label: t("ui.zoomOut"), onSelect: () => zoomStep(-1), disabled: zoom <= 50 },
     ] },
     { id: "settings", label: t("ui.settings"), items: [
       { label: t("ui.openSettings"), onSelect: () => openTab("settings") },
@@ -840,7 +919,7 @@ export function App() {
   };
 
   return (
-    <div className={`app${left ? " with-left" : ""}${right ? " with-right" : ""}${project ? " with-ribbon" : ""}`}>
+    <div className={`app${settings.fontMode === "journal" ? " fonts-journal" : ""}${left ? " with-left" : ""}${right ? " with-right" : ""}${project ? " with-ribbon" : ""}`}>
       <header className="titlebar">
         <span className="brand"><span className="brand-mark" aria-hidden="true">S</span>SciDesk</span>
         <MenuBar menus={menus} label={t("ui.menus")} />
@@ -856,7 +935,8 @@ export function App() {
       {/* the toolbar across the whole window; the side panels start under it (the user's choice, record 0044) */}
       {project && editor && (
         <div className="ribbon-row">
-          <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)} />
+          <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)}
+            freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()} />
         </div>
       )}
       <div className="workspace">
@@ -898,8 +978,8 @@ export function App() {
 
           {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
           <div className="tab-body manuscript-tab" hidden={!project || !isDoc(tab)}>
-            <div className="desk">
-              <div className="paper" onContextMenu={onContextMenu}>
+            <div className="desk" ref={deskRef}>
+              <div className="paper" onContextMenu={onContextMenu} onMouseDown={onPaperDown}>
                 <EditorContent editor={editor} className="page" />
                 {rendering && rendering.bibliography.length > 0 && (
                   <section className="bibliography" aria-label={t("ui.bibliography")}>
@@ -996,7 +1076,9 @@ export function App() {
         </div>
       )}
       <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
-        onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }} />
+        onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }}
+        zoom={{ value: zoom, fit: settings.zoom === "fit", set: setZoom, step: zoomStep }}
+        fontMode={settings.fontMode} onFontMode={() => updateSettings({ fontMode: settings.fontMode === "free" ? "journal" : "free" })} />
 
       {/* hidden file inputs, opened from the menus and buttons */}
       <input ref={wordInput} type="file" accept=".docx" hidden onChange={() => void fromWord()} aria-label={t("fromWord")} />

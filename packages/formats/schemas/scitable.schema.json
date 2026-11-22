@@ -742,6 +742,68 @@
       ],
       "type": "object"
     },
+    "FontFamily": {
+      "additionalProperties": false,
+      "description": "Font of a fragment, chosen in the free font mode (record 0047). The DOCX for coauthors carries it; the DOCX and PDF for the journal never do.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "family": {
+              "description": "Name of the font, as Word writes it in w:rFonts (\"Arial\", \"Times New Roman\").",
+              "maxLength": 64,
+              "minLength": 1,
+              "pattern": "^[^;{}<>\"\\\\]+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "family"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "fontFamily",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
+    "FontSize": {
+      "additionalProperties": false,
+      "description": "Size of a fragment, chosen in the free font mode (record 0047). The DOCX for coauthors carries it; the DOCX and PDF for the journal never do.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "size": {
+              "description": "Size in points, in half points as Word (w:sz).",
+              "maximum": 409,
+              "minimum": 1,
+              "multipleOf": 0.5,
+              "type": "number"
+            }
+          },
+          "required": [
+            "size"
+          ],
+          "type": "object"
+        },
+        "type": {
+          "const": "fontSize",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
+      ],
+      "type": "object"
+    },
     "HardBreak": {
       "additionalProperties": false,
       "description": "Line break inside a paragraph.",
@@ -2673,6 +2735,12 @@
         },
         {
           "$ref": "#/$defs/Highlight"
+        },
+        {
+          "$ref": "#/$defs/FontFamily"
+        },
+        {
+          "$ref": "#/$defs/FontSize"
         },
         {
           "$ref": "#/$defs/LangMark"

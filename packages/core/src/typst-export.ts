@@ -88,7 +88,8 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted, as in the DOCX
-      if (n.type === "text") out += wrap(typstEscape(n.text ?? ""), runFormat(n.marks));
+      // the PDF is for the journal: a fragment's own font and size are not carried (record 0047)
+      if (n.type === "text") { const { font: _f, size: _s, ...format } = runFormat(n.marks); out += wrap(typstEscape(n.text ?? ""), format); }
       else if (n.type === "hardBreak") out += "#linebreak()";
       else if (n.type === "citation") out += runs(rendering.citations.get(n.attrs!.id as string)?.runs ?? [{ text: "?" }]);
       else if (n.type === "xref") {

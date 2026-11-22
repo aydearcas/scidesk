@@ -341,6 +341,23 @@ const Highlight = Mark.create({
   renderHTML: ({ HTMLAttributes }) => ["mark", { "data-highlight": HTMLAttributes.color, class: `hl-${HTMLAttributes.color}` }, 0],
 });
 
+// Record 0047: a fragment's own font and size, used in the free font mode. Only SciDesk's own
+// spans are read back (copy and paste inside the editor): Word's pasted HTML has a font and
+// a size on every run, and its text takes the document's ("combinar formato", R23). In the
+// font mode adapted to the journal, the window's CSS shows them as the rest of the text.
+const FontFamily = Mark.create({
+  name: "fontFamily",
+  addAttributes: () => ({ family: { default: null, rendered: false } }),
+  parseHTML: () => [{ tag: "span[data-font-family]", getAttrs: (el) => { const f = (el as HTMLElement).dataset.fontFamily ?? ""; return /^[^;{}<>"\\]{1,64}$/.test(f) ? { family: f } : false; } }],
+  renderHTML: ({ mark }) => ["span", { "data-font-family": mark.attrs.family, class: "own-font", style: `font-family: "${mark.attrs.family}", var(--doc-font)` }, 0],
+});
+const FontSize = Mark.create({
+  name: "fontSize",
+  addAttributes: () => ({ size: { default: null, rendered: false } }),
+  parseHTML: () => [{ tag: "span[data-font-size]", getAttrs: (el) => { const n = Number((el as HTMLElement).dataset.fontSize); return n >= 1 && n <= 409 ? { size: Math.round(n * 2) / 2 } : false; } }],
+  renderHTML: ({ mark }) => ["span", { "data-font-size": String(mark.attrs.size), class: "own-font", style: `font-size: calc(${Number(mark.attrs.size)}pt * var(--zoom))` }, 0],
+});
+
 export const extensions = [
   ...partExtensions,
   SchemeKeys,
@@ -369,5 +386,7 @@ export const extensions = [
   Underline,
   TextColor,
   Highlight,
+  FontFamily,
+  FontSize,
   UndoRedo,
 ];

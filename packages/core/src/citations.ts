@@ -16,6 +16,8 @@ export interface Run {
   text: string; bold?: boolean; italic?: boolean; sup?: boolean; sub?: boolean;
   /** Record 0043: underline, colour of the text (#RRGGBB) and Word's highlight colour. */
   underline?: boolean; color?: string; highlight?: string;
+  /** Record 0047: the font and size of a fragment, in points (free font mode). */
+  font?: string; size?: number;
 }
 
 /** The marks of a text node as a run's format (the same in every export). */
@@ -29,6 +31,8 @@ export function runFormat(marks: { type: string; attrs?: Record<string, unknown>
     else if (m.type === "subscript") f.sub = true;
     else if (m.type === "textColor") f.color = String(m.attrs?.color);
     else if (m.type === "highlight") f.highlight = String(m.attrs?.color);
+    else if (m.type === "fontFamily") f.font = String(m.attrs?.family);
+    else if (m.type === "fontSize") f.size = Number(m.attrs?.size);
   }
   return f;
 }

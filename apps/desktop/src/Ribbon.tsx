@@ -20,7 +20,17 @@ export const SYMBOLS = ["±", "≤", "≥", "×", "µ", "°", "→", "–", "—
 /** Letters on the bold, italic and underline buttons in each scheme. */
 const LETTERS: Record<SchemeId, [string, string, string]> = { "word-es": ["N", "K", "S"], international: ["B", "I", "U"] };
 
-export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled }: {
+/** Fonts offered in the free font mode: Word's usual ones and Roboto (record 0011); the document's is the default. */
+export const FONTS = ["Arial", "Aptos", "Calibri", "Cambria", "Courier New", "Garamond", "Georgia", "Roboto", "Times New Roman", "Verdana"];
+export const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36];
+/** The document's font and size: the first option of each list, which removes a fragment's own (so they are not offered twice). */
+const DOC_FONT = "Calibri";
+const DOC_SIZE = 12;
+
+export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled, freeFonts, onAdapt }: {
+  /** The free font mode (record 0047): font, size and "Adapt to the journal". */
+  freeFonts: boolean;
+  onAdapt: () => void;
   editor: Editor;
   scheme: SchemeId;
   targets: { tables: OutlinePart[]; figures: OutlinePart[] };
@@ -37,6 +47,8 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
       bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline"),
       sup: e.isActive("superscript"), sub: e.isActive("subscript"),
       color: (e.getAttributes("textColor").color as string | undefined) ?? null,
+      font: (e.getAttributes("fontFamily").family as string | undefined) ?? "",
+      size: e.getAttributes("fontSize").size != null ? String(e.getAttributes("fontSize").size) : "",
       canUndo: e.can().undo(), canRedo: e.can().redo(),
       block: e.isActive("title") ? "title" : e.isActive("heading", { level: 1 }) ? "h1" : e.isActive("heading", { level: 2 }) ? "h2" : e.isActive("heading", { level: 3 }) ? "h3" : e.isActive("paragraph") ? "p" : "other",
     }),
@@ -56,7 +68,7 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
   };
 
   return (
-    <div className="ribbon" role="toolbar" aria-label={t("ui.ribbon")}>
+    <div className={`ribbon${freeFonts ? " free-fonts" : ""}`} role="toolbar" aria-label={t("ui.ribbon")}>
       <button className="tool" title={tip(t("ui.undo"), "undo")} aria-label={t("ui.undo")} onMouseDown={keep} disabled={disabled || !s.canUndo} onClick={() => editor.chain().focus().undo().run()}><Icon name="undo" /></button>
       <button className="tool" title={tip(t("ui.redo"), "redo")} aria-label={t("ui.redo")} onMouseDown={keep} disabled={disabled || !s.canRedo} onClick={() => editor.chain().focus().redo().run()}><Icon name="redo" /></button>
       <span className="tool-sep" />
@@ -68,6 +80,24 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
         <option value="h2">{t("ui.styles.h2")}</option>
         <option value="h3">{t("ui.styles.h3")}</option>
       </select>
+      {freeFonts && <>
+        <select className="font-family" aria-label={t("ui.font")} title={s.font ? t("ui.font") : t("ui.documentFont")} value={s.font} disabled={disabled}
+          onChange={(e) => { const v = e.target.value; const c = editor.chain().focus(); (v ? c.setMark("fontFamily", { family: v }) : c.unsetMark("fontFamily")).run(); }}>
+          {s.font && !FONTS.filter((f) => f !== DOC_FONT).includes(s.font) && <option value={s.font}>{s.font}</option>}
+          {/* the document's font in its place in the list: choosing it removes a fragment's own */}
+          {FONTS.map((f) => (f === DOC_FONT
+            ? <option key={f} value="" title={t("ui.documentFont")}>{t("ui.documentFontShort")}</option>
+            : <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>))}
+        </select>
+        <select className="font-size" aria-label={t("ui.fontSize")} title={s.size ? t("ui.fontSize") : t("ui.documentSize")} value={s.size} disabled={disabled}
+          onChange={(e) => { const v = e.target.value; const c = editor.chain().focus(); (v ? c.setMark("fontSize", { size: Number(v) }) : c.unsetMark("fontSize")).run(); }}>
+          {s.size && !SIZES.filter((n) => n !== DOC_SIZE).map(String).includes(s.size) && <option value={s.size}>{s.size}</option>}
+          {SIZES.map((n) => (n === DOC_SIZE
+            ? <option key={n} value="" title={t("ui.documentSize")}>{t("ui.documentSizeShort")}</option>
+            : <option key={n} value={String(n)}>{n.toLocaleString(i18n.language)}</option>))}
+        </select>
+        <button className="tool" title={`${t("ui.adaptFonts")}: ${t("ui.adaptFontsHint")}`} onMouseDown={keep} disabled={disabled} onClick={onAdapt} aria-label={t("ui.adaptFonts")}><Icon name="adapt" size={21} /></button>
+      </>}
       <span className="tool-sep" />
       {toggle("bold", s.bold, t("ui.bold"), "bold", <b>{b}</b>)}
       {toggle("italic", s.italic, t("ui.italic"), "italic", <i className="serif">{k}</i>)}

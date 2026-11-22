@@ -67,6 +67,8 @@ const markDefs = {
   Subscript: simpleMark("subscript", "Subscript."),
   TextColor: Strict({ type: Type.Literal("textColor"), attrs: Strict({ color: Type.String({ pattern: "^#[0-9A-F]{6}$", description: "Colour of the text, #RRGGBB in capitals (w:color)." }) }) }, { description: "Colour of the text (record 0043)." }),
   Highlight: Strict({ type: Type.Literal("highlight"), attrs: Strict({ color: enumOf(HIGHLIGHT_COLORS) }) }, { description: "Highlight, with one of Word's highlight colours (w:highlight, record 0043)." }),
+  FontFamily: Strict({ type: Type.Literal("fontFamily"), attrs: Strict({ family: Type.String({ minLength: 1, maxLength: 64, pattern: "^[^;{}<>\"\\\\]+$", description: "Name of the font, as Word writes it in w:rFonts (\"Arial\", \"Times New Roman\")." }) }) }, { description: "Font of a fragment, chosen in the free font mode (record 0047). The DOCX for coauthors carries it; the DOCX and PDF for the journal never do." }),
+  FontSize: Strict({ type: Type.Literal("fontSize"), attrs: Strict({ size: Type.Number({ minimum: 1, maximum: 409, multipleOf: 0.5, description: "Size in points, in half points as Word (w:sz)." }) }) }, { description: "Size of a fragment, chosen in the free font mode (record 0047). The DOCX for coauthors carries it; the DOCX and PDF for the journal never do." }),
   LangMark: Strict({ type: Type.Literal("lang"), attrs: Strict({ lang: Lang }) }, { description: "Language of a fragment inside a paragraph (spell checking, hyphenation, export)." }),
   Link: Strict({ type: Type.Literal("link"), attrs: Strict({ href: Type.String({ pattern: "^(https?://|mailto:)\\S+$" }) }) }, { description: "Hyperlink (http, https or mailto only)." }),
   CommentMark: Strict({ type: Type.Literal("comment"), attrs: Strict({ id: IdOf("cm") }) }, { description: "Text anchored to a comment of the `comments` registry." }),
@@ -84,7 +86,7 @@ const markDefs = {
   }, { description: "Tracked change of a node attribute (heading level, cell alignment...). A change of text format is a deletion plus an insertion of the same text with the same id." }),
   TextMark: Type.Union([
     Type.Ref("Bold"), Type.Ref("Italic"), Type.Ref("Underline"), Type.Ref("Superscript"), Type.Ref("Subscript"),
-    Type.Ref("TextColor"), Type.Ref("Highlight"), Type.Ref("LangMark"), Type.Ref("Link"), Type.Ref("CommentMark"),
+    Type.Ref("TextColor"), Type.Ref("Highlight"), Type.Ref("FontFamily"), Type.Ref("FontSize"), Type.Ref("LangMark"), Type.Ref("Link"), Type.Ref("CommentMark"),
     Type.Ref("Insertion"), Type.Ref("Deletion"), Type.Ref("Modification"),
   ]),
   /** Marks a node (block or inline atom) can carry: only tracked changes and comments. */

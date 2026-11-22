@@ -25,6 +25,13 @@ export function SettingsView({ settings, onChange }: { settings: Settings; onCha
         ))}
         <p className="muted small">{t("ui.schemeNote")}</p>
       </fieldset>
+      <fieldset className="setting">
+        <legend>{t("ui.fontMode")}</legend>
+        {(["journal", "free"] as const).map((m) => (
+          <label key={m} className="inline"><input type="radio" name="fontMode" checked={settings.fontMode === m} onChange={() => onChange({ fontMode: m })} />{t(`ui.fontModes.${m}`)}</label>
+        ))}
+        <p className="muted small">{t("ui.fontModeNote")}</p>
+      </fieldset>
       <table className="shortcut-table">
         <thead><tr><th>{t("ui.action")}</th>{schemes.map((s) => <th key={s} className={s === scheme ? "current" : ""}>{t(`ui.schemes.${s}`)}</th>)}</tr></thead>
         <tbody>

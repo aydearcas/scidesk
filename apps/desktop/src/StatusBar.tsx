@@ -5,7 +5,14 @@ import { useTranslation } from "react-i18next";
 import { BUNDLED_STYLES, type ArticleData, type CheckReport, type Project } from "@scidesk/core";
 import { LevelIcon } from "./icons.tsx";
 
-export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords }: {
+/** The zoom of the sheet: fit to the width or a percentage, with − and +. */
+export interface ZoomControl { value: number; fit: boolean; set: (z: "fit" | number) => void; step: (dir: 1 | -1) => void }
+const ZOOMS = [50, 75, 100, 125, 150, 175, 200, 250, 300];
+
+export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode }: {
+  zoom: ZoomControl;
+  fontMode: "journal" | "free";
+  onFontMode: () => void;
   project: Project | null;
   article: ArticleData | null;
   report: CheckReport | null;
@@ -48,6 +55,19 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
         <LevelIcon level="blocking" size={14} /> {t("ui.blockingCount", { count: blocking })} · <LevelIcon level="review" size={14} /> {t("ui.reviewCount", { count: review })}
       </button>
       <span className="spacer" />
+      <button className="status-item" onClick={onFontMode} title={t("ui.fontModeHint")} aria-pressed={fontMode === "free"}>{t(`ui.fontModes.${fontMode}`)}</button>
+      <span className="status-zoom" role="group" aria-label={t("ui.zoom")}>
+        <button className="status-item" onClick={() => zoom.step(-1)} disabled={zoom.value <= 50} aria-label={t("ui.zoomOut")} title={t("ui.zoomOut")}>−</button>
+        <label className="status-item status-select" title={t("ui.zoomHint")}>
+          <span aria-hidden="true">{zoom.fit ? t("ui.zoomFitN", { n: zoom.value }) : `${zoom.value} %`}</span>
+          <select aria-label={t("ui.zoom")} value={zoom.fit ? "fit" : String(zoom.value)} onChange={(e) => zoom.set(e.target.value === "fit" ? "fit" : Number(e.target.value))}>
+            <option value="fit">{t("ui.zoomFit")}</option>
+            {!zoom.fit && !ZOOMS.includes(zoom.value) && <option value={String(zoom.value)}>{zoom.value} %</option>}
+            {ZOOMS.map((z) => <option key={z} value={String(z)}>{z} %</option>)}
+          </select>
+        </label>
+        <button className="status-item" onClick={() => zoom.step(1)} disabled={zoom.value >= 300} aria-label={t("ui.zoomIn")} title={t("ui.zoomIn")}>+</button>
+      </span>
       <span className="status-item" aria-live="polite">{saving ? t("saving") : dirty ? t("unsaved") : time ? t("savedAt", { time }) : t("saved")}</span>
       {attribution}
     </footer>

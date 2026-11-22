@@ -100,7 +100,7 @@ Esto corrige el ejemplo de PLAN.md 3.2, que guardaba `refs` como cadenas y envol
 
 ### 3.3 Marcas
 
-- **Formato:** `bold`, `italic`, `underline`, `superscript`, `subscript`, `textColor` (`{ color: "#RRGGBB" }`) y `highlight` (`{ color }`, uno de los 16 colores de resaltado de Word), estos dos añadidos el 22/11/2026 (ficha 0043).
+- **Formato:** `bold`, `italic`, `underline`, `superscript`, `subscript`, `textColor` (`{ color: "#RRGGBB" }`) y `highlight` (`{ color }`, uno de los 16 colores de resaltado de Word), estos dos añadidos el 22/11/2026 (ficha 0043); `fontFamily` (`{ family }`, nombre de la fuente como en `w:rFonts`) y `fontSize` (`{ size }`, en puntos, de 1 a 409 en medios puntos), añadidos el 22/11/2026 para el modo de fuente libre (ficha 0047): los lleva el Word para coautores y nunca el Word ni el PDF para la revista.
 - **`lang {lang}`:** idioma de un fragmento dentro de un párrafo. El idioma de cada palabra sale de esta marca; si no, del `lang` del párrafo; si no, del `lang` del documento (ficha 0023).
 - **`link {href}`:** solo `http`, `https` y `mailto`.
 - **`comment {id}`:** texto anclado a un comentario del registro `comments`.

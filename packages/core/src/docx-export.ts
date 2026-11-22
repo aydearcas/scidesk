@@ -44,7 +44,7 @@ export const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rPr = (r: Omit<Run, "text">) => {
-  const p = (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
+  const p = (r.font ? `<w:rFonts w:ascii="${esc(r.font)}" w:hAnsi="${esc(r.font)}" w:cs="${esc(r.font)}"/>` : "") + (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.size ? `<w:sz w:val="${Math.round(r.size * 2)}"/><w:szCs w:val="${Math.round(r.size * 2)}"/>` : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
   return p ? `<w:rPr>${p}</w:rPr>` : "";
 };
 const runXml = (r: Run) => `<w:r>${rPr(r)}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
@@ -56,6 +56,7 @@ const fieldXml = (instr: string, result: string) =>
 const textRun = (r: Run) => new TextRun({
   text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}),
   ...(r.underline ? { underline: {} } : {}), ...(r.color ? { color: r.color.slice(1) } : {}), ...(r.highlight ? { highlight: r.highlight as "yellow" } : {}),
+  ...(r.font ? { font: r.font } : {}), ...(r.size ? { size: Math.round(r.size * 2) } : {}),
 });
 export const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
 
@@ -236,7 +237,11 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted (w:ins/w:del: V1)
-      if (n.type === "text") out.push(textRun({ text: n.text!, ...runFormat(n.marks) }));
+      if (n.type === "text") {
+        // a fragment's own font and size go to the coauthors, never to the journal (record 0047)
+        const { font, size, ...format } = runFormat(n.marks);
+        out.push(textRun({ text: n.text!, ...format, ...(markers ? { font, size } : {}) }));
+      }
       else if (n.type === "hardBreak") out.push(new TextRun({ break: 1 }));
       else if (n.type === "citation") out.push(...citation(n));
       else if (n.type === "xref") {

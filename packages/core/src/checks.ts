@@ -14,7 +14,7 @@ export type CheckLevel = "blocking" | "review" | "info";
 export type CheckCode =
   | "word-limit" | "abstract-word-limit" | "references-limit" | "tables-limit" | "figures-limit" | "figures-tables-limit"
   | "authors-limit" | "authors-advised" | "keywords-limit" | "keywords-min" | "title-characters"
-  | "pending" | "uncited-table" | "uncited-figure" | "uncited-reference" | "no-limits";
+  | "pending" | "uncited-table" | "uncited-figure" | "uncited-reference" | "no-limits" | "own-font";
 
 export interface CheckWarning {
   /** Stable: the same thing gives the same id after any edit elsewhere. */
@@ -170,6 +170,25 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
     };
     visit(file.doc as PMNode, null);
   }
+
+  // ---------------------------------------------------------------- own font or size (record 0047)
+  // fragments with a font or size of their own: shown only in the free font mode, sent to
+  // the coauthors and never to the journal; "Adapt to the journal" removes them
+  let fragments = 0;
+  let first: CheckWarning["where"];
+  for (const [path, file] of documents) {
+    if (!/\.(scidoc|scitable|scifigure)$/.test(path)) continue;
+    const visit = (n: PMNode, block: string | null) => {
+      const id = typeof n.attrs?.id === "string" ? (n.attrs.id as string) : block;
+      if (n.type === "text" && n.marks?.some((m) => m.type === "fontFamily" || m.type === "fontSize")) {
+        fragments++;
+        if (!first && id) first = { path, block: id };
+      }
+      n.content?.forEach((c) => visit(c, id));
+    };
+    visit(file.doc as PMNode, null);
+  }
+  if (fragments) add({ id: "own-font", code: "own-font", level: "info", params: { count: fragments }, where: first });
 
   // ---------------------------------------------------------------- never cited
   const targets = new Set<string>();

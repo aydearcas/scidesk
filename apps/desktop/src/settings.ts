@@ -15,9 +15,17 @@ export interface Settings {
   right: boolean;
   leftWidth: number;
   rightWidth: number;
+  /** Zoom of the sheet: "fit" to the width of the window, or a percentage. */
+  zoom: "fit" | number;
+  /**
+   * Record 0047. "journal": the text is shown with the document's font, and a fragment's own
+   * font and size are hidden (kept); "free": they are shown, and the toolbar has font, size
+   * and "Adapt to the journal".
+   */
+  fontMode: "journal" | "free";
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320 };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal" };
 
 export const effectiveScheme = (s: Settings): SchemeId => s.scheme ?? defaultScheme(s.lang);
 

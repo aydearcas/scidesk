@@ -29,6 +29,8 @@ const PATHS: Record<string, string> = {
   textColor: "M6 16L12 4l6 12 M8.2 11.5h7.6",
   highlight: "M14 4l6 6-8 8H6v-6z M10 8l6 6",
   download: "M12 4v11 M7 10l5 5 5-5 M5 20h14",
+  // a page with a tick: "adapt to the journal" (record 0047)
+  adapt: "M7 3h7l5 5v13H7z M14 3v5h5 M9.5 14.5l2 2 4-4.5",
   palette: "M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-1.4-1-1.8-1-2.9 0-.9.7-1.5 1.6-1.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z",
 };
 
