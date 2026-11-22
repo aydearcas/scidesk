@@ -1,13 +1,13 @@
 // The editor's ProseMirror schema, as Tiptap extensions. Node and mark names and their
 // attributes are those of the .scidoc format (packages/formats, record 0031): the editor's
 // JSON is saved as it is (R34): title, headings, paragraphs, lists, bold, italic, underline,
-// superscript, subscript, colour and highlight, citations, cross-references and the places
-// of tables and figures.
+// superscript, subscript, colour and highlight, citations, cross-references, and the
+// abstract, tables and figures edited in place (parts.ts).
 import { Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection, type EditorState as EditorStateType, type Transaction as TransactionType } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import type { Node as PMNodeType } from "@tiptap/pm/model";
-import { HIGHLIGHT_COLORS, newId } from "@scidesk/formats";
+import { HIGHLIGHT_COLORS } from "@scidesk/formats";
 import Bold from "@tiptap/extension-bold";
 import Document from "@tiptap/extension-document";
 import Heading from "@tiptap/extension-heading";
@@ -19,6 +19,7 @@ import Text from "@tiptap/extension-text";
 import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { UndoRedo } from "@tiptap/extensions";
 import { actionFor, comboOf, EDITOR_ACTIONS, keyScheme } from "./shortcuts.ts";
+import { partExtensions } from "./parts.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -74,8 +75,8 @@ export function refreshXrefLabels(doc: { content?: { type: string; attrs?: Recor
   visit(doc as never);
   for (const n of doc.content ?? []) {
     const id = String(n.attrs?.id ?? "");
-    if (n.type === "tableRef" && !order.tables.includes(id)) order.tables.push(id);
-    if (n.type === "figureRef" && !order.figures.includes(id)) order.figures.push(id);
+    if ((n.type === "tableRef" || n.type === "tablePart") && !order.tables.includes(id)) order.tables.push(id);
+    if ((n.type === "figureRef" || n.type === "figurePart") && !order.figures.includes(id)) order.figures.push(id);
   }
   xrefLabels.clear();
   order.tables.forEach((id, i) => xrefLabels.set(id, String(i + 1)));
@@ -127,40 +128,9 @@ const Citation = Node.create({
 });
 
 /**
- * Every block keeps a unique id (R34, record 0021 rule 1): a block that arrives without one
- * or with one already used (Enter splits a paragraph and copies its attributes; paste
- * copies them too) gets a new one, in the same transaction.
- */
-const BlockIds = Extension.create({
-  name: "blockIds",
-  addProseMirrorPlugins: () => [
-    new Plugin({
-      key: new PluginKey("blockIds"),
-      appendTransaction: (trs, _old, state) => {
-        if (!trs.some((t) => t.docChanged)) return null;
-        const seen = new Set<string>();
-        let tr = state.tr;
-        let changed = false;
-        state.doc.descendants((node, pos) => {
-          if (!["paragraph", "heading", "title", "bulletList", "orderedList", "citation"].includes(node.type.name)) return;
-          const id = node.attrs.id as string | null;
-          if (id && !seen.has(id)) { seen.add(id); return; }
-          const fresh = newId(node.type.name === "citation" ? "c" : "b");
-          seen.add(fresh);
-          tr = tr.setNodeMarkup(pos, undefined, { ...node.attrs, id: fresh });
-          changed = true;
-        });
-        return changed ? tr.setMeta("addToHistory", false) : null;
-      },
-    }),
-  ],
-});
-
-/**
- * Where a table or a figure goes. It is a block that is not edited here: the part lives in
- * its own file and is exported in place. It shows its number and caption as they will come
- * out ("Tabla 2 · Características basales"), set by the window from the article's outline.
- * Editing it inside the document (the composite document, record 0021) comes later.
+ * Where a table or a figure goes when its file is missing: in the composite document each
+ * part is edited in place (parts.ts), and only a reference whose file cannot be read stays
+ * a reference. It shows its number and the file it points to, set by the window.
  */
 export interface PartInfo { label: string; caption: string; cited: boolean; uncitedText: string }
 export const partInfo = new Map<string, PartInfo>();
@@ -372,11 +342,11 @@ const Highlight = Mark.create({
 });
 
 export const extensions = [
-  BlockIds,
+  ...partExtensions,
   SchemeKeys,
   FindHighlight,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
-  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | tableRef | figureRef)*" }),
+  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | abstractPart | tablePart | figurePart | tableRef | figureRef)*" }),
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),
   OrderedList.extend({ addAttributes: () => ({ id: plain("id"), start: { default: 1, parseHTML: (el: HTMLElement) => Number(el.getAttribute("start") ?? 1) } }) }),
   ListItem,

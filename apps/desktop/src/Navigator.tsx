@@ -11,6 +11,8 @@ export type NavTarget =
   | { kind: "block"; block: string }
   | { kind: "part"; id: string; part: "table" | "figure" }
   | { kind: "abstract"; lang: string }
+  /** A table or figure whose file was kept when it left the text: clicking puts it back. */
+  | { kind: "unplaced"; src: string }
   | { kind: "authors" }
   | { kind: "credit" }
   | { kind: "title-page" };
@@ -123,6 +125,8 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
           </>)}
           {group("table", t("ui.tables"), counts && of(counts.tables, limits.tables, ` ${t("ui.of")} `), outline?.tables.length ? outline.tables.map((p) => part(p, "table")) : <li className="nav-empty">{t("ui.noTables")}</li>)}
           {group("figure", t("ui.figures"), counts && of(counts.figures, limits.figures, ` ${t("ui.of")} `), outline?.figures.length ? outline.figures.map((p) => part(p, "figure")) : <li className="nav-empty">{t("ui.noFigures")}</li>)}
+          {!!outline?.unplaced.length && group("files", t("ui.unplaced"), <span className="nav-count">{n(outline.unplaced.length)}</span>,
+            outline.unplaced.map((u) => item({ kind: "unplaced", src: u.src }, <>{u.caption || <span className="muted">{u.src}</span>}</>, <Icon name={u.kind} size={14} />, { title: `${t("ui.placeAgain")} · ${u.src}` })))}
           {group("users", t("ui.authorsGroup"), <span className="nav-count">{n(art.authors.authors.length)}</span>, null, { kind: "authors" })}
           {group("send", t("ui.submissionDocs"), null, <>
             {item({ kind: "title-page" }, t("ui.titlePage"), <span className="nav-auto">{t("ui.automatic")}</span>)}

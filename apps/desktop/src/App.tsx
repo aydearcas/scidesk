@@ -7,14 +7,17 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addEmptyTable, addFigure, addTablePart, articleOutline, checkArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
+  addEmptyTable, addFigure, addTablePart, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
-import { EditorState, NodeSelection } from "@tiptap/pm/state";
-import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { citationLabels, extensions, findStep, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels } from "./editor.ts";
+import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, deleteColumn, deleteRow, isInTable, mergeCells, splitCell, toggleHeaderRow } from "@tiptap/pm/tables";
+import { newId, type PMNode, type ProposalSetFile } from "@scidesk/formats";
+import { citationLabels, extensions, findStep, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels, xrefLabels } from "./editor.ts";
 import { FindBar } from "./FindBar.tsx";
+import { addNote, blockInsertPos, clearImages, partAround, partContext, placed, relabel, setAlign, setPartAttrs } from "./parts.ts";
+import { TableTabView, type TableCommand } from "./TableTab.tsx";
 import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
@@ -43,12 +46,14 @@ const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
 
-/** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015). */
-type CenterTab = `doc:${string}` | "library" | "authors" | "settings";
+/** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
+type CenterTab = `doc:${string}` | `table:${string}` | "library" | "authors" | "settings";
 type View = "article" | "library";
 type RightTab = "warnings" | "review" | "details";
 const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings" };
 const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
+const isTableTab = (k: string): k is `table:${string}` => k.startsWith("table:");
+const IMAGE_TYPES: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", svg: "image/svg+xml" };
 /** The title of an article as saved (the tab of an article that is not on screen). */
 const savedTitle = (a: ArticleData) => {
   const title = ((a.documents.get(BODY)?.doc as PMNode | undefined)?.content ?? []).find((n) => n.type === "title");
@@ -141,7 +146,9 @@ export function App() {
   const recompute = useCallback(async () => {
     if (!project || !article || !editor) return;
     try {
+      // the article on screen: one tree, and the files it will be saved to (record 0021)
       const doc = editor.getJSON() as PMNode;
+      const live = liveDocuments(doc, article);
       const r = await renderCitations(project.library, [doc], article.article.citationStyle.id, article.article.referenceTermsLang ?? article.article.lang, await styleResources(project, article, resources));
       refreshXrefLabels(doc as never);
       citationLabels.clear();
@@ -149,17 +156,21 @@ export function App() {
       refreshCitationLabels();
       setRendering(r);
       // how often each reference is cited, with what is on screen and not saved yet
-      const sites = referenceUses(project, { [`${article.folder}/${BODY}`]: doc });
+      const sites = referenceUses(project, Object.fromEntries(Object.entries(live).map(([p, d]) => [`${article.folder}/${p}`, d])));
       setUseSites(sites);
       setUses(new Map([...sites].map(([id, u]) => [id, u.length])));
       // the checks, with what is on screen (record 0041)
-      setReport(checkArticle(project, article.folder, { [BODY]: doc }));
+      setReport(checkArticle(project, article.folder, live));
       // the navigator, and the places of tables and figures with their numbers
-      const o = articleOutline(project, article.folder, { [BODY]: doc });
+      const o = articleOutline(project, article.folder, live);
       setOutline(o);
+      // a reference left in the text whose file is missing
       partInfo.clear();
-      for (const p of o.tables) partInfo.set(p.id, { label: t("ui.tableN", { n: p.number }), caption: p.caption, cited: p.cited, uncitedText: t("ui.notCitedFlag") });
-      for (const p of o.figures) partInfo.set(p.id, { label: t("ui.figureN", { n: p.number }), caption: p.caption, cited: p.cited, uncitedText: t("ui.notCitedFlag") });
+      doc.content?.forEach((n) => {
+        if (n.type !== "tableRef" && n.type !== "figureRef") return;
+        const id = String(n.attrs!.id);
+        partInfo.set(id, { label: t(n.type === "tableRef" ? "ui.tableN" : "ui.figureN", { n: xrefLabels.get(id) ?? "?" }), caption: t("ui.partMissing", { path: String(n.attrs!.src) }), cited: true, uncitedText: "" });
+      });
       refreshPartLabels();
     } catch (e) {
       setError(String(e));
@@ -183,16 +194,26 @@ export function App() {
     const onSelection = () => {
       const sel = editor.state.selection;
       let next: Selected | null = null;
+      let atom = false;
       if (sel instanceof NodeSelection) {
         const n = sel.node;
+        atom = true;
         if (n.type.name === "citation") next = { kind: "citation", id: n.attrs.id as string, items: n.attrs.items as CiteItem[] };
-        else if (n.type.name === "tableRef" || n.type.name === "figureRef") next = { kind: "part", id: n.attrs.id as string, part: n.type.name === "tableRef" ? "table" : "figure" };
+        else if (/^(table|figure)(Ref|Part)$/.test(n.type.name)) next = { kind: "part", id: n.attrs.id as string, part: n.type.name.startsWith("table") ? "table" : "figure" };
         else if (n.type.name === "xref") next = { kind: "xref", target: n.attrs.target as string };
+        else atom = false;
+      }
+      // the cursor inside a table, a figure or the abstract shows it, without leaving the tab the user is on
+      if (!next) {
+        const part = partAround(sel.$from);
+        if (part) next = { kind: "part", id: part.node.attrs.id as string, part: part.node.type.name === "tablePart" ? "table" : "figure" };
+        else for (let d = sel.$from.depth; d > 0; d--) if (sel.$from.node(d).type.name === "abstractSection") { next = { kind: "abstract", lang: String(sel.$from.node(d).attrs.lang) }; break; }
       }
       if (next) {
-        setSelected(next);
-        if (pointerInEditor.current) setRightTab("details");
-      } else setSelected((s) => (s && (s.kind === "citation" || s.kind === "part" || s.kind === "xref") ? null : s));
+        const n = next;
+        setSelected((s) => (JSON.stringify(s) === JSON.stringify(n) ? s : n));
+        if (pointerInEditor.current && atom) setRightTab("details");
+      } else setSelected((s) => (s && (s.kind === "citation" || s.kind === "part" || s.kind === "xref" || s.kind === "abstract") ? null : s));
       pointerInEditor.current = false;
     };
     dom.addEventListener("mousedown", down);
@@ -210,6 +231,29 @@ export function App() {
     }
   }, [editor, t]);
   const loadDoc = useCallback((doc: PMNode) => { if (editor) editor.view.updateState(freshState(doc)); }, [editor, freshState]);
+  /**
+   * The article as one tree (record 0021). The parts learn first the article they belong to:
+   * its language (for "Tabla 1."), its files (a copy never takes one) and where its images are.
+   */
+  const composed = useCallback((p: Project, a: ArticleData): PMNode => {
+    clearImages();
+    partContext.lang = a.article.lang;
+    partContext.files = () => a.documents.keys();
+    partContext.image = async (path) => {
+      const type = IMAGE_TYPES[path.split(".").pop()!.toLowerCase()];
+      const bytes = type ? await p.fs.readBytes(`articles/${a.folder}/${path}`) : null;
+      return bytes ? URL.createObjectURL(new Blob([bytes as BlobPart], { type })) : null;
+    };
+    const c = composeArticle(a);
+    if (c.warnings.length) setError(c.warnings.join("; "));
+    return c.doc;
+  }, []);
+  // the texts of the parts follow the interface language
+  useEffect(() => {
+    partContext.uncited = t("ui.notCitedFlag");
+    partContext.noImage = (path) => t("ui.noImage", { path });
+    if (editor) relabel(editor.view);
+  }, [editor, t]);
 
   const show = useCallback(async (p: Project) => {
     setProject(p);
@@ -223,7 +267,8 @@ export function App() {
     setActiveFolder(p.articles[0].folder);
     editorStates.current.clear();
     setView("article");
-    loadDoc(p.articles[0].documents.get(BODY)!.doc as PMNode);
+    journaled.current.clear();
+    loadDoc(composed(p, p.articles[0]));
     setDirty(false);
     dirtySince.current = null;
     setLastSaved(null);
@@ -231,7 +276,7 @@ export function App() {
     const rec = new Recovery(await localStore(), p);
     recovery.current = rec;
     setRecoveries((await rec.pending()).pending);
-  }, [loadDoc]);
+  }, [loadDoc, composed]);
   useEffect(() => { void recompute(); }, [project, recompute]);
 
   const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {
@@ -239,17 +284,20 @@ export function App() {
     try { await f(...a); } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   };
 
-  const onScreen = () => ({ ...article!.documents.get(BODY)!, doc: editor!.getJSON() }) as unknown as DocumentFile;
+  // paths of the article whose unsaved state went to the journal of recovery
+  const journaled = useRef(new Set<string>());
+  /** Writes the files of the article that changed: the body, the abstract, each table and figure (record 0021). */
   const save = async () => {
     if (!project || !article || !editor || savingNow.current) return;
     savingNow.current = true;
     setSaving(true);
     const version = editVersion.current;
     try {
-      await saveDocument(project, article, BODY, onScreen());
+      await saveComposite(project, article, editor.getJSON() as PMNode);
       if (version === editVersion.current) {
         // everything on screen is on disk: nothing left to recover
-        await recovery.current?.clear(article.folder, BODY);
+        for (const path of journaled.current) await recovery.current?.clear(article.folder, path);
+        journaled.current.clear();
         setDirty(false);
         dirtySince.current = null;
       }
@@ -269,7 +317,13 @@ export function App() {
     let autosave: ReturnType<typeof setTimeout> | undefined;
     const onUpdate = () => {
       clearTimeout(journal);
-      journal = setTimeout(() => { void recovery.current?.record(article.folder, BODY, onScreen()).catch(() => {}); }, JOURNAL_MS);
+      // each file whose content differs from the disk, as it would be saved
+      journal = setTimeout(() => {
+        for (const [path, file] of changedDocuments(splitArticle(editor.getJSON() as PMNode, article), article)) {
+          journaled.current.add(path);
+          void recovery.current?.record(article.folder, path, file).catch(() => {});
+        }
+      }, JOURNAL_MS);
       clearTimeout(autosave);
       const waited = Date.now() - (dirtySince.current ?? Date.now());
       autosave = setTimeout(() => {
@@ -278,7 +332,6 @@ export function App() {
     };
     editor.on("update", onUpdate);
     return () => { editor.off("update", onUpdate); clearTimeout(journal); clearTimeout(autosave); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- onScreen reads the current editor and article
   }, [editor, project, article, t]);
 
   const recover = run(async (p: PendingRecovery, keep: boolean) => {
@@ -287,8 +340,8 @@ export function App() {
     setRecoveries((list) => list.filter((x) => x.key !== p.key));
     if (!keep) { await rec.discard(p); setMessage(t("recoveryDiscarded")); return; }
     const { snapshot } = await rec.apply(p);
-    if (p.entry.article === article?.folder && p.entry.path === BODY) {
-      loadDoc(p.entry.file.doc as PMNode);
+    if (p.entry.article === article?.folder && project) {
+      loadDoc(composed(project, article));
       setDirty(false);
       void recompute();
     } else editorStates.current.delete(p.entry.article); // shown from the disk when its tab is opened
@@ -302,7 +355,7 @@ export function App() {
   const openDemo = run(async () => {
     if (opening.current) return;
     opening.current = true;
-    try { await show(await createDemoProject(inTauri ? memoryFs() : previewFs(true), "corte-vertical", { letter: true })); } finally { opening.current = false; }
+    try { await show(await createDemoProject(inTauri ? memoryFs() : previewFs(true), "corte-vertical", { letter: true, parts: true })); } finally { opening.current = false; }
   });
   const reopenPreview = run(async () => show(await loadProject(previewFs(false))));
   const wordInput = useRef<HTMLInputElement>(null);
@@ -328,6 +381,7 @@ export function App() {
     setTabs((ts) => (ts.includes(k) ? ts : [...ts, k]));
     setTab(k);
   };
+  const openTableTab = (id: string) => openTab(`table:${id}`);
   /**
    * Shows another article's manuscript: what is on screen is saved first, its editor state
    * (with its undo history) is kept, and the other article's is restored or loaded.
@@ -339,7 +393,12 @@ export function App() {
     if (!next) return;
     if (dirty) await save();
     if (article) editorStates.current.set(article.folder, editor.state);
-    editor.view.updateState(editorStates.current.get(folder) ?? freshState(next.documents.get(BODY)!.doc as PMNode));
+    // a table's tab belongs to the article it is in
+    setTabs((ts) => ts.filter((k) => !isTableTab(k)));
+    const kept = editorStates.current.get(folder);
+    const doc = composed(project, next);
+    editor.view.updateState(kept ?? freshState(doc));
+    journaled.current.clear();
     editVersion.current++;
     dirtySince.current = null;
     setDirty(false);
@@ -351,6 +410,8 @@ export function App() {
     openTab(`doc:${folder}`);
   });
   const selectTab = (k: CenterTab) => { if (isDoc(k)) void switchArticle(k.slice(4)); else setTab(k); };
+  // a table's tab whose table left the text closes by itself
+  const tableGone = (k: CenterTab) => { setTabs((ts) => ts.filter((x) => x !== k)); setTab((cur) => (cur === k ? docTab : cur)); };
   const closeTab = (k: CenterTab) => {
     const docs = tabs.filter(isDoc);
     // a manuscript tab closes only while another one stays open
@@ -388,25 +449,31 @@ export function App() {
     openTab(docTab);
     const node = editor.state.doc.nodeAt(target)!;
     const chain = focus ? editor.chain().focus() : editor.chain();
-    (node.isAtom ? chain.setNodeSelection(target) : chain.setTextSelection(target + 1)).scrollIntoView().run();
+    // a block: the cursor at its first text (inside a table, figure or abstract: its first line)
+    (node.isAtom ? chain.setNodeSelection(target) : chain.command(({ tr }) => { tr.setSelection(TextSelection.near(tr.doc.resolve(target + 1))); return true; })).scrollIntoView().run();
     // a heading at the top of the page, not just inside it
     requestAnimationFrame(() => (editor.view.nodeDOM(target) as HTMLElement | null)?.scrollIntoView?.({ block: node.isInline ? "center" : "start", behavior: "smooth" }));
     return true;
   };
   const goToBlock = (block: string) => selectNode((n) => n.attrs.id === block);
-  const goToPart = (id: string) => selectNode((n) => (n.type.name === "tableRef" || n.type.name === "figureRef") && n.attrs.id === id);
+  const goToPart = (id: string) => selectNode((n) => /^(table|figure)(Ref|Part)$/.test(n.type.name) && n.attrs.id === id);
   const goToCitation = (id: string, focus = true) => selectNode((n) => n.type.name === "citation" && n.attrs.id === id, focus);
   // a warning takes to its block: in the text, or to the table or figure it is in
   const goTo = (w: CheckWarning) => {
     if (!w.where) return;
-    if (w.where.path === BODY) goToBlock(w.where.block);
-    else selectNode((n) => (n.type.name === "tableRef" || n.type.name === "figureRef") && n.attrs.src === w.where!.path);
+    // every block is in the one tree: the body's, the abstract's and those of each part
+    if (!goToBlock(w.where.block)) selectNode((n) => /^(table|figure)(Ref|Part)$/.test(n.type.name) && n.attrs.src === w.where!.path);
   };
   const onNav = (target: NavTarget) => {
     setNavActive(target);
     if (target.kind === "block") goToBlock(target.block);
     else if (target.kind === "part") { goToPart(target.id); setSelected({ kind: "part", id: target.id, part: target.part }); showRight("details"); }
-    else if (target.kind === "abstract") { setSelected({ kind: "abstract", lang: target.lang }); showRight("details"); }
+    else if (target.kind === "abstract") {
+      const block = outline?.abstract.find((a) => a.lang === target.lang)?.block;
+      if (block) goToBlock(block);
+      setSelected({ kind: "abstract", lang: target.lang });
+      showRight("details");
+    } else if (target.kind === "unplaced") placeAgain(target.src);
     else if (target.kind === "title-page") { setSelected({ kind: "title-page" }); showRight("details"); }
     else { setAuthorsTab(target.kind === "credit" ? "credit" : "authors"); openTab("authors"); }
   };
@@ -444,20 +511,44 @@ export function App() {
     const content: object[] = [...(typed ? [] : [{ type: "text", text: `${word} ` }]), { type: "xref", attrs: { target: p.id } }];
     editor.chain().focus().insertContent(content as never).run();
   };
+  /**
+   * A table or figure goes into the text as its part (record 0021): at the cursor in the
+   * body, or after the part the cursor is in; then the cursor goes to its caption.
+   */
+  const insertPart = (path: string) => {
+    if (!editor || !article) return;
+    const part = article.documents.get(path)?.doc as PMNode | undefined;
+    if (!part) return;
+    openTab(docTab);
+    const at = blockInsertPos(editor.state);
+    const node = placed(part, path) as never;
+    (at === null ? editor.chain().focus().insertContent(node) : editor.chain().focus().insertContentAt(at, node)).run();
+    goToPart(String(part.attrs!.id));
+  };
   const insertTable = run(async () => {
     if (!project || !article || !editor) return;
-    const { ref, path } = await addEmptyTable(project, article.folder);
-    openTab(docTab);
-    editor.chain().focus().insertContent(ref as never).run();
+    const { path } = await addEmptyTable(project, article.folder);
+    insertPart(path);
     setMessage(t("ui.tableAdded", { path }));
   });
+  // a table or figure that left the text (its file was kept) comes back at the cursor
+  const placeAgain = (path: string) => { insertPart(path); setMessage(t("ui.placedAgain", { path })); };
+  const removePart = (id: string) => {
+    if (!editor) return;
+    let at = -1;
+    let src = "";
+    editor.state.doc.forEach((n, offset) => { if (/^(table|figure)(Ref|Part)$/.test(n.type.name) && n.attrs.id === id) { at = offset; src = String(n.attrs.src); } });
+    if (at < 0) return;
+    editor.chain().focus().command(({ tr }) => { tr.delete(at, at + tr.doc.nodeAt(at)!.nodeSize); return true; }).run();
+    setSelected(null);
+    setMessage(t("ui.removedFromText", { path: src }));
+  };
   const insertFigure = run(async () => {
     const file = figureInput.current?.files?.[0];
     if (figureInput.current) figureInput.current.value = "";
     if (!file || !project || !article || !editor) return;
-    const { ref, path } = await addFigure(project, article.folder, { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
-    openTab(docTab);
-    editor.chain().focus().insertContent(ref as never).run();
+    const { path } = await addFigure(project, article.folder, { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
+    insertPart(path);
     setMessage(t("ui.figureAdded", { path }));
   });
 
@@ -488,12 +579,15 @@ export function App() {
       for (const s of segments) {
         if (s.kind === "html") { content.push(s); continue; }
         const { part, warnings: w } = tablePartFromPaste(s.table);
-        const { ref } = await addTablePart(project, article.folder, part);
+        const { path } = await addTablePart(project, article.folder, part);
         warnings.push(...w);
-        content.push({ kind: "node", node: ref });
+        content.push({ kind: "node", node: placed(part, path) });
         tables++;
       }
+      // inside a table, a figure or the abstract, the pasted tables go after it
+      const at = blockInsertPos(editor.state);
       let chain = editor.chain().focus();
+      if (at !== null) chain = chain.insertContentAt(at, { type: "paragraph" }).setTextSelection(at + 1);
       for (const c of content) chain = chain.insertContent(c.kind === "html" ? c.html : (c.node as never));
       chain.run();
       setMessage(t("pastedTables", { count: tables }) + (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${[...new Set(warnings)].join("; ")}` : ""));
@@ -503,7 +597,8 @@ export function App() {
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
   const removeReference = async (id: string) => {
     if (!project || !article || !editor) return;
-    await deleteReference(project, id, { [`${article.folder}/${BODY}`]: editor.getJSON() as PMNode });
+    const live = liveDocuments(editor.getJSON() as PMNode, article);
+    await deleteReference(project, id, Object.fromEntries(Object.entries(live).map(([p, d]) => [`${article.folder}/${p}`, d])));
     if (selected?.kind === "reference" && selected.id === id) setSelected(null);
     libraryChanged(t("refDeleted"));
   };
@@ -666,7 +761,26 @@ export function App() {
     const sel = editor.state.selection;
     const onCitation = sel instanceof NodeSelection && sel.node.type.name === "citation";
     const exec = (cmd: "cut" | "copy") => { editor.commands.focus(); document.execCommand(cmd); };
+    const part = partAround(sel.$from);
+    const inTable = isInTable(editor.state);
+    const cmd = (key: string, c: TableCommand): MenuEntry => ({ label: t(`ui.${key}`), onSelect: () => { c(editor.state, editor.view.dispatch); editor.commands.focus(); }, disabled: !c(editor.state) });
+    const tableItems: MenuEntry[] = inTable ? [
+      cmd("rowAbove", addRowBefore), cmd("rowBelow", addRowAfter), cmd("colLeft", addColumnBefore), cmd("colRight", addColumnAfter),
+      cmd("deleteRow", deleteRow), cmd("deleteCol", deleteColumn), cmd("mergeCells", mergeCells), cmd("splitCell", splitCell), cmd("headerRow", toggleHeaderRow),
+      "-",
+    ] : [];
+    // once the menu has closed and given the focus back: a cursor moved before that is lost
+    const afterMenu = (f: () => void) => () => setTimeout(() => { editor.view.focus(); f(); }, 0);
+    const partItems: MenuEntry[] = part ? [
+      { label: t("ui.generalNote"), onSelect: afterMenu(() => addNote(editor.state, editor.view.dispatch, "general")) },
+      ...(inTable ? [{ label: t("ui.specificNote"), title: t("ui.specificNoteHint"), onSelect: afterMenu(() => addNote(editor.state, editor.view.dispatch, "specific")) }] : []),
+      ...(part.node.type.name === "tablePart" ? [{ label: t("ui.openInTab"), onSelect: () => openTableTab(String(part.node.attrs.id)) }] : []),
+      { label: t("ui.removeFromText"), onSelect: () => removePart(String(part.node.attrs.id)) },
+      "-",
+    ] : [];
     return [
+      ...tableItems,
+      ...partItems,
       ...(onCitation ? [
         { label: t("ui.editCitation"), shortcut: keys("cite"), onSelect: openQuickCite },
         { label: t("ui.removeCitation"), onSelect: () => editor.chain().focus().deleteSelection().run() },
@@ -715,6 +829,10 @@ export function App() {
   const right = !!project && settings.right;
   const targets = { tables: outline?.tables ?? [], figures: outline?.figures ?? [] };
   const tabLabel = (k: CenterTab) => {
+    if (isTableTab(k)) {
+      const p = outline?.tables.find((x) => x.id === k.slice(6));
+      return p ? `${t("ui.tableN", { n: p.number })}${p.caption ? ` · ${p.caption}` : ""}` : t("ui.tableTools");
+    }
     if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : t("ui.settings");
     const a = project?.articles.find((x) => x.folder === k.slice(4));
     const title = a === article ? outline?.title?.text : a ? savedTitle(a) : "";
@@ -766,7 +884,7 @@ export function App() {
           <div className="tabbar" role="tablist" aria-label={t("ui.openTabs")}>
             {(project ? tabs : tabs.filter((k) => k === "settings")).map((k) => (
               <div key={k} className={`tab${tab === k ? " active" : ""}`}>
-                <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
+                <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : isTableTab(k) ? "table" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
                 {(!isDoc(k) || tabs.filter(isDoc).length > 1) && <button className="tab-close" aria-label={t("ui.closeTab", { name: tabLabel(k) })} onClick={() => closeTab(k)}><Icon name="close" size={13} /></button>}
               </div>
             ))}
@@ -805,6 +923,11 @@ export function App() {
             )}
           </div>
 
+          {project && editor && tabs.filter(isTableTab).map((k) => (
+            <div key={k} className="tab-body table-tab" hidden={tab !== k}>
+              <TableTabView editor={editor} id={k.slice(6)} title={tabLabel(k)} onGone={() => tableGone(k)} />
+            </div>
+          ))}
           {project && tab === "library" && (
             <div className="tab-body library-tab">
               <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} filter={libraryFilter}
@@ -852,7 +975,11 @@ export function App() {
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}
                   onEditCitation={() => { if (selected?.kind === "citation") goToCitation(selected.id, false); openQuickCite(); }}
-                  onGoCitation={goToCitation} onGoPart={goToPart}
+                  onGoCitation={goToCitation} onGoPart={goToPart} onGoBlock={(b) => void goToBlock(b)}
+                  partAttrs={(id) => { let a: Record<string, unknown> | null = null; editor?.state.doc.forEach((n) => { if (/Part$/.test(n.type.name) && n.attrs.id === id) a = n.attrs; }); return a; }}
+                  onSetPartAttrs={(id, attrs) => { if (editor) setPartAttrs(editor, id, attrs); }}
+                  onOpenTableTab={openTableTab} onRemovePart={removePart}
+                  onAddNote={(id) => { goToPart(id); if (editor) { addNote(editor.state, editor.view.dispatch, "general"); editor.commands.focus(); } }}
                   onOpenReference={(id) => { setSelected({ kind: "reference", id }); }}
                   onExportTitlePage={() => void exportAs("title-page")()}
                   onOpenAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }} />

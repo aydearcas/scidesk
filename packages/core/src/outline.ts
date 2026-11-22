@@ -27,6 +27,8 @@ export interface ArticleOutline {
   tables: OutlinePart[];
   figures: OutlinePart[];
   abstract: { lang: string; block: string; text: string; keywords: string[] }[];
+  /** Tables and figures whose file is in the article but not in the text (rule 4 of record 0021). */
+  unplaced: { src: string; kind: "table" | "figure"; caption: string }[];
 }
 
 /** The outline of one article; `live` replaces saved documents by what is on screen (as checkArticle). */
@@ -34,7 +36,8 @@ export function articleOutline(project: Project, folder: string, live: Record<st
   const art0 = project.articles.find((a) => a.folder === folder);
   if (!art0) throw new Error(`no article ${folder}`);
   const documents = new Map(art0.documents);
-  for (const [p, doc] of Object.entries(live)) { const f = documents.get(p); if (f) documents.set(p, { ...f, doc } as never); }
+  // a part only on screen (a copy not saved yet) gets an envelope of its own
+  for (const [p, doc] of Object.entries(live)) documents.set(p, { ...(documents.get(p) ?? { schemaVersion: 1, documentType: doc.type === "figurePart" ? "figure" : doc.type === "tablePart" ? "table" : "article", lang: art0.article.lang, changes: {}, comments: {} }), doc } as never);
   const art = { ...art0, documents };
   const body = documents.get("manuscript/article.scidoc")!.doc as PMNode;
   const title = (body.content ?? []).find((n) => n.type === "title");
@@ -56,7 +59,13 @@ export function articleOutline(project: Project, folder: string, live: Record<st
       ...(part.type === "figurePart" ? { image: part.attrs!.image as string } : {}),
     })).sort((a, b) => a.number - b.number);
   };
+  const placed = new Set(refs.map((n) => n.attrs!.src as string));
+  const unplaced = [...documents].filter(([p, f]) => (f.documentType === "table" || f.documentType === "figure") && !placed.has(p)).map(([p, f]) => ({
+    src: p, kind: f.documentType as "table" | "figure",
+    caption: blockText(((f.doc as PMNode).content ?? [])[0] ?? { type: "text", text: "" }).trim(),
+  })).sort((a, b) => a.src.localeCompare(b.src, undefined, { numeric: true }));
   return {
+    unplaced,
     title: title ? { block: title.attrs!.id as string, text: blockText(title).trim() } : null,
     tables: parts(tables, "tableCaption", "tableNote"),
     figures: parts(figures, "figureCaption", "figureNote"),

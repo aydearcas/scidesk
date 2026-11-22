@@ -403,3 +403,48 @@ mark { color: #000; padding: 0 1px; }
   .right-panel { right: 0; }
 }
 .page .ProseMirror > * { scroll-margin-top: 24px; }
+
+/* ---------------------------------------------------------------- the composite document (record 0021)
+   the abstract, tables and figures are written in place; numbers and letters are decorations */
+.page .part { margin: 18px 0; }
+.page .part-abstract { border-left: 3px solid var(--line); padding: 2px 0 2px 16px; margin: 4px 0 26px; }
+.page .abstract-section + .abstract-section { margin-top: 16px; }
+.page .abstract-section::before { content: attr(data-label); display: block; font: 600 11px/1.6 var(--ui-font); letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-2); margin-bottom: 2px; }
+/* keywords as flex items: each is a block box, where the caret of an empty one stays put */
+.page .keywords { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.35em; }
+.page .keywords::before { content: attr(data-label); font-weight: 700; }
+.page .keyword { display: block; min-width: 1ch; }
+.page .keyword:not(:last-child)::after { content: ";"; }
+.page .part-table, .page .part-figure { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 8px 0 6px; }
+.page .part-caption { display: block; font-size: 11pt; line-height: 1.45; margin: 0 0 6px; }
+.page .part-caption::before { content: attr(data-label) " "; font-weight: 700; }
+.page .part-caption[data-uncited]::after { content: "△ " attr(data-uncited); margin-left: 8px; font: 11px var(--ui-font); color: var(--review); background: var(--review-soft); border-radius: 8px; padding: 0 7px; white-space: nowrap; }
+.page .part-grid { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 10.5pt; line-height: 1.35; margin: 4px 0 6px; }
+.page .part-grid td, .page .part-grid th { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 3px 6px; vertical-align: top; text-align: left; position: relative; }
+.page .part-grid th { font-weight: 700; border-bottom: 1.5px solid var(--text-2); }
+.page .part-grid [data-align=center] { text-align: center; }
+.page .part-grid [data-align=right], .page .part-grid [data-align=decimal] { text-align: right; font-variant-numeric: tabular-nums; }
+.page .part-grid p { margin: 0; }
+.page .part-grid .selectedCell::after { content: ""; position: absolute; inset: 0; background: rgb(11 100 119 / 0.14); pointer-events: none; }
+.page .note-text { font-size: 10pt; line-height: 1.4; margin: 2px 0; }
+.page .note-text[data-letter]::before { content: attr(data-letter) "\00a0"; vertical-align: super; font-size: 75%; }
+.page .note-ref { font-size: 75%; }
+.page .note-ref::after { content: attr(data-letter); }
+.page .note-ref.ProseMirror-selectednode { outline: 2px solid var(--accent); outline-offset: 1px; }
+.page .part-image { text-align: center; margin: 4px 0 8px; user-select: none; }
+.page .part-image img { max-width: 100%; max-height: 420px; }
+.part-image-missing { display: inline-block; font: 12px/1.4 var(--ui-font); color: var(--text-2); border: 1px dashed var(--line-strong); border-radius: var(--radius); padding: 16px 20px; }
+.paper.wide { max-width: 1100px; }
+.table-tab-body { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.table-tab-body .desk { flex: 1; }
+.table-tab-head { display: flex; align-items: center; gap: 12px 16px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bars); flex-wrap: wrap; }
+.table-tab-head h2 { font-size: 14px; margin: 0; font-weight: 600; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-tab-hint { padding: 6px 16px 0; margin: 0; }
+.table-tools { display: flex; gap: 10px; flex-wrap: wrap; }
+.table-tools .tool-group { display: flex; gap: 2px; }
+.btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
+.figure-fields { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.figure-fields textarea, .figure-fields input { font: inherit; font-size: 13px; color: var(--text); padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); }
+.dialog-actions.wrap { flex-wrap: wrap; }
+/* a whole part selected (Backspace right after it): the next Backspace takes it out of the text */
+.page .part.ProseMirror-selectednode { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 2px; }

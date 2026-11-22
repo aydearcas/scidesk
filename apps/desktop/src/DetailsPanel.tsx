@@ -1,7 +1,9 @@
 // "Details" in the right panel (design proposal 3.3): what is selected. A citation: its
 // references, page, prefix and suffix. A table or a figure: number, caption, notes, file and
 // whether the text cites it (and the image). A reference: its card, how it comes out in the
-// bibliography and where it is cited. The abstract and the title page, read-only.
+// bibliography and where it is cited. The abstract and the title page. Tables, figures and
+// the abstract are written in the text (record 0021); here go what is not text: a figure's
+// alternative text, source and licence, the table's own tab, notes and removing a part.
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { summarize, type ArticleOutline, type Project, type Rendering, type ReferenceUse } from "@scidesk/core";
@@ -15,7 +17,14 @@ export type Selected =
   | { kind: "abstract"; lang: string }
   | { kind: "title-page" };
 
-export function DetailsPanel({ selected, project, folder, outline, rendering, uses, onEditCitation, onGoCitation, onGoPart, onOpenReference, onExportTitlePage, onOpenAuthors }: {
+export function DetailsPanel({ selected, project, folder, outline, rendering, uses, onEditCitation, onGoCitation, onGoPart, onGoBlock, onOpenReference, onExportTitlePage, onOpenAuthors, partAttrs, onSetPartAttrs, onOpenTableTab, onRemovePart, onAddNote }: {
+  onGoBlock: (block: string) => void;
+  /** The attributes of a part as they are in the text now. */
+  partAttrs: (id: string) => Record<string, unknown> | null;
+  onSetPartAttrs: (id: string, attrs: Record<string, unknown>) => void;
+  onOpenTableTab: (id: string) => void;
+  onRemovePart: (id: string) => void;
+  onAddNote: (id: string) => void;
   selected: Selected | null;
   project: Project;
   folder: string;
@@ -97,9 +106,15 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
           <dt>{t("ui.file")}</dt><dd className="mono">{p.src}</dd>
           {p.image && <><dt>{t("ui.image")}</dt><dd className="mono">{p.image}</dd></>}
         </dl>
-        {image && <img className="figure-preview" src={image} alt={p.caption} />}
-        <p className="muted small">{t("ui.partEditLater")}</p>
-        <div className="dialog-actions"><button className="btn" onClick={() => onGoPart(id)}>{t("ui.goToText")}</button></div>
+        {image && <img className="figure-preview" src={image} alt={String(partAttrs(id)?.alt ?? p.caption)} />}
+        {p.kind === "figure" && <FigureFields key={id} attrs={partAttrs(id)} onSet={(a) => onSetPartAttrs(id, a)} />}
+        <p className="muted small">{t("ui.partInPlace")}</p>
+        <div className="dialog-actions wrap">
+          {selected.kind === "xref" && <button className="btn" onClick={() => onGoPart(id)}>{t("ui.goToText")}</button>}
+          {p.kind === "table" && <button className="btn" onClick={() => onOpenTableTab(id)}>{t("ui.openInTab")}</button>}
+          <button className="btn" onClick={() => onAddNote(id)}>{t("ui.generalNote")}</button>
+          <button className="btn" onClick={() => onRemovePart(id)}>{t("ui.removeFromText")}</button>
+        </div>
       </div>
     );
   }
@@ -138,7 +153,8 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
         <h3>{t("ui.abstract")} · {selected.lang.toUpperCase()}</h3>
         {a?.text ? <p className="abstract-text">{a.text}</p> : <p className="muted">{t("ui.abstractEmpty")}</p>}
         {a?.keywords.length ? <p><b>{t("ui.keywords")}:</b> {a.keywords.join("; ")}</p> : null}
-        <p className="muted small">{t("ui.abstractEditLater")}</p>
+        <p className="muted small">{t("ui.abstractInPlace")}</p>
+        {a && <div className="dialog-actions"><button className="btn" onClick={() => onGoBlock(a.block)}>{t("ui.goToAbstract")}</button></div>}
       </div>
     );
   }
@@ -153,6 +169,31 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
         <button className="btn" onClick={onOpenAuthors}>{t("ui.editAuthors")}</button>
         <button className="btn primary" onClick={onExportTitlePage}>{t("ui.exportTitlePage")}</button>
       </div>
+    </div>
+  );
+}
+
+/** A figure's alternative text, source and licence: set when the field is left (one undo step each). */
+function FigureFields({ attrs, onSet }: { attrs: Record<string, unknown> | null; onSet: (a: Record<string, unknown>) => void }) {
+  const { t } = useTranslation();
+  const field = (name: "alt" | "credit" | "license", labelKey: string, multiline = false, hint?: string) => {
+    const value = String(attrs?.[name] ?? "");
+    const commit = (v: string) => { if (v.trim() !== value) onSet({ [name]: v.trim() }); };
+    return (
+      <label className="field">
+        <span>{t(labelKey)}</span>
+        {multiline
+          ? <textarea rows={3} defaultValue={value} onBlur={(e) => commit(e.target.value)} />
+          : <input defaultValue={value} onBlur={(e) => commit(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") commit((e.target as HTMLInputElement).value); }} />}
+        {hint && <small className="muted">{hint}</small>}
+      </label>
+    );
+  };
+  return (
+    <div className="figure-fields">
+      {field("alt", "ui.altText", true, t("ui.altHint"))}
+      {field("credit", "ui.credit")}
+      {field("license", "ui.license")}
     </div>
   );
 }
