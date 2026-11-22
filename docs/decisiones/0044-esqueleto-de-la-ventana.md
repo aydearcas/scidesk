@@ -90,6 +90,20 @@ La ventana provisional (una barra de botones, el editor y tres pestañas a la de
 - **Referencia cruzada (Ctrl+Mayús+R):** un buscador como el de la cita rápida, por número o por palabras del pie. Inserta «tabla » y el número, salvo que la palabra ya esté escrita justo antes.
 - **Las tablas y figuras se ven en el texto con su número y su pie** («Tabla 2 · Características basales») y la marca «sin citar en el texto», en lugar de la ruta de su archivo.
 
+### Buscar y reemplazar (PLAN 5.2)
+Pedido por el usuario al ver que Ctrl+F abría la barra de búsqueda de WebView2, que busca en toda la ventana:
+- **Una barra propia sobre el manuscrito** (`FindBar.tsx`, arriba a la derecha del papel). Se abre con Ctrl+B en «Word en español» o Ctrl+F en los dos esquemas, y con Ctrl+L o Ctrl+H se abre con la fila de reemplazar. También está en el menú Editar.
+- **Cómo busca:**
+  - lo que se escribe se busca al momento, sin distinguir mayúsculas salvo que se pida («Aa»);
+  - todas las coincidencias se resaltan, la actual en otro tono, con «n de m»;
+  - Intro y F3 van a la siguiente, y Mayús+Intro y Mayús+F3 a la anterior;
+  - la búsqueda empieza en la coincidencia que hay en el cursor o justo después, como Word, y la selecciona;
+  - si había una selección corta, se busca esa.
+- **Reemplazar** cambia la actual y pasa a la siguiente. **Reemplazar todo** lo hace en un solo paso, así que un Ctrl+Z lo deshace entero, y el mensaje lo dice.
+- **Esc cierra la barra**, quita los resaltados y devuelve el cursor al texto, con la última coincidencia seleccionada.
+- **Busca en los bloques de texto del manuscrito.** Una cita, una referencia cruzada o un salto de línea cuentan como un carácter que nunca coincide, así que no se busca a través de ellos. La bibliografía generada no se busca.
+- **Por qué el editor abre la barra él mismo:** ProseMirror se reserva Ctrl+B, Ctrl+I, Ctrl+Y y Ctrl+Z en el texto (su `captureKeyDown` evita la negrita y la cursiva propias del navegador), así que Ctrl+B nunca llegaba a la ventana. El editor abre el buscador con su atajo, como hace con la cita.
+
 ### Atajos (sección 9, D6)
 - **Dos esquemas en `apps/desktop/src/shortcuts.ts`**, que leen el editor y la ventana en cada pulsación, así que cambiar de esquema no obliga a recargar:
 
@@ -97,16 +111,17 @@ La ventana provisional (una barra de botones, el editor y tres pestañas a la de
   |---|---|---|
   | Negrita, cursiva, subrayado | Ctrl+N, Ctrl+K, Ctrl+S | Ctrl+B, Ctrl+I, Ctrl+U |
   | Guardar | Ctrl+G | Ctrl+S |
-  | Buscar, reemplazar (reservados) | Ctrl+B, Ctrl+L | Ctrl+F, Ctrl+H |
+  | Buscar, reemplazar | Ctrl+B (y Ctrl+F), Ctrl+L | Ctrl+F, Ctrl+H |
   | Cita | Ctrl+Mayús+C | Ctrl+Mayús+C |
   | Referencia cruzada | Ctrl+Mayús+R | Ctrl+Mayús+R |
   | Superíndice, subíndice | Ctrl+., Ctrl+, | Ctrl+., Ctrl+, |
   | Deshacer, rehacer | Ctrl+Z, Ctrl+Y | Ctrl+Z, Ctrl+Y |
 
-  Comentario, modo de sugerencias y paleta de órdenes tienen su atajo reservado y Ajustes dice que llegan más adelante.
+  Comentario, modo de sugerencias y paleta de órdenes tienen su atajo reservado y Ajustes dice que llegan más adelante. Ctrl+F busca también con «Word en español», donde está libre, porque es la costumbre de cualquier programa.
 - **Las marcas pierden sus atajos propios de Tiptap.** Así Ctrl+B no pone negrita con «Word en español», donde es buscar.
 - **Ctrl+Alt nunca es un atajo**: una pulsación con Alt no se interpreta, porque en un teclado español de Windows es AltGr (@, #, [, ]…).
 - **Un atajo de formato pulsado fuera del texto no hace nada.** Tampoco abre el «guardar página» del navegador con Ctrl+S.
+- **Las herramientas propias de WebView2 quedan anuladas** (`BROWSER_KEYS` en `shortcuts.ts`): su barra de búsqueda (Ctrl+F, F3, Mayús+F3, Ctrl+G y Ctrl+Mayús+G si el esquema no los usa) y su diálogo de imprimir (Ctrl+P). La barra busca en toda la ventana (navegador, paneles, avisos), no solo en el documento, como observó el usuario al probarla. Tauri 2.12 no permite apagar los atajos del navegador de WebView2, porque no expone la opción que sí tiene wry, la capa que usa por debajo. Por eso la ventana los anula al pulsarlos, y Ctrl+F abre el buscador propio (ver «Buscar y reemplazar»).
 - **Por defecto, «Word en español» con la interfaz en español** e «Internacional» con la inglesa, mientras no se elija otro.
 
 ### Ajustes de este equipo
@@ -154,7 +169,9 @@ Todos los textos nuevos están en `i18n.ts`, en español y en inglés, bajo `ui`
     - el navegador numera tablas y figuras como la exportación y como el panel de avisos, con pie, notas y si se citan;
     - la tabla vacía y la figura crean archivos válidos con el primer número libre, y se rechaza una imagen que no se puede exportar;
     - el segundo artículo de la demostración comparte la biblioteca, se comprueba y se exporta por su cuenta, y no se puede crear dos veces en la misma carpeta.
-  - **Ventana**, 5 nuevas (`apps/desktop/src/shortcuts.test.ts`, que `npm test` ya ejecuta): los dos esquemas, la cita en Ctrl+Mayús+C en los dos, ningún Ctrl+Alt (AltGr no es atajo), una acción por tecla y los nombres de las teclas en cada idioma.
+  - **Ventana**, 9 nuevas, que `npm test` ya ejecuta:
+    - en `shortcuts.test.ts`: los dos esquemas, la cita en Ctrl+Mayús+C en los dos, ningún Ctrl+Alt (AltGr no es atajo), una acción por tecla, los nombres de las teclas en cada idioma y las teclas que se quitan a WebView2;
+    - en `find.test.ts`: las coincidencias a través del formato, con y sin mayúsculas, y nunca a través de una cita.
   - **En el navegador** (configuración `desktop-web`, 1440 × 900), sin errores en la consola:
     - abrir la demostración y reabrirla tras recargar;
     - recuperar lo escrito al recargar antes del guardado;
@@ -180,6 +197,38 @@ Todos los textos nuevos están en `i18n.ts`, en español y en inglés, bajo `ui`
 - **Fallo corregido de paso** (venía de la ficha 0039): «Proyecto de demostración» daba a veces «the folder is not empty». Al borrar la demostración anterior del almacenamiento del navegador, el bucle recorría las claves por índice mientras las borraba, y Chrome puede reordenarlas, así que alguna se quedaba (por ejemplo `articles/main/authors.json`). Ahora se reúnen primero las claves y después se borran (`platform.ts`). Con la clave sobrante aún en el almacenamiento, la demostración se abre a la primera. Afecta solo a la vista en el navegador.
 - **La prueba de los 18 estilos (ficha 0037) tiene ahora un límite de 20 s.** Tarda casi 5 s sola, justo el límite por defecto de Vitest, y con las pruebas nuevas en paralelo lo pasaba a veces.
 
+### En la ventana real de Tauri (22/11/2026)
+La ventana de desarrollo (`tauri dev`, unida al servidor de Vite que ya estaba en marcha) se manejó con el protocolo de depuración de WebView2 (puerto local). Las teclas y los clics que envía llegan a la página como de verdad. La persona usuaria eligió la carpeta en los dos diálogos nativos y pulsó a mano las combinaciones que solo se pueden probar con el teclado. Resultados:
+- **Atajos** de «Word en español»:
+  - Ctrl+N, Ctrl+K y Ctrl+S ponen negrita, cursiva y subrayado, y Ctrl+B no pone negrita;
+  - Ctrl+Mayús+C abre la cita rápida con el foco en el buscador;
+  - Ctrl+Mayús+R abre la referencia cruzada;
+  - Ctrl+G guarda.
+
+  Con el teclado de verdad, Ctrl+N, Ctrl+Mayús+C y Ctrl+Mayús+R no abren otra ventana, ni el inspector, ni recargan la página. Ctrl+F sí abría la barra de búsqueda de WebView2: ahora se anula (ver Atajos).
+- **Menú contextual** sobre una cita: editarla o quitarla, referencia cruzada, pendiente, cortar, copiar y seleccionar todo, con el foco en el menú.
+- **Dos manuscritos:** cada uno conserva su texto, y Ctrl+Z en la carta vuelve a su texto original sin pasar al otro.
+- **Figura** desde un PNG.
+- **PDF** compilado por Typst en Rust: 2 páginas, con el aviso de texto alternativo de la figura.
+- **Ajustes** en `%LOCALAPPDATA%\app.scidesk.desktop\settings\interface.json`: el esquema internacional se conserva al cerrar y volver a abrir la aplicación, y la cinta muestra B, I y U.
+- **Proyecto en el disco** (creado con `scidesk demo` y abierto con «Abrir proyecto…»): se escribe y se cierra la aplicación a la fuerza a los 0,6 s. El texto no está en el disco y el registro de recuperación sí, en la carpeta local de datos. Al reabrir:
+  - sale «Cambios sin guardar»;
+  - «Recuperar» devuelve el texto y lo guarda;
+  - el registro se borra;
+  - no quedan archivos temporales de la escritura atómica.
+
+  Exportar el Word para coautores escribe el DOCX en `exports/` y la instantánea en `.scidesk/history/`.
+
+- **Buscar y reemplazar** en la ventana real:
+  - Ctrl+B abre la barra con el foco;
+  - «artritis» da «1 de 2» con las dos resaltadas, e Intro pasa a «2 de 2»;
+  - Esc la cierra, quita los resaltados y deja la palabra seleccionada;
+  - Ctrl+F la vuelve a abrir con esa palabra, y Ctrl+L añade la fila de reemplazar;
+  - «Reemplazar todo» hace 2 reemplazos, y un solo Ctrl+Z los deshace;
+  - con el teclado de verdad, Ctrl+F, F3 y Ctrl+P ya no abren la búsqueda ni el diálogo de imprimir de WebView2.
+
+Con esto quedan probadas en la ventana real lo que tenían pendiente las fichas 0039 (recuperación) y 0040 (el PDF en la ventana).
+
 ## Qué se descartó
 - **Rehacer la biblioteca y los autores para la vista grande.** Se reutilizan los componentes de las fichas 0037 y 0038.
 - **Una biblioteca de iconos (Lucide)**: haría falta una dependencia nueva para unos 30 iconos.
@@ -187,7 +236,7 @@ Todos los textos nuevos están en `i18n.ts`, en español y en inglés, bajo `ui`
 - **Guardar los ajustes en el proyecto:** son de quien usa el equipo, no del artículo.
 
 ## Consecuencias
-- **En la vista del navegador, algunos atajos de «Word en español» no se pueden probar con el teclado**: Chrome se queda Ctrl+N (ventana nueva), y Ctrl+Mayús+C y Ctrl+Mayús+R son sus herramientas de desarrollo y la recarga. Con un evento de teclado simulado, Ctrl+N pone negrita. En la aplicación instalada no pasa: falta comprobarlo en la ventana real de Tauri.
+- **En la vista del navegador, algunos atajos de «Word en español» no se pueden probar con el teclado**: Chrome se queda Ctrl+N (ventana nueva), y Ctrl+Mayús+C y Ctrl+Mayús+R son sus herramientas de desarrollo y la recarga. En la ventana de Tauri funcionan (ver «En la ventana real de Tauri»).
 - **Las capturas de `docs/interfaz/capturas/` siguen siendo las de la maqueta.** Las de esta ventana, tomadas al probarla, están fuera del repositorio.
 - **Falta de la fila «1 (MVP)»:**
   - la pantalla de inicio y el asistente de nuevo artículo, que esperan a las láminas de D8; mientras tanto, un inicio mínimo con los botones de siempre;
@@ -197,5 +246,11 @@ Todos los textos nuevos están en `i18n.ts`, en español y en inglés, bajo `ui`
   - los subrayados de aviso en el texto;
   - el selector de idioma por fragmento;
   - plegar los paneles con un atajo.
-- **Probar en la ventana real de Tauri**: el menú contextual, los atajos, el diálogo de imagen y los ajustes en la carpeta local.
+- **Falta en Tauri:** el diálogo nativo de imagen (la prueba llenó el campo de archivo directamente).
+- **Falta del buscador:**
+  - «solo en esta sección»;
+  - buscar en el resumen, las tablas y los pies (cuando se editen en su sitio);
+  - buscar en todo el proyecto (V1, R22);
+  - las expresiones regulares (V1, R43).
+- **Pedir a Tauri la opción de apagar los atajos del navegador** (la de wry), o añadirla con un parche, para no depender de anular cada tecla.
 - **Varios artículos en la ventana son por ahora solo una prueba:** no hay orden para crear un artículo nuevo (llegará con el asistente) y la vista Autores, las exportaciones y la Revisión actúan sobre el artículo a la vista.

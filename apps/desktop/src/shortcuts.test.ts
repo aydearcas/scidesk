@@ -43,3 +43,13 @@ describe("shortcut schemes", () => {
     expect(shortcutLabel("Mod-Shift-c", "en")).toBe("Ctrl+Shift+C");
   });
 });
+
+describe("the web view's own keys", () => {
+  it("Ctrl+F, F3 and Ctrl+P are kept from the web view (its find bar searches the whole window)", async () => {
+    const { BROWSER_KEYS, plainKeyOf } = await import("./shortcuts.ts");
+    expect(BROWSER_KEYS).toEqual(expect.arrayContaining(["Mod-f", "Mod-p", "F3"]));
+    expect(comboOf(key("f"))).toBe("Mod-f");
+    expect(plainKeyOf({ key: "F3", ctrlKey: false, metaKey: false, shiftKey: false, altKey: false })).toBe("F3");
+    expect(plainKeyOf({ key: "a", ctrlKey: false, metaKey: false, shiftKey: false, altKey: false })).toBeNull();
+  });
+});

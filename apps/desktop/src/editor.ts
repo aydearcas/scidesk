@@ -4,7 +4,9 @@
 // superscript, subscript, colour and highlight, citations, cross-references and the places
 // of tables and figures.
 import { Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection, type EditorState as EditorStateType, type Transaction as TransactionType } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import type { Node as PMNodeType } from "@tiptap/pm/model";
 import { HIGHLIGHT_COLORS, newId } from "@scidesk/formats";
 import Bold from "@tiptap/extension-bold";
 import Document from "@tiptap/extension-document";
@@ -54,7 +56,7 @@ export function refreshCitationLabels() {
 }
 
 /** What the shortcuts that open a dialog do (set by the window). */
-export const hooks = { quickCite: () => {}, xref: () => {} };
+export const hooks = { quickCite: () => {}, xref: () => {}, find: (_replace: boolean) => {} };
 
 /** Numbers of tables and figures by first cross-reference, then position (as the export). */
 export const xrefLabels = new Map<string, string>();
@@ -221,7 +223,12 @@ const SchemeKeys = Extension.create({
       key: new PluginKey("schemeKeys"),
       props: {
         handleKeyDown: (_view, event) => {
-          const action = actionFor(keyScheme.current, comboOf(event));
+          const combo = comboOf(event);
+          const action = actionFor(keyScheme.current, combo);
+          // find here too: ProseMirror keeps Ctrl+B and Ctrl+I from the window (its
+          // captureKeyDown stops the browser's own bold and italic), so "Word en español"'s
+          // Ctrl+B would never reach it
+          if (action === "find" || action === "replace" || combo === "Mod-f") { hooks.find(action === "replace"); event.preventDefault(); return true; }
           if (!action || !EDITOR_ACTIONS.includes(action)) return false;
           if (action === "cite") hooks.quickCite();
           else if (action === "xref") hooks.xref();
@@ -234,6 +241,94 @@ const SchemeKeys = Extension.create({
   },
 });
 const noKeys = { addKeyboardShortcuts: () => ({}) };
+
+// ---------------------------------------------------------------- find and replace (PLAN 5.2, record 0044)
+
+export interface FindMatch { from: number; to: number }
+interface FindState { query: string; caseSensitive: boolean; matches: FindMatch[]; current: number }
+export const findKey = new PluginKey<FindState>("find");
+
+/** Every match in the text blocks; a citation or cross-reference is one character that never matches. */
+export function findMatches(doc: PMNodeType, query: string, caseSensitive: boolean): FindMatch[] {
+  if (!query) return [];
+  const norm = (s: string) => (caseSensitive ? s : s.toLocaleLowerCase());
+  const q = norm(query);
+  const out: FindMatch[] = [];
+  doc.descendants((node, pos) => {
+    if (!node.isTextblock) return true;
+    // one character per position: text, and U+FFFC for each inline leaf (citation, xref, break)
+    const text = norm(node.textBetween(0, node.content.size, undefined, "￼"));
+    for (let i = text.indexOf(q); i >= 0; i = text.indexOf(q, i + q.length)) out.push({ from: pos + 1 + i, to: pos + 1 + i + q.length });
+    return false;
+  });
+  return out;
+}
+
+const FindHighlight = Extension.create({
+  name: "findHighlight",
+  addProseMirrorPlugins: () => [
+    new Plugin<FindState>({
+      key: findKey,
+      state: {
+        init: () => ({ query: "", caseSensitive: false, matches: [], current: -1 }),
+        apply(tr, value, _old, state) {
+          const meta = tr.getMeta(findKey) as Partial<FindState> | undefined;
+          if (!meta && !tr.docChanged) return value;
+          const next = { ...value, ...meta };
+          const matches = meta?.query !== undefined || meta?.caseSensitive !== undefined || tr.docChanged ? findMatches(state.doc, next.query, next.caseSensitive) : value.matches;
+          const current = matches.length ? Math.min(Math.max(meta?.current ?? next.current, 0), matches.length - 1) : -1;
+          return { ...next, matches, current };
+        },
+      },
+      props: {
+        decorations(state) {
+          const f = findKey.getState(state);
+          if (!f?.matches.length) return null;
+          return DecorationSet.create(state.doc, f.matches.map((m, i) => Decoration.inline(m.from, m.to, { class: i === f.current ? "find-match find-current" : "find-match" })));
+        },
+      },
+    }),
+  ],
+});
+
+/** What the find bar shows. */
+export const findState = (editor: { state: EditorStateType }) => findKey.getState(editor.state) ?? { query: "", caseSensitive: false, matches: [], current: -1 };
+type EditorLike = { state: EditorStateType; view: { dispatch: (tr: TransactionType) => void } };
+export function setFind(editor: EditorLike, query: string, caseSensitive: boolean) {
+  // the match at or after the cursor becomes the current one, as in Word
+  const at = editor.state.selection.from;
+  const matches = findMatches(editor.state.doc, query, caseSensitive);
+  const current = Math.max(0, matches.findIndex((m) => m.from >= at));
+  editor.view.dispatch(editor.state.tr.setMeta(findKey, { query, caseSensitive, current }).setMeta("addToHistory", false));
+}
+/** Goes to the next (1) or previous (-1) match, or stays on the current one (0), and selects it. */
+export function findStep(editor: EditorLike, dir: -1 | 0 | 1, select = true) {
+  const f = findState(editor);
+  if (!f.matches.length) return;
+  const current = (f.current + dir + f.matches.length) % f.matches.length;
+  const m = f.matches[current];
+  let tr = editor.state.tr.setMeta(findKey, { current }).setMeta("addToHistory", false);
+  if (select) tr = tr.setSelection(TextSelection.create(tr.doc, m.from, m.to)).scrollIntoView();
+  editor.view.dispatch(tr);
+}
+/** Replaces the current match (and goes to the next one); returns whether something was replaced. */
+export function replaceCurrent(editor: EditorLike, text: string) {
+  const f = findState(editor);
+  const m = f.matches[f.current];
+  if (!m) return false;
+  editor.view.dispatch(editor.state.tr.insertText(text, m.from, m.to).setMeta(findKey, { current: f.current }));
+  findStep(editor, 0);
+  return true;
+}
+/** Replaces every match in one step (one Ctrl+Z undoes it); returns how many. */
+export function replaceAll(editor: EditorLike, text: string) {
+  const { matches } = findState(editor);
+  if (!matches.length) return 0;
+  let tr = editor.state.tr;
+  for (const m of [...matches].reverse()) tr = tr.insertText(text, m.from, m.to);
+  editor.view.dispatch(tr);
+  return matches.length;
+}
 
 /** "#c00000", "rgb(192, 0, 0)" -> "#C00000"; anything else (named colours, black) -> null. */
 export function cssColor(value: string | null | undefined): string | null {
@@ -279,6 +374,7 @@ const Highlight = Mark.create({
 export const extensions = [
   BlockIds,
   SchemeKeys,
+  FindHighlight,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
   Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | tableRef | figureRef)*" }),
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),

@@ -6,12 +6,12 @@
 export type SchemeId = "word-es" | "international";
 export type Action =
   | "bold" | "italic" | "underline" | "superscript" | "subscript" | "undo" | "redo"
-  | "cite" | "xref" | "save"
+  | "cite" | "xref" | "save" | "find" | "replace"
   // listed and reserved, not built yet (phase 1 V1 and phase 2)
-  | "find" | "replace" | "comment" | "suggestions" | "palette";
+  | "comment" | "suggestions" | "palette";
 
 /** Actions that work today; the others show "coming later" in Settings. */
-export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save"];
+export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace"];
 /** Actions that act on the text, run by the editor when it has the focus. */
 export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref"];
 
@@ -26,6 +26,18 @@ export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
 };
 /** Order of the actions in the table of Settings. */
 export const ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
+
+/**
+ * Keys that open the web view's own tools: its find bar (which searches the whole window,
+ * not the document) and its print dialog (of the window). Tauri 2.12 cannot turn off
+ * WebView2's browser keys, so the window swallows these unless a scheme uses them.
+ */
+export const BROWSER_KEYS: readonly string[] = ["Mod-f", "Mod-g", "Mod-Shift-g", "Mod-h", "Mod-p", "F3", "Shift-F3"];
+/** "F3" / "Shift-F3": function keys without Ctrl, for BROWSER_KEYS. */
+export function plainKeyOf(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "shiftKey" | "altKey">): string | null {
+  if (e.ctrlKey || e.metaKey || e.altKey || !/^F\d+$/.test(e.key)) return null;
+  return `${e.shiftKey ? "Shift-" : ""}${e.key}`;
+}
 
 export const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 

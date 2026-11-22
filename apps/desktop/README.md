@@ -21,6 +21,7 @@ Tauri 2 + React + Tiptap. Estado: **fase 1, con el esqueleto de la ventana** (fi
 
   Tiene un botón para cambiar a la vista de archivos.
 - `src/Ribbon.tsx`: la cinta de una fila, a todo el ancho bajo la barra de título (los paneles laterales empiezan debajo). Lleva deshacer, estilo del párrafo, negrita, cursiva y subrayado (N/K/S o B/I/U según el esquema), índices, color y resaltado de Word, cita, referencia cruzada, tabla, figura y carácter especial.
+- `src/FindBar.tsx`: buscar y reemplazar en el manuscrito (Ctrl+B o Ctrl+F, Ctrl+L o Ctrl+H), con las coincidencias resaltadas por el plugin `findHighlight` de `editor.ts`; sus pruebas están en `src/find.test.ts`.
 - `src/EditorMenus.tsx`: la burbuja de selección y el buscador de referencia cruzada (Ctrl+Mayús+R).
 - `src/DetailsPanel.tsx`: «Detalles», con la cita, tabla, figura o referencia elegida, el resumen o la portada.
 - `src/ReviewPanel.tsx`: «Revisión», con la copia devuelta por un coautor y sus propuestas.

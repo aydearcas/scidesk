@@ -208,6 +208,19 @@ button.nav-item:hover { background: var(--bars); }
 .bibliography li { display: flex; gap: 8px; margin-bottom: 4px; }
 .part-note { font: 12px var(--ui-font); color: var(--text-3); margin: 8px 0; }
 .bib-label { min-width: 2em; text-align: right; flex: none; }
+.find-bar { position: absolute; top: 8px; right: 22px; z-index: 22; width: min(460px, calc(100% - 44px)); display: flex; flex-direction: column; gap: 4px; padding: 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.find-row { display: flex; align-items: center; gap: 2px; }
+.find-row input { flex: 1; min-width: 0; }
+.find-row .btn { height: 28px; font-size: 12px; }
+.find-indent { width: 28px; flex: none; }
+.find-count { min-width: 76px; text-align: right; padding: 0 6px; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.find-count.none { color: var(--blocking); }
+.icon-button.text { font-size: 12px; font-weight: 600; width: auto; padding: 0 6px; }
+.icon-button.on { background: var(--accent-soft); color: var(--accent); }
+.icon-button:disabled { opacity: 0.4; cursor: default; }
+.icon.flip { transform: rotate(180deg); }
+.find-match { background: #FFE58F; border-radius: 2px; }
+.find-current { background: #FFB020; outline: 1px solid #B76E00; }
 .bubble { position: fixed; z-index: 25; display: flex; align-items: center; gap: 1px; padding: 3px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
 .bubble .tool { height: 28px; min-width: 28px; }
 

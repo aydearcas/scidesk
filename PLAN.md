@@ -297,7 +297,7 @@ Reparto de los datos:
   - Por eso el programa incluye equivalentes libres con las mismas medidas, para que el texto ocupe lo mismo: Carlito (Calibri), Caladea (Cambria), Liberation Serif (Times New Roman), Liberation Sans (Arial) y Liberation Mono (Courier New). Roboto es libre y se incluye tal cual.
   - El DOCX conserva el nombre original de la fuente, así que quien lo abra en Word verá Calibri. El PDF incrusta la fuente que se haya usado.
 - **[MVP]** Negrita, cursiva, subrayado, superíndice, subíndice, alineación, sangría. **[V1]** Versalitas (R43).
-- **[MVP]** Deshacer y rehacer, buscar y reemplazar (también "solo en esta sección"). **[V1]** Con expresiones regulares (R43).
+- **[MVP]** Deshacer y rehacer, buscar y reemplazar (también "solo en esta sección"). **[V1]** Con expresiones regulares (R43). **Buscar y reemplazar en el manuscrito, hecho el 22/11/2026** (ficha 0044): barra propia con Ctrl+B o Ctrl+F, Ctrl+L o Ctrl+H, coincidencias resaltadas, mayúsculas opcionales y «Reemplazar todo» que se deshace de una vez; falta «solo en esta sección».
 - **[MVP]** Caracteres especiales con acceso rápido a los científicos: ±, ≤, ≥, µ, α–ω, ×, espacio duro, guion largo.
 - **[MVP]** **Autocorrección científica y texto automático** (R18). Reglas que se aplican al teclear y se deshacen con Ctrl+Z, y que sustituyen buena parte del uso del menú de caracteres especiales:
   - `+-` → ±, `<=` → ≤, `>=` → ≥, `->` → →, y la x entre números ("2 x 2") → ×.

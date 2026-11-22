@@ -13,7 +13,8 @@ import {
 } from "@scidesk/core";
 import { EditorState, NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { citationLabels, extensions, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels } from "./editor.ts";
+import { citationLabels, extensions, findStep, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels } from "./editor.ts";
+import { FindBar } from "./FindBar.tsx";
 import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
@@ -28,7 +29,7 @@ import { ReviewPanel } from "./ReviewPanel.tsx";
 import { Ribbon } from "./Ribbon.tsx";
 import { SettingsView } from "./SettingsView.tsx";
 import { StatusBar } from "./StatusBar.tsx";
-import { actionFor, comboOf, EDITOR_ACTIONS, SCHEMES, shortcutLabel, type Action } from "./shortcuts.ts";
+import { actionFor, BROWSER_KEYS, comboOf, EDITOR_ACTIONS, plainKeyOf, SCHEMES, shortcutLabel, type Action } from "./shortcuts.ts";
 import { effectiveScheme, useSettings } from "./settings.ts";
 import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
 
@@ -75,6 +76,8 @@ export function App() {
   // the quick citation dialog: the citation being edited (its position), or a new one
   const [citing, setCiting] = useState<{ pos: number | null; items: CiteItem[] } | null>(null);
   const [xrefOpen, setXrefOpen] = useState(false);
+  // find and replace in the manuscript; `focus` changes each time it is asked for again
+  const [finding, setFinding] = useState<{ replace: boolean; focus: number } | null>(null);
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   // every message replaces the previous one, with its file link or none
   const setMessage = (text: string, file: { url: string; name: string } | null = null) => { setMessageState(text); setDownload(file); };
@@ -418,7 +421,9 @@ export function App() {
     else setCiting({ pos: null, items: [] });
   }, [editor, project]);
   const openXref = useCallback(() => { if (project) setXrefOpen(true); }, [project]);
-  useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; }, [openQuickCite, openXref]);
+  const openFind = (replace: boolean) => { openTab(docTab); setFinding({ replace, focus: Date.now() }); };
+  useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; });
+  useEffect(() => { hooks.find = (replace) => openFind(replace); });
   const finishCitation = (items: CiteItem[]) => {
     if (!editor || !citing) return;
     const pos = citing.pos;
@@ -549,8 +554,20 @@ export function App() {
   const shortcutRef = useRef<(e: KeyboardEvent) => void>(() => {});
   shortcutRef.current = (e: KeyboardEvent) => {
     if (e.defaultPrevented) return;
-    const action = actionFor(scheme, comboOf(e));
-    if (!action) return;
+    const combo = comboOf(e);
+    const plain = plainKeyOf(e);
+    const action = actionFor(scheme, combo);
+    // our find bar, on the manuscript: the scheme's key, and Ctrl+F in both schemes
+    if (action === "find" || action === "replace" || combo === "Mod-f") {
+      e.preventDefault();
+      if (project) openFind(action === "replace");
+      return;
+    }
+    if ((plain === "F3" || plain === "Shift-F3") && finding && editor) { e.preventDefault(); findStep(editor, plain === "F3" ? 1 : -1); return; }
+    // Esc closes the find bar also when the focus has left it (a button that became disabled)
+    if (e.key === "Escape" && finding && !document.querySelector(".overlay, .context-menu, .menu-list")) { e.preventDefault(); setFinding(null); editor?.commands.focus(); return; }
+    // not the web view's own find bar or print dialog, which act on the whole window (record 0044)
+    if (!action) { if (BROWSER_KEYS.includes(combo ?? plain ?? "")) e.preventDefault(); return; }
     if (action === "save") { e.preventDefault(); void run(save)(); }
     else if (action === "cite" && project && !citing) { e.preventDefault(); openQuickCite(); }
     else if (action === "xref" && project) { e.preventDefault(); openXref(); }
@@ -589,6 +606,9 @@ export function App() {
       "-",
       { label: t("ui.pastePlain"), shortcut: shortcutLabel("Mod-Shift-v", i18n.language), onSelect: () => {}, disabled: true, title: t("ui.pastePlainHint") },
       { label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor?.chain().focus().selectAll().run(), disabled: noProject },
+      "-",
+      { label: t("ui.find.find"), shortcut: keys("find"), onSelect: () => openFind(false), disabled: noProject },
+      { label: t("ui.find.findReplace"), shortcut: keys("replace"), onSelect: () => openFind(true), disabled: noProject },
     ] },
     { id: "insert", label: t("ui.menu.insert"), items: [
       { label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite, disabled: noProject },
@@ -779,6 +799,10 @@ export function App() {
               </div>
             </div>
             {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} />}
+            {editor && project && finding && (
+              <FindBar editor={editor} replace={finding.replace} focus={finding.focus} onClose={() => { setFinding(null); editor.commands.focus(); }}
+                onReplaced={(count) => setMessage(t("ui.find.replaced", { count }))} />
+            )}
           </div>
 
           {project && tab === "library" && (

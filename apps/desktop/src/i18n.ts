@@ -144,13 +144,19 @@ const es = {
     },
     settingsLocal: "Estos ajustes son de este equipo: no se guardan en el proyecto.", interfaceLanguage: "Idioma de la interfaz", shortcutScheme: "Esquema de atajos",
     schemes: { "word-es": "Word en español", international: "Internacional" },
-    schemeNote: "«Word en español» es el de Word con la interfaz en español (Ctrl+N negrita, Ctrl+K cursiva, Ctrl+S subrayado, Ctrl+G guardar). La cita rápida es Ctrl+Mayús+C en los dos.",
+    schemeNote: "«Word en español» es el de Word con la interfaz en español (Ctrl+N negrita, Ctrl+K cursiva, Ctrl+S subrayado, Ctrl+G guardar, Ctrl+B buscar). La cita rápida es Ctrl+Mayús+C en los dos, y Ctrl+F también busca en los dos.",
     action: "Acción", comingLater: "llega más adelante", noCtrlAlt: "Ningún atajo usa Ctrl+Alt, que en los teclados españoles de Windows es AltGr.",
     actions: {
       bold: "Negrita", italic: "Cursiva", underline: "Subrayado", superscript: "Superíndice", subscript: "Subíndice", undo: "Deshacer", redo: "Rehacer", save: "Guardar ahora (después, versión con nombre)",
       cite: "Insertar cita", xref: "Insertar referencia cruzada", find: "Buscar", replace: "Reemplazar", comment: "Comentario", suggestions: "Modo de sugerencias", palette: "Buscar o ejecutar una orden",
     },
     startLater: "La pantalla de inicio y el asistente de nuevo artículo llegan con sus láminas (D8).",
+    find: {
+      label: "Buscar en el manuscrito", find: "Buscar…", findReplace: "Buscar y reemplazar…", placeholder: "Buscar en el manuscrito", replaceWith: "Reemplazar por",
+      count: "{{n}} de {{total}}", none: "Sin resultados", caseSensitive: "Distinguir mayúsculas y minúsculas", previous: "Anterior (Mayús+Intro)", next: "Siguiente (Intro)",
+      toggleReplace: "Reemplazar", replace: "Reemplazar", replaceAll: "Reemplazar todo",
+      replaced_one: "1 reemplazo: Ctrl+Z lo deshace", replaced_other: "{{count}} reemplazos: Ctrl+Z los deshace todos de una vez",
+    },
   },
 };
 const en: typeof es = {
@@ -294,13 +300,19 @@ const en: typeof es = {
     },
     settingsLocal: "These settings belong to this computer: they are not saved in the project.", interfaceLanguage: "Interface language", shortcutScheme: "Shortcut scheme",
     schemes: { "word-es": "Word in Spanish", international: "International" },
-    schemeNote: "“Word in Spanish” is Word's with the interface in Spanish (Ctrl+N bold, Ctrl+K italic, Ctrl+S underline, Ctrl+G save). The quick citation is Ctrl+Shift+C in both.",
+    schemeNote: "“Word in Spanish” is Word's with the interface in Spanish (Ctrl+N bold, Ctrl+K italic, Ctrl+S underline, Ctrl+G save, Ctrl+B find). The quick citation is Ctrl+Shift+C in both, and Ctrl+F finds in both too.",
     action: "Action", comingLater: "coming later", noCtrlAlt: "No shortcut uses Ctrl+Alt, which is AltGr on Spanish Windows keyboards.",
     actions: {
       bold: "Bold", italic: "Italic", underline: "Underline", superscript: "Superscript", subscript: "Subscript", undo: "Undo", redo: "Redo", save: "Save now (later, a named version)",
       cite: "Insert citation", xref: "Insert cross-reference", find: "Find", replace: "Replace", comment: "Comment", suggestions: "Suggestions mode", palette: "Search or run a command",
     },
     startLater: "The start screen and the new-article wizard come with their mock-ups (D8).",
+    find: {
+      label: "Find in the manuscript", find: "Find…", findReplace: "Find and replace…", placeholder: "Find in the manuscript", replaceWith: "Replace with",
+      count: "{{n}} of {{total}}", none: "No results", caseSensitive: "Match case", previous: "Previous (Shift+Enter)", next: "Next (Enter)",
+      toggleReplace: "Replace", replace: "Replace", replaceAll: "Replace all",
+      replaced_one: "1 replacement: Ctrl+Z undoes it", replaced_other: "{{count}} replacements: Ctrl+Z undoes them all at once",
+    },
   },
 };
 
