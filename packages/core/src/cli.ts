@@ -2,6 +2,8 @@
 // SciDesk's command line (R33), on the same core as the app.
 //   scidesk new <dir> --name <name> --title <title> [--lang es] [--type original] [--also en]
 //                [--journal reumatologia-clinica] [--style <style>]   (the wizard's choices; journals: scidesk journals)
+//   scidesk add-article <dir> --title <title> [--folder <name>] [--lang es] [--type …] [--also en] [--journal …] [--style …]
+//                another article in the project (folder from the title by default)
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
@@ -16,16 +18,23 @@
 //   scidesk authors <dir> [--article main]          who signs, with affiliations, CRediT and warnings
 //   scidesk recover <dir> [--apply|--discard] [--store <folder>]   unsaved changes left by a closed window
 //   scidesk styles                                   the citation styles included
-//   scidesk journals                                 the journals SciDesk knows (with a profile or only their style)
+//   scidesk journals [--area rheumatology,cardiology]   the journals SciDesk knows (with a profile or only
+//                                                    their style); with areas, those suggested for them first
+//   scidesk zotero-collections                       the collections of Zotero (local API, Zotero open)
+//   scidesk zotero <dir>                             sync a library linked to a Zotero collection
+//                (new … --zotero <collection key> links a new project's library to that collection)
+//   scidesk areas                                    the main areas a user can choose (first start, Settings)
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
 import { appLocalDataDir, readAsset, NodeFs, NodeStore, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
 import { exportPdf, manuscriptTypst, type PdfStandard } from "./typst-export.ts";
 import { Recovery } from "./recovery.ts";
-import { createProject, loadProject, ProjectError } from "./project.ts";
+import { addArticle, articleFolder, createProject, loadProject, ProjectError } from "./project.ts";
 import { createDemoProject } from "./demo.ts";
 import { JOURNAL_CATALOG, journalTranslations } from "./new-article.ts";
+import { AREAS, areaFit, splitByAreas } from "./areas.ts";
+import { collectionTree, fetchTransport, syncZoteroLibrary, ZoteroLocal, zoteroLibraryMode } from "./zotero.ts";
 import { exportDocx, type ExportProfile } from "./docx-export.ts";
 import { importCopy } from "./round.ts";
 import { exportTitlePage } from "./title-page.ts";
@@ -49,29 +58,72 @@ async function main() {
     for (const s of BUNDLED_STYLES) console.log(`${s.file.replace(/\.csl$/, "").padEnd(36)} ${s.format.padEnd(12)} ${s.name}${s.parent ? ` (uses ${s.parent})` : ""}`);
     return;
   }
+  if (cmd === "zotero-collections") {
+    for (const c of collectionTree(await new ZoteroLocal(fetchTransport()).collections())) console.log(`${c.key}  ${"  ".repeat(c.depth)}${c.name} (${c.items})`);
+    return;
+  }
+  if (cmd === "areas") {
+    for (const a of AREAS) console.log(`${a.id.padEnd(26)} ${a.group.padEnd(9)} ${String(a.openalex).padEnd(5)} ${a.name.en} / ${a.name.es}`);
+    return;
+  }
   if (cmd === "journals") {
-    for (const j of JOURNAL_CATALOG) console.log(`${j.id.padEnd(38)} ${j.profile ? "profile" : "style only"}  ${j.title}`);
+    const all = process.argv.slice(3);
+    const i = all.indexOf("--area");
+    const areas = i >= 0 ? (all[i + 1] ?? "").split(",").map((a) => a.trim()).filter(Boolean) : [];
+    const unknown = areas.filter((a) => !AREAS.some((x) => x.id === a));
+    if (unknown.length) throw new Error(`unknown area ${unknown.join(", ")} (see: scidesk areas)`);
+    const { suggested, others } = splitByAreas(JOURNAL_CATALOG, areas);
+    const line = (j: (typeof JOURNAL_CATALOG)[number]) => console.log(`${j.id.padEnd(38)} ${j.profile ? "profile   " : "style only"}  ${j.title}${areas.length && areaFit(j.areas, areas) === 1 ? "  (general)" : ""}`);
+    if (areas.length) { console.log("suggested for your areas:"); suggested.forEach(line); console.log(others.length ? "other journals:" : ""); }
+    others.forEach(line);
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals");
+    console.log("usage: scidesk <new|add-article|zotero|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
   switch (cmd) {
-    case "new": {
+    case "new":
+    case "add-article": {
       const lang = opt("lang", "es")!;
       const entry = opt("journal") ? JOURNAL_CATALOG.find((j) => j.id === opt("journal")) : undefined;
       if (opt("journal") && !entry) throw new Error(`unknown journal ${opt("journal")} (see: scidesk journals)`);
       const profile = entry?.profile ? JSON.parse(await readAsset(`journals/${entry.profile}`)) : null;
       const style = opt("style") ? findStyle(opt("style")!)?.id : entry?.styleId;
       if (opt("style") && !style) throw new Error(`unknown style ${opt("style")} (see: scidesk styles)`);
-      const p = await createProject(fs, {
-        name: opt("name", basename(dir))!, fileName: basename(fs.root), title: opt("title", "Título del artículo")!, lang,
+      const choices = {
+        title: opt("title", "Título del artículo")!, lang,
         articleType: opt("type", "original"), translations: opt("also")?.split(",") ?? (profile ? journalTranslations(profile, lang) : []),
-        journal: profile, citationStyle: style, readStyle: (file) => readAsset(`styles/${file}`),
-      });
+        journal: profile, citationStyle: style, readStyle: (file: string) => readAsset(`styles/${file}`),
+      };
+      if (cmd === "add-article") {
+        const before = await loadProject(fs);
+        const folder = opt("folder") ?? (await articleFolder(before, choices.title));
+        const p = await addArticle(before, { ...choices, folder });
+        console.log(`added articles/${folder} (${p.articles.length} articles in the project)`);
+        break;
+      }
+      let library: ReturnType<typeof zoteroLibraryMode> | undefined;
+      const zotero = opt("zotero") ? new ZoteroLocal(fetchTransport()) : null;
+      if (zotero) {
+        const col = (await zotero.collections()).find((c) => c.key === opt("zotero"));
+        if (!col) throw new Error(`no Zotero collection ${opt("zotero")} (see: scidesk zotero-collections)`);
+        library = zoteroLibraryMode(col);
+      }
+      const p = await createProject(fs, { ...choices, name: opt("name", basename(dir))!, fileName: basename(fs.root), library });
+      if (zotero) {
+        const r = await syncZoteroLibrary(p, zotero);
+        console.log(`linked to Zotero: ${r.total} references`);
+      }
       console.log(`created ${p.manifestPath} (project ${p.manifest.id})`);
+      break;
+    }
+    case "zotero": {
+      const p = await loadProject(fs);
+      const r = await syncZoteroLibrary(p, new ZoteroLocal(fetchTransport()));
+      console.log(`${r.total} references: ${r.added.length} added, ${r.updated.length} updated, ${r.removed.length} removed${r.keptCited.length ? `, ${r.keptCited.length} kept because cited (no longer in the collection)` : ""}`);
+      for (const k of r.keptCited) console.log(`  kept: ${k.id} ${k.title}`);
       break;
     }
     case "demo": {

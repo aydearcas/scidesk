@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import type { JournalProfileFile, PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
-import { createProject, loadProject } from "../src/project.ts";
+import { addArticle, articleFolder, createProject, loadProject } from "../src/project.ts";
 import { articlePlan, folderName, journalSummary, journalTranslations, searchJournals } from "../src/new-article.ts";
 import { readAsset } from "../src/node-fs.ts";
 import { checkArticle } from "../src/checks.ts";
@@ -98,5 +98,27 @@ describe("createProject with the wizard's choices", () => {
   it("a journal with only a style: no profile, its style", async () => {
     const p = await createProject(new MemoryFs(), { name: "X", fileName: "x", title: "X", citationStyle: "http://www.zotero.org/styles/the-lancet" });
     expect(p.articles[0].article).toMatchObject({ journal: null, citationStyle: { id: "http://www.zotero.org/styles/the-lancet" } });
+  });
+});
+
+describe("a new article in an open project (record 0051)", () => {
+  it("gets a free folder from its title, the journal's profile and style, and shares the library", async () => {
+    const fs = new MemoryFs();
+    let p = await createProject(fs, { name: "Estudio", fileName: "estudio", title: "Remisión sostenida" });
+    expect(await articleFolder(p, "Main")).toBe("main-2");
+    const folder = await articleFolder(p, "Protocolo del estudio");
+    expect(folder).toBe("protocolo-estudio");
+    p = await addArticle(p, { folder, title: "Protocolo del estudio", articleType: "narrative-review", journal: await rc(), readStyle: (f) => readAsset(`styles/${f}`) });
+    expect(p.manifest.articles.map((a) => a.folder)).toEqual(["main", "protocolo-estudio"]);
+    expect(p.journals.has("reumatologia-clinica")).toBe(true);
+    expect(await fs.readText("resources/journals/styles/reumatologia-clinica-2026.csl")).toMatch(/<style/);
+    expect(p.articles[1].article).toMatchObject({ articleType: "narrative-review", journal: "reumatologia-clinica" });
+    expect(await articleFolder(p, "Protocolo del estudio")).toBe("protocolo-estudio-2");
+    // a profile the project already has is kept as it is
+    const edited = (await fs.readText("resources/journals/reumatologia-clinica.json"))!.replace("Reumatología Clínica", "Reumatología Clínica (editado)");
+    await fs.write("resources/journals/reumatologia-clinica.json", edited);
+    p = await addArticle(await loadProject(fs), { folder: "carta", title: "Carta", articleType: "letter", journal: await rc(), readStyle: (f) => readAsset(`styles/${f}`) });
+    expect(await fs.readText("resources/journals/reumatologia-clinica.json")).toContain("(editado)");
+    await expect(addArticle(p, { folder: "CARTA", title: "x" })).rejects.toThrow(/already/);
   });
 });

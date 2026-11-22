@@ -114,6 +114,8 @@ export interface CatalogJournal {
   styleId: string;
   /** Its profile, a file under assets/journals/, when SciDesk includes one. */
   profile?: string;
+  /** Its areas (ids of areas.ts), to suggest it to whoever works in them. */
+  areas: string[];
 }
 
 const Z = "http://www.zotero.org/styles/";
@@ -123,15 +125,15 @@ const Z = "http://www.zotero.org/styles/";
  * citation style; their limits and requirements will come with the package for an LLM.
  */
 export const JOURNAL_CATALOG: CatalogJournal[] = [
-  { id: "reumatologia-clinica", title: "Reumatología Clínica", publisher: "Elsevier", styleId: REUMATOLOGIA_CLINICA, profile: "reumatologia-clinica.json" },
-  { id: "medicina-clinica", title: "Medicina Clínica", publisher: "Elsevier", styleId: `${Z}medicina-clinica` },
-  { id: "the-lancet", title: "The Lancet", publisher: "Elsevier", styleId: `${Z}the-lancet` },
-  { id: "the-new-england-journal-of-medicine", title: "The New England Journal of Medicine", styleId: `${Z}the-new-england-journal-of-medicine` },
-  { id: "bmj", title: "BMJ", styleId: `${Z}bmj` },
-  { id: "jama", title: "JAMA", styleId: `${Z}jama` },
-  { id: "nature", title: "Nature", styleId: `${Z}nature` },
-  { id: "science", title: "Science", styleId: `${Z}science` },
-  { id: "cell", title: "Cell", styleId: `${Z}cell` },
+  { id: "reumatologia-clinica", title: "Reumatología Clínica", publisher: "Elsevier", styleId: REUMATOLOGIA_CLINICA, profile: "reumatologia-clinica.json", areas: ["rheumatology"] },
+  { id: "medicina-clinica", title: "Medicina Clínica", publisher: "Elsevier", styleId: `${Z}medicina-clinica`, areas: ["general-medicine", "internal-medicine"] },
+  { id: "the-lancet", title: "The Lancet", publisher: "Elsevier", styleId: `${Z}the-lancet`, areas: ["general-medicine"] },
+  { id: "the-new-england-journal-of-medicine", title: "The New England Journal of Medicine", styleId: `${Z}the-new-england-journal-of-medicine`, areas: ["general-medicine"] },
+  { id: "bmj", title: "BMJ", styleId: `${Z}bmj`, areas: ["general-medicine"] },
+  { id: "jama", title: "JAMA", styleId: `${Z}jama`, areas: ["general-medicine"] },
+  { id: "nature", title: "Nature", styleId: `${Z}nature`, areas: ["multidisciplinary"] },
+  { id: "science", title: "Science", styleId: `${Z}science`, areas: ["multidisciplinary"] },
+  { id: "cell", title: "Cell", styleId: `${Z}cell`, areas: ["biochemistry-genetics"] },
 ];
 
 const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();

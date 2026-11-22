@@ -19,10 +19,12 @@ export type NavTarget =
 
 const sameTarget = (a: NavTarget | null, b: NavTarget) => !!a && JSON.stringify(a) === JSON.stringify(b);
 
-export function Navigator({ project, folder, report, outline, active, onGo, articles, onSwitchArticle }: {
+export function Navigator({ project, folder, report, outline, active, onGo, articles, onSwitchArticle, onNewArticle }: {
   /** The project's articles: with more than one, the header chooses which (design proposal 3.1). */
   articles: { folder: string; title: string }[];
   onSwitchArticle: (folder: string) => void;
+  /** Record 0051: the wizard, to add another article to the project. */
+  onNewArticle: () => void;
   project: Project;
   folder: string;
   report: CheckReport | null;
@@ -111,6 +113,11 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
             {articles.map((a) => <option key={a.folder} value={a.folder}>{a.title}</option>)}
           </select>
         ) : <span className="panel-title">{showFiles ? t("ui.projectFiles") : t("ui.thisArticle")}</span>}
+        {!showFiles && (
+          <button className="icon-button" title={t("ui.newArticleHere")} aria-label={t("ui.newArticleHere")} onClick={onNewArticle}>
+            <Icon name="newFile" size={16} />
+          </button>
+        )}
         <button className="icon-button" aria-pressed={showFiles} title={showFiles ? t("ui.showConcepts") : t("ui.showFiles")} aria-label={showFiles ? t("ui.showConcepts") : t("ui.showFiles")} onClick={() => setShowFiles((v) => !v)}>
           <Icon name={showFiles ? "concepts" : "files"} size={16} />
         </button>

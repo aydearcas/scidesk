@@ -33,8 +33,10 @@ const FIELDS: { key: keyof ReferenceFields; multiline?: boolean; for?: string[] 
 export type LibraryFilter = "all" | "cited" | "uncited";
 
 /** The library view's left panel: filters with their counts, and the imports. */
-export function LibraryFilters({ project, uses, filter, onFilter, onImport }: {
+export function LibraryFilters({ project, uses, filter, onFilter, onImport, onSyncZotero }: {
   project: Project; uses: Map<string, number>; filter: LibraryFilter; onFilter: (f: LibraryFilter) => void; onImport: () => void;
+  /** Record 0052: a library linked to Zotero is synced, not imported into. */
+  onSyncZotero: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const refs = project.library.references;
@@ -66,8 +68,10 @@ export function LibraryFilters({ project, uses, filter, onFilter, onImport }: {
           ))}
         </ul>
       )}
-      <div className="pad"><button className="btn" onClick={onImport}>{t("importRefs")}</button></div>
-      <p className="muted pad small">{project.manifest.library.mode === "own" ? t("ui.ownLibrary") : t("zoteroLibrary")}</p>
+      {project.manifest.library.mode === "own"
+        ? <div className="pad"><button className="btn" onClick={onImport}>{t("importRefs")}</button></div>
+        : <div className="pad"><button className="btn" onClick={onSyncZotero}>{t("ui.zoteroSync")}</button></div>}
+      <p className="muted pad small">{project.manifest.library.mode === "own" ? t("ui.ownLibrary") : t("ui.zoteroLinkedTo", { name: project.manifest.library.zotero.name })}</p>
     </nav>
   );
 }

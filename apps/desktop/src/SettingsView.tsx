@@ -1,6 +1,8 @@
-// Settings (record 0044): interface language and shortcut scheme, kept on this computer,
+// Settings (record 0044): interface language, shortcut scheme, font mode and main areas
+// (record 0050), kept on this computer,
 // with the table of shortcuts of both schemes.
 import { useTranslation } from "react-i18next";
+import { AreaPicker } from "./AreaPicker.tsx";
 import { ACTIONS, BUILT, SCHEMES, shortcutLabel, type SchemeId } from "./shortcuts.ts";
 import { effectiveScheme, type Settings } from "./settings.ts";
 
@@ -31,6 +33,11 @@ export function SettingsView({ settings, onChange }: { settings: Settings; onCha
           <label key={m} className="inline"><input type="radio" name="fontMode" checked={settings.fontMode === m} onChange={() => onChange({ fontMode: m })} />{t(`ui.fontModes.${m}`)}</label>
         ))}
         <p className="muted small">{t("ui.fontModeNote")}</p>
+      </fieldset>
+      <fieldset className="setting areas-setting">
+        <legend>{t("ui.areas.title")}</legend>
+        <p className="muted small">{t("ui.areas.note")}</p>
+        <AreaPicker value={settings.areas} onChange={(areas) => onChange({ areas })} />
       </fieldset>
       <table className="shortcut-table">
         <thead><tr><th>{t("ui.action")}</th>{schemes.map((s) => <th key={s} className={s === scheme ? "current" : ""}>{t(`ui.schemes.${s}`)}</th>)}</tr></thead>

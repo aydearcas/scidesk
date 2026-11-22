@@ -5,6 +5,7 @@
 //! data folder for what never travels with the project, such as the journal of unsaved
 //! changes (R25, R26, record 0039), with the same rules.
 pub mod pdf;
+pub mod zotero;
 
 use std::collections::HashMap;
 use std::fs;
@@ -364,7 +365,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
-        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf])
+        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, zotero::zotero_get])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }

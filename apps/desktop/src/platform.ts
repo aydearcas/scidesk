@@ -1,7 +1,7 @@
 // Where the core's files come from. In the Tauri window: commands of the Rust side, which
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
-import { MemoryFs, bundledResources, type LocalStore, type ProjectFs, type TypstCompiler } from "@scidesk/core";
+import { MemoryFs, bundledResources, type LocalStore, type ProjectFs, type TypstCompiler, type ZoteroTransport } from "@scidesk/core";
 import type { JournalProfileFile } from "@scidesk/formats";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
@@ -213,3 +213,21 @@ export async function typstCompiler(): Promise<TypstCompiler | null> {
     return { pdf: unb64(r.pdf), pages: r.pages, warnings: r.warnings };
   };
 }
+
+/**
+ * Zotero's local API (record 0052): in the window, a command of the Rust side that only
+ * reads the user's library at 127.0.0.1:23119; in the browser preview, the dev server's
+ * proxy (/zotero-api), since the page cannot call another origin.
+ */
+export const zoteroTransport: ZoteroTransport = async (path, headers) => {
+  if (inTauri) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    return (await invoke("zotero_get", { path, serverId: headers["Zotero-Server-ID"] ?? null })) as Awaited<ReturnType<ZoteroTransport>>;
+  }
+  const res = await fetch(`/zotero-api${path}`, { headers });
+  // the proxy answers 502/504 when nothing listens at Zotero's port
+  if (res.status === 502 || res.status === 504) throw new Error("Zotero is not running");
+  const h: Record<string, string> = {};
+  res.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
+  return { status: res.status, headers: h, body: await res.text() };
+};

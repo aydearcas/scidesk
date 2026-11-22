@@ -7,7 +7,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addEmptyTable, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -35,8 +35,9 @@ import { SettingsView } from "./SettingsView.tsx";
 import { StatusBar } from "./StatusBar.tsx";
 import { actionFor, BROWSER_KEYS, comboOf, EDITOR_ACTIONS, plainKeyOf, SCHEMES, shortcutLabel, type Action } from "./shortcuts.ts";
 import { effectiveScheme, useSettings } from "./settings.ts";
-import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inTauri, localStore, memoryFs, openFolder, openRecentFolder, previewFs, resources, styleText, typstCompiler } from "./platform.ts";
+import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inTauri, localStore, memoryFs, openFolder, openRecentFolder, previewFs, resources, styleText, typstCompiler, zoteroTransport } from "./platform.ts";
 import { Home, shortPath } from "./Home.tsx";
+import { FirstRun } from "./FirstRun.tsx";
 import { NewArticle, type NewArticleChoice } from "./NewArticle.tsx";
 import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, updateRecentArticle, type RecentArticle, type RecentProject } from "./recent.ts";
 
@@ -81,7 +82,7 @@ const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as Bl
 
 export function App() {
   const { t, i18n } = useTranslation();
-  const [settings, updateSettings] = useSettings();
+  const [settings, updateSettings, settingsLoaded] = useSettings();
   const scheme = effectiveScheme(settings);
   const keys = (a: Action) => shortcutLabel(SCHEMES[scheme][a], i18n.language);
   const [project, setProject] = useState<Project | null>(null);
@@ -286,7 +287,8 @@ export function App() {
     if (editor) relabel(editor.view);
   }, [editor, t]);
 
-  const show = useCallback(async (p: Project, where: string | null = null) => {
+  /** Shows a project; `focus` is the article on screen (the first by default). */
+  const show = useCallback(async (p: Project, where: string | null = null, focus: string | null = null) => {
     place.current = where;
     setProject(p);
     setProposals(null);
@@ -294,13 +296,14 @@ export function App() {
     setSelected(null);
     setNavActive(null);
     // every manuscript of the project in its tab, the first on screen
+    const first = p.articles.find((a) => a.folder === focus) ?? p.articles[0];
     setTabs(p.articles.map((a) => `doc:${a.folder}` as CenterTab));
-    setTab(`doc:${p.articles[0].folder}`);
-    setActiveFolder(p.articles[0].folder);
+    setTab(`doc:${first.folder}`);
+    setActiveFolder(first.folder);
     editorStates.current.clear();
     setView("article");
     journaled.current.clear();
-    loadDoc(composed(p, p.articles[0]));
+    loadDoc(composed(p, first));
     setDirty(false);
     dirtySince.current = null;
     setLastSaved(null);
@@ -483,14 +486,44 @@ export function App() {
   });
   /** What the wizard chose: the folder, the project, and the references from a file. */
   const createArticle = async (c: NewArticleChoice) => {
+    // record 0051: another article in the open project, with its library and people
+    if (c.inProject && project) {
+      let p = await addArticle(project, {
+        folder: c.folder, title: c.title, lang: c.lang, translations: c.translations, articleType: c.articleType,
+        journal: c.profile, citationStyle: c.citationStyle, readStyle: styleText,
+      });
+      let note = t("ui.wizard.added", { folder: c.folder });
+      let failed = "";
+      if (c.references) {
+        try {
+          const r = await importReferences(p, { name: c.references.name, text: await c.references.text() });
+          note = t("ui.wizard.addedRefs", { folder: c.folder, added: r.added.length, duplicates: r.duplicates.length });
+          p = await loadProject(p.fs);
+        } catch (e) { failed = e instanceof Error ? e.message : String(e); }
+      }
+      setWizard(false);
+      await show(p, place.current, c.folder);
+      setMessage(note);
+      if (failed) setError(failed);
+      return;
+    }
     const target = inTauri ? await createProjectFolder(c.location!, c.folder) : { fs: previewFs(true), path: PREVIEW_PLACE, name: c.folder };
     let p = await createProject(target.fs, {
       name: c.title.slice(0, 80), fileName: c.folder, title: c.title, lang: c.lang, translations: c.translations, articleType: c.articleType,
       journal: c.profile, citationStyle: c.citationStyle, readStyle: styleText,
+      library: c.zotero ? zoteroLibraryMode(c.zotero) : undefined,
     });
     const where = target.path === PREVIEW_PLACE ? t("ui.home.previewPlace") : shortPath(target.path);
     let note = t("ui.wizard.created", { path: where });
     let failed = "";
+    // record 0052: the linked library is filled from the collection at once
+    if (c.zotero) {
+      try {
+        const r = await syncZoteroLibrary(p, new ZoteroLocal(zoteroTransport));
+        note = t("ui.wizard.zoteroLinked", { path: where, name: c.zotero.name, count: r.total });
+        zoteroSyncedFor.current = p;
+      } catch (e) { failed = e instanceof Error ? e.message : String(e); }
+    }
     if (c.references) {
       try {
         const r = await importReferences(p, { name: c.references.name, text: await c.references.text() });
@@ -799,6 +832,30 @@ export function App() {
     setPasteNotices((m) => { const next = new Map(m); for (const id of ids) next.delete(id); return next; });
   };
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
+  /**
+   * Record 0052: brings a library linked to Zotero up to date. On opening (`quiet`), a closed
+   * Zotero is only mentioned: the copy in library.json is used as it is.
+   */
+  const syncZotero = async (quiet: boolean) => {
+    const link = project && linkedCollection(project);
+    if (!project || !link) return;
+    const live = article && editor ? liveDocuments(editor.getJSON() as PMNode, article) : {};
+    try {
+      const r = await syncZoteroLibrary(project, new ZoteroLocal(zoteroTransport), article ? Object.fromEntries(Object.entries(live).map(([p, d]) => [`${article.folder}/${p}`, d])) : {});
+      const kept = r.keptCited.length ? ` ${t("ui.zoteroKeptCited", { count: r.keptCited.length, titles: r.keptCited.map((k) => `«${k.title}»`).join(", ") })}` : "";
+      if (r.changed) libraryChanged(t("ui.zoteroSynced", { name: link.name, added: r.added.length, updated: r.updated.length, removed: r.removed.length }) + kept);
+      else if (!quiet || kept) setMessage(t("ui.zoteroUpToDate", { name: link.name, count: r.total }) + kept);
+    } catch (e) {
+      if (quiet && e instanceof ZoteroError) setMessage(t(`ui.zoteroOffline.${e.code === "disabled" ? "disabled" : "closed"}`, { name: link.name }));
+      else setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const zoteroSyncedFor = useRef<Project | null>(null);
+  useEffect(() => {
+    if (!project || !editor || !article || zoteroSyncedFor.current === project || !linkedCollection(project)) return;
+    zoteroSyncedFor.current = project;
+    void syncZotero(true);
+  }, [project, editor, article]); // eslint-disable-line react-hooks/exhaustive-deps
   const removeReference = async (id: string) => {
     if (!project || !article || !editor) return;
     const live = liveDocuments(editor.getJSON() as PMNode, article);
@@ -1225,8 +1282,8 @@ export function App() {
           <aside className="left-panel">
             {view === "article"
               ? <Navigator project={project!} folder={article!.folder} report={report} outline={outline} active={navActive} onGo={onNav}
-                  articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} />
-              : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} />}
+                  articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} onNewArticle={() => void newArticle()} />
+              : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} onSyncZotero={() => void syncZotero(false)} />}
           </aside>
         )}
         {left && <div className="resizer" role="separator" aria-orientation="vertical" aria-label={t("ui.leftPanel")} onPointerDown={drag("left")} />}
@@ -1307,7 +1364,12 @@ export function App() {
           )}
           {tab === "settings" && <div className="tab-body settings-tab"><SettingsView settings={settings} onChange={updateSettings} /></div>}
 
-          {!project && tab !== "settings" && (
+          {!project && tab !== "settings" && settingsLoaded && !settings.setupDone && (
+            <div className="tab-body start">
+              <FirstRun settings={settings} onChange={updateSettings} onDone={() => updateSettings({ setupDone: true })} />
+            </div>
+          )}
+          {!project && tab !== "settings" && settingsLoaded && settings.setupDone && (
             <div className="tab-body start">
               <Home recent={recent} missing={missing} canOpenFolder={inTauri} keys={{ newArticle: keys("newArticle"), openProject: keys("openProject") }}
                 onNew={() => void newArticle()} onFromWord={() => wordInput.current?.click()} onOpen={() => void open()} onDemo={() => void openDemo()}
@@ -1345,7 +1407,9 @@ export function App() {
         )}
       </div>
 
-      {wizard && <NewArticle uiLang={i18n.language} onCancel={() => setWizard(false)} onCreate={createArticle} />}
+      {wizard && <NewArticle uiLang={i18n.language} areas={settings.areas}
+        openProject={project ? { name: project.manifest.name, folders: project.manifest.articles.map((a) => a.folder), references: project.library.references.length, zotero: linkedCollection(project)?.name ?? null } : null}
+        onCancel={() => setWizard(false)} onCreate={createArticle} />}
       {message && (
         <div className="toast" role="status">
           <span>{message}{download && <> · <a href={download.url} download={download.name}><Icon name="download" size={14} /> {download.name}</a></>}</span>

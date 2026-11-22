@@ -6,7 +6,7 @@ import {
   type JournalProfileFile, type PMNode, type PeopleFile,
 } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
-import { articleDocs } from "./new-article.ts";
+import { articleDocs, folderName } from "./new-article.ts";
 import { REUMATOLOGIA_CLINICA } from "./resources.ts";
 
 export interface ArticleData {
@@ -147,35 +147,60 @@ async function writeValidated(fs: ProjectFs, files: Record<string, unknown>) {
  * journal's profile goes to resources/journals/ and its own style next to it, read with
  * `readStyle` (the bundled file of the same name).
  */
-export async function createProject(fs: ProjectFs, opts: ArticleCreateOptions & { name: string; fileName: string; readStyle?: (file: string) => Promise<string> }) {
+export async function createProject(fs: ProjectFs, opts: ArticleCreateOptions & {
+  name: string; fileName: string; readStyle?: (file: string) => Promise<string>;
+  /** Own (the default) or linked to a Zotero collection (record 0052); a linked library is filled by syncing. */
+  library?: ManifestFile["library"];
+}) {
   if ((await fs.list("")).length) throw new Error("the folder is not empty");
   const articleId = newId("a");
-  const journal = opts.journal ? { [`resources/journals/${opts.journal.id}.json`]: opts.journal } : {};
   await writeValidated(fs, {
-    [`${opts.fileName}.scidesk`]: { format: "scidesk-project", schemaVersion: 1, id: crypto.randomUUID(), name: opts.name, created: now(), articles: [{ id: articleId, folder: "main" }], library: { mode: "own" } },
+    [`${opts.fileName}.scidesk`]: { format: "scidesk-project", schemaVersion: 1, id: crypto.randomUUID(), name: opts.name, created: now(), articles: [{ id: articleId, folder: "main" }], library: opts.library ?? { mode: "own" } },
     "references/library.json": { schemaVersion: 1, references: [] },
     "people/people.json": { schemaVersion: 1, affiliations: [], people: [] },
-    ...journal,
     ...articleFiles(articleId, "main", opts),
   });
-  const own = opts.journal?.citationStyle.value.file;
-  if (own) {
-    if (!opts.readStyle) throw new Error(`the journal's own style ${own} needs readStyle`);
-    await fs.write(`resources/journals/${own}`, await opts.readStyle(own.replace(/^styles\//, "")));
-  }
+  await writeJournal(fs, opts.journal, opts.readStyle);
   return loadProject(fs);
 }
 
 /**
- * Another article in the same project (record 0015): its folder under articles/, with the
- * project's library and directory of people in common. The manifest is written last, so a
- * failure leaves the project as it was. Gives the project loaded again.
+ * The journal's profile in resources/journals/, and its own style next to it, read with
+ * `readStyle` (the bundled file of the same name). A profile the project already has is kept
+ * as it is: it may have been completed by hand or by an LLM package since.
  */
-export async function addArticle(project: Project, opts: ArticleCreateOptions & { folder: string }): Promise<Project> {
-  if (project.manifest.articles.some((a) => a.folder === opts.folder) || (await project.fs.list(`articles/${opts.folder}`)).length) throw new Error(`there is already an article in articles/${opts.folder}`);
+async function writeJournal(fs: ProjectFs, journal: JournalProfileFile | null | undefined, readStyle?: (file: string) => Promise<string>) {
+  if (!journal) return;
+  const path = `resources/journals/${journal.id}.json`;
+  if ((await fs.readText(path)) === null) await writeValidated(fs, { [path]: journal });
+  const own = journal.citationStyle.value.file;
+  if (own && (await fs.readText(`resources/journals/${own}`)) === null) {
+    if (!readStyle) throw new Error(`the journal's own style ${own} needs readStyle`);
+    await fs.write(`resources/journals/${own}`, await readStyle(own.replace(/^styles\//, "")));
+  }
+}
+
+/** A folder under articles/ for a new article: from its title, and not used yet ("-2", "-3"…). */
+export async function articleFolder(project: Project, title: string): Promise<string> {
+  const base = folderName(title);
+  const taken = async (f: string) => project.manifest.articles.some((a) => a.folder.toLowerCase() === f.toLowerCase()) || (await project.fs.list(`articles/${f}`)).length > 0;
+  let folder = base;
+  for (let n = 2; await taken(folder); n++) folder = `${base}-${n}`;
+  return folder;
+}
+
+/**
+ * Another article in the same project (record 0015): its folder under articles/, with the
+ * project's library and directory of people in common, and the journal's profile if the
+ * project does not have it yet (record 0051). The manifest is written last, so a failure
+ * leaves the project as it was. Gives the project loaded again.
+ */
+export async function addArticle(project: Project, opts: ArticleCreateOptions & { folder: string; readStyle?: (file: string) => Promise<string> }): Promise<Project> {
+  if (project.manifest.articles.some((a) => a.folder.toLowerCase() === opts.folder.toLowerCase()) || (await project.fs.list(`articles/${opts.folder}`)).length) throw new Error(`there is already an article in articles/${opts.folder}`);
   const id = newId("a");
   const manifest = { ...project.manifest, articles: [...project.manifest.articles, { id, folder: opts.folder }] };
   await writeValidated(project.fs, articleFiles(id, opts.folder, opts));
+  await writeJournal(project.fs, opts.journal, opts.readStyle);
   await writeValidated(project.fs, { [project.manifestPath]: manifest });
   return loadProject(project.fs);
 }

@@ -1,8 +1,10 @@
-// Settings of this computer (record 0044): interface language and shortcut scheme. They are
+// Settings of this computer (record 0044): interface language, shortcut scheme and main areas
+// (record 0050), chosen on the first start and changed in Settings. They are
 // kept in the app's local data folder (the browser's storage in the preview), never in the
 // project: two people opening the same project keep their own (R26, record 0039).
 import { useCallback, useEffect, useState } from "react";
 import i18n from "./i18n.ts";
+import { normalizeAreas } from "@scidesk/core";
 import { localStore } from "./platform.ts";
 import { defaultScheme, keyScheme, type SchemeId } from "./shortcuts.ts";
 
@@ -23,20 +25,33 @@ export interface Settings {
    * and "Adapt to the journal".
    */
   fontMode: "journal" | "free";
+  /** Record 0050: the user's main areas (ids of the core's AREAS), which put their journals first. */
+  areas: string[];
+  /** Record 0050: the first start (language, scheme, areas) is done on this computer. */
+  setupDone: boolean;
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal" };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false };
+
+/** The language of the system, for a computer without settings yet. */
+const systemLang = (): Settings["lang"] => (typeof navigator !== "undefined" && !navigator.language.toLowerCase().startsWith("es") ? "en" : "es");
 
 export const effectiveScheme = (s: Settings): SchemeId => s.scheme ?? defaultScheme(s.lang);
 
-export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
+/** The settings, and whether they have been read (so the first start does not flash). */
+export function useSettings(): [Settings, (patch: Partial<Settings>) => void, boolean] {
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     void (async () => {
       try {
         const text = await (await localStore()).read(KEY);
-        if (text) setSettings({ ...DEFAULTS, ...(JSON.parse(text) as Partial<Settings>) });
+        if (text) {
+          const read = JSON.parse(text) as Partial<Settings>;
+          setSettings({ ...DEFAULTS, ...read, areas: normalizeAreas(read.areas) });
+        } else setSettings({ ...DEFAULTS, lang: systemLang() });
       } catch { /* unreadable settings: the defaults */ }
+      setLoaded(true);
     })();
   }, []);
   useEffect(() => {
@@ -51,5 +66,5 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
       return next;
     });
   }, []);
-  return [settings, update];
+  return [settings, update, loaded];
 }
