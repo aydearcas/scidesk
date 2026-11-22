@@ -15,6 +15,7 @@ import { CellSelection, TableMap, addRowAfter, goToNextCell, isInTable, tableEdi
 import { ID_OF_NODE, newId, type PMNode as JsonNode } from "@scidesk/formats";
 import { copyPart, freePartPath, label } from "@scidesk/core";
 import { actionFor, comboOf, keyScheme } from "./shortcuts.ts";
+import { columnResize } from "./columnResize.ts";
 
 const PART_TYPES = new Set(["tablePart", "figurePart"]);
 /** Nodes whose borders an edit may not cut: text never moves from one file (or language) to another. */
@@ -555,7 +556,7 @@ export function relabel(view: EditorView) { view.dispatch(view.state.tr.setMeta(
 
 // ---------------------------------------------------------------- editing a part
 
-const TableEditing = Extension.create({ name: "tableEditing", addProseMirrorPlugins: () => [tableEditing()] });
+const TableEditing = Extension.create({ name: "tableEditing", addProseMirrorPlugins: () => [tableEditing(), columnResize()] });
 
 export const partExtensions = [
   TableRoles, AbstractPart, AbstractSection, Keywords, Keyword,
@@ -663,6 +664,7 @@ export class PartTab {
           }),
           keymap(baseKeymap),
           tableEditing(),
+          columnResize(),
           labelsPlugin(() => editor.state.doc),
         ],
       }),
