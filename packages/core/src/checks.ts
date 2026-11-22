@@ -48,6 +48,39 @@ export interface CheckReport {
   limits: Record<string, number>;
 }
 
+/** Why an article is not ready to submit yet, by the checks (record 0054). */
+export type NotReady = "empty" | "abstract" | "keywords" | "authors" | "no-journal" | "blocking" | "pending";
+export interface Readiness {
+  ready: boolean;
+  /** What stands in the way, in this order; empty when it is ready. */
+  missing: NotReady[];
+  /** Warnings that block submission, and pending markers, not marked as correct or not applicable. */
+  blocking: number;
+  pending: number;
+}
+
+/**
+ * "Ready to submit", as far as SciDesk can tell without the journal's submission form: the
+ * text has words, every abstract has words and keywords, someone signs, the article has a
+ * journal whose profile has limits for its type, nothing blocks submission and no pending
+ * marker is left (warnings the user marked as correct or not applicable do not count).
+ * Uncited elements and other warnings to review do not stop it.
+ */
+export function readiness(report: CheckReport): Readiness {
+  const active = report.warnings.filter((w) => !w.ignored);
+  const blocking = active.filter((w) => w.level === "blocking").length;
+  const pending = active.filter((w) => w.code === "pending").length;
+  const missing: NotReady[] = [];
+  if (report.counts.main === 0) missing.push("empty");
+  if (report.counts.abstract.some((a) => a.words === 0)) missing.push("abstract");
+  if (report.counts.keywords.some((k) => k.count === 0)) missing.push("keywords");
+  if (report.counts.authors === 0) missing.push("authors");
+  if (report.warnings.some((w) => w.code === "no-limits")) missing.push("no-journal");
+  if (blocking) missing.push("blocking");
+  if (pending) missing.push("pending");
+  return { ready: missing.length === 0, missing, blocking, pending };
+}
+
 /** Sections that journals leave out of the word count of the text. */
 const NOT_COUNTED = new Set(["references", "acknowledgements", "funding", "conflicts", "ethics", "consent", "data-availability", "registration", "ai-use", "contributions", "appendix"]);
 

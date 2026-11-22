@@ -7,7 +7,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addArticle, addEmptyTable, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, readiness, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -193,7 +193,7 @@ export function App() {
       // the navigator, and the places of tables and figures with their numbers
       const o = articleOutline(project, article.folder, live);
       setOutline(o);
-      if (place.current) void localStore().then((st) => updateRecentArticle(st, place.current!, summaryOf(project, article, rep.counts.main, rep.limits.words, o.title?.text ?? ""))).catch(() => {});
+      if (place.current) void localStore().then((st) => updateRecentArticle(st, place.current!, summaryOf(project, article, rep, o.title?.text ?? ""))).catch(() => {});
       // a reference left in the text whose file is missing
       partInfo.clear();
       doc.content?.forEach((n) => {
@@ -319,17 +319,21 @@ export function App() {
       for (const a of p.articles) {
         rounds.current.set(a.folder, await roundOf(p, a.folder));
         const r = checkArticle(p, a.folder);
-        articles.push(summaryOf(p, a, r.counts.main, r.limits.words, savedTitle(a)));
+        articles.push(summaryOf(p, a, r, savedTitle(a)));
       }
       await rememberProject(store, { path: where, id: p.manifest.id, name: p.manifest.name, articles }).catch(() => {});
     }
   }, [loadDoc, composed]); // eslint-disable-line react-hooks/exhaustive-deps
   /** What the start screen shows of an article. */
-  const summaryOf = (p: Project, a: ArticleData, words: number, limit: number | undefined, title: string): RecentArticle => ({
-    folder: a.folder, title, articleType: a.article.articleType, words, limit: limit ?? null,
-    journal: a.article.journal ? p.journals.get(a.article.journal)?.journal.title.value ?? a.article.journal : null,
-    round: rounds.current.get(a.folder) ?? null,
-  });
+  const summaryOf = (p: Project, a: ArticleData, report: CheckReport, title: string): RecentArticle => {
+    const ready = readiness(report);
+    return {
+      folder: a.folder, title, articleType: a.article.articleType, words: report.counts.main, limit: report.limits.words ?? null,
+      journal: a.article.journal ? p.journals.get(a.article.journal)?.journal.title.value ?? a.article.journal : null,
+      round: rounds.current.get(a.folder) ?? null,
+      ready: ready.ready, blocking: ready.blocking, pending: ready.pending, missing: ready.missing,
+    };
+  };
   useEffect(() => { void recompute(); }, [project, recompute]);
 
   const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {

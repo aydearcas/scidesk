@@ -40,11 +40,15 @@ function ArticleRow({ a }: { a: RecentArticle }) {
         <span className="recent-title">{a.title || type}</span>
         {a.round
           ? <span className="badge accent">{t("ui.home.withCoauthors", { n: a.round.number })}</span>
-          : <span className="badge">{t("ui.home.draft")}</span>}
+          : a.ready
+            ? <span className="badge correct" title={t("ui.home.readyHint")}>{t("ui.home.ready")}</span>
+            : <span className="badge" title={a.missing?.length ? t("ui.home.notReady", { what: a.missing.map((m) => t(`ui.home.notReadyParts.${m}`)).join(", ") }) : undefined}>{t("ui.home.draft")}</span>}
         <span className={`recent-words${over ? " over" : ""}`}>{a.limit !== null ? t("ui.home.wordsOf", { words: n(a.words), limit: n(a.limit) }) : t("ui.home.words", { count: a.words, words: n(a.words) })}</span>
       </div>
       <div className="recent-sub muted small">
         {type}{a.journal ? ` · ${a.journal}` : ""}{a.round ? ` · ${t("ui.home.copiesBack", { count: a.round.copies })}` : ""}
+        {!a.round && !a.ready && a.blocking ? ` · ${t("ui.home.blocking", { count: a.blocking })}` : ""}
+        {!a.round && !a.ready && a.pending ? ` · ${t("ui.home.pending", { count: a.pending })}` : ""}
       </div>
     </div>
   );

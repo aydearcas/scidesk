@@ -12,6 +12,13 @@ export interface RecentArticle {
   limit: number | null;
   /** The latest review round with coauthors, if there is one. */
   round: { number: number; copies: number } | null;
+  /** Record 0054: ready to submit by the checks (core's readiness); absent in lists saved before. */
+  ready?: boolean;
+  /** Warnings that block submission and pending markers left, not ignored. */
+  blocking?: number;
+  pending?: number;
+  /** What stands in the way of "ready to submit" (the core's NotReady). */
+  missing?: string[];
 }
 export interface RecentProject {
   /** Where the folder is (in the browser preview, PREVIEW_PLACE). */

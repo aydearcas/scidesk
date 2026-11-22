@@ -7,10 +7,10 @@ import type { PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
 import { createDemoProject } from "../src/demo.ts";
 import { loadProject, saveDocument, saveJson } from "../src/project.ts";
-import { checkArticle, countWords, ignoreWarning, pendingMarkers, restoreWarning } from "../src/checks.ts";
+import { checkArticle, countWords, ignoreWarning, pendingMarkers, readiness, restoreWarning } from "../src/checks.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { addReference } from "../src/library.ts";
-import { nodeResources } from "../src/node-fs.ts";
+import { nodeResources, readAsset } from "../src/node-fs.ts";
 
 const EXAMPLE = fileURLToPath(new URL("../../formats/examples/knee-oa/", import.meta.url));
 async function kneeOa(articleType = "original") {
@@ -112,5 +112,26 @@ describe("checks", () => {
     const added = await addReference(demo, { type: "book", title: "Libro que no se cita", author: [{ family: "Nadie" }] });
     const w = checkArticle(demo, "main").warnings.find((x) => x.code === "uncited-reference")!;
     expect(w).toMatchObject({ id: `uncited-reference:${added.id}`, level: "info", params: { reference: "Nadie" } });
+  });
+
+  it("says when an article is ready to submit, and what stands in the way", async () => {
+    const { p } = await kneeOa();
+    // too many references for the journal: blocked
+    expect(readiness(checkArticle(p, "main"))).toMatchObject({ ready: false, missing: ["blocking"], blocking: 1, pending: 0 });
+    // marked as correct, it no longer stops it
+    await ignoreWarning(p, "main", "references-limit", "correct");
+    expect(readiness(checkArticle(await loadProject(p.fs), "main"))).toEqual({ ready: true, missing: [], blocking: 0, pending: 0 });
+    // a pending marker left in the text stops it again
+    const q = await loadProject(p.fs);
+    const body = structuredClone(q.articles[0].documents.get("manuscript/article.scidoc")!.doc as PMNode);
+    body.content!.push(para("b-pendingxx1", "Faltan los datos de 2025 XX."));
+    expect(readiness(checkArticle(q, "main", { "manuscript/article.scidoc": body }))).toMatchObject({ ready: false, missing: ["pending"], pending: 1 });
+    // without limits for its type (no journal profile for it), it cannot be said to be ready
+    const { p: review } = await kneeOa("narrative-review");
+    expect(readiness(checkArticle(review, "main")).missing).toContain("no-journal");
+    // a new article: no text, an empty abstract without keywords, nobody signs
+    const { createProject } = await import("../src/project.ts");
+    const fresh = await createProject(new MemoryFs(), { name: "N", fileName: "n", title: "Nuevo", articleType: "original", journal: p.journals.get("reumatologia-clinica")!, readStyle: (f) => readAsset(`styles/${f}`) });
+    expect(readiness(checkArticle(fresh, "main")).missing).toEqual(["empty", "abstract", "keywords", "authors"]);
   });
 });
