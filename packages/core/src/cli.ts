@@ -29,7 +29,7 @@
 //   scidesk style <dir> <style> [--article main]     choose an article's style (id, file or name)
 import { readFile } from "node:fs/promises";
 import { basename } from "node:path";
-import { appLocalDataDir, readAsset, NodeFs, NodeStore, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
+import { appLocalDataDir, readAsset, NodeFs, NodeStore, nodeRasterizer, nodeResources, nodeTypstCompiler, scideskPdfBinary } from "./node-fs.ts";
 import { exportPdf, manuscriptTypst, type PdfStandard } from "./typst-export.ts";
 import { Recovery } from "./recovery.ts";
 import { addArticle, articleFolder, createProject, loadProject, ProjectError } from "./project.ts";
@@ -200,7 +200,9 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
         console.log(JSON.stringify({ file: t.path, kb: Math.round(t.bytes.length / 1024), warnings: t.warnings }));
         break;
       }
-      const r = await exportDocx(p, opt("article", "main")!, profile as ExportProfile, await nodeResources());
+      // record 0068: SVG figures with the PNG Word asks for, when the scidesk-pdf binary is built
+      const raster = scideskPdfBinary();
+      const r = await exportDocx(p, opt("article", "main")!, profile as ExportProfile, { ...(await nodeResources()), ...(raster ? { rasterize: nodeRasterizer(raster) } : {}) });
       console.log(JSON.stringify({ file: r.path, snapshot: r.snapshot, kb: Math.round(r.bytes.length / 1024), warnings: r.warnings }));
       break;
     }

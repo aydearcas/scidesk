@@ -34,6 +34,19 @@ export type ExportProfile = "coauthors" | "journal";
 export interface ExportResources extends CitationResources {
   /** The reference template (.dotx) whose styles the export takes (R35). */
   template(): Promise<Uint8Array>;
+  /**
+   * Record 0068: draws an image the DOCX cannot take as it is (an SVG) as a PNG, and gives
+   * the image's own size in CSS pixels. Without it (or when it fails), such a figure is
+   * left as its file name with a warning.
+   */
+  rasterize?: Rasterizer;
+}
+export type Rasterizer = (bytes: Uint8Array) => Promise<{ png: Uint8Array; width: number; height: number }>;
+
+/** Whether the bytes are an SVG document (record 0068). */
+export function isSvg(bytes: Uint8Array): boolean {
+  const head = new TextDecoder().decode(bytes.subarray(0, 4096));
+  return head.includes("<svg");
 }
 export interface ExportResult { bytes: Uint8Array; snapshot: string | null; path: string; warnings: string[] }
 
@@ -343,7 +356,17 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   }
 
   const imageBytes = new Map<string, Uint8Array | null>();
-  for (const part of figures.values()) imageBytes.set(part.attrs!.image as string, await project.fs.readBytes(`articles/${folder}/${part.attrs!.image}`));
+  // record 0068: an SVG goes as itself plus the PNG Word asks for, drawn by the rasterizer
+  const svgFallback = new Map<string, { png: Uint8Array; width: number; height: number } | string>();
+  for (const part of figures.values()) {
+    const image = part.attrs!.image as string;
+    const bytes = await project.fs.readBytes(`articles/${folder}/${image}`);
+    imageBytes.set(image, bytes);
+    if (bytes && isSvg(bytes) && !svgFallback.has(image)) {
+      if (!res.rasterize) svgFallback.set(image, "SVG images need the app or the scidesk-pdf binary to be embedded");
+      else svgFallback.set(image, await res.rasterize(bytes).catch((e: unknown) => `the SVG cannot be drawn (${e instanceof Error ? e.message : String(e)})`));
+    }
+  }
   function figure(part: PMNode, withImage: boolean) {
     const id = part.attrs!.id as string;
     const [cap, ...notes] = part.content!;
@@ -351,12 +374,16 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     if (withImage) {
       const bytes = imageBytes.get(part.attrs!.image as string);
       const size = bytes ? imageSize(bytes) : null;
+      const svg = svgFallback.get(part.attrs!.image as string);
+      const maxPx = (textWidth / 1440) * 96;
+      const fit = (width: number, height: number) => { const w = Math.min(maxPx, Math.max(width, 1)); return { width: Math.round(w), height: Math.round((w * height) / Math.max(width, 1)) }; };
+      const altText = { name: L.figure, title: L.figure, description: (part.attrs!.alt as string) ?? "" };
       if (bytes && size) {
-        const maxPx = (textWidth / 1440) * 96;
-        const w = Math.min(maxPx, Math.max(size.width, 1)), h = (w * size.height) / Math.max(size.width, 1);
-        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: size.type, data: bytes, transformation: { width: Math.round(w), height: Math.round(h) }, altText: { name: L.figure, title: L.figure, description: (part.attrs!.alt as string) ?? "" } }) as unknown as ParagraphChild] }));
+        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: size.type, data: bytes, transformation: fit(size.width, size.height), altText }) as unknown as ParagraphChild] }));
+      } else if (bytes && svg && typeof svg !== "string") {
+        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: "svg", data: bytes, fallback: { type: "png", data: svg.png }, transformation: fit(svg.width, svg.height), altText }) as unknown as ParagraphChild] }));
       } else {
-        warnings.push(`${part.attrs!.image}: only PNG, JPEG, GIF and BMP images are embedded for now`);
+        warnings.push(`${part.attrs!.image}: ${typeof svg === "string" ? svg : "only PNG, JPEG, GIF, BMP and SVG images are embedded for now"}`);
         out.push(new Paragraph({ children: [...(ps ? [ps] : []), new TextRun(`[${part.attrs!.image}]`)] }));
       }
     }

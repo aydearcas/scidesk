@@ -10,7 +10,8 @@ import { applyTemplate, exportDocx, imageSize } from "../src/docx-export.ts";
 import { readDocx } from "../src/docx-read.ts";
 import { loadProject } from "../src/project.ts";
 import { importCopy } from "../src/round.ts";
-import { nodeResources } from "../src/node-fs.ts";
+import { nodeRasterizer, nodeResources, scideskPdfBinary } from "../src/node-fs.ts";
+import { createDemoProject } from "../src/demo.ts";
 
 const res = await nodeResources();
 const EXAMPLE = fileURLToPath(new URL("../../formats/examples/knee-oa/", import.meta.url));
@@ -100,5 +101,42 @@ describe("manuscript export (knee-oa example, Reumatología Clínica)", () => {
     expect(t.xml).toMatch(/<w:pPr><w:spacing w:before="0" w:after="0" w:line="480" w:lineRule="auto"\/><\/w:pPr>/);
     expect(t.xml).toMatch(/<w:sz w:val="24"\/>/);
     expect(t.xml).not.toMatch(/w:val="22"/);
+  });
+
+  it("an SVG figure goes in as itself with a PNG fallback (record 0068)", async () => {
+    const p = await createDemoProject(new MemoryFs(), "svg", { parts: true });
+    const res = await nodeResources();
+    // without a rasterizer: the file name and a warning, as before
+    const plain = await exportDocx(p, "main", "coauthors", res);
+    expect(plain.warnings.join(" ")).toMatch(/figura-1.svg.*scidesk-pdf/i);
+    // with one: the SVG and the PNG in word/media, the SVG blip in the drawing, the size of the SVG
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, 0, 0, 3, 0xc0, 0, 0, 2, 8, 8, 2]);
+    let asked = 0;
+    const out = await exportDocx(p, "main", "coauthors", { ...res, rasterize: async () => (asked++, { png, width: 480, height: 260 }) });
+    expect(asked).toBe(1);
+    expect(out.warnings.join(" ")).not.toMatch(/svg/i);
+    const zip = await JSZip.loadAsync(out.bytes);
+    const media = Object.keys(zip.files).filter((n) => n.startsWith("word/media/"));
+    expect(media.some((n) => n.endsWith(".svg"))).toBe(true);
+    expect(media.some((n) => n.endsWith(".png"))).toBe(true);
+    const doc = await zip.file("word/document.xml")!.async("string");
+    expect(doc).toMatch(/svgBlip/);
+    // 480 × 260 CSS pixels at 9525 EMU each
+    expect(doc).toContain(`cx="${480 * 9525}" cy="${260 * 9525}"`);
+    // the copy still comes back without proposals
+    const back = await importCopy(p, "main", out.bytes, { fileName: "svg.docx", returnedBy: { name: "Marta Ríos Navarro" } });
+    expect(back.set.proposals.filter((x) => x.status !== "noise-hidden")).toHaveLength(0);
+    // a rasterizer that fails: a warning that says why
+    const failed = await exportDocx(p, "main", "journal", { ...res, rasterize: async () => { throw new Error("broken"); } });
+    expect(failed.warnings.join(" ")).toContain("the SVG cannot be drawn (broken)");
+  });
+
+  const bin = scideskPdfBinary();
+  it.skipIf(!bin)("draws the SVG with the scidesk-pdf binary (record 0068)", async () => {
+    const svg = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="100"><rect width="200" height="100" fill="#0b6477"/></svg>');
+    const r = await nodeRasterizer(bin!)(svg);
+    expect([r.width, r.height]).toEqual([200, 100]);
+    expect(imageSize(r.png)).toEqual({ type: "png", width: 400, height: 200 });
+    await expect(nodeRasterizer(bin!)(new TextEncoder().encode("not an image"))).rejects.toThrow();
   });
 });

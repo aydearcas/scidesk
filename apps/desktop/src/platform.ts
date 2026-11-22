@@ -1,7 +1,7 @@
 // Where the core's files come from. In the Tauri window: commands of the Rust side, which
 // only reach inside the project folder the user opened. In a plain browser (the preview
 // used to test the interface): a project in memory, with the Tauri side simulated (PLAN 6.1).
-import { MemoryFs, bundledResources, type LocalStore, type ProjectFs, type TypstCompiler, type ZoteroTransport } from "@scidesk/core";
+import { MemoryFs, bundledResources, type ExportResources, type LocalStore, type Rasterizer, type ProjectFs, type TypstCompiler, type ZoteroTransport } from "@scidesk/core";
 import type { JournalProfileFile } from "@scidesk/formats";
 import localeEs from "@scidesk/core/assets/locales-es-ES.xml?raw";
 import localeEn from "@scidesk/core/assets/locales-en-US.xml?raw";
@@ -15,7 +15,7 @@ const ASSETS: Record<string, string> = {
 };
 // each style is its own chunk, loaded the first time it is used (record 0037)
 const STYLES = import.meta.glob<string>("../../../packages/core/assets/styles/*.csl", { query: "?raw", import: "default" });
-export const resources = bundledResources(
+const bundled = bundledResources(
   async (file) => {
     if (file.startsWith("styles/")) {
       const load = Object.entries(STYLES).find(([k]) => k.endsWith(`/${file}`))?.[1];
@@ -27,6 +27,40 @@ export const resources = bundledResources(
   },
   async () => new Uint8Array(await (await fetch(templateUrl)).arrayBuffer()),
 );
+
+/**
+ * Record 0068: the PNG Word asks for with an SVG figure. In the window, drawn by the Rust side
+ * (resvg, the same as the command line); in the browser view, by the browser on a canvas.
+ */
+const rasterize: Rasterizer = async (bytes) => {
+  if (inTauri) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const out = new Uint8Array((await invoke("raster_image", bytes)) as ArrayBuffer);
+    const dv = new DataView(out.buffer, out.byteOffset, out.byteLength);
+    return { width: dv.getFloat32(0, true), height: dv.getFloat32(4, true), png: out.slice(8) };
+  }
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "image/svg+xml" }));
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const width = img.naturalWidth || 300, height = img.naturalHeight || 150;
+    const scale = Math.min(2, 2400 / Math.max(width, height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(width * scale);
+    canvas.height = Math.ceil(height * scale);
+    const g = canvas.getContext("2d")!;
+    g.fillStyle = "#fff";
+    g.fillRect(0, 0, canvas.width, canvas.height);
+    g.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((ok) => canvas.toBlob(ok, "image/png"));
+    if (!blob) throw new Error("the browser cannot draw it");
+    return { width, height, png: new Uint8Array(await blob.arrayBuffer()) };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+export const resources: ExportResources = { ...bundled, rasterize };
 
 type Invoke = typeof import("@tauri-apps/api/core").invoke;
 

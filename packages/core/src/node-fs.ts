@@ -8,6 +8,7 @@ import { homedir, tmpdir } from "node:os";
 import { safePath, type ProjectFs } from "./fs.ts";
 import { safeKey, type LocalStore } from "./recovery.ts";
 import type { TypstCompiler } from "./typst-export.ts";
+import type { Rasterizer } from "./docx-export.ts";
 
 export class NodeFs implements ProjectFs {
   readonly root: string;
@@ -96,6 +97,22 @@ export function scideskPdfBinary(): string | null {
   const target = fileURLToPath(new URL("../../../apps/desktop/src-tauri/target/", import.meta.url));
   for (const p of [process.env.SCIDESK_PDF, join(target, "release", exe), join(target, "debug", exe)]) if (p && existsSync(p)) return p;
   return null;
+}
+
+/** Record 0068: a Rasterizer that runs `scidesk-pdf --raster` on a temporary file (Node only). */
+export function nodeRasterizer(binary: string): Rasterizer {
+  return async (bytes) => {
+    const dir = await mkdtemp(join(tmpdir(), "scidesk-raster-"));
+    try {
+      const input = join(dir, "image"), output = join(dir, "image.png");
+      await writeFile(input, bytes);
+      const { stdout } = await run(binary, ["--raster", input, output]);
+      const size = JSON.parse(stdout.trim().split("\n").pop() ?? "{}") as { width: number; height: number };
+      return { png: new Uint8Array(await readFile(output)), width: size.width, height: size.height };
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  };
 }
 
 /** A TypstCompiler that runs scidesk-pdf on a temporary copy of the bundle (Node only). */

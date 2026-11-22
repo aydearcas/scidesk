@@ -351,7 +351,7 @@ Reparto de los datos:
 - **[Después]** Tablas que salen de los datos, por ejemplo una tabla de características basales generada desde un CSV.
 
 ### 5.5 Figuras
-- **[MVP]** Insertar imagen (PNG, JPG, TIFF, SVG) copiándola a `figures/`, con pie de figura y numeración automática.
+- **[MVP]** Insertar imagen (PNG, JPG, TIFF, SVG) copiándola a `figures/`, con pie de figura y numeración automática. SVG también en el Word (ficha 0068). **TIFF (verlo en el editor, el PDF y el Word), aplazado por el usuario al final del desarrollo** (22/11/2026).
 - **[V1]** Comprobación de requisitos: resolución en ppp según el tamaño de impresión, modo de color y formato admitido por la revista.
 - **[V1]** Exportar las figuras como archivos separados con el nombre que pide la revista (`Figure1.tiff`), convirtiendo el formato si hace falta.
 - **[V1]** Figuras con paneles (A, B, C) y lista de pies de figura al final del manuscrito.

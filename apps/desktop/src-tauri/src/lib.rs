@@ -6,6 +6,7 @@
 //! changes (R25, R26, record 0039), with the same rules.
 pub mod pdf;
 pub mod preview;
+pub mod raster;
 pub mod zotero;
 
 use std::collections::HashMap;
@@ -387,6 +388,25 @@ async fn preview_compile(app: tauri::AppHandle, source: String, files: Option<Ha
     .map_err(|e| e.to_string())?
 }
 
+/// Record 0068: the PNG of an image the exports cannot take as it is (an SVG's fallback in the
+/// DOCX). The image comes as the raw body; the answer is its own width and height in CSS
+/// pixels (two little-endian f32) followed by the PNG.
+#[tauri::command]
+async fn raster_image(request: Request<'_>) -> Result<Response, String> {
+    let InvokeBody::Raw(bytes) = request.body() else { return Err("expected raw bytes".into()) };
+    let bytes = bytes.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let r = raster::to_png(&bytes)?;
+        let mut out = Vec::with_capacity(8 + r.png.len());
+        out.extend_from_slice(&r.width.to_le_bytes());
+        out.extend_from_slice(&r.height.to_le_bytes());
+        out.extend_from_slice(&r.png);
+        Ok(Response::new(out))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 /// Record 0058: one page of the last preview as a PNG (raw bytes).
 #[tauri::command]
 async fn preview_page(app: tauri::AppHandle, page: usize, pixel_per_pt: f32) -> Result<Response, String> {
@@ -405,7 +425,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
         .manage(preview::PreviewState::default())
-        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, zotero::zotero_get])
+        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, raster_image, zotero::zotero_get])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }
