@@ -43,6 +43,13 @@ export async function setProjectWords(words: string[], view?: EditorView | null)
   if (view) refresh(view);
 }
 export const suggestions = (dict: string, word: string) => call<string[]>({ type: "suggest", dict, word });
+/** Which words a language accepts, or null if it has no dictionary (record 0060). */
+export async function checkWords(lang: string, words: string[]): Promise<boolean[] | null> {
+  const dict = dictionaryFor(lang);
+  if (!dict) return null;
+  if (!words.length) return [];
+  return (await call<boolean[][]>({ type: "check", items: [{ dict, words }] }))[0];
+}
 
 /** Draws the underlines again (the language, the setting or the dictionary changed). */
 export function refresh(view: EditorView) {
@@ -111,13 +118,20 @@ function textblocks(doc: PMNode, from = 0, to = doc.content.size): { node: PMNod
 /** The ranges of the new document that a transaction changed. */
 function changedRanges(tr: Transaction): [number, number][] {
   const ranges: [number, number][] = [];
+  // map through the later steps of the same transaction
+  const later = (i: number, a: number, b: number): [number, number] => {
+    let from = a, to = b;
+    for (let j = i + 1; j < tr.steps.length; j++) { from = tr.steps[j].getMap().map(from, -1); to = tr.steps[j].getMap().map(to, 1); }
+    return [from, to];
+  };
   tr.steps.forEach((step, i) => {
-    step.getMap().forEach((_os, _oe, ns, ne) => {
-      // map through the later steps of the same transaction
-      let from = ns, to = ne;
-      for (let j = i + 1; j < tr.steps.length; j++) { from = tr.steps[j].getMap().map(from, -1); to = tr.steps[j].getMap().map(to, 1); }
-      ranges.push([from, to]);
-    });
+    let moved = false;
+    step.getMap().forEach((_os, _oe, ns, ne) => { moved = true; ranges.push(later(i, ns, ne)); });
+    // a mark or an attribute changed (a language, record 0060): nothing moves, the block changes
+    const s = step as unknown as { from?: number; to?: number; pos?: number };
+    if (moved) return;
+    if (typeof s.from === "number" && typeof s.to === "number") ranges.push(later(i, s.from, s.to));
+    else if (typeof s.pos === "number") ranges.push(later(i, s.pos, s.pos + 1));
   });
   return ranges;
 }

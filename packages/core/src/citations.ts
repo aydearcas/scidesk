@@ -18,6 +18,8 @@ export interface Run {
   underline?: boolean; color?: string; highlight?: string;
   /** Record 0047: the font and size of a fragment, in points (free font mode). */
   font?: string; size?: number;
+  /** Record 0060: the language of a fragment (a `lang` mark), as a BCP 47 tag. */
+  lang?: string;
 }
 
 /** The marks of a text node as a run's format (the same in every export). */
@@ -33,6 +35,7 @@ export function runFormat(marks: { type: string; attrs?: Record<string, unknown>
     else if (m.type === "highlight") f.highlight = String(m.attrs?.color);
     else if (m.type === "fontFamily") f.font = String(m.attrs?.family);
     else if (m.type === "fontSize") f.size = Number(m.attrs?.size);
+    else if (m.type === "lang") f.lang = String(m.attrs?.lang);
   }
   return f;
 }

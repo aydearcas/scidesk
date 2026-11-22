@@ -12,6 +12,7 @@
 import type { JournalProfileFile, PMNode } from "@scidesk/formats";
 import { renderCitations, runFormat, type CitationResources, type Run } from "./citations.ts";
 import { composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
+import { sameLang } from "./lang.ts";
 import type { Project } from "./project.ts";
 import { pendingCount } from "./checks.ts";
 
@@ -76,6 +77,11 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   function wrap(t: string, m: Omit<Run, "text">) {
     if (!t) return t;
     let out = t;
+    // record 0060: a fragment in another language (hyphenation, and the PDF's /Lang)
+    if (m.lang && /^[a-z]{2,3}([-_][a-z0-9]+)?$/i.test(m.lang)) {
+      const [l, r] = m.lang.split(/[-_]/);
+      out = `#text(lang: ${str(l.toLowerCase())}${r && /^[a-z]{2}$/i.test(r) ? `, region: ${str(r.toUpperCase())}` : ""})[${out}]`;
+    }
     if (m.underline) out = `#underline[${out}]`;
     if (m.color && /^#[0-9A-F]{6}$/i.test(m.color)) out = `#text(fill: rgb(${str(m.color)}))[${out}]`;
     if (m.highlight && HIGHLIGHT[m.highlight]) out = `#highlight(fill: rgb(${str(HIGHLIGHT[m.highlight])}))[${out}]`;
@@ -85,13 +91,19 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     if (m.bold) out = `#strong[${out}]`;
     return out;
   }
-  function inlines(content: PMNode[] = [], notes?: Map<string, string>): string {
+  // the language around the block being written: the article's, or that of an abstract
+  let around = lang;
+  function inlines(content: PMNode[] = [], notes?: Map<string, string>, blockLang = around): string {
     let out = "";
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted, as in the DOCX
       // the PDF is for the journal: a fragment's own font and size are not carried (record 0047)
-      if (n.type === "text") { const { font: _f, size: _s, ...format } = runFormat(n.marks); out += wrap(typstEscape(n.text ?? ""), format); }
+      if (n.type === "text") {
+        const { font: _f, size: _s, lang: own, ...format } = runFormat(n.marks);
+        const runLang = own ?? blockLang;
+        out += wrap(typstEscape(n.text ?? ""), { ...format, ...(sameLang(runLang, around) ? {} : { lang: runLang }) });
+      }
       else if (n.type === "hardBreak") out += "#linebreak()";
       else if (n.type === "citation") out += runs(rendering.citations.get(n.attrs!.id as string)?.runs ?? [{ text: "?" }]);
       else if (n.type === "xref") {
@@ -107,11 +119,11 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   // a marker with the block id: the introspector finds on which page each block landed
   const marker = (n: PMNode) => (typeof n.attrs?.id === "string" && /^[a-z]+-[a-z0-9]+$/.test(n.attrs.id) ? `#metadata(${str(n.attrs.id)}) <${n.attrs.id}>` : "");
   // "1. " at the start of a line would be a numbered list in Typst
-  const paragraph = (n: PMNode, notes?: Map<string, string>) => `${marker(n)}${inlines(n.content, notes).replace(/^(\d+)\./, "$1\\.")}`;
+  const paragraph = (n: PMNode, notes?: Map<string, string>) => `${marker(n)}${inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around).replace(/^(\d+)\./, "$1\\.")}`;
 
   // ---------------------------------------------------------------- blocks
   const out: string[] = [];
-  const heading = (n: PMNode, level?: number) => out.push(`${marker(n)}\n${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${inlines(n.content)}`);
+  const heading = (n: PMNode, level?: number) => out.push(`${marker(n)}\n${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? around)}`);
 
   function list(n: PMNode): string {
     const items = (n.content ?? []).map((item) => `[${(item.content ?? []).map((c) => (c.type === "paragraph" ? paragraph(c) : list(c))).join("\n\n")}]`);
@@ -203,6 +215,9 @@ ${notesOf(notes)}
     abstractDone = true;
     for (const section of abstract?.content ?? []) {
       const sl = label((section.attrs!.lang as string) ?? lang);
+      // an abstract in another language sets it for everything in it (record 0060)
+      around = (section.attrs!.lang as string) ?? lang;
+      if (!sameLang(around, lang)) out.push(`#set text(lang: ${str(around.split(/[-_]/)[0].toLowerCase())})`);
       out.push(`= ${typstEscape(sl.abstract)}`);
       for (const n of section.content ?? []) {
         if (n.type === "heading") heading(n, 2);
@@ -212,7 +227,9 @@ ${notesOf(notes)}
           out.push(`${marker(n)}#strong[${typstEscape(sl.keywords)}:] ${words.join("; ")}`);
         }
       }
+      if (!sameLang(around, lang)) out.push(`#set text(lang: ${str(lang.split(/[-_]/)[0].toLowerCase())})`);
     }
+    around = lang;
   };
   const tablesAtEnd = fmt?.tables?.value === "end";
   const captionsList = fmt?.figureCaptionsList?.value === true;
@@ -220,7 +237,7 @@ ${notesOf(notes)}
   for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
     if (n.type !== "title" && !abstractDone) writeAbstract();
-    if (n.type === "title") out.push(`${marker(n)}#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content)}])`);
+    if (n.type === "title") out.push(`${marker(n)}#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? lang)}])`);
     else if (n.type === "heading") {
       heading(n);
       if (n.attrs!.role === "references") bibliography();

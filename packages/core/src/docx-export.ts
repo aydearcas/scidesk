@@ -26,6 +26,7 @@ import {
   snapshotBookmark, validate, type JournalProfileFile, type PMNode,
 } from "@scidesk/formats";
 import { renderCitations, runFormat, type CitationResources, type Rendering, type Run } from "./citations.ts";
+import { sameLang } from "./lang.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 
@@ -42,9 +43,15 @@ export const LABELS: Record<string, { bib: string; abstract: string; keywords: s
 };
 export const label = (lang: string) => LABELS[lang.slice(0, 2)] ?? LABELS.en;
 
+/** A language tag as Word writes it: a region always (es → es-ES, en → en-US). */
+export function wordLang(tag: string): string {
+  const [l, r] = tag.split(/[-_]/);
+  const lang = l.toLowerCase();
+  return r ? `${lang}-${r.toUpperCase()}` : ({ es: "es-ES", en: "en-US", fr: "fr-FR", pt: "pt-PT", de: "de-DE", it: "it-IT" } as Record<string, string>)[lang] ?? lang;
+}
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rPr = (r: Omit<Run, "text">) => {
-  const p = (r.font ? `<w:rFonts w:ascii="${esc(r.font)}" w:hAnsi="${esc(r.font)}" w:cs="${esc(r.font)}"/>` : "") + (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.size ? `<w:sz w:val="${Math.round(r.size * 2)}"/><w:szCs w:val="${Math.round(r.size * 2)}"/>` : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "");
+  const p = (r.font ? `<w:rFonts w:ascii="${esc(r.font)}" w:hAnsi="${esc(r.font)}" w:cs="${esc(r.font)}"/>` : "") + (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.size ? `<w:sz w:val="${Math.round(r.size * 2)}"/><w:szCs w:val="${Math.round(r.size * 2)}"/>` : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "") + (r.lang ? `<w:lang w:val="${esc(wordLang(r.lang))}"/>` : "");
   return p ? `<w:rPr>${p}</w:rPr>` : "";
 };
 const runXml = (r: Run) => `<w:r>${rPr(r)}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
@@ -56,7 +63,7 @@ const fieldXml = (instr: string, result: string) =>
 const textRun = (r: Run) => new TextRun({
   text: r.text, ...(r.bold ? { bold: true } : {}), ...(r.italic ? { italics: true } : {}), ...(r.sup ? { superScript: true } : {}), ...(r.sub ? { subScript: true } : {}),
   ...(r.underline ? { underline: {} } : {}), ...(r.color ? { color: r.color.slice(1) } : {}), ...(r.highlight ? { highlight: r.highlight as "yellow" } : {}),
-  ...(r.font ? { font: r.font } : {}), ...(r.size ? { size: Math.round(r.size * 2) } : {}),
+  ...(r.font ? { font: r.font } : {}), ...(r.size ? { size: Math.round(r.size * 2) } : {}), ...(r.lang ? { language: { value: wordLang(r.lang) } } : {}),
 });
 export const letters = (n: number) => { let s = ""; n++; while (n > 0) { n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); } return s; };
 
@@ -80,10 +87,18 @@ export function imageSize(b: Uint8Array): { type: "png" | "jpg" | "gif" | "bmp";
 }
 
 /** The template's styles.xml with the journal's page format applied to Normal, and the ids of the styles SciDesk uses. */
-export function applyTemplate(stylesXml: string, format: { lineSpacing?: number; fontSizePt?: number; font?: string } = {}) {
+export function applyTemplate(stylesXml: string, format: { lineSpacing?: number; fontSizePt?: number; font?: string; lang?: string } = {}) {
   const ids: Record<string, string> = {};
   for (const m of stylesXml.matchAll(/<w:style [^>]*w:styleId="([^"]+)"[^>]*>\s*<w:name w:val="([^"]+)"/g)) ids[m[2].toLowerCase()] = m[1];
   let xml = stylesXml;
+  // record 0060: the document's language is the article's (the template says es-ES), so that
+  // Word checks each fragment with its own dictionary; fragments in another language say so
+  if (format.lang) {
+    const lang = `<w:lang w:val="${esc(wordLang(format.lang))}"`;
+    xml = /<w:docDefaults>[\s\S]*?<w:lang /.test(xml)
+      ? xml.replace(/(<w:docDefaults>[\s\S]*?)<w:lang w:val="[^"]*"/, `$1${lang}`)
+      : xml.replace(/(<w:rPrDefault>\s*<w:rPr>)/, `$1${lang}/>`);
+  }
   const normal = new RegExp(`(<w:style [^>]*w:styleId="${ids["normal"] ?? "Normal"}"[^>]*>)([\\s\\S]*?)(</w:style>)`);
   xml = xml.replace(normal, (_, open: string, body: string, close: string) => {
     let b = body;
@@ -191,7 +206,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const tplZip = await JSZip.loadAsync(await res.template());
   const tplStyles = await tplZip.file("word/styles.xml")?.async("string");
   if (!tplStyles) throw new Error("the reference template has no styles");
-  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value });
+  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value, lang });
   const S = (name: string) => tpl.style(name) ?? (warnings.push(`style '${name}' not in the template`), undefined);
   const marginCm = fmt?.sideMarginsCm?.value ? (fmt.sideMarginsCm.value.max ?? fmt.sideMarginsCm.value.min) : 2.5;
   const margin = Math.round((marginCm / 2.54) * 1440);
@@ -232,15 +247,19 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     return [raw(fieldXml(`${FIELDS.citation} ${JSON.stringify(code)}`, r.runs.map(runXml).join("")))];
   }
 
-  function inlines(content: PMNode[] = [], notes?: Map<string, string>): ParagraphChild[] {
+  // record 0060: the language around the block being written (the abstract of each language)
+  let around = lang;
+  function inlines(content: PMNode[] = [], notes?: Map<string, string>, blockLang = around): ParagraphChild[] {
     const out: ParagraphChild[] = [];
     for (const n of content) {
       const marks = new Set((n.marks ?? []).map((m) => m.type));
       if (marks.has("deletion")) continue; // tracked changes go out accepted (w:ins/w:del: V1)
       if (n.type === "text") {
         // a fragment's own font and size go to the coauthors, never to the journal (record 0047)
-        const { font, size, ...format } = runFormat(n.marks);
-        out.push(textRun({ text: n.text!, ...format, ...(markers ? { font, size } : {}) }));
+        const { font, size, lang: own, ...format } = runFormat(n.marks);
+        // only what differs from the document's language is written (its default is the article's)
+        const runLang = own ?? blockLang;
+        out.push(textRun({ text: n.text!, ...format, ...(markers ? { font, size } : {}), ...(sameLang(runLang, lang) ? {} : { lang: runLang }) }));
       }
       else if (n.type === "hardBreak") out.push(new TextRun({ break: 1 }));
       else if (n.type === "citation") out.push(...citation(n));
@@ -264,7 +283,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const para = (n: PMNode, opts: Opts = {}, lead: ParagraphChild[] = [], notes?: Map<string, string>, wrap: { before?: ParagraphChild[]; after?: ParagraphChild[] } = {}) => {
     // generated text ("Tabla 1. ", a note's letter, "Palabras clave: ") goes before the
     // block's bookmark: the reader leaves it out, so it never comes back as an edit
-    const children = inlines(n.content, notes);
+    const children = inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around);
     if (markers && n.attrs?.id) {
       const [s, e] = bm(blockBookmark(n.attrs.id as string));
       children.unshift(s);
@@ -378,17 +397,20 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     abstractDone = true;
     for (const section of abstract?.content ?? []) {
       const sl = label((section.attrs!.lang as string) ?? lang);
-      out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun(sl.abstract)] }));
+      around = (section.attrs!.lang as string) ?? lang;
+      const sectionLang = sameLang(around, lang) ? {} : { language: { value: wordLang(around) } };
+      out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun({ text: sl.abstract, ...sectionLang })] }));
       for (const n of section.content ?? []) {
         if (n.type === "heading") out.push(para(n, { style: headingStyle(2) }));
         else if (n.type === "paragraph") out.push(para(n));
         else if (n.type === "keywords") {
           const words = (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).filter(Boolean);
           const kw = { type: "paragraph", attrs: n.attrs, content: [{ type: "text", text: words.join("; ") }] } as PMNode;
-          out.push(para(kw, {}, [new TextRun({ text: `${sl.keywords}: `, bold: true })]));
+          out.push(para(kw, {}, [new TextRun({ text: `${sl.keywords}: `, bold: true, ...sectionLang })]));
         }
       }
     }
+    around = lang;
   };
   for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;

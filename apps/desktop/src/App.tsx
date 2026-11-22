@@ -39,7 +39,8 @@ import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inT
 import { Home, shortPath } from "./Home.tsx";
 import { FirstRun } from "./FirstRun.tsx";
 import { PreviewPane } from "./PreviewPane.tsx";
-import { misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
+import { checkWords, misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
+import { foreignStretch, langAtCursor, otherLang, setLanguage } from "./lang.ts";
 import { formatDictionary, parseDictionary } from "@scidesk/spell";
 import { PROJECT_LAYOUT } from "@scidesk/formats";
 
@@ -133,7 +134,7 @@ export function App() {
   const [authorsTab, setAuthorsTab] = useState<AuthorsTab>("authors");
   const [authorsKey, setAuthorsKey] = useState(0);
   const [authorsDirty, setAuthorsDirty] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; spell?: { from: number; to: number; word: string; dict: string; suggestions: string[] } } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; spell?: { from: number; to: number; word: string; dict: string; suggestions: string[]; foreign: { from: number; to: number; text: string; lang: string } | null } } | null>(null);
   const [showSections, setShowSections] = useState(false);
   // the start screen (record 0048): where the open project is, the recent projects, the wizard
   const place = useRef<string | null>(null);
@@ -363,6 +364,16 @@ export function App() {
     editor.on("selectionUpdate", onSel);
     return () => { editor.off("selectionUpdate", onSel); };
   }, [editor, settings.preview]);
+  // record 0060: the language at the cursor, for the status bar and the Review menu
+  const [cursorLang, setCursorLang] = useState<{ lang: string; fragment: boolean } | null>(null);
+  useEffect(() => {
+    if (!editor) return;
+    const onSel = () => { const l = langAtCursor(editor.state); setCursorLang((old) => (old && old.lang === l.lang && old.fragment === l.fragment ? old : l)); };
+    onSel();
+    editor.on("selectionUpdate", onSel);
+    editor.on("transaction", onSel);
+    return () => { editor.off("selectionUpdate", onSel); editor.off("transaction", onSel); };
+  }, [editor, article]);
   // record 0057: the spell checker follows the article's language and the setting
   useEffect(() => {
     spellOptions.enabled = settings.spellcheck;
@@ -462,7 +473,7 @@ export function App() {
     if (!file) return;
     const target = inTauri ? await openFolder() : { fs: memoryFs(), path: null };
     if (!target) return;
-    const { project: p, report } = await projectFromWord(target.fs, new Uint8Array(await file.arrayBuffer()), { fileName: file.name });
+    const { project: p, report } = await projectFromWord(target.fs, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, checkLang: checkWords });
     await show(p, target.path);
     setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${report.warnings.join("; ")}` : ""));
   });
@@ -1178,6 +1189,9 @@ export function App() {
       { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
       "-",
       { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
+      // record 0060: the language of the selection, or of the paragraph
+      { label: t("ui.lang.setEs"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("es"), onSelect: () => editor && setLanguage(editor, "es"), disabled: noProject },
+      { label: t("ui.lang.setEn"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("en"), onSelect: () => editor && setLanguage(editor, "en"), disabled: noProject },
     ] },
     { id: "view", label: t("ui.menu.view"), items: [
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
@@ -1214,7 +1228,12 @@ export function App() {
     const wrong = at ? misspelledAt(editor.state, at.pos) : null;
     const x = e.clientX, y = e.clientY;
     if (!wrong) { setContextMenu({ x, y }); return; }
-    void suggestions(wrong.dict, wrong.word).catch(() => [] as string[]).then((s) => setContextMenu({ x, y, spell: { ...wrong, suggestions: s } }));
+    // record 0060: a word of the other language, and the words around it that are too
+    const other = otherLang(wrong.dict);
+    void Promise.all([
+      suggestions(wrong.dict, wrong.word).catch(() => [] as string[]),
+      other ? foreignStretch(editor.state, wrong.from, other).catch(() => null) : Promise.resolve(null),
+    ]).then(([s, f]) => setContextMenu({ x, y, spell: { ...wrong, suggestions: s, foreign: f && other ? { ...f, lang: other } : null } }));
   };
   /** Record 0057: a word into resources/dictionary.txt, which every language of the project accepts. */
   const addToDictionary = run(async (word: string) => {
@@ -1253,6 +1272,7 @@ export function App() {
         ? spell.suggestions.slice(0, 6).map((s) => ({ label: s, onSelect: () => { editor.chain().focus().insertContentAt({ from: spell.from, to: spell.to }, s).run(); } }))
         : [{ label: t("ui.spell.noSuggestions"), onSelect: () => {}, disabled: true }]),
       { label: t("ui.spell.addToProject", { word: spell.word }), onSelect: () => void addToDictionary(spell.word) },
+      ...(spell.foreign ? [{ label: t(`ui.lang.markAs.${spell.foreign.lang}`, { text: spell.foreign.text.length > 40 ? `${spell.foreign.text.slice(0, 38)}…` : spell.foreign.text }), onSelect: () => { const f = spell.foreign!; editor.chain().focus().setTextSelection({ from: f.from, to: f.to }).run(); setLanguage(editor, f.lang); } }] : []),
       "-",
     ] : [];
     return [
@@ -1495,6 +1515,7 @@ export function App() {
         </div>
       )}
       <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
+        cursorLang={cursorLang} onLang={(l) => editor && setLanguage(editor, l)}
         onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }}
         zoom={{ value: zoom, fit: settings.zoom === "fit", set: setZoom, step: zoomStep }}
         fontMode={settings.fontMode} onFontMode={() => updateSettings({ fontMode: settings.fontMode === "free" ? "journal" : "free" })}

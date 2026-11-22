@@ -9,7 +9,10 @@ import { LevelIcon } from "./icons.tsx";
 export interface ZoomControl { value: number; fit: boolean; set: (z: "fit" | number) => void; step: (dir: 1 | -1) => void }
 const ZOOMS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
 
-export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home }: {
+export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home, cursorLang, onLang }: {
+  /** Record 0060: the language at the cursor (a fragment's own, or its paragraph's), and changing it. */
+  cursorLang?: { lang: string; fragment: boolean } | null;
+  onLang?: (lang: string) => void;
   /** On the start screen: the interface language and the shortcut scheme, changed from here (sheet 6). */
   home?: { lang: string; scheme: string; onLang: () => void; onScheme: () => void };
   zoom: ZoomControl;
@@ -45,7 +48,10 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
   const review = active.filter((w) => w.level === "review").length;
   const words = report?.counts.main ?? 0;
   const limit = report?.limits.words;
-  const lang = (() => { try { return new Intl.DisplayNames([i18n.language], { type: "language" }).of(a.lang) ?? a.lang; } catch { return a.lang; } })();
+  const langName = (l: string) => { try { return new Intl.DisplayNames([i18n.language], { type: "language" }).of(l.split(/[-_]/)[0]) ?? l; } catch { return l; } };
+  const here = cursorLang?.lang ?? a.lang;
+  const lang = langName(here);
+  const langCode = here.toLowerCase().startsWith("en") ? "en" : here.toLowerCase().startsWith("es") ? "es" : here;
   const styleName = BUNDLED_STYLES.find((s) => s.id === a.citationStyle.id)?.name ?? a.citationStyle.id;
   const time = lastSaved?.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" });
   return (
@@ -59,7 +65,15 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
           {BUNDLED_STYLES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
       </label>
-      <span className="status-item">{lang}</span>
+      <label className="status-item status-select" title={t("ui.lang.status")}>
+        <span className="sr-only">{t("ui.lang.status")}</span>
+        <span aria-hidden="true">{cursorLang?.fragment ? t("ui.lang.fragment", { lang }) : lang}</span>
+        <select value={langCode} onChange={(e) => onLang?.(e.target.value)} aria-label={t("ui.lang.status")}>
+          {!["es", "en"].includes(langCode) && <option value={langCode}>{lang}</option>}
+          <option value="es">{langName("es")}</option>
+          <option value="en">{langName("en")}</option>
+        </select>
+      </label>
       <button className={`status-item${limit !== undefined && words > limit ? " over" : ""}`} onClick={onWords} title={t("bySection")}>
         {t("ui.wordsOf", { words: words.toLocaleString(i18n.language), limit: limit !== undefined ? ` / ${limit.toLocaleString(i18n.language)}` : "" })}
       </button>

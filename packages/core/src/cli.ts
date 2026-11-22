@@ -199,7 +199,9 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
     case "from-word": {
       const file = positional[0];
       if (!file) throw new Error("usage: scidesk from-word <empty folder> <file.docx>");
-      const { report } = await projectFromWord(fs, new Uint8Array(await readFile(file)), { fileName: basename(file) });
+      // record 0060: Word's language marks are checked with the dictionaries
+      const { nodeCheck } = await import("@scidesk/spell/node");
+      const { report } = await projectFromWord(fs, new Uint8Array(await readFile(file)), { fileName: basename(file), checkLang: nodeCheck });
       console.log(JSON.stringify(report));
       break;
     }

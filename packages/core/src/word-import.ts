@@ -13,6 +13,7 @@ import JSZip from "jszip";
 import { HIGHLIGHT_COLORS, newId, type PMNode } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
 import { createProject, loadProject, saveDocument, type Project } from "./project.ts";
+import { cleanLangMarks, normalLang, verifyLangMarks, type LangCheck } from "./lang.ts";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const kids = (n: Node): Element[] => {
@@ -113,6 +114,8 @@ async function readWord(bytes: Uint8Array) {
         ...(/^[0-9A-F]{6}$/.test(color) && color !== "000000" ? { color: `#${color}` } : {}),
         ...((HIGHLIGHT_COLORS as readonly string[]).includes(hl) ? { highlight: hl } : {}),
         ...(child(rPr, "u") && u !== "none" ? { underline: true } : {}),
+        // record 0060: the run's language; those that repeat the one around them go later
+        ...(normalLang(attr(child(rPr, "lang"), "val")) ? { lang: normalLang(attr(child(rPr, "lang"), "val"))! } : {}),
       };
       for (const e of kids(r)) {
         const ln = e.localName;
@@ -185,11 +188,12 @@ async function readWord(bytes: Uint8Array) {
 
 /** Two runs with the same format (they can be one). */
 export const sameFormat = (a: Omit<Run, "text">, b: Omit<Run, "text">) =>
-  !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.sup === !!b.sup && !!a.sub === !!b.sub && !!a.underline === !!b.underline && a.color === b.color && a.highlight === b.highlight;
+  !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.sup === !!b.sup && !!a.sub === !!b.sub && !!a.underline === !!b.underline && a.color === b.color && a.highlight === b.highlight && a.lang === b.lang;
 export const inline = (runs: Run[]): PMNode[] => runs.filter((r) => r.text).map((r) => {
   const marks = [
     r.bold && { type: "bold" }, r.italic && { type: "italic" }, r.underline && { type: "underline" }, r.sup && { type: "superscript" }, r.sub && { type: "subscript" },
     r.color && { type: "textColor", attrs: { color: r.color.toUpperCase() } }, r.highlight && { type: "highlight", attrs: { color: r.highlight } },
+    r.lang && { type: "lang", attrs: { lang: r.lang } },
   ].filter(Boolean) as { type: string; attrs?: Record<string, unknown> }[];
   return marks.length ? { type: "text", text: r.text, marks } : { type: "text", text: r.text };
 });
@@ -212,7 +216,7 @@ export function stripLead(runs: Run[], re: RegExp): Run[] {
  * Creates a project in an empty folder from a Word document. The original stays where it
  * is; nothing of it is sent anywhere.
  */
-export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { fileName: string; name?: string; lang?: string }): Promise<{ project: Project; report: WordImportReport }> {
+export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { fileName: string; name?: string; lang?: string; checkLang?: LangCheck }): Promise<{ project: Project; report: WordImportReport }> {
   const { items, images } = await readWord(bytes);
   const warnings: string[] = [];
   const headingsText = items.filter((i): i is Para => i.kind === "p" && i.outline !== null).map((p) => p.text).join(" ");
@@ -363,9 +367,14 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
   const titleText = (title[0].content ?? []).map((c) => c.text).join("");
   const p = await createProject(fs, { name: opts.name ?? titleText.slice(0, 80), fileName: opts.fileName.replace(/\.docx$/i, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").toLowerCase().slice(0, 40) || "articulo", title: titleText, lang });
   const art = p.articles[0];
-  const envelope = (documentType: string, doc: PMNode) => ({ schemaVersion: 1, documentType, lang, doc, changes: {}, comments: {} }) as never;
-  await saveDocument(p, art, "manuscript/article.scidoc", envelope("article", { type: "doc", content: [...title, ...body] }));
-  await saveDocument(p, art, "manuscript/abstract.scidoc", envelope("abstract", { type: "doc", content: (sections.some((x) => x.content.length) ? sections.filter((x) => x.content.length) : [{ lang, content: [{ type: "paragraph", attrs: { id: newId("b"), lang: null } }] }]).map((x) => ({ type: "abstractSection", attrs: { id: newId("b"), lang: x.lang }, content: x.content })) }));
+  // record 0060: Word's language marks, without those that repeat the language around them
+  // and, with dictionaries, without those that are wrong (Spanish text marked as English)
+  const envelope = async (documentType: string, doc: PMNode) => {
+    const clean = cleanLangMarks(doc, lang);
+    return { schemaVersion: 1, documentType, lang, doc: opts.checkLang ? await verifyLangMarks(clean, lang, opts.checkLang) : clean, changes: {}, comments: {} } as never;
+  };
+  await saveDocument(p, art, "manuscript/article.scidoc", await envelope("article", { type: "doc", content: [...title, ...body] }));
+  await saveDocument(p, art, "manuscript/abstract.scidoc", await envelope("abstract", { type: "doc", content: (sections.some((x) => x.content.length) ? sections.filter((x) => x.content.length) : [{ lang, content: [{ type: "paragraph", attrs: { id: newId("b"), lang: null } }] }]).map((x) => ({ type: "abstractSection", attrs: { id: newId("b"), lang: x.lang }, content: x.content })) }));
 
   for (const t of tables) {
     // vertical merges: a "restart" cell spans the "continue" cells below it in the same grid column
@@ -394,7 +403,7 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
         ...t.notes.map((n) => ({ type: "tableNote", attrs: { id: newId("n"), kind: "general", lang: null }, content: inline(n.runs) })),
       ],
     };
-    await saveDocument(p, art, `tables/tabla-${t.number}.scitable`, envelope("table", part));
+    await saveDocument(p, art, `tables/tabla-${t.number}.scitable`, await envelope("table", part));
   }
   for (const f of figures) {
     const img = images.get(f.image);
@@ -407,7 +416,7 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
       attrs: { id: figureId.get(f.number), image: file, alt: null, credit: null, license: null },
       content: [{ type: "figureCaption", attrs: { id: newId("b"), lang: null }, ...(inline(f.caption).length ? { content: inline(f.caption) } : {}) }],
     };
-    await saveDocument(p, art, `figures/figura-${f.number}.scifigure`, envelope("figure", part));
+    await saveDocument(p, art, `figures/figura-${f.number}.scifigure`, await envelope("figure", part));
     if (!f.caption.length) warnings.push(`figure ${f.number} has no "Figura N." caption next to it`);
   }
   const project = await loadProject(fs);
