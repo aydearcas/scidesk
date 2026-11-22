@@ -116,3 +116,20 @@ describe("composite document", () => {
     expect(changedDocuments(splitArticle(doc, art), art).size).toBe(0);
   });
 });
+
+describe("sameJson (record 0055)", () => {
+  it("compares as the files are written: key order and undefined keys do not matter", async () => {
+    const { sameJson } = await import("../src/compose.ts");
+    const { stableStringify } = await import("@scidesk/formats");
+    const pairs: [unknown, unknown][] = [
+      [{ a: 1, b: [1, { c: null }] }, { b: [1, { c: null }], a: 1 }],
+      [{ a: 1, x: undefined }, { a: 1 }],
+      [{ a: [1, 2] }, { a: [2, 1] }],
+      [{ a: null }, { a: {} }],
+      [{ a: [] }, { a: {} }],
+      [{ a: "1" }, { a: 1 }],
+      [{ a: 1 }, { a: 1, b: 2 }],
+    ];
+    for (const [a, b] of pairs) expect(sameJson(a, b)).toBe(stableStringify(a) === stableStringify(b));
+  });
+});

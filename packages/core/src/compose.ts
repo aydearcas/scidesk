@@ -3,7 +3,7 @@
 // and the numbering work over the whole article as one document. composeArticle() builds
 // it on load; splitArticle() gives every file back, and saveComposite() writes only those
 // whose content changed.
-import { ID_OF_NODE, newId, stableStringify, type DocumentFile, type PMNode } from "@scidesk/formats";
+import { ID_OF_NODE, newId, type DocumentFile, type PMNode } from "@scidesk/formats";
 import { saveDocument, type ArticleData, type Project } from "./project.ts";
 
 export const BODY_PATH = "manuscript/article.scidoc";
@@ -100,12 +100,41 @@ export function splitArticle(doc: PMNode, art: ArticleData): Map<string, Documen
   return out;
 }
 
+/**
+ * Whether two JSON values are the same as stableStringify would write them: key order does
+ * not matter and keys whose value is undefined do not exist. Stops at the first difference,
+ * and builds no strings: comparing every file of a long article after each pause in typing
+ * was the slowest step of the recovery journal and the save (record 0055).
+ */
+export function sameJson(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    const bb = b as unknown[];
+    if (a.length !== bb.length) return false;
+    for (let i = 0; i < a.length; i++) if (!sameJson(a[i], bb[i])) return false;
+    return true;
+  }
+  const ao = a as Record<string, unknown>;
+  const bo = b as Record<string, unknown>;
+  let na = 0;
+  for (const k in ao) {
+    if (ao[k] === undefined) continue;
+    na++;
+    if (!sameJson(ao[k], bo[k])) return false;
+  }
+  let nb = 0;
+  for (const k in bo) if (bo[k] !== undefined) nb++;
+  return na === nb;
+}
+
 /** The files of `split` whose content differs from what the article holds (what is on disk). */
 export function changedDocuments(split: Map<string, DocumentFile>, art: ArticleData): Map<string, DocumentFile> {
   const changed = new Map<string, DocumentFile>();
   for (const [path, file] of split) {
     const old = art.documents.get(path);
-    if (!old || stableStringify(old) !== stableStringify(file)) changed.set(path, file);
+    if (!old || !sameJson(old, file)) changed.set(path, file);
   }
   return changed;
 }
