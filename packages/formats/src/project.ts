@@ -58,6 +58,7 @@ export const Article = Strict({
   }, { description: "The journal profile's style by default; the user may choose another." }),
   referenceTermsLang: Type.Union([Lang, Type.Null()], { description: "Language of the fixed words of the references (En:, editores…); null: the language of the manuscript (record 0026)." }),
   ignoredWarnings: Type.Array(IgnoredWarning, { description: "Warnings marked 'correct' or 'not applicable' (R12)." }),
+  countTableWords: Type.Optional(Type.Union([Type.Boolean(), Type.Null()], { description: "Whether the words of the tables count in the text's word count; null or absent: as the journal profile says, and not when it does not say (record 0056)." })),
 }, { title: "SciDesk article (articles/<folder>/article.json)" });
 
 export type ManifestFile = Type.Static<typeof Manifest>;

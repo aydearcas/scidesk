@@ -6,6 +6,7 @@
 //                another article in the project (folder from the title by default)
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited)
+//   scidesk table-words <dir> on|off|journal [--article main]   whether the tables' words count (record 0056)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
 //   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
 //                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
@@ -43,7 +44,7 @@ import { projectFromWord } from "./word-import.ts";
 import { deleteReference, referenceUses, searchLibrary, setCitationStyle, summarize } from "./library.ts";
 import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 import { checkAuthorship, displayName } from "./authorship.ts";
-import { checkArticle, ignoreWarning, restoreWarning } from "./checks.ts";
+import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
 import { titlePageModel } from "./title-page.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
@@ -79,7 +80,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|add-article|zotero|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
+    console.log("usage: scidesk <new|add-article|zotero|table-words|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -119,6 +120,16 @@ async function main() {
       console.log(`created ${p.manifestPath} (project ${p.manifest.id})`);
       break;
     }
+    case "table-words": {
+      const p = await loadProject(fs);
+      const v = positional[0];
+      if (!["on", "off", "journal"].includes(v ?? "")) throw new Error("usage: scidesk table-words <dir> on|off|journal [--article main]");
+      const folder = opt("article", "main")!;
+      await setCountTableWords(p, folder, v === "journal" ? null : v === "on");
+      const r = checkArticle(p, folder);
+      console.log(`${folder}: ${r.counts.main} words in the text; tables ${r.counts.tableWords}, ${r.counts.tableWordsCounted ? "counted" : "not counted"} (${r.counts.tableWordsBy})`);
+      break;
+    }
     case "zotero": {
       const p = await loadProject(fs);
       const r = await syncZoteroLibrary(p, new ZoteroLocal(fetchTransport()));
@@ -139,7 +150,7 @@ async function main() {
         const r = checkArticle(p, a.folder);
         const lim = (k: string) => (r.limits[k] !== undefined ? ` / ${r.limits[k]}` : "");
         console.log(`
-${a.folder}: ${r.counts.main}${lim("words")} words in the text; abstract ${r.counts.abstract.map((x) => `${x.lang} ${x.words}${lim("abstractWords")}`).join(", ") || "-"}; ${r.counts.references}${lim("references")} references, ${r.counts.tables} tables, ${r.counts.figures} figures`);
+${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.counts.tableWords}, ${r.counts.tableWordsCounted ? "counted" : "not counted"} by ${r.counts.tableWordsBy}); abstract ${r.counts.abstract.map((x) => `${x.lang} ${x.words}${lim("abstractWords")}`).join(", ") || "-"}; ${r.counts.references}${lim("references")} references, ${r.counts.tables} tables, ${r.counts.figures} figures`);
         for (const s of r.counts.sections) console.log(`    ${String(s.words).padStart(5)}  ${s.heading || "(before the first heading)"}${s.counted ? "" : "  (not counted)"}`);
         for (const w of r.warnings.filter((x) => !x.ignored)) console.log(`  ${w.level.padEnd(8)} ${w.id}  ${JSON.stringify(w.params)}`);
         const ignored = r.warnings.filter((x) => x.ignored).length;

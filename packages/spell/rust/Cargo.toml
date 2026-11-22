@@ -1,0 +1,17 @@
+[package]
+name = "spellwasm"
+description = "spellbook (MPL-2.0) compiled to WebAssembly for SciDesk's spell checker (record 0023)"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+spellbook = "0.4"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

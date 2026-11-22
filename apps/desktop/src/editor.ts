@@ -20,6 +20,7 @@ import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { UndoRedo } from "@tiptap/extensions";
 import { actionFor, comboOf, EDITOR_ACTIONS, keyScheme } from "./shortcuts.ts";
 import { partExtensions } from "./parts.ts";
+import { Spellcheck } from "./spellcheck.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -389,4 +390,5 @@ export const extensions = [
   FontFamily,
   FontSize,
   UndoRedo,
+  Spellcheck,
 ];

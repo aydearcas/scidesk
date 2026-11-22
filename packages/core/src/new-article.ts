@@ -160,7 +160,7 @@ export interface JournalSummary {
 export function journalSummary(profile: JournalProfileFile, articleType: string, lang: string): JournalSummary {
   const rules = profile.articleTypes.find((t) => t.articleType === articleType);
   const limits: Record<string, number> = {};
-  for (const [k, v] of Object.entries(rules?.limits ?? {})) if (v) limits[k] = v.value;
+  for (const [k, v] of Object.entries(rules?.limits ?? {})) if (v && typeof v.value === "number") limits[k] = v.value;
   const abstract = rules?.abstract ?? (IMRAD.has(articleType) ? profile.abstract : undefined);
   const guide = profile.sources.find((s) => s.kind === "author-guide") ?? profile.sources[0];
   return {

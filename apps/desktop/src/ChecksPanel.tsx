@@ -9,7 +9,11 @@ import { useTranslation } from "react-i18next";
 import type { CheckLevel, CheckReport, CheckWarning } from "@scidesk/core";
 import { LevelIcon } from "./icons.tsx";
 
-export function ChecksPanel({ report, onGo, onIgnore, onRestore, showSections = false }: {
+export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, journalSays, showSections = false }: {
+  /** Record 0056: whether the tables' words count (null: as the journal says). */
+  onTableWords: (value: boolean | null) => Promise<void>;
+  /** What the journal's profile says about the tables' words, if it says anything. */
+  journalSays: boolean | null;
   report: CheckReport | null;
   /** Open the words by section (from the status bar). */
   showSections?: boolean;
@@ -57,16 +61,27 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, showSections = 
     <div className="checks">
       <table className="counts">
         <tbody>
-          <tr><th>{t("countText")}</th><td>{of(counts.main, limits.words)}</td></tr>
+          <tr><th>{t("countText")}{counts.tableWords > 0 && <span className="muted small"> · {t(counts.tableWordsCounted ? "tableWords.withTables" : "tableWords.withoutTables")}</span>}</th><td>{of(counts.main, limits.words)}</td></tr>
           {counts.abstract.map((a) => <tr key={a.lang}><th>{t("countAbstract", { lang: a.lang })}</th><td>{of(a.words, limits.abstractWords)}</td></tr>)}
           <tr><th>{t("countReferences")}</th><td>{of(counts.references, limits.references)}</td></tr>
           <tr><th>{t("countTablesFigures")}</th><td>{of(counts.tables, limits.tables)} · {of(counts.figures, limits.figures)}</td></tr>
         </tbody>
       </table>
+      {counts.tables > 0 && (
+        <label className="table-words">
+          <span>{t("tableWords.label", { count: counts.tableWords })}</span>
+          <select value={counts.tableWordsBy === "article" ? String(counts.tableWordsCounted) : "journal"}
+            onChange={(e) => void onTableWords(e.target.value === "journal" ? null : e.target.value === "true")}>
+            <option value="journal">{t(journalSays === null ? "tableWords.journalUnknown" : journalSays ? "tableWords.journalYes" : "tableWords.journalNo")}</option>
+            <option value="true">{t("tableWords.yes")}</option>
+            <option value="false">{t("tableWords.no")}</option>
+          </select>
+        </label>
+      )}
       <details open={showSections || undefined}>
         <summary>{t("bySection")}</summary>
         <ul className="sections">
-          {counts.sections.map((s, i) => <li key={i} className={s.counted ? "" : "muted"}><span>{s.heading || t("beforeFirstHeading")}</span><span>{s.words}{s.counted ? "" : ` (${t("notCounted")})`}</span></li>)}
+          {counts.sections.map((s, i) => <li key={i} className={s.counted ? "" : "muted"}><span>{s.heading || t("beforeFirstHeading")}</span><span>{s.words}{s.counted ? "" : ` (${t("notCounted")})`}{s.tableWords > 0 && s.counted ? <span className="muted"> {t(counts.tableWordsCounted ? "tableWords.sectionIn" : "tableWords.sectionOut", { count: s.tableWords })}</span> : null}</span></li>)}
         </ul>
       </details>
       {active.length === 0 ? <p className="muted">{t("noWarnings")}</p> : (["blocking", "review", "info"] as CheckLevel[]).map((level) => {

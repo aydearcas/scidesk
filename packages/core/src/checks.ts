@@ -29,12 +29,20 @@ export interface CheckWarning {
   ignored?: ArticleFile["ignoredWarnings"][number];
 }
 
-export interface SectionCount { heading: string; role: string | null; words: number; counted: boolean; block: string | null }
+export interface SectionCount {
+  heading: string; role: string | null; words: number; counted: boolean; block: string | null;
+  /** Words of the tables placed in this section (captions, cells and notes); in `words` only when they count. */
+  tableWords: number;
+}
 export interface CheckReport {
   warnings: CheckWarning[];
   counts: {
-    /** Words of the text that the journal counts: from the first section to the last, without references or back matter. */
+    /** Words of the text that the journal counts: from the first section to the last, without references or back matter; with the tables' when they count. */
     main: number;
+    /** Record 0056: words of the tables in the counted sections, whether they are in `main`, and who says so. */
+    tableWords: number;
+    tableWordsCounted: boolean;
+    tableWordsBy: "article" | "journal" | "default";
     sections: SectionCount[];
     abstract: { lang: string; words: number }[];
     keywords: { lang: string; count: number }[];
@@ -132,6 +140,12 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
 
   // ---------------------------------------------------------------- counts
   const body = documents.get("manuscript/article.scidoc")!.doc as PMNode;
+  const { tree, tables, figures } = composite(art);
+  // record 0056: the tables' words count if the article says so, else if the journal says so
+  const journalSays = rules?.limits.wordsIncludeTables?.value;
+  const articleSays = art.article.countTableWords ?? null;
+  const tableWordsCounted = articleSays ?? journalSays ?? false;
+  const tableWordsBy = articleSays !== null ? "article" : journalSays !== undefined ? "journal" : "default";
   const sections: SectionCount[] = [];
   let current: SectionCount | null = null;
   for (const n of body.content ?? []) {
@@ -139,15 +153,23 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
     if (n.type === "title") continue;
     if (n.type === "heading" && ((n.attrs!.level as number) ?? 1) === 1) {
       const role = (n.attrs!.role as string) ?? null;
-      current = { heading: blockText(n), role, words: 0, counted: !NOT_COUNTED.has(role ?? ""), block: (n.attrs!.id as string) ?? null };
+      current = { heading: blockText(n), role, words: 0, counted: !NOT_COUNTED.has(role ?? ""), block: (n.attrs!.id as string) ?? null, tableWords: 0 };
       sections.push(current);
       continue;
     }
-    if (n.type === "tableRef" || n.type === "figureRef") continue; // tables and figures are not text
-    if (!current) { current = { heading: "", role: null, words: 0, counted: true, block: null }; sections.push(current); }
+    if (!current) { current = { heading: "", role: null, words: 0, counted: true, block: null, tableWords: 0 }; sections.push(current); }
+    if (n.type === "tableRef") {
+      const part = tables.get(n.attrs!.id as string);
+      const words = part ? countWords(blockText(part)) : 0;
+      current.tableWords += words;
+      if (tableWordsCounted) current.words += words;
+      continue;
+    }
+    if (n.type === "figureRef") continue; // figures are not text
     current.words += countWords(blockText(n)); // subheadings count, as in Word
   }
   const main = sections.filter((s) => s.counted).reduce((a, s) => a + s.words, 0);
+  const tableWords = sections.filter((s) => s.counted).reduce((a, s) => a + s.tableWords, 0);
 
   const abstractDoc = documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
   const abstract = (abstractDoc?.content ?? []).map((s) => ({
@@ -158,7 +180,6 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
   }));
   const title = (body.content ?? []).find((n) => n.type === "title");
   const titleCharacters = title ? blockText(title).trim().length : 0;
-  const { tree, tables, figures } = composite(art);
   const trees = [...(abstractDoc ? [abstractDoc] : []), tree];
   const cited = new Set(trees.flatMap(citationsOf).flatMap((c) => (c.attrs!.items as { ref: string }[]).map((i) => i.ref)));
   const authors = art.authors.authors.length;
@@ -244,7 +265,7 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
   return {
     warnings,
     counts: {
-      main, sections: sections.filter((s) => s.heading || s.words), abstract: abstract.map(({ lang, words }) => ({ lang, words })),
+      main, tableWords, tableWordsCounted, tableWordsBy, sections: sections.filter((s) => s.heading || s.words || s.tableWords), abstract: abstract.map(({ lang, words }) => ({ lang, words })),
       keywords: abstract.map(({ lang, keywords }) => ({ lang, count: keywords })), titleCharacters, references: cited.size,
       tables: tables.size, figures: figures.size, authors,
     },
@@ -258,6 +279,19 @@ export async function ignoreWarning(project: Project, folder: string, id: string
   if (!art) throw new Error(`no article ${folder}`);
   const entry = { warning: id, status, date: now(), ...(note?.trim() ? { note: note.trim() } : {}) };
   const article = { ...art.article, ignoredWarnings: [...art.article.ignoredWarnings.filter((w) => w.warning !== id), entry] };
+  await saveJson(project, `articles/${folder}/article.json`, article);
+  art.article = article;
+}
+
+/**
+ * Record 0056: whether the tables' words count in this article's word count; null follows
+ * the journal profile (and, when it does not say, they do not count).
+ */
+export async function setCountTableWords(project: Project, folder: string, value: boolean | null) {
+  const art = project.articles.find((a) => a.folder === folder);
+  if (!art) throw new Error(`no article ${folder}`);
+  const { countTableWords: _, ...rest } = art.article;
+  const article = value === null ? rest : { ...rest, countTableWords: value };
   await saveJson(project, `articles/${folder}/article.json`, article);
   art.article = article;
 }

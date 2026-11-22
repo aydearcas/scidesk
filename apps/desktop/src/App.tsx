@@ -7,7 +7,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addArticle, addEmptyTable, readiness, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -38,6 +38,11 @@ import { effectiveScheme, useSettings } from "./settings.ts";
 import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inTauri, localStore, memoryFs, openFolder, openRecentFolder, previewFs, resources, styleText, typstCompiler, zoteroTransport } from "./platform.ts";
 import { Home, shortPath } from "./Home.tsx";
 import { FirstRun } from "./FirstRun.tsx";
+import { misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
+import { formatDictionary, parseDictionary } from "@scidesk/spell";
+import { PROJECT_LAYOUT } from "@scidesk/formats";
+
+const PROJECT_DICTIONARY = PROJECT_LAYOUT.dictionary;
 import { NewArticle, type NewArticleChoice } from "./NewArticle.tsx";
 import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, updateRecentArticle, type RecentArticle, type RecentProject } from "./recent.ts";
 
@@ -124,7 +129,7 @@ export function App() {
   const [authorsTab, setAuthorsTab] = useState<AuthorsTab>("authors");
   const [authorsKey, setAuthorsKey] = useState(0);
   const [authorsDirty, setAuthorsDirty] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; spell?: { from: number; to: number; word: string; dict: string; suggestions: string[] } } | null>(null);
   const [showSections, setShowSections] = useState(false);
   // the start screen (record 0048): where the open project is, the recent projects, the wizard
   const place = useRef<string | null>(null);
@@ -335,6 +340,17 @@ export function App() {
     };
   };
   useEffect(() => { void recompute(); }, [project, recompute]);
+  // record 0057: the spell checker follows the article's language and the setting
+  useEffect(() => {
+    spellOptions.enabled = settings.spellcheck;
+    spellOptions.lang = article?.article.lang ?? "es";
+    if (editor && !editor.isDestroyed) refresh(editor.view);
+  }, [editor, article, settings.spellcheck]);
+  // and the project's dictionary, which every language accepts
+  useEffect(() => {
+    if (!project) return;
+    void project.fs.readText(PROJECT_DICTIONARY).then((text) => setProjectWords(parseDictionary(text), editor?.view)).catch(() => {});
+  }, [project, editor]);
 
   const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {
     setError("");
@@ -745,6 +761,12 @@ export function App() {
     await ignoreWarning(project, article.folder, w.id, status, note);
     await recompute();
   };
+  /** Record 0056: whether the tables' words count in this article (null: as the journal says). */
+  const tableWords = async (value: boolean | null) => {
+    if (!project || !article) return;
+    await setCountTableWords(project, article.folder, value);
+    await recompute();
+  };
   const restore = async (w: CheckWarning) => {
     if (!project || !article) return;
     await restoreWarning(project, article.folder, w.id);
@@ -1131,6 +1153,8 @@ export function App() {
       { label: t("ui.warnings"), onSelect: () => showRight("warnings"), disabled: noProject },
       { label: t("importCopy"), onSelect: () => showRight("review"), disabled: noProject },
       { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
+      "-",
+      { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
     ] },
     { id: "view", label: t("ui.menu.view"), items: [
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
@@ -1162,8 +1186,21 @@ export function App() {
     // without focus(): it would take the focus back from the menu a frame later
     if (node?.isAtom && at) editor.commands.setNodeSelection(at.inside);
     else if (at && editor.state.selection.empty) editor.commands.setTextSelection(at.pos);
-    setContextMenu({ x: e.clientX, y: e.clientY });
+    // a word the spell checker underlines: its suggestions first (record 0057)
+    const wrong = at ? misspelledAt(editor.state, at.pos) : null;
+    const x = e.clientX, y = e.clientY;
+    if (!wrong) { setContextMenu({ x, y }); return; }
+    void suggestions(wrong.dict, wrong.word).catch(() => [] as string[]).then((s) => setContextMenu({ x, y, spell: { ...wrong, suggestions: s } }));
   };
+  /** Record 0057: a word into resources/dictionary.txt, which every language of the project accepts. */
+  const addToDictionary = run(async (word: string) => {
+    if (!project) return;
+    const before = await project.fs.readText(PROJECT_DICTIONARY);
+    const words = [...parseDictionary(before), word];
+    await project.fs.write(PROJECT_DICTIONARY, formatDictionary(words, before));
+    await setProjectWords(words, editor?.view);
+    setMessage(t("ui.spell.added", { word }));
+  });
   const contextItems = (): MenuEntry[] => {
     if (!editor) return [];
     const sel = editor.state.selection;
@@ -1186,7 +1223,16 @@ export function App() {
       { label: t("ui.removeFromText"), onSelect: () => removePart(String(part.node.attrs.id)) },
       "-",
     ] : [];
+    const spell = contextMenu?.spell;
+    const spellItems: MenuEntry[] = spell ? [
+      ...(spell.suggestions.length
+        ? spell.suggestions.slice(0, 6).map((s) => ({ label: s, onSelect: () => { editor.chain().focus().insertContentAt({ from: spell.from, to: spell.to }, s).run(); } }))
+        : [{ label: t("ui.spell.noSuggestions"), onSelect: () => {}, disabled: true }]),
+      { label: t("ui.spell.addToProject", { word: spell.word }), onSelect: () => void addToDictionary(spell.word) },
+      "-",
+    ] : [];
     return [
+      ...spellItems,
       ...tableItems,
       ...partItems,
       ...(onCitation ? [
@@ -1391,7 +1437,8 @@ export function App() {
               <button role="tab" aria-selected={rightTab === "details"} onClick={() => setRightTab("details")}>{t("ui.details")}</button>
             </div>
             <div className="right-body">
-              {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} />}
+              {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections}
+                onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
               {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} />}
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}

@@ -39,6 +39,17 @@
       ],
       "type": "object"
     },
+    "countTableWords": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Whether the words of the tables count in the text's word count; null or absent: as the journal profile says, and not when it does not say (record 0056)."
+    },
     "id": {
       "description": "Id of a article.",
       "pattern": "^a-[a-z0-9]{1,24}$",

@@ -31,6 +31,7 @@ export const Source = Strict({
 const Count = Type.Integer({ minimum: 0 });
 const Limits = Strict({
   words: Type.Optional(Sourced(Count, "Words of the main text.")),
+  wordsIncludeTables: Type.Optional(Sourced(Type.Boolean(), "Whether the words limit counts the text of the tables (captions, cells and notes); unknown when absent (record 0056).")),
   abstractWords: Type.Optional(Sourced(Count)),
   references: Type.Optional(Sourced(Count)),
   figures: Type.Optional(Sourced(Count)),

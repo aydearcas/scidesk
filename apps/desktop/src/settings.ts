@@ -29,9 +29,11 @@ export interface Settings {
   areas: string[];
   /** Record 0050: the first start (language, scheme, areas) is done on this computer. */
   setupDone: boolean;
+  /** Record 0057: the spell checker underlines words. */
+  spellcheck: boolean;
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true };
 
 /** The language of the system, for a computer without settings yet. */
 const systemLang = (): Settings["lang"] => (typeof navigator !== "undefined" && !navigator.language.toLowerCase().startsWith("es") ? "en" : "es");

@@ -7,7 +7,7 @@ import type { PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
 import { createDemoProject } from "../src/demo.ts";
 import { loadProject, saveDocument, saveJson } from "../src/project.ts";
-import { checkArticle, countWords, ignoreWarning, pendingMarkers, readiness, restoreWarning } from "../src/checks.ts";
+import { checkArticle, countWords, ignoreWarning, pendingMarkers, readiness, restoreWarning, setCountTableWords } from "../src/checks.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { addReference } from "../src/library.ts";
 import { nodeResources, readAsset } from "../src/node-fs.ts";
@@ -133,5 +133,29 @@ describe("checks", () => {
     const { createProject } = await import("../src/project.ts");
     const fresh = await createProject(new MemoryFs(), { name: "N", fileName: "n", title: "Nuevo", articleType: "original", journal: p.journals.get("reumatologia-clinica")!, readStyle: (f) => readAsset(`styles/${f}`) });
     expect(readiness(checkArticle(fresh, "main")).missing).toEqual(["empty", "abstract", "keywords", "authors"]);
+  });
+
+  it("counts the tables' words when the journal or the article says so (record 0056)", async () => {
+    const { fs, p } = await kneeOa();
+    const base = checkArticle(p, "main").counts;
+    // by default they do not count, and the report says how many there are
+    expect(base).toMatchObject({ tableWordsCounted: false, tableWordsBy: "default" });
+    expect(base.tableWords).toBeGreaterThan(20);
+    const sum = (c: typeof base) => c.sections.filter((s) => s.counted).reduce((a, s) => a + s.words, 0);
+    expect(sum(base)).toBe(base.main);
+    // the journal's profile says they count
+    const prof = structuredClone(p.journals.get("reumatologia-clinica")!);
+    prof.articleTypes.find((t) => t.articleType === "original")!.limits.wordsIncludeTables = { value: true, source: "guide" };
+    p.journals.set("reumatologia-clinica", prof);
+    const withTables = checkArticle(p, "main").counts;
+    expect(withTables).toMatchObject({ tableWordsCounted: true, tableWordsBy: "journal", main: base.main + base.tableWords });
+    expect(sum(withTables)).toBe(withTables.main);
+    // the article says otherwise, and it is kept in article.json; null follows the journal again
+    await setCountTableWords(p, "main", false);
+    expect(checkArticle(p, "main").counts).toMatchObject({ tableWordsCounted: false, tableWordsBy: "article", main: base.main });
+    expect((await loadProject(fs)).articles[0].article.countTableWords).toBe(false);
+    await setCountTableWords(p, "main", null);
+    expect((await loadProject(fs)).articles[0].article).not.toHaveProperty("countTableWords");
+    expect(checkArticle(p, "main").counts.tableWordsBy).toBe("journal");
   });
 });
