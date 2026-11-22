@@ -33,7 +33,8 @@ describe("words to check", () => {
     expect(w).toEqual({ word: "mundo", index: 5 });
   });
   it("chooses the dictionary by language tag", () => {
-    expect([dictionaryFor("es"), dictionaryFor("es-MX"), dictionaryFor("en-GB"), dictionaryFor("fr"), dictionaryFor(null)]).toEqual(["es_ES", "es_ES", "en_US", null, null]);
+    expect([dictionaryFor("es"), dictionaryFor("es-MX"), dictionaryFor("en-GB"), dictionaryFor("en_gb"), dictionaryFor("en-US"), dictionaryFor("en"), dictionaryFor("fr"), dictionaryFor(null)])
+      .toEqual(["es_ES", "es_ES", "en_GB", "en_GB", "en_US", "en_US", null, null]);
   });
   it("reads and writes the project dictionary", () => {
     expect(parseDictionary("# comment\nmetotrexato\n\nDAS\nmetotrexato # again\n")).toEqual(["metotrexato", "DAS"]);
@@ -72,5 +73,15 @@ describe("specialty dictionary (record 0059)", () => {
       "t.txt:6: cannot read «dos palabras»",
       "t.txt:7: flags and a model at once in «zz/S ~realizar»",
     ]);
+  });
+});
+
+describe("British English (record 0062)", () => {
+  const read = (p: string) => readFileSync(asset(p), "utf8");
+  const gb = sb.dictionary(read("dicts/en_GB.aff"), withSpecialty(read("dicts/en_GB.dic"), read(`dicts/${SPECIALTY.en_GB}`)));
+  it("checks British spelling, with the specialty list", () => {
+    expect(gb.checkMany(["colour", "randomised", "haematology", "tumour", "behaviour", "spondyloarthritis", "tofacitinib", "rheumatologists"])).toEqual([true, true, true, true, true, true, true, true]);
+    expect(gb.checkMany(["color", "behavior", "diseese"])).toEqual([false, false, false]);
+    expect(gb.suggest("colur")).toContain("colour");
   });
 });

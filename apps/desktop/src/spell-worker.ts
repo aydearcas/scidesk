@@ -8,10 +8,12 @@ import esAff from "@scidesk/spell/assets/dicts/es_ES.aff?url";
 import esDic from "@scidesk/spell/assets/dicts/es_ES.dic?url";
 import enAff from "@scidesk/spell/assets/dicts/en_US.aff?url";
 import enDic from "@scidesk/spell/assets/dicts/en_US.dic?url";
+import gbAff from "@scidesk/spell/assets/dicts/en_GB.aff?url";
+import gbDic from "@scidesk/spell/assets/dicts/en_GB.dic?url";
 import esBiomed from "@scidesk/spell/assets/dicts/biomed_es.dic?url";
 import enBiomed from "@scidesk/spell/assets/dicts/biomed_en.dic?url";
 
-const FILES: Record<string, [string, string, string]> = { es_ES: [esAff, esDic, esBiomed], en_US: [enAff, enDic, enBiomed] };
+const FILES: Record<string, [string, string, string]> = { es_ES: [esAff, esDic, esBiomed], en_US: [enAff, enDic, enBiomed], en_GB: [gbAff, gbDic, enBiomed] };
 
 let engine: Promise<Spellbook> | null = null;
 const dicts = new Map<string, Promise<Dictionary | null>>();

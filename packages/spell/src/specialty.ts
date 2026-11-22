@@ -4,7 +4,8 @@
 // language, with the affix flags of that language's .aff (plurals, feminine, verb forms).
 
 /** The specialty .dic that goes with each general dictionary. */
-export const SPECIALTY: Record<string, string> = { es_ES: "biomed_es.dic", en_US: "biomed_en.dic" };
+// British English shares the English list: SCOWL builds en_GB with the same affix flags as en_US
+export const SPECIALTY: Record<string, string> = { es_ES: "biomed_es.dic", en_US: "biomed_en.dic", en_GB: "biomed_en.dic" };
 
 /** A general .dic with the specialty one after it: one dictionary, so suggestions use both. */
 export function withSpecialty(dic: string, specialty: string | null | undefined): string {

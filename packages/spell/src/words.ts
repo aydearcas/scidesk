@@ -4,8 +4,14 @@
 
 /** Languages with a dictionary, and the file of each; a regional tag falls back to its language. */
 export const SPELL_LANGS: Record<string, string> = { es: "es_ES", en: "en_US" };
-/** The dictionary for a language tag ("es-ES" → es_ES, "en-GB" → en_US for now), or null. */
-export const dictionaryFor = (lang: string | null | undefined): string | null => (lang ? SPELL_LANGS[lang.toLowerCase().split(/[-_]/)[0]] ?? null : null);
+/** Regional dictionaries, by tag (record 0062: British English, SCOWL en_GB-ise). */
+export const SPELL_REGIONS: Record<string, string> = { "en-gb": "en_GB" };
+/** The dictionary for a language tag ("es-ES" → es_ES, "en-GB" → en_GB, "en-US" or "en" → en_US), or null. */
+export const dictionaryFor = (lang: string | null | undefined): string | null => {
+  if (!lang) return null;
+  const tag = lang.toLowerCase().replace("_", "-");
+  return SPELL_REGIONS[tag] ?? SPELL_LANGS[tag.split("-")[0]] ?? null;
+};
 
 // a hyphenated word is one token: Hunspell checks each part (anti-inflamatorio, doble-ciego)
 const WORD = /[\p{L}\p{M}]+(?:['’-][\p{L}\p{M}]+)*/gu;

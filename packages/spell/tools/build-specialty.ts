@@ -39,6 +39,12 @@ for (const [lang, name] of Object.entries(LANGS)) {
   if (known.length) console.log(`${lang}: ${known.length} already in the general dictionary, left out:\n  ${known.join("\n  ")}`);
   const header = `${lines.length}`;
   writeFileSync(new URL(`assets/dicts/${SPECIALTY[name]}`, root), `${header}\n${lines.join("\n")}\n`);
+  // the other dictionaries that load this list must read its flags too (en_GB, record 0062)
+  for (const [other, file] of Object.entries(SPECIALTY)) {
+    if (other === name || file !== SPECIALTY[name]) continue;
+    const d = sb.dictionary(read(`assets/dicts/${other}.aff`), `${lines.length}\n${lines.join("\n")}\n`);
+    for (const l of lines) if (!d.check(l.split("/")[0])) { console.error(`${other}: «${l}» is not accepted with its .aff`); failed = true; }
+  }
   console.log(`${lang}: ${lines.length} entries from ${files.length} lists → assets/dicts/${SPECIALTY[name]}`);
 }
 if (failed) process.exit(1);

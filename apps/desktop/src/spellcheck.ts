@@ -13,7 +13,10 @@ import type { SpellRequest } from "./spell-worker.ts";
 export const spellKey = new PluginKey<DecorationSet>("spellcheck");
 
 /** Settings the window changes while the editor lives. */
-export const spellOptions = { enabled: true, lang: "es" };
+/** Settings the window changes while the editor lives; `ignore`: the words ignored in this article (record 0061). */
+export const spellOptions = { enabled: true, lang: "es", ignore: new Set<string>() };
+// as Hunspell reads a word list: as it is, or in lower case when only its first letter is a capital
+const ignored = (w: string) => spellOptions.ignore.has(w) || (/^\p{Lu}\p{Ll}*$/u.test(w) && spellOptions.ignore.has(w.toLowerCase()));
 
 // ---------------------------------------------------------------- the worker
 
@@ -98,6 +101,7 @@ function underline(doc: PMNode, blocks: { node: PMNode; pos: number }[], unknown
   const decos: Decoration[] = [];
   for (const { node, pos } of blocks) {
     for (const w of wordsOfBlock(doc, node, pos)) {
+      if (ignored(w.word)) continue;
       const ok = cache.get(key(w.dict, w.word));
       if (ok === undefined) { if (!unknown.has(w.dict)) unknown.set(w.dict, new Set()); unknown.get(w.dict)!.add(w.word); }
       else if (!ok) decos.push(Decoration.inline(w.from, w.to, { class: "misspelled" }, { word: w.word, dict: w.dict }));

@@ -92,6 +92,16 @@
       },
       "type": "array"
     },
+    "ignoredWords": {
+      "description": "Words the spell checker does not underline in this article ('Ignore', record 0061); the project dictionary is resources/dictionary.txt.",
+      "items": {
+        "maxLength": 100,
+        "minLength": 1,
+        "pattern": "^\\S+$",
+        "type": "string"
+      },
+      "type": "array"
+    },
     "journal": {
       "anyOf": [
         {

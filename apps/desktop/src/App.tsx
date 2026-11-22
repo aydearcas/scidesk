@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape,
+  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -378,6 +378,7 @@ export function App() {
   useEffect(() => {
     spellOptions.enabled = settings.spellcheck;
     spellOptions.lang = article?.article.lang ?? "es";
+    spellOptions.ignore = new Set(article?.article.ignoredWords ?? []);
     if (editor && !editor.isDestroyed) refresh(editor.view);
   }, [editor, article, settings.spellcheck]);
   // and the project's dictionary, which every language accepts
@@ -1244,6 +1245,17 @@ export function App() {
     await setProjectWords(words, editor?.view);
     setMessage(t("ui.spell.added", { word }));
   });
+  /** Record 0061: the word is not underlined in this article any more (article.json); the message undoes it. */
+  const ignoreInArticle = run(async (word: string) => {
+    if (!project || !article) return;
+    const apply = async (on: boolean) => {
+      await (on ? ignoreWord : unignoreWord)(project, article.folder, word);
+      spellOptions.ignore = new Set(article.article.ignoredWords ?? []);
+      if (editor && !editor.isDestroyed) refresh(editor.view);
+    };
+    await apply(true);
+    setMessage(t("ui.spell.ignored", { word }), null, { label: t("ui.undo"), run: () => void apply(false).then(() => setMessage(t("ui.spell.unignored", { word }))) });
+  });
   const contextItems = (): MenuEntry[] => {
     if (!editor) return [];
     const sel = editor.state.selection;
@@ -1271,6 +1283,7 @@ export function App() {
       ...(spell.suggestions.length
         ? spell.suggestions.slice(0, 6).map((s) => ({ label: s, onSelect: () => { editor.chain().focus().insertContentAt({ from: spell.from, to: spell.to }, s).run(); } }))
         : [{ label: t("ui.spell.noSuggestions"), onSelect: () => {}, disabled: true }]),
+      { label: t("ui.spell.ignore", { word: spell.word }), onSelect: () => void ignoreInArticle(spell.word) },
       { label: t("ui.spell.addToProject", { word: spell.word }), onSelect: () => void addToDictionary(spell.word) },
       ...(spell.foreign ? [{ label: t(`ui.lang.markAs.${spell.foreign.lang}`, { text: spell.foreign.text.length > 40 ? `${spell.foreign.text.slice(0, 38)}…` : spell.foreign.text }), onSelect: () => { const f = spell.foreign!; editor.chain().focus().setTextSelection({ from: f.from, to: f.to }).run(); setLanguage(editor, f.lang); } }] : []),
       "-",

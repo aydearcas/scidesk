@@ -25,3 +25,4 @@ export * from "./new-article.ts";
 export * from "./areas.ts";
 export * from "./zotero.ts";
 export * from "./lang.ts";
+export * from "./spelling.ts";

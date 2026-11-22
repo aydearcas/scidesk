@@ -134,7 +134,7 @@ const es = {
       note: "Como el PDF para la revista. La paginación en Word puede variar.", clickHint: "Pulsa para ir a ese párrafo",
       error: "La vista previa no se ha podido componer", desktopOnly: "La vista previa la compone Typst en la ventana de escritorio; la vista en el navegador no la tiene.",
     },
-    spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias" },
+    spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias", ignore: "Ignorar «{{word}}» en este artículo", ignored: "«{{word}}» ya no se subraya en este artículo (article.json)", unignored: "«{{word}}» se vuelve a subrayar" },
     lang: {
       setEs: "Idioma: español", setEn: "Idioma: inglés",
       hint: "Con texto seleccionado, solo ese fragmento; si no, el párrafo. El corrector y el Word de los coautores usan el diccionario de cada idioma.",
@@ -439,7 +439,7 @@ const en: typeof es = {
       note: "As the PDF for the journal. Word's pagination may differ.", clickHint: "Click to go to that paragraph",
       error: "The preview could not be composed", desktopOnly: "Typst composes the preview in the desktop window; the browser preview does not have it.",
     },
-    spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions" },
+    spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions", ignore: "Ignore “{{word}}” in this article", ignored: "“{{word}}” is no longer underlined in this article (article.json)", unignored: "“{{word}}” is underlined again" },
     lang: {
       setEs: "Language: Spanish", setEn: "Language: English",
       hint: "With text selected, only that fragment; otherwise the paragraph. The spell checker and the coauthors' Word use each language's dictionary.",

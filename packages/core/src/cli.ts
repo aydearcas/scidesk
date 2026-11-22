@@ -5,9 +5,10 @@
 //   scidesk add-article <dir> --title <title> [--folder <name>] [--lang es] [--type …] [--also en] [--journal …] [--style …]
 //                another article in the project (folder from the title by default)
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
-//   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited)
+//   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited, spelling; --all-words)
 //   scidesk table-words <dir> on|off|journal [--article main]   whether the tables' words count (record 0056)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
+//   scidesk spell-ignore <dir> <word> [--undo] [--article main]   a word the checker does not underline in this article
 //   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
 //                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
@@ -45,6 +46,7 @@ import { deleteReference, referenceUses, searchLibrary, setCitationStyle, summar
 import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 import { checkAuthorship, displayName } from "./authorship.ts";
 import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
+import { ignoreWord, spellingReport, unignoreWord } from "./spelling.ts";
 import { titlePageModel } from "./title-page.ts";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
@@ -155,7 +157,23 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
         for (const w of r.warnings.filter((x) => !x.ignored)) console.log(`  ${w.level.padEnd(8)} ${w.id}  ${JSON.stringify(w.params)}`);
         const ignored = r.warnings.filter((x) => x.ignored).length;
         if (ignored) console.log(`  (${ignored} ignored)`);
+        // record 0061: the words the dictionaries do not know, as the editor underlines them
+        const { nodeCheck } = await import("@scidesk/spell/node");
+        const s = await spellingReport(p, a.folder, nodeCheck);
+        const total = s.issues.reduce((n, i) => n + i.count, 0);
+        console.log(`  spelling: ${total} of ${s.words} words not recognised (${s.issues.length} distinct)${s.unchecked.length ? `; no dictionary for ${s.unchecked.join(", ")}` : ""}`);
+        for (const i of s.issues.slice(0, rest.includes("--all-words") ? undefined : 30)) console.log(`    ${String(i.count).padStart(4)}  ${i.word}  (${i.lang})`);
+        if (!rest.includes("--all-words") && s.issues.length > 30) console.log(`    … ${s.issues.length - 30} more (--all-words)`);
       }
+      break;
+    }
+    case "spell-ignore": {
+      const word = positional[0];
+      if (!word) throw new Error("usage: scidesk spell-ignore <dir> <word> [--undo] [--article main]");
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      if (rest.includes("--undo")) await unignoreWord(p, folder, word); else await ignoreWord(p, folder, word);
+      console.log(`${word}: ${rest.includes("--undo") ? "underlined again" : "ignored"} in ${folder}`);
       break;
     }
     case "export": {
