@@ -129,6 +129,11 @@ const es = {
     zoteroSynced: "Biblioteca sincronizada con «{{name}}» de Zotero: {{added}} nuevas, {{updated}} cambiadas, {{removed}} quitadas.", zoteroUpToDate: "La biblioteca ya estaba al día con «{{name}}» de Zotero ({{count}} referencias).",
     zoteroKeptCited_one: "Se mantiene 1 que ya no está en la colección porque se cita: {{titles}}.", zoteroKeptCited_other: "Se mantienen {{count}} que ya no están en la colección porque se citan: {{titles}}.",
     zoteroOffline: { closed: "Zotero no está abierto: se usa la última copia de «{{name}}».", disabled: "La API local de Zotero está desactivada: se usa la última copia de «{{name}}»." },
+    preview: {
+      toggle: "Vista previa", title: "Vista previa", composing: "Componiendo…", pages_one: "1 página", pages_other: "{{count}} páginas", page: "Página {{n}}",
+      note: "Como el PDF para la revista. La paginación en Word puede variar.", clickHint: "Pulsa para ir a ese párrafo",
+      error: "La vista previa no se ha podido componer", desktopOnly: "La vista previa la compone Typst en la ventana de escritorio; la vista en el navegador no la tiene.",
+    },
     spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias" },
     navigator: "Navegador del artículo", chooseArticle: "Artículo del proyecto que se muestra", newArticleHere: "Nuevo artículo en este proyecto…", openSettings: "Abrir los ajustes…", thisArticle: "Artículo", projectFiles: "Archivos del proyecto", showFiles: "Ver los archivos del proyecto", showConcepts: "Ver el artículo por conceptos",
     manuscript: "Manuscrito", titleBlock: "Título", titleCharacters: "Caracteres del título frente al límite de la revista", abstract: "Resumen", tables: "Tablas", figures: "Figuras", of: "de", noTables: "Sin tablas", noFigures: "Sin figuras",
@@ -423,6 +428,11 @@ const en: typeof es = {
     zoteroSynced: "Library synced with Zotero's “{{name}}”: {{added}} new, {{updated}} changed, {{removed}} removed.", zoteroUpToDate: "The library was already up to date with Zotero's “{{name}}” ({{count}} references).",
     zoteroKeptCited_one: "1 reference no longer in the collection is kept because it is cited: {{titles}}.", zoteroKeptCited_other: "{{count}} references no longer in the collection are kept because they are cited: {{titles}}.",
     zoteroOffline: { closed: "Zotero is not open: the last copy of “{{name}}” is used.", disabled: "Zotero's local API is turned off: the last copy of “{{name}}” is used." },
+    preview: {
+      toggle: "Preview", title: "Preview", composing: "Composing…", pages_one: "1 page", pages_other: "{{count}} pages", page: "Page {{n}}",
+      note: "As the PDF for the journal. Word's pagination may differ.", clickHint: "Click to go to that paragraph",
+      error: "The preview could not be composed", desktopOnly: "Typst composes the preview in the desktop window; the browser preview does not have it.",
+    },
     spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions" },
     navigator: "Article navigator", chooseArticle: "Article of the project shown", newArticleHere: "New article in this project…", openSettings: "Open the settings…", thisArticle: "Article", projectFiles: "Project files", showFiles: "Show the project's files", showConcepts: "Show the article by concepts",
     manuscript: "Manuscript", titleBlock: "Title", titleCharacters: "Characters of the title against the journal's limit", abstract: "Abstract", tables: "Tables", figures: "Figures", of: "of", noTables: "No tables", noFigures: "No figures",

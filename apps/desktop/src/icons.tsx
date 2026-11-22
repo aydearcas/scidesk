@@ -37,6 +37,7 @@ const PATHS: Record<string, string> = {
   close: "M6 6l12 12 M18 6L6 18",
   panelLeft: "M4 5h16v14H4z M9 5v14",
   panelRight: "M4 5h16v14H4z M15 5v14",
+  preview: "M3 4h8v16H3z M13 4h8v16h-8z M5 8h4 M5 11h4 M15 8h4 M15 11h4",
   files: "M8 3h8l4 4v11H8z M16 3v4h4 M4 7v14h11",
   concepts: "M5 6h14 M8 11h11 M8 16h11 M5 11h.01 M5 16h.01",
   blocking: "M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2z M12 7.5v5.5 M12 16.3v.2",

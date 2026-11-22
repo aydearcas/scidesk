@@ -231,3 +231,28 @@ export const zoteroTransport: ZoteroTransport = async (path, headers) => {
   res.headers.forEach((v, k) => { h[k.toLowerCase()] = v; });
   return { status: res.status, headers: h, body: await res.text() };
 };
+
+// ---------------------------------------------------------------- preview (record 0058)
+
+export interface PreviewOut {
+  pages: number;
+  /** Width and height of each page, in points. */
+  sizes: [number, number][];
+  /** Each block's id, page (from 1) and height in points from the top of its page. */
+  blocks: [string, number, number][];
+  warnings: string[];
+  ms: number;
+}
+/** The live preview in Rust (only in the app): compile the source, `files` only when they changed. */
+export async function previewCompile(source: string, files: Record<string, Uint8Array> | null): Promise<PreviewOut> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  const encoded = files ? Object.fromEntries(Object.entries(files).map(([k, v]) => [k, b64(v)])) : null;
+  return (await invoke("preview_compile", { source, files: encoded })) as PreviewOut;
+}
+/** A page of the last preview as a PNG. */
+export async function previewPage(page: number, pixelPerPt: number): Promise<Blob> {
+  const { invoke } = await import("@tauri-apps/api/core");
+  const bytes = (await invoke("preview_page", { page, pixelPerPt })) as ArrayBuffer;
+  return new Blob([bytes], { type: "image/png" });
+}
+

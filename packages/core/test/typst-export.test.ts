@@ -103,3 +103,18 @@ describe("typst export", () => {
     expect(ua.pages).toBe(r.pages);
   }, 60_000);
 });
+
+describe("the preview's source (record 0058)", () => {
+  it("is written from what is on screen when `live` is given, and the saved article does not change", async () => {
+    const p = await createDemoProject(new MemoryFs());
+    const art = p.articles[0];
+    const body = structuredClone(art.documents.get("manuscript/article.scidoc")!.doc as PMNode);
+    body.content!.push({ type: "paragraph", attrs: { id: "b-livetext01", lang: null }, content: [{ type: "text", text: "Texto sin guardar" }] });
+    const live = await manuscriptTypst(p, "main", res, { date, live: { "manuscript/article.scidoc": body } });
+    expect(live.source).toContain("Texto sin guardar");
+    expect(live.source).toContain("<b-livetext01>");
+    const saved = await manuscriptTypst(p, "main", res, { date });
+    expect(saved.source).not.toContain("Texto sin guardar");
+  });
+});
+

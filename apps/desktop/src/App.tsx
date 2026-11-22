@@ -38,6 +38,7 @@ import { effectiveScheme, useSettings } from "./settings.ts";
 import { createProjectFolder, foldersExist, forgetFolder, hasPreviewProject, inTauri, localStore, memoryFs, openFolder, openRecentFolder, previewFs, resources, styleText, typstCompiler, zoteroTransport } from "./platform.ts";
 import { Home, shortPath } from "./Home.tsx";
 import { FirstRun } from "./FirstRun.tsx";
+import { PreviewPane } from "./PreviewPane.tsx";
 import { misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
 import { formatDictionary, parseDictionary } from "@scidesk/spell";
 import { PROJECT_LAYOUT } from "@scidesk/formats";
@@ -112,6 +113,9 @@ export function App() {
   const refsInput = useRef<HTMLInputElement>(null);
   const figureInput = useRef<HTMLInputElement>(null);
   const [libraryVersion, setLibraryVersion] = useState(0);
+  // record 0058: the preview compiles again after each recomputation (a pause in typing)
+  const [previewTick, setPreviewTick] = useState(0);
+  const [cursorBlocks, setCursorBlocks] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [recoveries, setRecoveries] = useState<PendingRecovery[]>([]);
@@ -198,6 +202,7 @@ export function App() {
       // the navigator, and the places of tables and figures with their numbers
       const o = articleOutline(project, article.folder, live);
       setOutline(o);
+      setPreviewTick((n) => n + 1);
       if (place.current) void localStore().then((st) => updateRecentArticle(st, place.current!, summaryOf(project, article, rep, o.title?.text ?? ""))).catch(() => {});
       // a reference left in the text whose file is missing
       partInfo.clear();
@@ -340,6 +345,24 @@ export function App() {
     };
   };
   useEffect(() => { void recompute(); }, [project, recompute]);
+  /** Record 0058: the Typst source of the article on screen, saved or not. */
+  const previewBundle = useCallback(async () => {
+    if (!project || !article || !editor) return null;
+    return manuscriptTypst(project, article.folder, resources, { live: liveDocuments(editor.getJSON() as PMNode, article) });
+  }, [project, article, editor]);
+  // the ids around the cursor, innermost first, for the preview to follow it
+  useEffect(() => {
+    if (!editor || !settings.preview) return;
+    const onSel = () => {
+      const $from = editor.state.selection.$from;
+      const ids: string[] = [];
+      for (let d = $from.depth; d > 0; d--) { const id = $from.node(d).attrs.id; if (typeof id === "string") ids.push(id); }
+      setCursorBlocks((old) => (old.join() === ids.join() ? old : ids));
+    };
+    onSel();
+    editor.on("selectionUpdate", onSel);
+    return () => { editor.off("selectionUpdate", onSel); };
+  }, [editor, settings.preview]);
   // record 0057: the spell checker follows the article's language and the setting
   useEffect(() => {
     spellOptions.enabled = settings.spellcheck;
@@ -1160,6 +1183,7 @@ export function App() {
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
       { label: t("ui.views.library"), checked: view === "library", onSelect: () => chooseView("library"), disabled: noProject },
       "-",
+      { label: t("ui.preview.toggle"), checked: settings.preview, onSelect: () => updateSettings({ preview: !settings.preview }) },
       { label: t("ui.leftPanel"), checked: settings.left, onSelect: () => updateSettings({ left: !settings.left }) },
       { label: t("ui.rightPanel"), checked: settings.right, onSelect: () => updateSettings({ right: !settings.right }) },
       "-",
@@ -1348,6 +1372,7 @@ export function App() {
             ))}
             <span className="spacer" />
             {project && <>
+              <button className="icon-button" aria-pressed={settings.preview} title={t("ui.preview.toggle")} aria-label={t("ui.preview.toggle")} onClick={() => updateSettings({ preview: !settings.preview })}><Icon name="preview" size={16} /></button>
               <button className="icon-button" aria-pressed={settings.left} title={t("ui.leftPanel")} aria-label={t("ui.leftPanel")} onClick={() => updateSettings({ left: !settings.left })}><Icon name="panelLeft" size={16} /></button>
               <button className="icon-button" aria-pressed={settings.right} title={t("ui.rightPanel")} aria-label={t("ui.rightPanel")} onClick={() => updateSettings({ right: !settings.right })}><Icon name="panelRight" size={16} /></button>
             </>}
@@ -1355,7 +1380,7 @@ export function App() {
           {error && <p className="error-banner" role="alert">{error}<button className="icon-button" aria-label={t("ui.close")} onClick={() => setError("")}><Icon name="close" size={14} /></button></p>}
 
           {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
-          <div className="tab-body manuscript-tab" hidden={!project || !isDoc(tab)}>
+          <div className={`tab-body manuscript-tab${settings.preview && project ? " with-preview" : ""}`} hidden={!project || !isDoc(tab)}>
             <div className="desk" ref={deskRef}>
               <div className={PAGED ? "pages-wrap" : undefined} ref={pagesRef} style={PAGED ? ({ "--per-row": perRow } as React.CSSProperties) : undefined}>
               {PAGED && (
@@ -1384,6 +1409,7 @@ export function App() {
               </div>
               </div>
             </div>
+            {project && settings.preview && <PreviewPane available={inTauri} tick={previewTick} bundle={previewBundle} cursorBlocks={cursorBlocks} onGoToBlock={(id) => { goToBlock(id); }} />}
             {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} />}
             {editor && project && finding && (
               <FindBar editor={editor} replace={finding.replace} focus={finding.focus} onClose={() => { setFinding(null); editor.commands.focus(); }}

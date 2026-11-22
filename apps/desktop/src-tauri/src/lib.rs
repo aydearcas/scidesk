@@ -5,6 +5,7 @@
 //! data folder for what never travels with the project, such as the journal of unsaved
 //! changes (R25, R26, record 0039), with the same rules.
 pub mod pdf;
+pub mod preview;
 pub mod zotero;
 
 use std::collections::HashMap;
@@ -360,12 +361,51 @@ async fn compile_pdf(source: String, files: HashMap<String, String>, standard: O
     Ok(PdfOut { pdf: b64.encode(&out.pdf), pages: out.pages, warnings: out.warnings })
 }
 
+/// Record 0058: compiles the preview of the article on screen in the live World (only what
+/// changed is laid out again); `files` (base64) only when the figures changed. Off the window's thread.
+#[tauri::command]
+async fn preview_compile(app: tauri::AppHandle, source: String, files: Option<HashMap<String, String>>) -> Result<preview::PreviewOut, String> {
+    use base64::Engine;
+    let decoded = match files {
+        Some(files) => {
+            let b64 = base64::engine::general_purpose::STANDARD;
+            let mut out = HashMap::new();
+            for (path, data) in files {
+                out.insert(path, b64.decode(data).map_err(|e| e.to_string())?);
+            }
+            Some(out)
+        }
+        None => None,
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<preview::PreviewState>();
+        let mut live = state.0.lock().map_err(|e| e.to_string())?;
+        preview::update(&mut live, source, decoded).map_err(|e| e.join("
+"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+/// Record 0058: one page of the last preview as a PNG (raw bytes).
+#[tauri::command]
+async fn preview_page(app: tauri::AppHandle, page: usize, pixel_per_pt: f32) -> Result<Response, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<preview::PreviewState>();
+        let live = state.0.lock().map_err(|e| e.to_string())?;
+        preview::page(&live, page, pixel_per_pt).map(Response::new).ok_or_else(|| format!("no page {page}"))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
-        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, zotero::zotero_get])
+        .manage(preview::PreviewState::default())
+        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, zotero::zotero_get])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }

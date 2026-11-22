@@ -31,9 +31,11 @@ export interface Settings {
   setupDone: boolean;
   /** Record 0057: the spell checker underlines words. */
   spellcheck: boolean;
+  /** Record 0058: the paginated preview beside the editor. */
+  preview: boolean;
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true, preview: false };
 
 /** The language of the system, for a computer without settings yet. */
 const systemLang = (): Settings["lang"] => (typeof navigator !== "undefined" && !navigator.language.toLowerCase().startsWith("es") ? "en" : "es");

@@ -27,11 +27,12 @@ pub fn fonts() -> &'static FontStore {
     })
 }
 
-struct Bundle<'a> {
-    library: LazyHash<Library>,
-    fonts: &'a FontStore,
-    main: Source,
-    files: HashMap<String, Bytes>,
+/// A source and the files it may read: the World of a compilation (also the live preview's).
+pub(crate) struct Bundle<'a> {
+    pub(crate) library: LazyHash<Library>,
+    pub(crate) fonts: &'a FontStore,
+    pub(crate) main: Source,
+    pub(crate) files: HashMap<String, Bytes>,
 }
 
 impl World for Bundle<'_> {

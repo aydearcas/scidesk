@@ -52,9 +52,11 @@ const IMAGE_TYPES = /\.(png|jpe?g|gif|svg|webp|pdf)$/i;
 const SINGLE = "0.2em";
 
 /** The manuscript of an article as a Typst bundle. */
-export async function manuscriptTypst(project: Project, folder: string, res: CitationResources, opts: { date?: Date } = {}): Promise<TypstBundle> {
-  const art = project.articles.find((a) => a.folder === folder);
-  if (!art) throw new Error(`no article ${folder}`);
+export async function manuscriptTypst(project: Project, folder: string, res: CitationResources, opts: { date?: Date; live?: Record<string, PMNode> } = {}): Promise<TypstBundle> {
+  const saved = project.articles.find((a) => a.folder === folder);
+  if (!saved) throw new Error(`no article ${folder}`);
+  // the preview (record 0058) shows what is on screen, saved or not: `live` replaces documents by path
+  const art = opts.live ? { ...saved, documents: new Map([...saved.documents, ...Object.entries(opts.live).map(([p, doc]) => [p, { ...(saved.documents.get(p) ?? { schemaVersion: 1, documentType: "article", lang: saved.article.lang, changes: {}, comments: {} }), doc }] as const)]) } as typeof saved : saved;
   const lang = art.article.lang;
   const L = label(lang);
   const journal: JournalProfileFile | undefined = art.article.journal ? project.journals.get(art.article.journal) : undefined;
