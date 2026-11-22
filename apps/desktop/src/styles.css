@@ -752,3 +752,11 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 
 /* the spell checker (record 0057): a wavy red underline that does not move the text */
 .ProseMirror .misspelled { text-decoration: underline wavy #D1242F; text-decoration-thickness: 1px; text-underline-offset: 0.18em; text-decoration-skip-ink: none; }
+
+/* Review › Make the English consistent (record 0063) */
+.variants-dialog { width: min(560px, calc(100vw - 32px)); }
+.variants-choice { display: flex; gap: 16px; }
+.variants-list { max-height: 45vh; overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 8px; display: flex; flex-direction: column; }
+.variants-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+.variants-word { font-family: var(--doc-font, serif); }
+.variants-note { font-size: 11px; color: var(--text-2); border: 1px solid var(--line); border-radius: 8px; padding: 0 6px; }

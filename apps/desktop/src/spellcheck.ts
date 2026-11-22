@@ -46,6 +46,11 @@ export async function setProjectWords(words: string[], view?: EditorView | null)
   if (view) refresh(view);
 }
 export const suggestions = (dict: string, word: string) => call<string[]>({ type: "suggest", dict, word });
+/** Which words a dictionary accepts, by name ("en_GB", "en_GB:general"; record 0063). */
+export async function checkDict(dict: string, words: string[]): Promise<boolean[]> {
+  if (!words.length) return [];
+  return (await call<boolean[][]>({ type: "check", items: [{ dict, words }] }))[0];
+}
 /** Which words a language accepts, or null if it has no dictionary (record 0060). */
 export async function checkWords(lang: string, words: string[]): Promise<boolean[] | null> {
   const dict = dictionaryFor(lang);

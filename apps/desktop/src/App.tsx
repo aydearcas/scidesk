@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord,
+  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -41,6 +41,7 @@ import { FirstRun } from "./FirstRun.tsx";
 import { PreviewPane } from "./PreviewPane.tsx";
 import { checkWords, misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
 import { foreignStretch, langAtCursor, otherLang, setLanguage } from "./lang.ts";
+import { EnglishVariants } from "./EnglishVariants.tsx";
 import { formatDictionary, parseDictionary } from "@scidesk/spell";
 import { PROJECT_LAYOUT } from "@scidesk/formats";
 
@@ -366,6 +367,8 @@ export function App() {
   }, [editor, settings.preview]);
   // record 0060: the language at the cursor, for the status bar and the Review menu
   const [cursorLang, setCursorLang] = useState<{ lang: string; fragment: boolean } | null>(null);
+  // record 0063: the dialog that makes the English British or American
+  const [variantsOpen, setVariantsOpen] = useState<"GB" | "US" | null>(null);
   useEffect(() => {
     if (!editor) return;
     const onSel = () => { const l = langAtCursor(editor.state); setCursorLang((old) => (old && old.lang === l.lang && old.fragment === l.fragment ? old : l)); };
@@ -1192,7 +1195,9 @@ export function App() {
       { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
       // record 0060: the language of the selection, or of the paragraph
       { label: t("ui.lang.setEs"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("es"), onSelect: () => editor && setLanguage(editor, "es"), disabled: noProject },
-      { label: t("ui.lang.setEn"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("en"), onSelect: () => editor && setLanguage(editor, "en"), disabled: noProject },
+      { label: t("ui.lang.setEnUS"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("en") && !/^en-gb$/i.test(cursorLang.lang), onSelect: () => editor && setLanguage(editor, "en-US"), disabled: noProject },
+      { label: t("ui.lang.setEnGB"), title: t("ui.lang.hint"), checked: !!cursorLang && /^en-gb$/i.test(cursorLang.lang), onSelect: () => editor && setLanguage(editor, "en-GB"), disabled: noProject },
+      { label: t("ui.variants.menu"), onSelect: () => setVariantsOpen(/^en-gb$/i.test(article?.article.lang ?? "") ? "GB" : "US"), disabled: noProject },
     ] },
     { id: "view", label: t("ui.menu.view"), items: [
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
@@ -1553,6 +1558,18 @@ export function App() {
             </div>
           </div>
         </div>
+      )}
+      {variantsOpen && editor && (
+        <EnglishVariants editor={editor} initial={variantsOpen} onClose={() => { setVariantsOpen(null); editor.commands.focus(); }}
+          onApplied={(changed, to, tagged) => {
+            setVariantsOpen(null);
+            // an English article takes the variety as its language, so the checker follows it
+            if (tagged && project && article && article.article.lang.toLowerCase().startsWith("en")) {
+              void setArticleLang(project, article.folder, to === "GB" ? "en-GB" : "en-US").then(() => { spellOptions.lang = article.article.lang; refresh(editor.view); });
+            }
+            setMessage(t("ui.variants.done", { count: changed, variety: t(`ui.variants.${to}`) }));
+            editor.commands.focus();
+          }} />
       )}
       {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
       {xrefOpen && <XrefPicker targets={targets} onPick={insertXref} onClose={() => { setXrefOpen(false); editor?.commands.focus(); }} />}

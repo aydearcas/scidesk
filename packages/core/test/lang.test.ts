@@ -17,7 +17,7 @@ const para = (...content: PMNode[]): PMNode => ({ type: "paragraph", attrs: { id
 describe("language tags", () => {
   it("are tidied, compared without the region and written as Word does", () => {
     expect([normalLang("EN-us"), normalLang("es"), normalLang("x-none"), normalLang(null)]).toEqual(["en-US", "es", null, null]);
-    expect([sameLang("es", "es-ES"), sameLang("en-GB", "en-US"), sameLang("en", "es")]).toEqual([true, false, false]);
+    expect([sameLang("es", "es-ES"), sameLang("en-GB", "en-US"), sameLang("en", "es"), sameLang("en", "en-US"), sameLang("en", "en-GB"), sameLang("EN_gb", "en-GB")]).toEqual([true, false, false, true, false, true]);
     expect([wordLang("es"), wordLang("en"), wordLang("en-gb")]).toEqual(["es-ES", "en-US", "en-GB"]);
   });
 });

@@ -48,10 +48,11 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
   const review = active.filter((w) => w.level === "review").length;
   const words = report?.counts.main ?? 0;
   const limit = report?.limits.words;
-  const langName = (l: string) => { try { return new Intl.DisplayNames([i18n.language], { type: "language" }).of(l.split(/[-_]/)[0]) ?? l; } catch { return l; } };
+  // English says its variety (record 0063); other languages only their name
+  const langName = (l: string) => { try { return new Intl.DisplayNames([i18n.language], { type: "language" }).of(/^en/i.test(l) ? (/^en[-_]gb$/i.test(l) ? "en-GB" : "en-US") : l.split(/[-_]/)[0]) ?? l; } catch { return l; } };
   const here = cursorLang?.lang ?? a.lang;
   const lang = langName(here);
-  const langCode = here.toLowerCase().startsWith("en") ? "en" : here.toLowerCase().startsWith("es") ? "es" : here;
+  const langCode = /^en[-_]gb$/i.test(here) ? "en-GB" : here.toLowerCase().startsWith("en") ? "en-US" : here.toLowerCase().startsWith("es") ? "es" : here;
   const styleName = BUNDLED_STYLES.find((s) => s.id === a.citationStyle.id)?.name ?? a.citationStyle.id;
   const time = lastSaved?.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" });
   return (
@@ -69,9 +70,10 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
         <span className="sr-only">{t("ui.lang.status")}</span>
         <span aria-hidden="true">{cursorLang?.fragment ? t("ui.lang.fragment", { lang }) : lang}</span>
         <select value={langCode} onChange={(e) => onLang?.(e.target.value)} aria-label={t("ui.lang.status")}>
-          {!["es", "en"].includes(langCode) && <option value={langCode}>{lang}</option>}
+          {!["es", "en-US", "en-GB"].includes(langCode) && <option value={langCode}>{lang}</option>}
           <option value="es">{langName("es")}</option>
-          <option value="en">{langName("en")}</option>
+          <option value="en-US">{langName("en-US")}</option>
+          <option value="en-GB">{langName("en-GB")}</option>
         </select>
       </label>
       <button className={`status-item${limit !== undefined && words > limit ? " over" : ""}`} onClick={onWords} title={t("bySection")}>

@@ -3,6 +3,7 @@
 // article). What comes from Word marks almost every run with a language, usually the
 // document's own: only the marks that say something are kept.
 import type { PMNode } from "@scidesk/formats";
+import { saveJson, type Project } from "./project.ts";
 
 /** A BCP 47 tag, tidied (es → es, EN-us → en-US), or null if it is not one. */
 export function normalLang(tag: string | null | undefined): string | null {
@@ -10,10 +11,16 @@ export function normalLang(tag: string | null | undefined): string | null {
   return m ? (m[2] ? `${m[1].toLowerCase()}-${m[2].toUpperCase()}` : m[1].toLowerCase()) : null;
 }
 
-/** The same language, ignoring the region unless both give one (es and es-ES are the same). */
+// the region a language tag without one means: es is Spain's, en is American (as Word and
+// the dictionaries take them); en-GB is another variety (record 0063)
+const DEFAULT_REGION: Record<string, string> = { es: "es", en: "us" };
+/** The same language and variety: es and es-ES are, en and en-US are, en and en-GB are not. */
 export function sameLang(a: string, b: string): boolean {
-  const [x, y] = [a.toLowerCase().replace("_", "-"), b.toLowerCase().replace("_", "-")];
-  return x.split("-")[0] === y.split("-")[0] && (!x.includes("-") || !y.includes("-") || x === y);
+  const full = (t: string) => {
+    const [l, r] = t.toLowerCase().replace("_", "-").split("-");
+    return `${l}-${r ?? DEFAULT_REGION[l] ?? ""}`;
+  };
+  return full(a) === full(b);
 }
 
 const LETTER = /\p{L}/u;
@@ -89,4 +96,18 @@ export async function verifyLangMarks<T extends PMNode>(node: T, around: string,
     return n.content ? { ...n, content: n.content.map(rebuild) } : n;
   };
   return rebuild(node) as T;
+}
+
+/**
+ * Record 0063: the article's language, when it changes variety (en → en-GB after making its
+ * English British). Saved in article.json; the documents keep their own tags.
+ */
+export async function setArticleLang(project: Project, folder: string, lang: string) {
+  const art = project.articles.find((a) => a.folder === folder);
+  if (!art) throw new Error(`no article ${folder}`);
+  const tag = normalLang(lang);
+  if (!tag) throw new Error(`not a language tag: ${lang}`);
+  const article = { ...art.article, lang: tag };
+  await saveJson(project, `articles/${folder}/article.json`, article);
+  art.article = article;
 }

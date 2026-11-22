@@ -20,19 +20,21 @@ const dicts = new Map<string, Promise<Dictionary | null>>();
 const projectWords = new Set<string>();
 
 const text = async (url: string) => (await fetch(url)).text();
-function dictionary(name: string): Promise<Dictionary | null> {
-  if (!dicts.has(name)) {
-    dicts.set(name, (async () => {
+// "en_GB:general": without the specialty list (British and American spelling, record 0063)
+function dictionary(spec: string): Promise<Dictionary | null> {
+  const [name, kind] = spec.split(":");
+  if (!dicts.has(spec)) {
+    dicts.set(spec, (async () => {
       const files = FILES[name];
       if (!files) return null;
       engine ??= (async () => loadSpellbook(await (await fetch(wasmUrl)).arrayBuffer()))();
-      const [sb, aff, dic, specialty] = await Promise.all([engine, text(files[0]), text(files[1]), text(files[2])]);
+      const [sb, aff, dic, specialty] = await Promise.all([engine, text(files[0]), text(files[1]), kind === "general" ? null : text(files[2])]);
       const d = sb.dictionary(aff, withSpecialty(dic, specialty));
       for (const w of projectWords) d.add(w);
       return d;
     })());
   }
-  return dicts.get(name)!;
+  return dicts.get(spec)!;
 }
 
 export type SpellRequest =
