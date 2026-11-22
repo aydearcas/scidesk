@@ -12,6 +12,9 @@ import {
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import { autocorrectOptions } from "./autocorrect.ts";
+import { unwrapPdfText } from "./pdf-paste.ts";
 import { closeHistory } from "@tiptap/pm/history";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, deleteColumn, deleteRow, isInTable, mergeCells, splitCell, toggleHeaderRow } from "@tiptap/pm/tables";
 import { newId, type PMNode, type ProposalSetFile } from "@scidesk/formats";
@@ -158,11 +161,21 @@ export function App() {
   const docTab: CenterTab = `doc:${article?.folder ?? ""}`;
   // pasting from Word with tables (record 0042): set below, called by the editor
   const pasteTables = useRef<(html: string) => boolean>(() => false);
+  // record 0065: text from a PDF put back into paragraphs; the message says so
+  const pdfPasted = useRef<(paragraphs: number) => void>(() => {});
 
   const editor = useEditor({
     editorProps: {
       // Word's HTML, cleaned (prototype 1); with tables, each becomes a .scitable
       transformPastedHTML: cleanOfficeHtml,
+      // record 0065: plain text copied from a PDF, in paragraphs again (Ctrl+Shift+V: the lines as they are)
+      clipboardTextParser: (text, _context, plain, view) => {
+        const paragraphs = plain ? null : unwrapPdfText(text);
+        if (!paragraphs) return null as unknown as Slice;
+        const { schema } = view.state;
+        setTimeout(() => pdfPasted.current(paragraphs.length), 0);
+        return new Slice(Fragment.from(paragraphs.map((p) => schema.nodes.paragraph.create(null, p ? schema.text(p) : null))), 1, 1);
+      },
       handlePaste: (view, event) => {
         // Ctrl+Shift+V: only the text, as ProseMirror does by itself
         if ((view as unknown as { input?: { shiftKey?: boolean } }).input?.shiftKey) return false;
@@ -380,10 +393,11 @@ export function App() {
   // record 0057: the spell checker follows the article's language and the setting
   useEffect(() => {
     spellOptions.enabled = settings.spellcheck;
+    autocorrectOptions.enabled = settings.autocorrect;
     spellOptions.lang = article?.article.lang ?? "es";
     spellOptions.ignore = new Set(article?.article.ignoredWords ?? []);
     if (editor && !editor.isDestroyed) refresh(editor.view);
-  }, [editor, article, settings.spellcheck]);
+  }, [editor, article, settings.spellcheck, settings.autocorrect]);
   // and the project's dictionary, which every language accepts
   useEffect(() => {
     if (!project) return;
@@ -810,6 +824,7 @@ export function App() {
     await restoreWarning(project, article.folder, w.id);
     await recompute();
   };
+  pdfPasted.current = (n: number) => setMessage(t("ui.pdfPasted", { count: n }));
   pasteTables.current = (html: string) => {
     if (!project || !article || !editor) return false;
     const images = (html.match(/<img\b/gi) ?? []).length;
@@ -1193,6 +1208,7 @@ export function App() {
       { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
       "-",
       { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
+      { label: t("ui.autocorrect.toggle"), title: t("ui.autocorrect.hint"), checked: settings.autocorrect, onSelect: () => updateSettings({ autocorrect: !settings.autocorrect }) },
       // record 0060: the language of the selection, or of the paragraph
       { label: t("ui.lang.setEs"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("es"), onSelect: () => editor && setLanguage(editor, "es"), disabled: noProject },
       { label: t("ui.lang.setEnUS"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("en") && !/^en-gb$/i.test(cursorLang.lang), onSelect: () => editor && setLanguage(editor, "en-US"), disabled: noProject },

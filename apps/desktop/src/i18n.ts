@@ -135,6 +135,9 @@ const es = {
       error: "La vista previa no se ha podido componer", desktopOnly: "La vista previa la compone Typst en la ventana de escritorio; la vista en el navegador no la tiene.",
     },
     spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias", ignore: "Ignorar «{{word}}» en este artículo", ignored: "«{{word}}» ya no se subraya en este artículo (article.json)", unignored: "«{{word}}» se vuelve a subrayar" },
+    autocorrect: { toggle: "Autocorrección científica", hint: "Al escribir: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, espacio duro entre número y unidad, signo menos, comillas «» (“” en inglés). Ctrl+Z deshace cada cambio." },
+    pdfPasted_one: "Texto de un PDF: líneas unidas en {{count}} párrafo (Ctrl+Mayús+V pega las líneas tal cual)",
+    pdfPasted_other: "Texto de un PDF: líneas unidas en {{count}} párrafos (Ctrl+Mayús+V pega las líneas tal cual)",
     lang: {
       setEs: "Idioma: español", setEnUS: "Idioma: inglés (EE. UU.)", setEnGB: "Idioma: inglés (Reino Unido)",
       hint: "Con texto seleccionado, solo ese fragmento; si no, el párrafo. El corrector y el Word de los coautores usan el diccionario de cada idioma.",
@@ -452,6 +455,9 @@ const en: typeof es = {
       error: "The preview could not be composed", desktopOnly: "Typst composes the preview in the desktop window; the browser preview does not have it.",
     },
     spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions", ignore: "Ignore “{{word}}” in this article", ignored: "“{{word}}” is no longer underlined in this article (article.json)", unignored: "“{{word}}” is underlined again" },
+    autocorrect: { toggle: "Scientific autocorrection", hint: "While typing: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, non-breaking space between number and unit, minus sign, quotation marks “” («» in Spanish). Ctrl+Z undoes each change." },
+    pdfPasted_one: "Text from a PDF: lines joined into {{count}} paragraph (Ctrl+Shift+V pastes the lines as they are)",
+    pdfPasted_other: "Text from a PDF: lines joined into {{count}} paragraphs (Ctrl+Shift+V pastes the lines as they are)",
     lang: {
       setEs: "Language: Spanish", setEnUS: "Language: English (US)", setEnGB: "Language: English (UK)",
       hint: "With text selected, only that fragment; otherwise the paragraph. The spell checker and the coauthors' Word use each language's dictionary.",

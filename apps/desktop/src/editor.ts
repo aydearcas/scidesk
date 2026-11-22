@@ -22,6 +22,7 @@ import { actionFor, comboOf, EDITOR_ACTIONS, keyScheme } from "./shortcuts.ts";
 import { partExtensions } from "./parts.ts";
 import { Spellcheck } from "./spellcheck.ts";
 import { LangMark, LangPaste } from "./lang.ts";
+import { Autocorrect } from "./autocorrect.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -392,6 +393,7 @@ export const extensions = [
   FontSize,
   LangMark,
   LangPaste,
+  Autocorrect,
   UndoRedo,
   Spellcheck,
 ];
