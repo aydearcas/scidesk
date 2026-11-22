@@ -54,7 +54,7 @@
 
 ## Consecuencias
 - **En la vista del navegador**, Ctrl+Mayús+C abre el inspector de las herramientas de desarrollo de Chrome. En la aplicación instalada no pasa (no las lleva); en el navegador se usa el botón «Citar…».
-- **La maqueta** (lienzo privado) se actualiza con las láminas de D8, el ajuste a la v0.5 y la cinta con color y resaltado. Las capturas de `docs/interfaz/capturas/` se rehacen después.
+- **La maqueta** (lienzo privado) se actualiza con las láminas de D8, el ajuste a la v0.5 y la cinta con color y resaltado. Las capturas de `docs/interfaz/capturas/` se rehacen después. **Hecho el 22/11/2026** (propuesta v0.2 de la interfaz): láminas 6 · Inicio, 7 · Nuevo artículo y 8 · Tabla en su pestaña; fuera recortes, envíos anteriores y aprobación final; hoja de envío «más adelante»; cinta a todo el ancho y menú «Ajustes» (ficha 0044) en todas las láminas; capturas rehechas.
 - **El esqueleto de la ventana** (navegador por conceptos, pestañas, panel derecho con Avisos, Revisión y Detalles, menús, barra de estado y los dos esquemas de atajos) ya no espera a ninguna decisión.
 - **Falta:**
   - leer color y resaltado en las copias devueltas por los coautores (fase 2a, con los cambios de formato);

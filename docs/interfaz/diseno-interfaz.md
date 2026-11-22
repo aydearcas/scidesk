@@ -1,8 +1,12 @@
 # Diseño de la interfaz de SciDesk
 
-**Propuesta v0.1, 20 de noviembre de 2026. Las decisiones D1–D8 (sección 12) las tomó el usuario el 21 de noviembre de 2026** ([ficha 0043](../decisiones/0043-decisiones-de-interfaz.md)): todas como se proponían, con la cita en Ctrl+Mayús+C, «Es correcto» y «No aplica» para los avisos, y color del texto y resaltado en la cinta. La maqueta está pendiente de ajustarse a la v0.5 del plan (recortes, aprobación final y envíos anteriores fuera) y de las láminas de D8.
+**Propuesta v0.2, 22 de noviembre de 2026** (la v0.1 es del 20/11). **Las decisiones D1–D8 (sección 12) las tomó el usuario el 21 de noviembre de 2026** ([ficha 0043](../decisiones/0043-decisiones-de-interfaz.md)): todas como se proponían, con la cita en Ctrl+Mayús+C, «Es correcto» y «No aplica» para los avisos, y color del texto y resaltado en la cinta. **La v0.2 añade las láminas de D8** (inicio, asistente de nuevo artículo y tabla en su pestaña con el aviso de pegado) **y ajusta la maqueta a la v0.5 del plan**:
+- fuera los recortes, los envíos anteriores y la aprobación de la versión final por los coautores;
+- la hoja de envío queda marcada «más adelante»;
+- la cinta va a todo el ancho bajo la barra de título, con color del texto y resaltado;
+- «Ajustes» es un menú propio (decisiones del usuario del 22/11, ficha 0044).
 
-La maqueta está en un lienzo de diseño con siete láminas: [Interfaz de SciDesk](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x). Es privada, solo la ves tú. En el lienzo puedes comentar sobre cada lámina, cambiar textos y probar otros colores de acento en la lámina de estilo.
+La maqueta está en un lienzo de diseño con diez láminas: [Interfaz de SciDesk](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x). Es privada, solo la ves tú. En el lienzo puedes comentar sobre cada lámina, cambiar textos y probar otros colores de acento en la lámina de estilo.
 
 | Lámina | Qué enseña |
 |---|---|
@@ -13,10 +17,13 @@ La maqueta está en un lienzo de diseño con siete láminas: [Interfaz de SciDes
 | [5 · Autores y CRediT](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Autores) | Orden de firma, matriz CRediT y cómo queda en el artículo |
 | [Cita rápida](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Citar) | El buscador de citas |
 | [Estilo visual](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Estilo) | Colores, tipografía, elementos del texto y controles |
+| [6 · Inicio](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Inicio) | Pantalla de inicio: las tres formas de empezar y los proyectos recientes con el estado de cada artículo |
+| [7 · Nuevo artículo](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Asistente) | El asistente en tres pasos, con lo que se va a crear a la derecha; se puede recorrer en el modo de reproducción |
+| [8 · Tabla en su pestaña](https://claude.ai/artifact/AysNFJETjAz7f1VYK3kr5x#artboard-Tabla) | Una tabla recién pegada desde Word, con el aviso de lo conservado y lo descartado, la barra de tabla y sus propiedades en «Detalles» |
 
-Las láminas 1 a 5 están enlazadas entre sí por la barra de vistas, así que en el modo de reproducción del lienzo se puede pasar de una a otra.
+Las láminas 1 a 5 están enlazadas entre sí por la barra de vistas, así que en el modo de reproducción del lienzo se puede pasar de una a otra. También lo están las nuevas: «Nuevo artículo» en el inicio abre el asistente, «Crear el proyecto» lleva a la lámina 1, y la pestaña «Tabla 2» de la lámina 1 lleva a la 8.
 
-Hay una captura de cada lámina en [`capturas/`](capturas/), tomada el 21 de noviembre de 2026: [escribir](capturas/1-escribir.png), [fusión de revisiones](capturas/2-fusion-de-revisiones.png), [revista y envío](capturas/3-revista-y-envio.png), [biblioteca](capturas/4-biblioteca.png), [autores y CRediT](capturas/5-autores-y-credit.png), [cita rápida](capturas/cita-rapida.png) y [estilo visual](capturas/estilo-visual.png). Si el lienzo cambia, las capturas no se actualizan solas.
+Hay una captura de cada lámina en [`capturas/`](capturas/): [escribir](capturas/1-escribir.png), [fusión de revisiones](capturas/2-fusion-de-revisiones.png), [revista y envío](capturas/3-revista-y-envio.png), [biblioteca](capturas/4-biblioteca.png), [autores y CRediT](capturas/5-autores-y-credit.png), [inicio](capturas/6-inicio.png), [nuevo artículo](capturas/7-nuevo-articulo.png) (y su [paso de la revista](capturas/7-nuevo-articulo-revista.png)), [tabla en su pestaña](capturas/8-tabla-en-su-pestana.png), [cita rápida](capturas/cita-rapida.png) y [estilo visual](capturas/estilo-visual.png). Las de las láminas 1 a 8 son del 22 de noviembre de 2026; las de cita rápida y estilo visual, del 21. Se renderizan en local con Edge sin interfaz, a 1440 × 900. Si el lienzo cambia, las capturas no se actualizan solas.
 
 ## 1. Qué tomo del boceto y qué cambio
 
@@ -86,7 +93,7 @@ Abajo, separados, están Ajustes y Ayuda.
 - **Material suplementario**.
 - **Autores**.
 - **Documentos de envío**: carta, portada, contribuciones y declaraciones. Los que se generan solos lo indican.
-- **Recortes**: lo que has quitado y no quieres perder.
+- **Sin colocar en el texto**: tablas y figuras que se quitaron del texto y cuyo archivo se conserva (ficha 0045). Un clic las vuelve a poner donde está el cursor.
 
 Un botón en la cabecera cambia a la vista de archivos, que enseña la carpeta tal como está en el disco. Sirve para quien quiera verla y para depurar.
 
@@ -138,7 +145,7 @@ Cada elemento informa y es un botón:
 
 ### 4.1 Lienzo
 
-- Texto continuo, sin saltos de página, en una columna centrada de unos 70 caracteres de ancho sobre papel blanco.
+- Texto continuo, sin saltos de página, sobre una hoja A4 blanca con márgenes de 2,5 cm. La hoja tiene desde el principio el alto de una página y crece si el texto pasa de ella. Con el zoom «Ajustar al ancho» (por defecto) llena el ancho que dejan los paneles; también hay zoom fijo del 50 al 300 % en la barra de estado, en el menú Ver y con Ctrl + rueda (ficha 0046).
 - A la derecha de cada título de sección, sus palabras.
 - El bloque de autores y afiliaciones se ve en su sitio, pero no se edita ahí: indica que se genera solo y enlaza a Autores.
 - El resumen y las tablas se editan en su sitio dentro del manuscrito, aunque cada uno viva en su archivo.
@@ -162,8 +169,8 @@ Están todos en la lámina de estilo.
 
 - **Barra de herramientas**, una sola fila: deshacer y rehacer, estilo del párrafo, negrita, cursiva, subrayado, superíndice y subíndice, **color del texto y resaltado** (con los colores de Word, ficha 0043), y las inserciones (cita, referencia cruzada, tabla, figura, símbolo). Los botones de negrita y cursiva llevan N y K, como en Word en español, o B e I con el esquema internacional.
 - **Burbuja de selección.** Al seleccionar texto aparece junto a él una barra pequeña con formato, citar, comentar y cambiar el idioma.
-- **Menú contextual.** Lo que tiene sentido en cada sitio: en el texto, cita, referencia cruzada, comentario, pendiente y mover a recortes. En una celda, además, las órdenes de tabla.
-- **Barra de tabla.** Al entrar en una tabla aparece sobre ella una barra con filas, columnas, combinar celdas, alineación decimal y notas.
+- **Menú contextual.** Lo que tiene sentido en cada sitio: en el texto, cita, referencia cruzada, comentario y pendiente. En una celda, además, las órdenes de tabla y las notas.
+- **Barra de tabla** (lámina 8). En la pestaña de la tabla, una fila bajo las pestañas con filas, columnas, combinar y dividir, fila de encabezado, la alineación de la celda (con la decimal) y las notas: llamada a una nota nueva y nota general. En el manuscrito, las mismas órdenes van en el menú contextual de la celda.
 
 ### 4.4 Cita rápida
 
@@ -178,8 +185,15 @@ Lámina "Cita rápida". Es la acción más repetida, así que es la más cuidada
 ### 4.5 Tablas y figuras
 
 - Una tabla se ve en el manuscrito con su título, su cuerpo y sus notas. Las abreviaturas del pie se generan solas y lo indican.
-- Al pegar desde Word o Excel, un aviso breve resume lo conservado y lo descartado ("Se han conservado 3 celdas combinadas. Se han descartado los colores de fondo"), con un botón para deshacer.
-- En su propia pestaña, la tabla ocupa todo el ancho y el panel de detalles enseña sus propiedades.
+- Al pegar desde Word o Excel, un aviso breve resume lo conservado y lo descartado ("Se han conservado 3 celdas combinadas. Se han descartado los colores de fondo"), con un botón para deshacer (lámina 8).
+- En su propia pestaña (lámina 8), la tabla ocupa todo el ancho. Es la misma tabla que la del manuscrito: lo que se escribe allí se ve aquí y Ctrl+Z deshace en los dos sitios (ficha 0045). El panel de detalles enseña:
+  - dónde se cita;
+  - su tamaño y sus notas;
+  - el archivo;
+  - las celdas seleccionadas;
+  - los anchos de las columnas;
+  - qué pasa al exportar (encabezado repetido, tabla al final si lo pide la revista);
+  - sus avisos.
 - Una figura enseña la imagen, el pie y, si los hay, los avisos de resolución o formato.
 
 ### 4.6 Modos de escritura
@@ -220,12 +234,12 @@ Un botón en la fila de pestañas abre la vista previa paginada al lado del edit
 
 ### 5.4 Revista y envío (lámina 3)
 
-- **Panel izquierdo.** El estado del artículo en una lista de pasos, los envíos anteriores y la aprobación de la versión final por los coautores.
+- **Panel izquierdo.** El estado del artículo en una lista de pasos. Los envíos anteriores (bitácora de envíos) quedan para más adelante y la aprobación de la versión final por los coautores se descartó en la revisión de la v0.4.
 - **Cabecera.** Revista, tipo de artículo, tipo de revisión, sistema de envío, y cuándo y con qué fuente se comprobó el perfil.
 - **Adaptación.** Dos columnas, como pide el plan. "Tienes que hacerlo tú" es una lista de tareas con un botón que lleva al sitio. "Se aplica solo al exportar" es una lista de lo que el programa hará sin tocar tu texto.
 - **Requisitos.** El perfil completo, dato a dato.
 - **Paquete de envío.** Cada archivo que se va a generar, con su nombre y su estado.
-- **Hoja de envío.** Cada campo que pide el sistema de la revista, con un botón de copiar.
+- **Hoja de envío.** Cada campo que pide el sistema de la revista, con un botón de copiar. Prioridad baja: en la lámina aparece como «más adelante».
 - **Panel derecho.** Al elegir un requisito, enseña la cita literal de la guía de la que sale, la fecha en que se comprobó y un botón para corregir el dato. También avisa de los datos que la guía actual no da.
 
 ### 5.5 Respuesta a revisores
@@ -244,8 +258,15 @@ No tiene lámina todavía. Propuesta:
 
 ### 5.7 Inicio y nuevo artículo
 
-- **Inicio.** Proyectos recientes con el estado de cada artículo, y tres acciones: nuevo artículo, nuevo artículo a partir de un Word y abrir una carpeta.
-- **Nuevo artículo.** Un asistente de tres pasos: tipo de artículo e idiomas, revista (opcional, con buscador) y biblioteca. El último paso enseña la estructura que se va a crear.
+- **Inicio** (lámina 6).
+  - Tres formas de empezar: nuevo artículo, nuevo a partir de un Word y abrir una carpeta, con sus atajos del esquema elegido. Debajo, el proyecto de demostración.
+  - Los proyectos recientes: carpeta, cuándo se abrió y cada artículo con su estado («Con coautores · ronda 2», «Borrador», «Listo para enviar») y lo más útil de ese estado (copias que han vuelto, palabras frente al límite).
+  - Un proyecto cuya carpeta no se encuentra, algo habitual con carpetas sincronizadas, se muestra aparte con «Buscar la carpeta» y «Quitar de la lista».
+  - La barra de estado enseña el idioma de la interfaz y el esquema de atajos, que se cambian desde ahí.
+- **Nuevo artículo** (lámina 7). Un asistente de tres pasos, con lo que se va a crear siempre a la derecha (títulos y resúmenes por idioma, apartados del resumen estructurado si la revista lo pide, secciones del tipo de artículo, revista y biblioteca):
+  1. **Tipo e idiomas:** título provisional, carpeta (vacía), tipo de artículo (original, original breve, revisión sistemática, revisión narrativa, caso clínico, carta) e idioma del manuscrito, con la opción de llevar también título, resumen y palabras clave en el otro idioma.
+  2. **Revista**, opcional: buscador; las revistas con perfil lo dicen y enseñan lo que piden para ese tipo de artículo. Las que no lo tienen traen su estilo de cita, y lo demás con un paquete para un LLM. También se puede elegir «Sin revista por ahora».
+  3. **Biblioteca:** propia y vacía, importada de un archivo (RIS, NBIB, BibTeX o CSL-JSON) o vinculada a una colección de Zotero; y el estilo de cita, que por defecto es el de la revista.
 - **Primer arranque.** Idioma de la interfaz, esquema de atajos y áreas principales.
 
 ## 6. Cuando algo sale del equipo
