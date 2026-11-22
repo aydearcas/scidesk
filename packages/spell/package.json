@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build:wasm": "cargo build --release --manifest-path rust/Cargo.toml --target wasm32-unknown-unknown && node -e \"require('fs').copyFileSync('rust/target/wasm32-unknown-unknown/release/spellwasm.wasm','assets/spellwasm.wasm')\"",
+    "build:specialty": "node tools/build-specialty.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   }

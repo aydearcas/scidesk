@@ -1,14 +1,17 @@
 // The spell checker's web worker (records 0023 and 0057): spellbook in WebAssembly, one
 // dictionary per language, loaded the first time a word of that language comes, and the
-// project dictionary, which every language accepts. The editor sends words, never the text.
-import { loadSpellbook, type Dictionary, type Spellbook } from "@scidesk/spell";
+// project dictionary, which every language accepts. Each general dictionary goes with its
+// specialty one (biomedicine, record 0059). The editor sends words, never the text.
+import { loadSpellbook, withSpecialty, type Dictionary, type Spellbook } from "@scidesk/spell";
 import wasmUrl from "@scidesk/spell/assets/spellwasm.wasm?url";
 import esAff from "@scidesk/spell/assets/dicts/es_ES.aff?url";
 import esDic from "@scidesk/spell/assets/dicts/es_ES.dic?url";
 import enAff from "@scidesk/spell/assets/dicts/en_US.aff?url";
 import enDic from "@scidesk/spell/assets/dicts/en_US.dic?url";
+import esBiomed from "@scidesk/spell/assets/dicts/biomed_es.dic?url";
+import enBiomed from "@scidesk/spell/assets/dicts/biomed_en.dic?url";
 
-const FILES: Record<string, [string, string]> = { es_ES: [esAff, esDic], en_US: [enAff, enDic] };
+const FILES: Record<string, [string, string, string]> = { es_ES: [esAff, esDic, esBiomed], en_US: [enAff, enDic, enBiomed] };
 
 let engine: Promise<Spellbook> | null = null;
 const dicts = new Map<string, Promise<Dictionary | null>>();
@@ -21,8 +24,8 @@ function dictionary(name: string): Promise<Dictionary | null> {
       const files = FILES[name];
       if (!files) return null;
       engine ??= (async () => loadSpellbook(await (await fetch(wasmUrl)).arrayBuffer()))();
-      const [sb, aff, dic] = await Promise.all([engine, text(files[0]), text(files[1])]);
-      const d = sb.dictionary(aff, dic);
+      const [sb, aff, dic, specialty] = await Promise.all([engine, text(files[0]), text(files[1]), text(files[2])]);
+      const d = sb.dictionary(aff, withSpecialty(dic, specialty));
       for (const w of projectWords) d.add(w);
       return d;
     })());
