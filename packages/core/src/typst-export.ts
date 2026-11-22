@@ -89,7 +89,9 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     if (m.sub) out = `#sub[${out}]`;
     if (m.italic) out = `#emph[${out}]`;
     if (m.bold) out = `#strong[${out}]`;
-    return out;
+    // a ";" ends the command: without it, "#strong[x](y)" takes "(y)" as more arguments,
+    // and bold or italic text followed by a bracket is everywhere in clinical writing
+    return out === t ? t : `${out};`;
   }
   // the language around the block being written: the article's, or that of an abstract
   let around = lang;
@@ -104,14 +106,14 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
         const runLang = own ?? blockLang;
         out += wrap(typstEscape(n.text ?? ""), { ...format, ...(sameLang(runLang, around) ? {} : { lang: runLang }) });
       }
-      else if (n.type === "hardBreak") out += "#linebreak()";
+      else if (n.type === "hardBreak") out += "#linebreak();";
       else if (n.type === "citation") out += runs(rendering.citations.get(n.attrs!.id as string)?.runs ?? [{ text: "?" }]);
       else if (n.type === "xref") {
         const target = n.attrs!.target as string;
         const num = tableNo.get(target) ?? figureNo.get(target);
         if (num === undefined) warnings.push(`cross-reference to ${target} is not exported yet`);
         out += String(num ?? "?");
-      } else if (n.type === "noteRef") out += `#super[${typstEscape(notes?.get(n.attrs!.target as string) ?? "?")}]`;
+      } else if (n.type === "noteRef") out += `#super[${typstEscape(notes?.get(n.attrs!.target as string) ?? "?")}];`;
       else warnings.push(`'${n.type}' is not exported yet`);
     }
     return out;
@@ -269,7 +271,8 @@ ${notesOf(notes)}
     `#set page(paper: "a4", margin: (x: ${marginCm()}cm, y: 2.5cm), numbering: ${fmt?.pageNumbers?.value === false ? "none" : `"1"`})`,
     `#set text(font: (${fontList(fmt?.font?.value).map(str).join(", ")}), size: ${fmt?.fontSizePt?.value ?? 12}pt, lang: ${str(lang.slice(0, 2))}, hyphenate: ${fmt?.hyphenation?.value === true}, top-edge: "ascender", bottom-edge: "descender")`,
     `#set par(leading: ${leading}, spacing: ${spacing > 1.5 ? leading : "0.8em"}, justify: ${fmt?.justified?.value === true})`,
-    ...(fmt?.lineNumbers?.value ? [`#set par.line(numbering: n => text(size: 8pt, fill: gray)[#n], numbering-scope: "page")`] : []),
+    // tables without numbers, as in Word (record 0064)
+    ...(fmt?.lineNumbers?.value ? [`#set par.line(numbering: n => text(size: 8pt, fill: gray)[#n], numbering-scope: "page")`, "#show table: set par.line(numbering: none)"] : []),
     `#show heading: set text(size: 1em)`,
     `#show heading.where(level: 1): set text(size: 1.15em)`,
     `#show heading: set block(above: 1.4em, below: 0.9em)`,

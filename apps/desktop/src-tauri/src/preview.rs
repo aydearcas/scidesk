@@ -57,10 +57,10 @@ pub fn update(state: &mut Option<Live>, source: String, files: Option<HashMap<St
         live.world.files = files.into_iter().map(|(k, v)| (k, Bytes::new(v))).collect();
     }
     let result = typst::compile::<PagedDocument>(&live.world);
-    let mut warnings: Vec<String> = result.warnings.iter().map(|d| d.message.to_string()).collect();
+    let mut warnings = crate::pdf::messages(&live.world.main, &result.warnings);
     warnings.dedup();
     // a source that does not compile keeps the last pages on screen
-    let doc = result.output.map_err(|e| e.iter().map(|d| d.message.to_string()).collect::<Vec<_>>())?;
+    let doc = result.output.map_err(|e| crate::pdf::messages(&live.world.main, &e))?;
     let intro = doc.introspector();
     let mut blocks = Vec::new();
     for c in intro.elements().query_labelled() {

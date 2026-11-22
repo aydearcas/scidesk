@@ -51,9 +51,9 @@ describe("typst export", () => {
     expect(files).toEqual({});
     expect(source).toContain('#set document(title: "Actividad inflamatoria en la artritis reumatoide de inicio (datos sintéticos)", author: (), date: datetime(year: 2026, month: 11, day: 21))');
     expect(source).toContain('lang: "es"');
-    expect(source).toMatch(/compuestos#super\[1\]\./); // citeproc-js' superscript, as in the DOCX
+    expect(source).toMatch(/compuestos#super\[1\];\./); // citeproc-js' superscript, as in the DOCX
     expect(source).toContain("Ver \\#5 y \\[nota\\] con \\*asteriscos\\*, a\\_b, 50 \\$ y \\<30 \\@x \\/\\/ no es un comentario");
-    expect(source).toContain("<b-tricky0002>2\\. No es una lista#emph[ pero esto sí va en cursiva]");
+    expect(source).toContain("<b-tricky0002>2\\. No es una lista#emph[ pero esto sí va en cursiva];");
     expect(source).toMatch(/#grid\(columns: \(auto, 1fr\)[\s\S]*\[1\.\], \[Alonso M, Benítez C/);
     expect(source).not.toContain("Alonso, María"); // no people in the metadata (blinded)
   });
@@ -101,6 +101,30 @@ describe("typst export", () => {
     expect(fs.files.get(r.path)).toEqual(r.bytes);
     const ua = await exportPdf(p, "main", res, nodeTypstCompiler(binary!), { date, standard: "ua-1" });
     expect(ua.pages).toBe(r.pages);
+  }, 60_000);
+});
+
+describe("formatted text followed by a bracket (record 0064)", () => {
+  // "#strong[x](y)" takes "(y)" as more arguments: every command ends with ";"
+  const para: PMNode = { type: "paragraph", attrs: { id: "b-bracket001", lang: null }, content: [
+    { type: "text", text: "Con " }, { type: "text", text: "azatioprina", marks: [{ type: "bold" }] }, { type: "text", text: "(MD −0,06) y " },
+    { type: "text", text: "metotrexato", marks: [{ type: "italic" }] }, { type: "text", text: "[sic]" }, { type: "hardBreak" }, { type: "text", text: "(otra línea)" },
+  ] };
+  const withPara = async () => {
+    const p = await createDemoProject(new MemoryFs());
+    const art = p.articles[0];
+    const body = structuredClone(art.documents.get("manuscript/article.scidoc")!);
+    (body.doc as PMNode).content!.splice(3, 0, para);
+    await saveDocument(p, art, "manuscript/article.scidoc", body);
+    return p;
+  };
+  it("ends each command with a semicolon", async () => {
+    const { source } = await manuscriptTypst(await withPara(), "main", res, { date });
+    expect(source).toContain("Con #strong[azatioprina];(MD −0,06) y #emph[metotrexato];\\[sic\\]#linebreak();(otra línea)");
+  });
+  it.skipIf(!binary)("and Typst compiles it", async () => {
+    const r = await exportPdf(await withPara(), "main", res, nodeTypstCompiler(binary!), { date });
+    expect(r.pages).toBeGreaterThan(0);
   }, 60_000);
 });
 

@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 use typst::diag::{FileError, FileResult, SourceDiagnostic};
 use typst::foundations::{Bytes, Datetime, Duration};
-use typst::syntax::{FileId, RootedPath, Source, VirtualPath, VirtualRoot};
+use typst::syntax::{DiagSpanKind, FileId, RootedPath, Source, VirtualPath, VirtualRoot};
 use typst::text::{Font, FontBook};
 use typst::utils::LazyHash;
 use typst::{Library, LibraryExt, World};
@@ -76,8 +76,24 @@ pub fn standards(name: Option<&str>) -> Result<typst_pdf::PdfStandards, String> 
     typst_pdf::PdfStandards::new(&list).map_err(|e| format!("{e:?}"))
 }
 
-fn messages(diags: &[SourceDiagnostic]) -> Vec<String> {
-    diags.iter().map(|d| d.message.to_string()).collect()
+/// Typst's messages, with the line and column of the source where it can tell (an error in a
+/// long manuscript is otherwise impossible to find).
+pub(crate) fn messages(main: &Source, diags: &[SourceDiagnostic]) -> Vec<String> {
+    diags
+        .iter()
+        .map(|d| {
+            let start = match d.span.get() {
+                DiagSpanKind::Number { id, num, sub_range } if id == main.id() => main.range(num, sub_range).map(|r| r.start),
+                DiagSpanKind::Range { id, range } if id == main.id() => Some(range.start),
+                _ => None,
+            };
+            let at = start
+                .and_then(|b| main.lines().byte_to_line_column(b))
+                .map(|(l, c)| format!(" (main.typ {}:{})", l + 1, c + 1))
+                .unwrap_or_default();
+            format!("{}{at}", d.message)
+        })
+        .collect()
 }
 
 pub struct Compiled {
@@ -97,10 +113,10 @@ pub fn compile(source: &str, files: HashMap<String, Vec<u8>>, standard: Option<&
         files: files.into_iter().map(|(k, v)| (k, Bytes::new(v))).collect(),
     };
     let result = typst::compile::<PagedDocument>(&world);
-    let mut warnings = messages(&result.warnings);
-    let document = result.output.map_err(|e| messages(&e))?;
+    let mut warnings = messages(&world.main, &result.warnings);
+    let document = result.output.map_err(|e| messages(&world.main, &e))?;
     let options = typst_pdf::PdfOptions { standards: standards(standard).map_err(|e| vec![e])?, ..Default::default() };
-    let pdf = typst_pdf::pdf(&document, &options).map_err(|e| messages(&e))?;
+    let pdf = typst_pdf::pdf(&document, &options).map_err(|e| messages(&world.main, &e))?;
     warnings.dedup();
     Ok(Compiled { pdf, pages: document.pages().len(), warnings, document })
 }
