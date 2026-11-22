@@ -56,7 +56,7 @@ Antes se llamaba `nobs-papers`; el proyecto se trasladó a esta carpeta el 20 de
   - Nombre: SciDesk. Extensiones: `.scidesk` (manifiesto del proyecto y carpeta oculta), `.scidoc` (documentos), `.scitable` (tablas) y `.scifigure` (figuras, añadida el 21/11 con la ficha 0031).
   - Un proyecto puede tener varios artículos (formato preparado desde el principio, MVP con uno). Biblioteca y directorio de personas comunes; cada artículo elige quién firma. Tablas y figuras se copian entre artículos. Sin biblioteca global.
 - Pendiente del usuario: reservar scidesk.app, scidesk.dev y los nombres en GitHub, npm y crates.io.
-- **Para retomar (22/11/2026, al cerrar la sesión del documento compuesto):** último commit `61d0d89`; el documento compuesto en la ventana (ficha 0045) está sin commit hasta que el usuario lo pida.
+- **Para retomar (22/11/2026, al cerrar la sesión del documento compuesto):** último commit `6ee24fd` (documento compuesto en la ventana, ficha 0045).
   - **Decisión pendiente del usuario:** si se adelantan a la fase 1 las citas vivas al crear un artículo desde un Word con EndNote, Zotero o Mendeley. Hoy «Nuevo desde Word» trae las citas como texto y la biblioteca vacía. El prototipo 10 (ficha 0028) ya lee los campos de sus tres Word.
   - **Lo que falta de la fase 1, en el orden propuesto:**
     1. las láminas de D8 (inicio y tabla en su pestaña) y después la pantalla de inicio y el asistente de nuevo artículo (y el diseño definitivo de la pestaña de la tabla);
