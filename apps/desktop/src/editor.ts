@@ -218,8 +218,43 @@ const noKeys = { addKeyboardShortcuts: () => ({}) };
 // ---------------------------------------------------------------- find and replace (PLAN 5.2, record 0044)
 
 export interface FindMatch { from: number; to: number }
-interface FindState { query: string; caseSensitive: boolean; matches: FindMatch[]; current: number }
+/** Record 0066: "only in this section": the part of the document searched, and its title. */
+export interface FindScope { from: number; to: number; title: string }
+interface FindState { query: string; caseSensitive: boolean; matches: FindMatch[]; current: number; scope: FindScope | null }
 export const findKey = new PluginKey<FindState>("find");
+
+/**
+ * The section around a position (record 0066): from its heading to the next heading of the
+ * same level or higher; the abstract (or another part) when the position is inside one; the
+ * text before the first heading when there is none before.
+ */
+export function sectionRange(doc: PMNodeType, pos: number): FindScope {
+  const $pos = doc.resolve(Math.min(Math.max(pos, 0), doc.content.size));
+  // inside a part (abstract, table, figure): the part, or the abstract section of its language
+  for (let d = $pos.depth; d > 0; d--) {
+    const n = $pos.node(d);
+    if (n.type.name === "abstractPart" || n.type.name === "tablePart" || n.type.name === "figurePart") {
+      const start = $pos.before(d);
+      return { from: start, to: start + n.nodeSize, title: n.firstChild?.type.name === "abstractSection" || n.type.name === "abstractPart" ? "" : n.firstChild?.textContent ?? "" };
+    }
+  }
+  const index = $pos.index(0);
+  const kids: { node: PMNodeType; pos: number }[] = [];
+  doc.forEach((node, offset) => kids.push({ node, pos: offset }));
+  let start = 0;
+  let level = 0;
+  for (let i = Math.min(index, kids.length - 1); i >= 0; i--) {
+    if (kids[i].node.type.name === "heading") { start = i; level = kids[i].node.attrs.level as number; break; }
+  }
+  let end = kids.length;
+  for (let i = start + 1; i < kids.length; i++) {
+    const k = kids[i].node;
+    if (k.type.name === "heading" && (!level || (k.attrs.level as number) <= level)) { end = i; break; }
+  }
+  const from = kids[start]?.pos ?? 0;
+  const to = end < kids.length ? kids[end].pos : doc.content.size;
+  return { from, to, title: level ? kids[start].node.textContent : "" };
+}
 
 /** Every match in the text blocks; a citation or cross-reference is one character that never matches. */
 export function findMatches(doc: PMNodeType, query: string, caseSensitive: boolean): FindMatch[] {
@@ -243,12 +278,15 @@ const FindHighlight = Extension.create({
     new Plugin<FindState>({
       key: findKey,
       state: {
-        init: () => ({ query: "", caseSensitive: false, matches: [], current: -1 }),
+        init: () => ({ query: "", caseSensitive: false, matches: [], current: -1, scope: null }),
         apply(tr, value, _old, state) {
           const meta = tr.getMeta(findKey) as Partial<FindState> | undefined;
           if (!meta && !tr.docChanged) return value;
           const next = { ...value, ...meta };
-          const matches = meta?.query !== undefined || meta?.caseSensitive !== undefined || tr.docChanged ? findMatches(state.doc, next.query, next.caseSensitive) : value.matches;
+          // the section follows the edits (a replacement makes it longer or shorter)
+          if (next.scope && tr.docChanged && !meta?.scope) next.scope = { ...next.scope, from: tr.mapping.map(next.scope.from, -1), to: tr.mapping.map(next.scope.to, 1) };
+          const inScope = (m: FindMatch) => !next.scope || (m.from >= next.scope.from && m.to <= next.scope.to);
+          const matches = meta?.query !== undefined || meta?.caseSensitive !== undefined || meta?.scope !== undefined || tr.docChanged ? findMatches(state.doc, next.query, next.caseSensitive).filter(inScope) : value.matches;
           const current = matches.length ? Math.min(Math.max(meta?.current ?? next.current, 0), matches.length - 1) : -1;
           return { ...next, matches, current };
         },
@@ -265,14 +303,21 @@ const FindHighlight = Extension.create({
 });
 
 /** What the find bar shows. */
-export const findState = (editor: { state: EditorStateType }) => findKey.getState(editor.state) ?? { query: "", caseSensitive: false, matches: [], current: -1 };
+export const findState = (editor: { state: EditorStateType }): FindState => findKey.getState(editor.state) ?? { query: "", caseSensitive: false, matches: [], current: -1, scope: null };
 type EditorLike = { state: EditorStateType; view: { dispatch: (tr: TransactionType) => void } };
 export function setFind(editor: EditorLike, query: string, caseSensitive: boolean) {
   // the match at or after the cursor becomes the current one, as in Word
   const at = editor.state.selection.from;
-  const matches = findMatches(editor.state.doc, query, caseSensitive);
+  const scope = findState(editor).scope;
+  const matches = findMatches(editor.state.doc, query, caseSensitive).filter((m) => !scope || (m.from >= scope.from && m.to <= scope.to));
   const current = Math.max(0, matches.findIndex((m) => m.from >= at));
   editor.view.dispatch(editor.state.tr.setMeta(findKey, { query, caseSensitive, current }).setMeta("addToHistory", false));
+}
+/** Record 0066: searches only in the section of the cursor (or everywhere again, with false). */
+export function setFindScope(editor: EditorLike, inSection: boolean) {
+  const scope = inSection ? sectionRange(editor.state.doc, editor.state.selection.from) : null;
+  editor.view.dispatch(editor.state.tr.setMeta(findKey, { scope, current: 0 }).setMeta("addToHistory", false));
+  return scope;
 }
 /** Goes to the next (1) or previous (-1) match, or stays on the current one (0), and selects it. */
 export function findStep(editor: EditorLike, dir: -1 | 0 | 1, select = true) {
@@ -351,13 +396,13 @@ const Highlight = Mark.create({
 const FontFamily = Mark.create({
   name: "fontFamily",
   addAttributes: () => ({ family: { default: null, rendered: false } }),
-  parseHTML: () => [{ tag: "span[data-font-family]", getAttrs: (el) => { const f = (el as HTMLElement).dataset.fontFamily ?? ""; return /^[^;{}<>"\\]{1,64}$/.test(f) ? { family: f } : false; } }],
+  parseHTML: () => [{ tag: "span[data-font-family]", consuming: false, getAttrs: (el) => { const f = (el as HTMLElement).dataset.fontFamily ?? ""; return /^[^;{}<>"\\]{1,64}$/.test(f) ? { family: f } : false; } }],
   renderHTML: ({ mark }) => ["span", { "data-font-family": mark.attrs.family, class: "own-font", style: `font-family: "${mark.attrs.family}", var(--doc-font)` }, 0],
 });
 const FontSize = Mark.create({
   name: "fontSize",
   addAttributes: () => ({ size: { default: null, rendered: false } }),
-  parseHTML: () => [{ tag: "span[data-font-size]", getAttrs: (el) => { const n = Number((el as HTMLElement).dataset.fontSize); return n >= 1 && n <= 409 ? { size: Math.round(n * 2) / 2 } : false; } }],
+  parseHTML: () => [{ tag: "span[data-font-size]", consuming: false, getAttrs: (el) => { const n = Number((el as HTMLElement).dataset.fontSize); return n >= 1 && n <= 409 ? { size: Math.round(n * 2) / 2 } : false; } }],
   renderHTML: ({ mark }) => ["span", { "data-font-size": String(mark.attrs.size), class: "own-font", style: `font-size: calc(${Number(mark.attrs.size)}pt * var(--zoom))` }, 0],
 });
 

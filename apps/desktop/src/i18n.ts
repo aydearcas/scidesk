@@ -136,6 +136,7 @@ const es = {
     },
     spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias", ignore: "Ignorar «{{word}}» en este artículo", ignored: "«{{word}}» ya no se subraya en este artículo (article.json)", unignored: "«{{word}}» se vuelve a subrayar" },
     autocorrect: { toggle: "Autocorrección científica", hint: "Al escribir: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, espacio duro entre número y unidad, signo menos, comillas «» (“” en inglés). Ctrl+Z deshace cada cambio." },
+    keepSource: { pasted: "Pegado desde Word con la fuente del documento", action: "Mantener formato de origen", done: "Pegado con las fuentes y tamaños de Word (Ctrl+Z lo deshace)", stale: "El texto ha cambiado desde el pegado: vuelve a pegarlo para mantener su formato" },
     pdfPasted_one: "Texto de un PDF: líneas unidas en {{count}} párrafo (Ctrl+Mayús+V pega las líneas tal cual)",
     pdfPasted_other: "Texto de un PDF: líneas unidas en {{count}} párrafos (Ctrl+Mayús+V pega las líneas tal cual)",
     lang: {
@@ -317,7 +318,7 @@ const es = {
     },
     find: {
       label: "Buscar en el manuscrito", find: "Buscar…", findReplace: "Buscar y reemplazar…", placeholder: "Buscar en el manuscrito", replaceWith: "Reemplazar por",
-      count: "{{n}} de {{total}}", none: "Sin resultados", caseSensitive: "Distinguir mayúsculas y minúsculas", previous: "Anterior (Mayús+Intro)", next: "Siguiente (Intro)",
+      count: "{{n}} de {{total}}", none: "Sin resultados", caseSensitive: "Distinguir mayúsculas y minúsculas", onlySection: "Solo en esta sección", onlyIn: "Solo en «{{section}}» (otra vez para buscar en todo)", thisSection: "esta sección", previous: "Anterior (Mayús+Intro)", next: "Siguiente (Intro)",
       toggleReplace: "Reemplazar", replace: "Reemplazar", replaceAll: "Reemplazar todo",
       replaced_one: "1 reemplazo: Ctrl+Z lo deshace", replaced_other: "{{count}} reemplazos: Ctrl+Z los deshace todos de una vez",
     },
@@ -456,6 +457,7 @@ const en: typeof es = {
     },
     spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions", ignore: "Ignore “{{word}}” in this article", ignored: "“{{word}}” is no longer underlined in this article (article.json)", unignored: "“{{word}}” is underlined again" },
     autocorrect: { toggle: "Scientific autocorrection", hint: "While typing: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, non-breaking space between number and unit, minus sign, quotation marks “” («» in Spanish). Ctrl+Z undoes each change." },
+    keepSource: { pasted: "Pasted from Word with the document's font", action: "Keep source formatting", done: "Pasted with Word's fonts and sizes (Ctrl+Z undoes it)", stale: "The text has changed since the paste: paste it again to keep its formatting" },
     pdfPasted_one: "Text from a PDF: lines joined into {{count}} paragraph (Ctrl+Shift+V pastes the lines as they are)",
     pdfPasted_other: "Text from a PDF: lines joined into {{count}} paragraphs (Ctrl+Shift+V pastes the lines as they are)",
     lang: {
@@ -637,7 +639,7 @@ const en: typeof es = {
     },
     find: {
       label: "Find in the manuscript", find: "Find…", findReplace: "Find and replace…", placeholder: "Find in the manuscript", replaceWith: "Replace with",
-      count: "{{n}} of {{total}}", none: "No results", caseSensitive: "Match case", previous: "Previous (Shift+Enter)", next: "Next (Enter)",
+      count: "{{n}} of {{total}}", none: "No results", caseSensitive: "Match case", onlySection: "Only in this section", onlyIn: "Only in “{{section}}” (again to search everywhere)", thisSection: "this section", previous: "Previous (Shift+Enter)", next: "Next (Enter)",
       toggleReplace: "Replace", replace: "Replace", replaceAll: "Replace all",
       replaced_one: "1 replacement: Ctrl+Z undoes it", replaced_other: "{{count}} replacements: Ctrl+Z undoes them all at once",
     },

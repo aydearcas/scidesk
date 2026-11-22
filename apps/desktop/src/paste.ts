@@ -19,6 +19,51 @@ const SYMBOLS: Record<string, Record<string, string>> = {
 
 export const isOfficeHtml = (html: string) => /urn:schemas-microsoft-com:office|mso-|class="?Mso/i.test(html);
 
+// the first family of a CSS font-family ("Arial Narrow",sans-serif -> Arial Narrow) and a size in points
+const firstFamily = (v: string | undefined) => v?.split(",")[0].replace(/["']/g, "").trim() || undefined;
+const sizePt = (v: string | undefined) => { const m = /([\d.]+)\s*pt/i.exec(v ?? ""); const n = m ? Math.round(Number(m[1]) * 2) / 2 : NaN; return n >= 1 && n <= 409 ? String(n) : undefined; };
+const fontOf = (style: string) => ({ family: firstFamily(/(?:^|;)\s*font-family:\s*([^;]+)/i.exec(style)?.[1]), size: sizePt(/(?:^|;)\s*font-size:\s*([^;]+)/i.exec(style)?.[1]) });
+
+/**
+ * "Keep source formatting" (R23, record 0066): Word's fonts and sizes as the spans the
+ * editor reads into its fontFamily and fontSize marks (record 0047). A paragraph takes the
+ * font of its style in the clipboard's style sheet (p.MsoNormal…), and a fragment its own.
+ */
+export function keepSourceFonts(html: string): string {
+  if (!isOfficeHtml(html)) return html;
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  // the style sheet's rules: "p.msonormal", ".msobodytext", "h1" -> font
+  const rules = new Map<string, { family?: string; size?: string }>();
+  for (const css of [...doc.querySelectorAll("style")].map((s) => s.textContent ?? "")) {
+    for (const m of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+      const font = fontOf(m[2]);
+      if (!font.family && !font.size) continue;
+      for (const sel of m[1].split(",")) rules.set(sel.trim().toLowerCase(), font);
+    }
+  }
+  const mark = (el: HTMLElement, font: { family?: string; size?: string }) => {
+    if (font.family && /^[^;{}<>"\\]{1,64}$/.test(font.family)) el.dataset.fontFamily = font.family;
+    if (font.size) el.dataset.fontSize = font.size;
+  };
+  for (const block of doc.body.querySelectorAll<HTMLElement>("p, li, h1, h2, h3, h4, h5, h6, td, th")) {
+    const tag = block.tagName.toLowerCase();
+    const cls = (block.getAttribute("class") ?? "").toLowerCase();
+    const fromSheet = { ...rules.get(tag), ...(cls ? rules.get(`.${cls}`) : undefined), ...(cls ? rules.get(`${tag}.${cls}`) : undefined) };
+    const font = { ...fromSheet, ...Object.fromEntries(Object.entries(fontOf(block.getAttribute("style") ?? "")).filter(([, v]) => v)) };
+    if (!font.family && !font.size) continue;
+    // the paragraph's font on a span around its content: the editor keeps marks, not paragraph styles
+    const span = doc.createElement("span");
+    mark(span, font);
+    while (block.firstChild) span.appendChild(block.firstChild);
+    block.appendChild(span);
+  }
+  for (const el of doc.body.querySelectorAll<HTMLElement>("span[style], font[face], font[size]")) {
+    const font = fontOf(el.getAttribute("style") ?? "");
+    mark(el, { family: font.family ?? (el.getAttribute("face") ?? undefined), size: font.size });
+  }
+  return doc.documentElement.outerHTML;
+}
+
 function textNodes(el: Element): Text[] {
   const out: Text[] = [];
   const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT);

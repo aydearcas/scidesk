@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
-import { findState, findStep, replaceAll, replaceCurrent, setFind } from "./editor.ts";
+import { findState, findStep, replaceAll, replaceCurrent, setFind, setFindScope } from "./editor.ts";
 import { Icon } from "./icons.tsx";
 
 export function FindBar({ editor, replace, focus, onClose, onReplaced }: {
@@ -26,6 +26,8 @@ export function FindBar({ editor, replace, focus, onClose, onReplaced }: {
     return sel.length <= 80 && !sel.includes("\n") ? sel : "";
   });
   const [caseSensitive, setCaseSensitive] = useState(false);
+  // record 0066: only in the section of the cursor; its title, for the button's hint
+  const [section, setSection] = useState<string | null>(null);
   const [withReplace, setWithReplace] = useState(replace);
   const [replacement, setReplacement] = useState("");
   const f = useEditorState({ editor, selector: ({ editor: e }) => { const s = findState(e); return { count: s.matches.length, current: s.current }; } });
@@ -34,7 +36,11 @@ export function FindBar({ editor, replace, focus, onClose, onReplaced }: {
   useEffect(() => { input.current?.focus(); input.current?.select(); }, [focus]);
   useEffect(() => { setFind(editor, query, caseSensitive); }, [editor, query, caseSensitive]);
   // closing clears the highlights
-  useEffect(() => () => { if (!editor.isDestroyed) setFind(editor, "", false); }, [editor]);
+  useEffect(() => () => { if (!editor.isDestroyed) { setFindScope(editor, false); setFind(editor, "", false); } }, [editor]);
+  const toggleSection = () => {
+    const scope = setFindScope(editor, section === null);
+    setSection(scope ? scope.title || t("ui.find.thisSection") : null);
+  };
 
   const step = (dir: 1 | -1) => findStep(editor, dir);
   const keys = (e: React.KeyboardEvent) => {
@@ -52,6 +58,7 @@ export function FindBar({ editor, replace, focus, onClose, onReplaced }: {
         <input ref={input} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("ui.find.placeholder")} aria-label={t("ui.find.placeholder")} />
         <span className={`find-count${query && !f.count ? " none" : ""}`} aria-live="polite">{count}</span>
         <button className={`icon-button text${caseSensitive ? " on" : ""}`} aria-pressed={caseSensitive} title={t("ui.find.caseSensitive")} aria-label={t("ui.find.caseSensitive")} onClick={() => setCaseSensitive((v) => !v)}>Aa</button>
+        <button className={`icon-button text${section !== null ? " on" : ""}`} aria-pressed={section !== null} title={section !== null ? t("ui.find.onlyIn", { section }) : t("ui.find.onlySection")} aria-label={t("ui.find.onlySection")} onClick={toggleSection}>§</button>
         <button className="icon-button" title={t("ui.find.previous")} aria-label={t("ui.find.previous")} disabled={!f.count} onClick={() => step(-1)}><Icon name="chevronDown" size={14} className="flip" /></button>
         <button className="icon-button" title={t("ui.find.next")} aria-label={t("ui.find.next")} disabled={!f.count} onClick={() => step(1)}><Icon name="chevronDown" size={14} /></button>
         <button className="icon-button" title={t("ui.close")} aria-label={t("ui.close")} onClick={onClose}><Icon name="close" size={14} /></button>

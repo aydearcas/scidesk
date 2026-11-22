@@ -12,7 +12,7 @@ import {
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
-import { Fragment, Slice } from "@tiptap/pm/model";
+import { Fragment, Slice, type Node as PMNodeType } from "@tiptap/pm/model";
 import { autocorrectOptions } from "./autocorrect.ts";
 import { unwrapPdfText } from "./pdf-paste.ts";
 import { closeHistory } from "@tiptap/pm/history";
@@ -27,7 +27,7 @@ import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
 import { SelectionBubble, XrefPicker } from "./EditorMenus.tsx";
 import { Icon, type IconName } from "./icons.tsx";
-import { cleanOfficeHtml, isOfficeHtml, readPaste } from "./paste.ts";
+import { cleanOfficeHtml, isOfficeHtml, keepSourceFonts, readPaste } from "./paste.ts";
 import { LibraryFilters, LibraryPanel, type LibraryFilter } from "./LibraryPanel.tsx";
 import { ContextMenu, MenuBar, MenuButton, type MenuDef, type MenuEntry } from "./Menus.tsx";
 import { Navigator, type NavTarget } from "./Navigator.tsx";
@@ -163,11 +163,22 @@ export function App() {
   const pasteTables = useRef<(html: string) => boolean>(() => false);
   // record 0065: text from a PDF put back into paragraphs; the message says so
   const pdfPasted = useRef<(paragraphs: number) => void>(() => {});
+  // record 0066: the last paste from Word (to redo it keeping its fonts), and the redo under way
+  const wordPaste = useRef<{ html: string; before: PMNodeType; from: number; to: number; after: PMNodeType | null } | null>(null);
+  const keepSourceNext = useRef(false);
+  const wordPasted = useRef<() => void>(() => {});
 
   const editor = useEditor({
     editorProps: {
       // Word's HTML, cleaned (prototype 1); with tables, each becomes a .scitable
-      transformPastedHTML: cleanOfficeHtml,
+      transformPastedHTML: (html, view) => {
+        // record 0066: a paste from Word without tables can be redone keeping its fonts
+        if (isOfficeHtml(html) && !/<table\b/i.test(html) && !keepSourceNext.current) {
+          wordPaste.current = { html, before: view.state.doc, from: view.state.selection.from, to: view.state.selection.to, after: null };
+          setTimeout(() => wordPasted.current(), 0);
+        }
+        return cleanOfficeHtml(keepSourceNext.current ? keepSourceFonts(html) : html);
+      },
       // record 0065: plain text copied from a PDF, in paragraphs again (Ctrl+Shift+V: the lines as they are)
       clipboardTextParser: (text, _context, plain, view) => {
         const paragraphs = plain ? null : unwrapPdfText(text);
@@ -825,6 +836,25 @@ export function App() {
     await recompute();
   };
   pdfPasted.current = (n: number) => setMessage(t("ui.pdfPasted", { count: n }));
+  // record 0066: "Keep source formatting", offered after a paste from Word in the free font mode
+  wordPasted.current = () => {
+    const w = wordPaste.current;
+    if (!w || !editor || settings.fontMode !== "free") return;
+    w.after = editor.state.doc;
+    setMessage(t("ui.keepSource.pasted"), null, { label: t("ui.keepSource.action"), run: keepSourceFormatting });
+  };
+  const keepSourceFormatting = () => {
+    const w = wordPaste.current;
+    if (!editor || !w || editor.state.doc !== w.after) { setMessage(t("ui.keepSource.stale")); return; }
+    // back to before the paste (undo, or the document as it was if the paste joined other typing)
+    editor.commands.undo();
+    if (!editor.state.doc.eq(w.before)) editor.view.dispatch(editor.state.tr.replaceWith(0, editor.state.doc.content.size, w.before.content));
+    editor.commands.setTextSelection({ from: w.from, to: w.to });
+    keepSourceNext.current = true;
+    try { editor.view.pasteHTML(w.html); } finally { keepSourceNext.current = false; }
+    wordPaste.current = null;
+    setMessage(t("ui.keepSource.done"));
+  };
   pasteTables.current = (html: string) => {
     if (!project || !article || !editor) return false;
     const images = (html.match(/<img\b/gi) ?? []).length;
