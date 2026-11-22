@@ -8,10 +8,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
+  exportPdf, manuscriptTypst, omitsAuthor, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import { Fragment, Slice, type Node as PMNodeType } from "@tiptap/pm/model";
 import { autocorrectOptions } from "./autocorrect.ts";
 import { unwrapPdfText } from "./pdf-paste.ts";
@@ -107,7 +108,9 @@ export function App() {
   const [uses, setUses] = useState<Map<string, number>>(new Map());
   const [useSites, setUseSites] = useState<Map<string, ReferenceUse[]>>(new Map());
   // the quick citation dialog: the citation being edited (its position), or a new one
-  const [citing, setCiting] = useState<{ pos: number | null; items: CiteItem[] } | null>(null);
+  // the citation being written: in the manuscript or in a table's tab (record 0067), and where
+  const [citing, setCiting] = useState<{ view: EditorView; pos: number | null; items: CiteItem[] } | null>(null);
+  const tabViews = useRef(new Map<string, EditorView>());
   const [xrefOpen, setXrefOpen] = useState(false);
   // find and replace in the manuscript; `focus` changes each time it is asked for again
   const [finding, setFinding] = useState<{ replace: boolean; focus: number } | null>(null);
@@ -138,7 +141,7 @@ export function App() {
   const [authorsTab, setAuthorsTab] = useState<AuthorsTab>("authors");
   const [authorsKey, setAuthorsKey] = useState(0);
   const [authorsDirty, setAuthorsDirty] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; spell?: { from: number; to: number; word: string; dict: string; suggestions: string[]; foreign: { from: number; to: number; text: string; lang: string } | null } } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; tab?: EditorView; spell?: { from: number; to: number; word: string; dict: string; suggestions: string[]; foreign: { from: number; to: number; text: string; lang: string } | null } } | null>(null);
   const [showSections, setShowSections] = useState(false);
   // the start screen (record 0048): where the open project is, the recent projects, the wizard
   const place = useRef<string | null>(null);
@@ -728,22 +731,41 @@ export function App() {
   // quick citation: on a selected citation it edits that one, otherwise it inserts a new one
   const openQuickCite = useCallback(() => {
     if (!editor || !project) return;
-    const sel = editor.state.selection;
-    if (sel instanceof NodeSelection && sel.node.type.name === "citation") setCiting({ pos: sel.from, items: sel.node.attrs.items as CiteItem[] });
-    else setCiting({ pos: null, items: [] });
-  }, [editor, project]);
+    // record 0067: in a table's tab, into the tab's view (which passes it on to the manuscript)
+    const view = (isTableTab(tab) && tabViews.current.get(tab.slice(6))) || editor.view;
+    const sel = view.state.selection;
+    if (sel instanceof NodeSelection && sel.node.type.name === "citation") setCiting({ view, pos: sel.from, items: sel.node.attrs.items as CiteItem[] });
+    else setCiting({ view, pos: null, items: [] });
+  }, [editor, project, tab]);
   const openXref = useCallback(() => { if (project) setXrefOpen(true); }, [project]);
   const openFind = (replace: boolean) => { openTab(docTab); setFinding({ replace, focus: Date.now() }); };
   useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; });
   useEffect(() => { hooks.find = (replace) => openFind(replace); });
   const finishCitation = (items: CiteItem[]) => {
     if (!editor || !citing) return;
-    const pos = citing.pos;
+    const { view, pos } = citing;
     setCiting(null);
-    if (pos === null) editor.chain().focus().insertContent({ type: "citation", attrs: { id: newId("c"), items } }).run();
-    else editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { ...tr.doc.nodeAt(pos)!.attrs, items }); return true; }).run();
+    if (view.isDestroyed) return;
+    const { state } = view;
+    const tr = state.tr;
+    if (pos === null) {
+      // with text selected, the citation goes after it (record 0067): it backs that text, never replaces it
+      const node = state.schema.nodes.citation.create({ id: newId("c"), items });
+      if (state.selection.empty) tr.replaceSelectionWith(node);
+      else { const at = state.selection.to; tr.insert(at, node).setSelection(TextSelection.near(tr.doc.resolve(at + node.nodeSize))); }
+    } else tr.setNodeMarkup(pos, undefined, { ...state.doc.nodeAt(pos)!.attrs, items });
+    view.dispatch(tr.scrollIntoView());
+    view.focus();
   };
-  const closeQuickCite = () => { setCiting(null); editor?.commands.focus(); };
+  const closeQuickCite = () => { const v = citing?.view; setCiting(null); if (v && !v.isDestroyed) v.focus(); else editor?.commands.focus(); };
+  /** Record 0067: "omit author" on every reference of a citation, or on none. */
+  const setOmitAuthor = (view: EditorView, pos: number, on: boolean) => {
+    const node = view.state.doc.nodeAt(pos);
+    if (!node || node.type.name !== "citation") return;
+    const items = (node.attrs.items as CiteItem[]).map(({ suppressAuthor: _s, ...i }) => (on ? { ...i, suppressAuthor: true } : i));
+    view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...node.attrs, items }));
+    view.focus();
+  };
   // a cross-reference: "tabla " and the number, unless the word is already typed before it
   const insertXref = (p: OutlinePart, kind: "table" | "figure") => {
     setXrefOpen(false);
@@ -1287,6 +1309,16 @@ export function App() {
       other ? foreignStretch(editor.state, wrong.from, other).catch(() => null) : Promise.resolve(null),
     ]).then(([s, f]) => setContextMenu({ x, y, spell: { ...wrong, suggestions: s, foreign: f && other ? { ...f, lang: other } : null } }));
   };
+  /** Record 0067: the right-click menu in a table's tab, on what is under the pointer. */
+  const onTabContextMenu = (e: React.MouseEvent, view: EditorView) => {
+    if (!project) return;
+    e.preventDefault();
+    const at = view.posAtCoords({ left: e.clientX, top: e.clientY });
+    const node = at && at.inside >= 0 ? view.state.doc.nodeAt(at.inside) : null;
+    if (node?.isAtom && at) view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, at.inside)));
+    else if (at && view.state.selection.empty) view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(at.pos))));
+    setContextMenu({ x: e.clientX, y: e.clientY, tab: view });
+  };
   /** Record 0057: a word into resources/dictionary.txt, which every language of the project accepts. */
   const addToDictionary = run(async (word: string) => {
     if (!project) return;
@@ -1309,22 +1341,28 @@ export function App() {
   });
   const contextItems = (): MenuEntry[] => {
     if (!editor) return [];
-    const sel = editor.state.selection;
+    // in a table's tab (record 0067), the same commands act on the tab's view
+    const inTab = contextMenu?.tab && !contextMenu.tab.isDestroyed ? contextMenu.tab : null;
+    const view = inTab ?? editor.view;
+    const sel = view.state.selection;
     const onCitation = sel instanceof NodeSelection && sel.node.type.name === "citation";
-    const exec = (cmd: "cut" | "copy") => { editor.commands.focus(); document.execCommand(cmd); };
-    const part = partAround(sel.$from);
-    const inTable = isInTable(editor.state);
-    const cmd = (key: string, c: TableCommand): MenuEntry => ({ label: t(`ui.${key}`), onSelect: () => { c(editor.state, editor.view.dispatch); editor.commands.focus(); }, disabled: !c(editor.state) });
+    const exec = (cmd: "cut" | "copy") => { view.focus(); document.execCommand(cmd); };
+    const part = inTab ? null : partAround(sel.$from);
+    const inTable = isInTable(view.state);
+    const cmd = (key: string, c: TableCommand): MenuEntry => ({ label: t(`ui.${key}`), onSelect: () => { c(view.state, view.dispatch); view.focus(); }, disabled: !c(view.state) });
     const tableItems: MenuEntry[] = inTable ? [
       cmd("rowAbove", addRowBefore), cmd("rowBelow", addRowAfter), cmd("colLeft", addColumnBefore), cmd("colRight", addColumnAfter),
       cmd("deleteRow", deleteRow), cmd("deleteCol", deleteColumn), cmd("mergeCells", mergeCells), cmd("splitCell", splitCell), cmd("headerRow", toggleHeaderRow),
       "-",
     ] : [];
     // once the menu has closed and given the focus back: a cursor moved before that is lost
-    const afterMenu = (f: () => void) => () => setTimeout(() => { editor.view.focus(); f(); }, 0);
+    const afterMenu = (f: () => void) => () => setTimeout(() => { view.focus(); f(); }, 0);
+    const noteItems: MenuEntry[] = part || inTab ? [
+      { label: t("ui.generalNote"), onSelect: afterMenu(() => addNote(view.state, view.dispatch, "general")) },
+      ...(inTable ? [{ label: t("ui.specificNote"), title: t("ui.specificNoteHint"), onSelect: afterMenu(() => addNote(view.state, view.dispatch, "specific")) }] : []),
+    ] : [];
     const partItems: MenuEntry[] = part ? [
-      { label: t("ui.generalNote"), onSelect: afterMenu(() => addNote(editor.state, editor.view.dispatch, "general")) },
-      ...(inTable ? [{ label: t("ui.specificNote"), title: t("ui.specificNoteHint"), onSelect: afterMenu(() => addNote(editor.state, editor.view.dispatch, "specific")) }] : []),
+      ...noteItems,
       ...(part.node.type.name === "tablePart" ? [{ label: t("ui.openInTab"), onSelect: () => openTableTab(String(part.node.attrs.id)) }] : []),
       { label: t("ui.removeFromText"), onSelect: () => removePart(String(part.node.attrs.id)) },
       "-",
@@ -1339,21 +1377,27 @@ export function App() {
       ...(spell.foreign ? [{ label: t(`ui.lang.markAs.${spell.foreign.lang}`, { text: spell.foreign.text.length > 40 ? `${spell.foreign.text.slice(0, 38)}…` : spell.foreign.text }), onSelect: () => { const f = spell.foreign!; editor.chain().focus().setTextSelection({ from: f.from, to: f.to }).run(); setLanguage(editor, f.lang); } }] : []),
       "-",
     ] : [];
+    // record 0067: "omit author", with the styles that print it (or to take it off a citation that has it)
+    const citeItems = onCitation ? (sel.node.attrs.items as CiteItem[]) : [];
+    const omitted = citeItems.length > 0 && citeItems.every((i) => i.suppressAuthor);
+    const omitItem: MenuEntry[] = onCitation && (omitsAuthor(rendering?.format ?? null) || citeItems.some((i) => i.suppressAuthor))
+      ? [{ label: t("omitAuthor"), checked: omitted, title: t("omitAuthorHint"), onSelect: () => setOmitAuthor(view, sel.from, !omitted) }] : [];
     return [
-      ...spellItems,
+      ...(inTab ? [] : spellItems),
       ...tableItems,
-      ...partItems,
+      ...(inTab ? (noteItems.length ? [...noteItems, "-" as const] : []) : partItems),
       ...(onCitation ? [
         { label: t("ui.editCitation"), shortcut: keys("cite"), onSelect: openQuickCite },
-        { label: t("ui.removeCitation"), onSelect: () => editor.chain().focus().deleteSelection().run() },
+        ...omitItem,
+        { label: t("ui.removeCitation"), onSelect: () => { view.dispatch(view.state.tr.deleteSelection()); view.focus(); } },
         "-" as const,
       ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }]),
-      { label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref },
-      { label: t("ui.pending"), onSelect: () => editor.chain().focus().insertContent(t("ui.pendingMarker")).run() },
+      ...(inTab ? [] : [{ label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref }]),
+      { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } },
       "-",
       { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
       { label: t("ui.copy"), shortcut: shortcutLabel("Mod-c", i18n.language), onSelect: () => exec("copy"), disabled: sel.empty },
-      { label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor.chain().focus().selectAll().run() },
+      ...(inTab ? [] : [{ label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor.chain().focus().selectAll().run() }]),
     ];
   };
 
@@ -1504,6 +1548,7 @@ export function App() {
           {project && editor && tabs.filter(isTableTab).map((k) => (
             <div key={k} className="tab-body table-tab" hidden={tab !== k}>
               <TableTabView editor={editor} id={k.slice(6)} title={tabLabel(k)} onGone={() => tableGone(k)} onCells={setCells}
+                onView={(v) => { if (v) tabViews.current.set(k.slice(6), v); else tabViews.current.delete(k.slice(6)); }} onContextMenu={onTabContextMenu}
                 notice={(() => { const n = pasteNotices.get(k.slice(6)); return n ? { ...n, number: outline?.tables.find((x) => x.id === k.slice(6))?.number ?? null } : null; })()}
                 onUndoPaste={() => { const n = pasteNotices.get(k.slice(6)); if (n) undoPaste(n.tables); }}
                 onDismissNotice={() => setPasteNotices((m) => { const next = new Map(m); next.delete(k.slice(6)); return next; })} />
@@ -1617,7 +1662,7 @@ export function App() {
             editor.commands.focus();
           }} />
       )}
-      {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
+      {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} omitAuthor={omitsAuthor(rendering?.format ?? null)} onDone={finishCitation} onClose={closeQuickCite} />}
       {xrefOpen && <XrefPicker targets={targets} onPick={insertXref} onClose={() => { setXrefOpen(false); editor?.commands.focus(); }} />}
     </div>
   );

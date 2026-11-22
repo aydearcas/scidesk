@@ -10,7 +10,7 @@ import {
   searchLibrary, setCitationStyle, summarize, updateReference,
 } from "../src/library.ts";
 import { loadProject } from "../src/project.ts";
-import { renderCitations } from "../src/citations.ts";
+import { citationFormat, omitsAuthor, renderCitations } from "../src/citations.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { nodeResources } from "../src/node-fs.ts";
 import { BUNDLED_STYLES, findStyle } from "../src/resources.ts";
@@ -118,12 +118,32 @@ describe("bundled styles", () => {
       for (const lang of ["es", "en"]) {
         const r = await renderCitations(p.library, [doc], s.id, lang, res);
         expect(r.bibliography, s.name).toHaveLength(2);
+        expect(r.format, s.name).toBe(s.format);
         const plain = [...r.citations.values()].map((c) => c.plain);
         if (s.format === "author-date") expect(plain[0], s.name).toMatch(/Alonso/);
         else expect(plain[0], s.name).toMatch(/1/);
       }
     }
   }, 20000); // 18 styles through citeproc-js: close to 5 s alone, more with the other files in parallel
+
+  it("omits the author of a citation in an author-date style (record 0067)", async () => {
+    const res = await nodeResources();
+    const p = await createDemoProject(new MemoryFs());
+    const [r1] = p.library.references;
+    const cite = (suppressAuthor?: boolean): PMNode => ({ type: "citation", attrs: { id: suppressAuthor ? "c-0000000002" : "c-0000000001", items: [{ ref: r1.id, ...(suppressAuthor ? { suppressAuthor } : {}) }] } });
+    const doc: PMNode = { type: "doc", content: [{ type: "paragraph", attrs: { id: "b-0000000001" }, content: [cite(), { type: "text", text: " " }, cite(true)] }] };
+    const apa = await renderCitations(p.library, [doc], findStyle("apa")!.id, "es", res);
+    expect(omitsAuthor(apa.format)).toBe(true);
+    expect(apa.citations.get("c-0000000001")!.plain).toMatch(/Alonso.*2025/);
+    expect(apa.citations.get("c-0000000002")!.plain).not.toMatch(/Alonso/);
+    expect(apa.citations.get("c-0000000002")!.plain).toMatch(/2025/);
+    // in a numeric style there is no author to omit: the same number either way
+    const vancouver = await renderCitations(p.library, [doc], findStyle("elsevier-vancouver")!.id, "es", res);
+    expect(omitsAuthor(vancouver.format)).toBe(false);
+    expect(vancouver.citations.get("c-0000000002")!.plain).toBe(vancouver.citations.get("c-0000000001")!.plain);
+    expect(citationFormat("<style><info><category citation-format=\"note\"/></info></style>")).toBe("note");
+    expect(citationFormat("<style/>")).toBeNull();
+  });
 
   it("changing the style changes the export at once", async () => {
     const fs = new MemoryFs();

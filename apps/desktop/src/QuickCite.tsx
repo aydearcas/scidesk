@@ -1,7 +1,8 @@
 // Quick citation (PLAN 5.6, record 0037): a search box over the library (author, year,
 // title…); Enter adds the highlighted reference to the citation, Enter with an empty search
 // inserts it. Several references per citation, each with prefix, page and suffix. Opened
-// with Ctrl+Shift+C or the toolbar; on a selected citation it edits that citation.
+// with Ctrl+Shift+C, the toolbar or the context menu; on a selected citation it edits that
+// citation. "Omit author" (record 0067) shows with the styles that print the author.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { searchLibrary, summarize } from "@scidesk/core";
@@ -9,8 +10,10 @@ import type { LibraryFile } from "@scidesk/formats";
 
 export interface CiteItem { ref: string; locator?: string; label?: string; prefix?: string; suffix?: string; suppressAuthor?: boolean }
 
-export function QuickCite({ library, initial, uses, onDone, onClose }: {
+export function QuickCite({ library, initial, uses, omitAuthor, onDone, onClose }: {
   library: LibraryFile;
+  /** The style prints the author (author-date): "omit author" changes the citation. */
+  omitAuthor: boolean;
   initial: CiteItem[];
   uses: Map<string, number>;
   onDone: (items: CiteItem[]) => void;
@@ -31,7 +34,7 @@ export function QuickCite({ library, initial, uses, onDone, onClose }: {
   const setItem = (i: number, patch: Partial<CiteItem>) => setChosen((c) => c.map((x, j) => {
     if (j !== i) return x;
     const next: CiteItem = { ...x, ...patch };
-    for (const k of ["locator", "prefix", "suffix"] as const) if (!next[k]) delete next[k];
+    for (const k of ["locator", "prefix", "suffix", "suppressAuthor"] as const) if (!next[k]) delete next[k];
     if (next.locator) next.label = x.label ?? "page"; else delete next.label;
     return next;
   }));
@@ -57,7 +60,7 @@ export function QuickCite({ library, initial, uses, onDone, onClose }: {
           {chosen.map((c, i) => (
             <span key={c.ref} className="chip">
               <button className="chip-label" onClick={() => setOpen(open === i ? null : i)} title={t("citeDetails")}>
-                {c.prefix ? `${c.prefix} ` : ""}{short(c.ref)}{c.locator ? `, p. ${c.locator}` : ""}{c.suffix ? ` ${c.suffix}` : ""}
+                {c.prefix ? `${c.prefix} ` : ""}{c.suppressAuthor ? <s>{short(c.ref)}</s> : short(c.ref)}{c.locator ? `, p. ${c.locator}` : ""}{c.suffix ? ` ${c.suffix}` : ""}
               </button>
               <button className="chip-x" onClick={() => setChosen((x) => x.filter((_, j) => j !== i))} aria-label={t("removeFromCitation")}>×</button>
             </span>
@@ -74,6 +77,12 @@ export function QuickCite({ library, initial, uses, onDone, onClose }: {
             <label>{t("prefix")}<input value={chosen[open].prefix ?? ""} onChange={(e) => setItem(open, { prefix: e.target.value })} /></label>
             <label>{t("locator")}<input value={chosen[open].locator ?? ""} onChange={(e) => setItem(open, { locator: e.target.value })} /></label>
             <label>{t("suffix")}<input value={chosen[open].suffix ?? ""} onChange={(e) => setItem(open, { suffix: e.target.value })} /></label>
+            {(omitAuthor || chosen[open].suppressAuthor) && (
+              <label className="check" title={omitAuthor ? t("omitAuthorHint") : t("omitAuthorNumeric")}>
+                <input type="checkbox" checked={!!chosen[open].suppressAuthor} onChange={(e) => setItem(open, { suppressAuthor: e.target.checked })} />
+                {t("omitAuthor")}
+              </label>
+            )}
           </div>
         )}
         {!library.references.length ? <p className="muted">{t("emptyLibrary")}</p> : (

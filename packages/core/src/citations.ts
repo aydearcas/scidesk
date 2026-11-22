@@ -45,7 +45,21 @@ export interface Rendering {
   bibliography: { label: string; runs: Run[]; ref: string }[];
   /** Reference ids in order of first citation. */
   order: string[];
+  /**
+   * The style's citation-format (record 0067): "author-date" and "author" print the author,
+   * so "omit author" (suppress-author) only changes something with them.
+   */
+  format: CitationFormat | null;
 }
+
+export type CitationFormat = "author-date" | "author" | "numeric" | "label" | "note";
+/** The citation-format of a CSL style, from its <category>, or null when it does not say. */
+export function citationFormat(styleXml: string): CitationFormat | null {
+  const m = /<category [^>]*citation-format="([a-z-]+)"/.exec(styleXml);
+  return m && ["author-date", "author", "numeric", "label", "note"].includes(m[1]) ? (m[1] as CitationFormat) : null;
+}
+/** Whether "omit author" shows in a citation with this style. */
+export const omitsAuthor = (format: CitationFormat | null) => format === "author-date" || format === "author";
 
 const LOCALES: Record<string, string> = { es: "es-ES", en: "en-US" };
 
@@ -86,6 +100,7 @@ export async function renderCitations(library: LibraryFile, trees: PMNode[], sty
   for (const c of citations) for (const item of c.attrs!.items as { ref: string }[]) if (!order.includes(item.ref)) order.push(item.ref);
   const locale = LOCALES[termsLang] ?? termsLang;
   const localeXml = await res.locale(locale);
+  const styleXml = await res.style(styleId);
   const engine = new CSL.Engine({
     retrieveLocale: () => localeXml,
     retrieveItem: (id: string) => {
@@ -93,7 +108,7 @@ export async function renderCitations(library: LibraryFile, trees: PMNode[], sty
       if (!r) throw new Error(`reference ${id} is not in the library`);
       return { id, ...r.csl };
     },
-  }, await res.style(styleId), locale, true);
+  }, styleXml, locale, true);
   engine.updateItems(order);
   const rendered = new Map<string, RenderedCitation>();
   for (const c of citations) {
@@ -113,5 +128,5 @@ export async function renderCitations(library: LibraryFile, trees: PMNode[], sty
       bibliography.push({ label, runs: htmlRuns(html), ref: meta.entry_ids[i][0] });
     });
   }
-  return { citations: rendered, bibliography, order };
+  return { citations: rendered, bibliography, order, format: citationFormat(styleXml) };
 }

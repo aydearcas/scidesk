@@ -87,10 +87,11 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
         {selected.items.map((it) => (
           <li key={it.ref}>
             <button className="link-block" onClick={() => onOpenReference(it.ref)}>{refLine(it.ref)}</button>
-            {(it.prefix || it.locator || it.suffix) && <dl className="props">
+            {(it.prefix || it.locator || it.suffix || it.suppressAuthor) && <dl className="props">
               {it.prefix && <><dt>{t("prefix")}</dt><dd>{it.prefix}</dd></>}
               {it.locator && <><dt>{t("locator")}</dt><dd>{it.locator}</dd></>}
               {it.suffix && <><dt>{t("suffix")}</dt><dd>{it.suffix}</dd></>}
+              {it.suppressAuthor && <><dt>{t("omitAuthor")}</dt><dd>✓</dd></>}
             </dl>}
           </li>
         ))}

@@ -7,6 +7,7 @@ import { useEffect, useReducer, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Editor } from "@tiptap/core";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
+import type { EditorView } from "@tiptap/pm/view";
 import type { Node as PMNodeType } from "@tiptap/pm/model";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, CellSelection, deleteColumn, deleteRow, mergeCells, splitCell, TableMap, toggleHeaderRow } from "@tiptap/pm/tables";
 import { addNote, PartTab, setAlign } from "./parts.ts";
@@ -114,8 +115,11 @@ export function TableTools({ run, state }: { run: (cmd: TableCommand) => void; s
 /** What a paste from Word kept and dropped (sheet 8), shown in the tab until it is closed. */
 export interface PasteNotice { tables: string[]; number: number | null; path: string; kept: string; dropped: string }
 
-export function TableTabView({ editor, id, title, onGone, onCells, notice, onUndoPaste, onDismissNotice }: {
+export function TableTabView({ editor, id, title, onGone, onCells, notice, onUndoPaste, onDismissNotice, onView, onContextMenu }: {
   editor: Editor; id: string; title: string; onGone: () => void;
+  /** Record 0067: the tab's view while it exists (the quick citation goes into it), and its right-click menu. */
+  onView: (view: EditorView | null) => void;
+  onContextMenu: (e: React.MouseEvent, view: EditorView) => void;
   onCells: (info: CellInfo | null) => void;
   notice: PasteNotice | null;
   onUndoPaste: () => void;
@@ -129,16 +133,19 @@ export function TableTabView({ editor, id, title, onGone, onCells, notice, onUnd
   const cells = useRef(onCells);
   cells.current = onCells;
   const forceTools = useRef<() => void>(() => {});
+  const viewSeen = useRef(onView);
+  viewSeen.current = onView;
   useEffect(() => {
     if (!host.current) return;
     try { tab.current = new PartTab(editor, id, host.current, () => gone.current()); } catch { gone.current(); return; }
     const view = tab.current.view;
     view.dom.setAttribute("aria-label", title);
+    viewSeen.current(view);
     const onSel = () => { forceTools.current(); cells.current(cellInfo(view.state)); };
     view.dom.addEventListener("keyup", onSel);
     view.dom.addEventListener("mouseup", onSel);
     view.dom.addEventListener("focus", onSel);
-    return () => { tab.current?.destroy(); tab.current = null; };
+    return () => { viewSeen.current(null); tab.current?.destroy(); tab.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one view per table; the title is set below
   }, [editor, id]);
   useEffect(() => { tab.current?.view.dom.setAttribute("aria-label", title); }, [title]);
@@ -160,7 +167,7 @@ export function TableTabView({ editor, id, title, onGone, onCells, notice, onUnd
         </div>
       )}
       <div className="desk">
-        <div className="paper wide"><div className="page" ref={host} /></div>
+        <div className="paper wide" onContextMenu={(e) => { if (tab.current) onContextMenu(e, tab.current.view); }}><div className="page" ref={host} /></div>
       </div>
       <p className="muted small table-tab-hint">{t("ui.tableTabHint")}</p>
     </div>
