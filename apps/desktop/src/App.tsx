@@ -74,6 +74,8 @@ const clampZoom = (z: number) => Math.round(Math.min(300, Math.max(MIN_ZOOM, z))
 const PAGED = typeof CSS !== "undefined" && CSS.supports("column-wrap", "wrap") && CSS.supports("column-height", "1px");
 /** Grey space between two sheets, in CSS px (not zoomed, as in Word). */
 const SHEET_GAP = 16;
+/** The sheet's side margins, 2.5 cm (record 0046), in CSS pixels at 100 %. */
+const MARGIN_PX = (25 / 25.4) * 96;
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 type CenterTab = `doc:${string}` | `table:${string}` | "library" | "authors" | "settings";
@@ -1186,11 +1188,79 @@ export function App() {
     if (pagesRef.current) ro.observe(pagesRef.current);
     return () => { editor.off("update", count); ro.disconnect(); };
   });
+  /** The left and right edges of the text on the sheet under the pointer (record 0046: 2.5 cm margins). */
+  const textColumn = (clientX: number, clientY: number): { left: number; right: number } | null => {
+    if (!editor) return null;
+    if (PAGED) {
+      const at = sheetAt(clientX, clientY);
+      const box = pagesRef.current?.getBoundingClientRect();
+      if (!at || !box) return null;
+      const sheet = box.left + Math.min(Math.max(at.col, 0), perRow - 1) * ((A4_PX * zoom) / 100 + SHEET_GAP);
+      return { left: sheet + (MARGIN_PX * zoom) / 100, right: sheet + ((A4_PX - MARGIN_PX) * zoom) / 100 };
+    }
+    const pm = editor.view.dom.getBoundingClientRect();
+    return { left: pm.left, right: pm.right };
+  };
+  /** The text position under the pointer, as if it were just inside the text when it is in a side margin. */
+  const pointerPos = (clientX: number, clientY: number): number | null => {
+    const col = textColumn(clientX, clientY);
+    if (!editor || !col) return null;
+    const x = Math.min(Math.max(clientX, col.left + 1), col.right - 1);
+    return editor.view.posAtCoords({ left: x, top: clientY })?.pos ?? null;
+  };
+  /**
+   * A press in a side margin, level with a line of text: the start of that line (left margin)
+   * or its end (right margin), as if the press had been just inside the text; with Shift, the
+   * selection is extended there. Dragging then extends the selection, to the start or end of
+   * each line while the pointer is in a margin, scrolling the sheet near its top or bottom.
+   * Returns false when the press is not beside a line.
+   */
+  const marginClick = (e: React.MouseEvent): boolean => {
+    if (!editor) return false;
+    const col = textColumn(e.clientX, e.clientY);
+    if (!col || (e.clientX >= col.left && e.clientX <= col.right)) return false;
+    if (!PAGED) {
+      const pm = editor.view.dom.getBoundingClientRect();
+      if (e.clientY < pm.top || e.clientY > pm.bottom) return false;
+    }
+    const pos = pointerPos(e.clientX, e.clientY);
+    if (pos === null) return false;
+    // the line must really be there: the position's own box at the height of the press
+    const line = editor.view.coordsAtPos(pos);
+    if (e.clientY < line.top - 4 || e.clientY > line.bottom + 4) return false;
+    e.preventDefault();
+    const view = editor.view;
+    const anchor = e.shiftKey ? view.state.selection.anchor : pos;
+    const select = (head: number) => {
+      const { state } = view;
+      const size = state.doc.content.size;
+      const $a = state.doc.resolve(Math.min(anchor, size)), $h = state.doc.resolve(Math.min(head, size));
+      const sel = head === anchor ? TextSelection.near($h) : TextSelection.between($a, $h);
+      if (!sel.eq(state.selection)) view.dispatch(state.tr.setSelection(sel));
+    };
+    select(pos);
+    view.focus();
+    const desk = deskRef.current;
+    const move = (m: MouseEvent) => {
+      if (desk) {
+        const box = desk.getBoundingClientRect();
+        if (m.clientY < box.top + 24) desk.scrollTop -= 24;
+        else if (m.clientY > box.bottom - 24) desk.scrollTop += 24;
+      }
+      const head = pointerPos(m.clientX, m.clientY);
+      if (head !== null) select(head);
+    };
+    const up = () => { window.removeEventListener("mousemove", move); window.removeEventListener("mouseup", up); };
+    window.addEventListener("mousemove", move);
+    window.addEventListener("mouseup", up);
+    return true;
+  };
   // a click on the empty part of the sheet, below the text, puts the cursor at the end
   const onPaperDown = (e: React.MouseEvent) => {
     if (!editor || e.button !== 0) return;
     const t = e.target as HTMLElement;
     if (!t.classList.contains("paper") && !t.classList.contains("page")) return;
+    if (marginClick(e)) return;
     if (PAGED) {
       // only after the end of the text: on its page below it, or on a later page
       const end = endRef.current?.getBoundingClientRect();

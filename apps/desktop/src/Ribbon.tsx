@@ -2,11 +2,14 @@
 // style, bold, italic, underline, superscript, subscript, font colour and highlight with
 // Word's colours (record 0043), and the insertions: citation, cross-reference, table,
 // figure and special character. Bold and italic read N and K in "Word en español", as in
-// Word, and B and I in the international scheme.
+// Word, and B and I in the international scheme. Record 0069: bullets, numbering and the
+// level of a list item or a paragraph's left indent (Tab and Shift+Tab in the text do the same),
+// as Word's Paragraph group.
 import { useEditorState, type Editor } from "@tiptap/react";
 import { useTranslation } from "react-i18next";
 import type { OutlinePart } from "@scidesk/core";
 import { Icon } from "./icons.tsx";
+import { changeIndent } from "./indent.ts";
 import { MenuButton, Popover } from "./Menus.tsx";
 import { SCHEMES, shortcutLabel, type Action, type SchemeId } from "./shortcuts.ts";
 
@@ -16,6 +19,16 @@ export const HIGHLIGHTS = ["yellow", "green", "cyan", "magenta", "red", "blue", 
 const HIGHLIGHT_CSS: Record<string, string> = { yellow: "#ffff00", green: "#00ff00", cyan: "#00ffff", magenta: "#ff00ff", red: "#ff0000", blue: "#0000ff", lightGray: "#c0c0c0" };
 /** The scientific characters of PLAN 5.2. */
 export const SYMBOLS = ["±", "≤", "≥", "×", "µ", "°", "→", "–", "—", " ", "α", "β", "γ", "δ", "κ", "λ", "χ", "Δ", "σ", "τ"];
+
+/** The list nearest the cursor, if any (record 0069). */
+function innermostList(e: Editor): "bulletList" | "orderedList" | null {
+  const $from = e.state.selection.$from;
+  for (let d = $from.depth; d > 0; d--) {
+    const name = $from.node(d).type.name;
+    if (name === "bulletList" || name === "orderedList") return name;
+  }
+  return null;
+}
 
 /** Letters on the bold, italic and underline buttons in each scheme. */
 const LETTERS: Record<SchemeId, [string, string, string]> = { "word-es": ["N", "K", "S"], international: ["B", "I", "U"] };
@@ -53,6 +66,9 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
       font: (e.getAttributes("fontFamily").family as string | undefined) ?? "",
       size: e.getAttributes("fontSize").size != null ? String(e.getAttributes("fontSize").size) : "",
       canUndo: e.can().undo(), canRedo: e.can().redo(),
+      list: innermostList(e),
+      canBullets: e.can().toggleBulletList(), canNumbers: e.can().toggleOrderedList(),
+      canSink: changeIndent(1)(e.state), canLift: changeIndent(-1)(e.state),
       block: e.isActive("title") ? "title" : e.isActive("heading", { level: 1 }) ? "h1" : e.isActive("heading", { level: 2 }) ? "h2" : e.isActive("heading", { level: 3 }) ? "h3" : e.isActive("paragraph") ? "p" : "other",
     }),
   });
@@ -137,6 +153,16 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
           </div>
         )}
       </Popover>
+      <span className="tool-sep" />
+      {/* record 0069: the list around the cursor decides which button is on (bullets inside a numbered list show bullets) */}
+      <button className={`tool${s.list === "bulletList" ? " on" : ""}`} aria-pressed={s.list === "bulletList"} title={t("ui.bulletList")} aria-label={t("ui.bulletList")} onMouseDown={keep}
+        disabled={disabled || !s.canBullets} onClick={() => editor.chain().focus().toggleBulletList().run()}><Icon name="bulletList" /></button>
+      <button className={`tool${s.list === "orderedList" ? " on" : ""}`} aria-pressed={s.list === "orderedList"} title={t("ui.orderedList")} aria-label={t("ui.orderedList")} onMouseDown={keep}
+        disabled={disabled || !s.canNumbers} onClick={() => editor.chain().focus().toggleOrderedList().run()}><Icon name="orderedList" /></button>
+      <button className="tool" title={`${t("ui.indentLess")} (${shortcutLabel("Shift-Tab", i18n.language)})`} aria-label={t("ui.indentLess")} onMouseDown={keep}
+        disabled={disabled || !s.canLift} onClick={() => { changeIndent(-1)(editor.state, editor.view.dispatch); editor.commands.focus(); }}><Icon name="indentLess" /></button>
+      <button className="tool" title={`${t("ui.indentMore")} (${shortcutLabel("Tab", i18n.language)})`} aria-label={t("ui.indentMore")} onMouseDown={keep}
+        disabled={disabled || !s.canSink} onClick={() => { changeIndent(1)(editor.state, editor.view.dispatch); editor.commands.focus(); }}><Icon name="indentMore" /></button>
       <span className="tool-sep" />
       <button className="tool accent" title={tip(t("ui.cite"), "cite")} onMouseDown={keep} disabled={disabled} onClick={onCite}><Icon name="quote" /> {t("ui.citeShort")}</button>
       <MenuButton id="tool-xref" label={t("ui.xref")} className="tool" disabled={disabled} title={tip(t("ui.xref"), "xref")} items={[

@@ -51,7 +51,7 @@ const FIGURE_CAPTION = /^\s*(figura|figure|fig\.)\s*(\d+)\s*[.:\-–—]?\s*/i;
 export const NOTE_START = /^\s*((abreviaturas|abbreviations|notas?|notes?|fuente|source)\b|[a-z*†‡§¶][.)]?\s|[A-Z][A-Za-z0-9-]{0,11}\s?:\s)/;
 const IMAGE_EXT: Record<string, string> = { png: "png", jpg: "jpg", jpeg: "jpg", gif: "gif", tif: "tiff", tiff: "tiff", svg: "svg", eps: "eps", pdf: "pdf" };
 
-interface Para { kind: "p"; style: string; outline: number | null; runs: Run[]; text: string; list: { num: string; ordered: boolean } | null; images: string[]; align: string | null }
+interface Para { kind: "p"; style: string; outline: number | null; runs: Run[]; text: string; list: { num: string; ordered: boolean } | null; images: string[]; align: string | null; indent: number | null }
 interface Tbl { kind: "t"; rows: { header: boolean; cells: { colspan: number; vmerge: "restart" | "continue" | null; paras: Para[]; align: string | null }[] }[]; grid: number[] }
 type Item = Para | Tbl;
 
@@ -93,13 +93,20 @@ async function readWord(bytes: Uint8Array) {
   for (const m of (relsXml ?? "").matchAll(/<Relationship [^>]*Target="([^"]+)"[^>]*Id="([^"]+)"/g)) rels.set(m[2], m[1]);
 
   const images = new Map<string, { bytes: Uint8Array; ext: string }>();
+  /** Record 0069: a paragraph's own left indent in steps of 1.25 cm (709 twips), without a hanging indent. */
+  function indentOf(ind: Element | undefined): number | null {
+    if (!ind || attr(ind, "hanging")) return null;
+    const left = Number(attr(ind, "left") || attr(ind, "start") || 0);
+    const steps = Math.round(left / 709);
+    return steps >= 1 ? Math.min(steps, 8) : null;
+  }
   function paragraph(p: Element): Para {
     const pPr = child(p, "pPr");
     const info = styleInfo(attr(child(pPr, "pStyle"), "val"));
     const outlineHere = attr(child(pPr, "outlineLvl"), "val");
     const numPr = child(pPr, "numPr");
     const numId = attr(child(numPr, "numId"), "val");
-    const P: Para = { kind: "p", style: info.name, outline: outlineHere ? Number(outlineHere) : info.outline, runs: [], text: "", list: numId && numId !== "0" ? { num: numId, ordered: ordered.has(numId) } : null, images: [], align: attr(child(pPr, "jc"), "val") || null };
+    const P: Para = { kind: "p", style: info.name, outline: outlineHere ? Number(outlineHere) : info.outline, runs: [], text: "", list: numId && numId !== "0" ? { num: numId, ordered: ordered.has(numId) } : null, images: [], align: attr(child(pPr, "jc"), "val") || null, indent: indentOf(child(pPr, "ind")) };
     let inFieldCode = 0;
     const run = (r: Element, deleted: boolean) => {
       const rPr = child(r, "rPr");
@@ -354,7 +361,7 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
       return;
     }
     currentList = null;
-    body.push(block("paragraph", it));
+    body.push(block("paragraph", it, it.indent ? { indent: it.indent } : {}));
   });
   if (!title.length) {
     const fallback = opts.fileName.replace(/\.docx$/i, "");

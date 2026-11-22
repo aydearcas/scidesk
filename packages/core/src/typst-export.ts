@@ -121,7 +121,12 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   // a marker with the block id: the introspector finds on which page each block landed
   const marker = (n: PMNode) => (typeof n.attrs?.id === "string" && /^[a-z]+-[a-z0-9]+$/.test(n.attrs.id) ? `#metadata(${str(n.attrs.id)}) <${n.attrs.id}>` : "");
   // "1. " at the start of a line would be a numbered list in Typst
-  const paragraph = (n: PMNode, notes?: Map<string, string>) => `${marker(n)}${inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around).replace(/^(\d+)\./, "$1\\.")}`;
+  const paragraph = (n: PMNode, notes?: Map<string, string>) => {
+    const text = inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around).replace(/^(\d+)\./, "$1\\.");
+    // record 0069: a paragraph's left indent, 1.25 cm a step
+    const indent = (n.attrs?.indent as number | null) ?? 0;
+    return `${marker(n)}${indent ? `#pad(left: ${(1.25 * indent).toFixed(2)}cm)[${text}]` : text}`;
+  };
 
   // ---------------------------------------------------------------- blocks
   const out: string[] = [];

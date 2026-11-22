@@ -23,6 +23,7 @@ import { partExtensions } from "./parts.ts";
 import { Spellcheck } from "./spellcheck.ts";
 import { LangMark, LangPaste } from "./lang.ts";
 import { Autocorrect } from "./autocorrect.ts";
+import { Indent, IndentBackspace, MAX_INDENT } from "./indent.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -418,7 +419,14 @@ export const extensions = [
   partRef("tableRef"),
   partRef("figureRef"),
   Text,
-  Paragraph.extend({ addAttributes: () => ({ id: plain("id"), lang: plain("lang") }) }),
+  Paragraph.extend({ addAttributes: () => ({ id: plain("id"), lang: plain("lang"), indent: {
+    // record 0069: the left indent in steps of 1.25 cm, drawn with --indent
+    default: null,
+    parseHTML: (el: HTMLElement) => { const n = Number(el.getAttribute("data-indent")); return n >= 1 && n <= MAX_INDENT ? n : null; },
+    renderHTML: (a: Record<string, unknown>) => (a.indent ? { "data-indent": a.indent, style: `--indent: ${a.indent}` } : {}),
+  } }) }),
+  Indent,
+  IndentBackspace,
   Heading.extend({
     addAttributes() {
       return { ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang") };

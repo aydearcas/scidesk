@@ -12,7 +12,8 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
   const [pointerDown, setPointerDown] = useState(false);
   const [, setTick] = useState(0);
   useEffect(() => {
-    const dom = editor.view.dom;
+    // the whole sheet: a selection dragged from the margin hides the bubble too
+    const dom = (editor.view.dom.closest(".paper") as HTMLElement | null) ?? editor.view.dom;
     const down = () => setPointerDown(true);
     const up = () => setPointerDown(false);
     // the bubble follows the text when the page scrolls
@@ -27,7 +28,7 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
     selector: ({ editor: e }) => {
       const { from, to, empty } = e.state.selection;
       const text = !empty && e.state.doc.textBetween(from, to, " ").trim().length > 0;
-      return { show: text && e.isFocused, from, bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline") };
+      return { show: text && e.isFocused, from, bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline"), sup: e.isActive("superscript"), sub: e.isActive("subscript") };
     },
   });
   if (!s.show || pointerDown) return null;
@@ -35,12 +36,14 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
   try { at = editor.view.coordsAtPos(s.from); } catch { return null; }
   const letters = scheme === "word-es" ? ["N", "K", "S"] : ["B", "I", "U"];
   const keep = (e: React.MouseEvent) => e.preventDefault();
-  const tip = (label: string, a: "bold" | "italic" | "underline" | "cite") => `${label} (${shortcutLabel(SCHEMES[scheme][a], i18n.language)})`;
+  const tip = (label: string, a: "bold" | "italic" | "underline" | "superscript" | "subscript" | "cite") => `${label} (${shortcutLabel(SCHEMES[scheme][a], i18n.language)})`;
   return (
     <div className="bubble" role="toolbar" aria-label={t("ui.bubble")} style={{ left: Math.max(8, at.left - 8), top: Math.max(8, at.top - 42) }} onMouseDown={keep}>
       <button className={`tool${s.bold ? " on" : ""}`} aria-pressed={s.bold} title={tip(t("ui.bold"), "bold")} onClick={() => editor.chain().focus().toggleMark("bold").run()}><b>{letters[0]}</b></button>
       <button className={`tool${s.italic ? " on" : ""}`} aria-pressed={s.italic} title={tip(t("ui.italic"), "italic")} onClick={() => editor.chain().focus().toggleMark("italic").run()}><i className="serif">{letters[1]}</i></button>
       <button className={`tool${s.underline ? " on" : ""}`} aria-pressed={s.underline} title={tip(t("ui.underline"), "underline")} onClick={() => editor.chain().focus().toggleMark("underline").run()}><u>{letters[2]}</u></button>
+      <button className={`tool${s.sup ? " on" : ""}`} aria-pressed={s.sup} title={tip(t("ui.superscript"), "superscript")} aria-label={t("ui.superscript")} onClick={() => editor.chain().focus().toggleMark("superscript").run()}><span>x<sup>2</sup></span></button>
+      <button className={`tool${s.sub ? " on" : ""}`} aria-pressed={s.sub} title={tip(t("ui.subscript"), "subscript")} aria-label={t("ui.subscript")} onClick={() => editor.chain().focus().toggleMark("subscript").run()}><span>x<sub>2</sub></span></button>
       <span className="tool-sep" />
       <button className="tool accent" title={tip(t("ui.cite"), "cite")} onClick={onCite}><Icon name="quote" size={16} /> {t("ui.citeShort")}</button>
     </div>

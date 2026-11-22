@@ -66,6 +66,31 @@ describe("new article from a Word document", () => {
     expect(t.content!.filter((n) => n.type === "tableNote").length).toBeGreaterThan(0);
   });
 
+  it("keeps a paragraph's left indent through the DOCX and back, and in the PDF source (record 0069)", async () => {
+    const { createDemoProject } = await import("../src/demo.ts");
+    const { saveDocument } = await import("../src/project.ts");
+    const { manuscriptTypst } = await import("../src/typst-export.ts");
+    const p = await createDemoProject(new MemoryFs());
+    const art = p.articles[0];
+    const file = structuredClone(art.documents.get("manuscript/article.scidoc")!);
+    const para = (file.doc as PMNode).content!.find((n) => n.type === "paragraph" && n.content?.length)!;
+    para.attrs = { ...para.attrs, indent: 2 };
+    await saveDocument(p, art, "manuscript/article.scidoc", file);
+    const res = await nodeResources();
+    const out = await exportDocx(p, "main", "journal", res);
+    const JSZip = (await import("jszip")).default;
+    const xml = await (await JSZip.loadAsync(out.bytes)).file("word/document.xml")!.async("string");
+    expect(xml).toContain('<w:ind w:left="1418"/>');
+    const typst = await manuscriptTypst(p, "main", res);
+    expect(typst.source).toContain("#pad(left: 2.50cm)[");
+    // back from Word: the same paragraph with the same indent, and none on the others
+    const back = await projectFromWord(new MemoryFs(), out.bytes, { fileName: "indent.docx" });
+    const body = back.project.articles[0].documents.get("manuscript/article.scidoc")!.doc as PMNode;
+    const indented = body.content!.filter((n) => n.type === "paragraph" && n.attrs?.indent);
+    expect(indented).toHaveLength(1);
+    expect(indented[0].attrs!.indent).toBe(2);
+  });
+
   it("refuses a folder that is not empty", async () => {
     const fs = new MemoryFs({ "x.txt": "hola" });
     await expect(projectFromWord(fs, new Uint8Array(readFileSync(SENT)), { fileName: "sent.docx" })).rejects.toThrow(/not empty/);

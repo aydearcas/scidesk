@@ -66,7 +66,7 @@ Un `.scidoc` es el **JSON de ProseMirror tal cual** (R34) dentro de un envoltori
 |---|---|---|---|
 | `title` | `id`, `lang` | texto | Uno por idioma, al principio del cuerpo; el primero es el principal. Reumatología Clínica pide también el título en inglés |
 | `heading` | `id`, `level` (1–6), `role`, `lang` | texto | **Las secciones no son nodos contenedores:** un encabezado con `role` empieza la sección (como `sec-type` de JATS) |
-| `paragraph` | `id`, `lang` | texto | |
+| `paragraph` | `id`, `lang`, `indent` | texto | `indent` (opcional, 1 a 8): sangría izquierda en pasos de 1,25 cm, como «Aumentar sangría» de Word (ficha 0069) |
 | `bulletList`, `orderedList` | `id` (`start` en la numerada) | `listItem`+ | `listItem` empieza por un párrafo |
 | `equation` | `id` (`e-`), `latex` | — | Llega en la fase 4; está en el formato desde la v1 (P6) |
 | `tableRef` | `id` (`t-`), `src` (`tables/*.scitable`) | — | Dónde va una tabla; la tabla vive en su archivo |

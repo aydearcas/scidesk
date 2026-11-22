@@ -302,7 +302,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       children.unshift(s);
       children.push(e);
     }
-    return new Paragraph({ ...opts, children: [...(wrap.before ?? []), ...lead, ...children, ...(wrap.after ?? [])] });
+    // record 0069: a paragraph's left indent, 1.25 cm (709 twips) a step, as Word's "Increase indent"
+    const indent = n.type === "paragraph" ? ((n.attrs?.indent as number | null) ?? 0) : 0;
+    const o = indent ? { ...opts, indent: { ...(opts.indent ?? {}), left: (((opts.indent as { left?: number } | undefined)?.left) ?? 0) + 709 * indent } } : opts;
+    return new Paragraph({ ...o, children: [...(wrap.before ?? []), ...lead, ...children, ...(wrap.after ?? [])] });
   };
 
   const out: (Paragraph | Table)[] = [];

@@ -18,6 +18,11 @@ const PATHS: Record<string, string> = {
   headerRow: "M4 5h16v14H4z M4 10h16 M4 7.5h16 M4 5h16v5H4z",
   generalNote: "M6 4h12v16H6z M9 9h6 M9 13h6 M9 17h3",
   alignLeft: "M4 6h16 M4 10h10 M4 14h16 M4 18h10",
+  // lists and their level (record 0069): dots or numbers beside three lines, and an arrow in or out
+  bulletList: "M10 6h10 M10 12h10 M10 18h10 M5 5.2a.8.8 0 1 0 0 1.6.8.8 0 1 0 0-1.6z M5 11.2a.8.8 0 1 0 0 1.6.8.8 0 1 0 0-1.6z M5 17.2a.8.8 0 1 0 0 1.6.8.8 0 1 0 0-1.6z",
+  orderedList: "M10 6h10 M10 12.5h10 M10 19h10 M4.2 4.6L5.4 3.8V8 M3.9 11c.2-1 2.4-1.1 2.4.3 0 1-2.4 1.8-2.4 2.9h2.5 M3.9 16.6h2.3l-1.2 1.5c1.1-.1 1.5.5 1.5 1.1 0 1.1-1.7 1.3-2.6.6",
+  indentMore: "M4 5h16 M11 10h9 M11 14h9 M4 19h16 M4 9.5l3 2.5-3 2.5",
+  indentLess: "M4 5h16 M11 10h9 M11 14h9 M4 19h16 M7 9.5l-3 2.5 3 2.5",
   alignCenter: "M4 6h16 M7 10h10 M4 14h16 M7 18h10",
   alignRight: "M4 6h16 M10 10h10 M4 14h16 M10 18h10",
   newFile: "M7 3h7l5 5v13H7z M14 3v5h5 M13 11v6 M10 14h6",

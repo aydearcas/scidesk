@@ -1372,7 +1372,7 @@
     },
     "Paragraph": {
       "additionalProperties": false,
-      "description": "Paragraph.",
+      "description": "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069).",
       "properties": {
         "attrs": {
           "additionalProperties": false,
@@ -1381,6 +1381,18 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "indent": {
+              "anyOf": [
+                {
+                  "maximum": 8,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "lang": {
               "anyOf": [
