@@ -53,7 +53,7 @@ export function LibraryFilters({ project, uses, filter, onFilter, onImport }: {
       <div className="panel-head"><span className="panel-title">{t("library")}</span></div>
       <ul className="nav-tree">
         {(["all", "cited", "uncited"] as LibraryFilter[]).map((f) => (
-          <li key={f}><button className={`nav-item level-1${filter === f ? " active" : ""}`} aria-pressed={filter === f} onClick={() => onFilter(f)}>
+          <li key={f}><button className={`nav-item level-1 filter-${f}${filter === f ? " active" : ""}`} aria-pressed={filter === f} onClick={() => onFilter(f)}>
             <span className="nav-label">{t(`ui.libraryFilters.${f}`)}</span><span className="nav-count">{counts[f]}</span>
           </button></li>
         ))}
@@ -62,7 +62,7 @@ export function LibraryFilters({ project, uses, filter, onFilter, onImport }: {
       {imports.size === 0 ? <p className="muted pad small">{t("ui.noImports")}</p> : (
         <ul className="nav-tree">
           {[...imports].map(([file, i]) => (
-            <li key={file}><div className="nav-item level-1 static" title={file}><span className="nav-label">{file.split("/").pop()}<span className="muted small"> · {new Date(i.date).toLocaleDateString(i18n.language)}</span></span><span className="nav-count">{i.n}</span></div></li>
+            <li key={file}><div className="nav-item level-1 static band-grey" title={file}><span className="nav-label">{file.split("/").pop()}<span className="muted small"> · {new Date(i.date).toLocaleDateString(i18n.language)}</span></span><span className="nav-count">{i.n}</span></div></li>
           ))}
         </ul>
       )}
