@@ -13,6 +13,8 @@ Estado: **corte vertical de la fase 1** (R42, ficha [0032](../../docs/decisiones
 | `src/docx-export.ts` | DOCX del manuscrito con la biblioteca `docx` y la plantilla `assets/reference.dotx`: resumen, tablas con notas, figuras, referencias cruzadas y el formato del perfil de revista; perfiles «coautores» (marcas, campos de Zotero con URI, propiedades) y «revista» (ficha 0033) |
 | `src/paste-table.ts` | Una tabla pegada desde Word (datos que lee la ventana) como `.scitable` con pie, notas y llamadas (ficha 0042) |
 | `src/checks.ts` | Comprobaciones antes del envío: límites, palabras por sección, pendientes y elementos sin citar, con avisos ignorables (ficha 0041) |
+| `src/project.ts` (`addArticle`) | Otro artículo en el mismo proyecto, con la biblioteca y las personas en común (ficha 0044) |
+| `src/outline.ts` | Lo que enseña el navegador por conceptos (título, tablas y figuras numeradas con pie y si se citan, resumen por idioma), y añadir una tabla vacía o una figura desde una imagen (ficha 0044) |
 | `src/typst-export.ts` | Fuente de Typst del manuscrito para la revista y `exportPdf` con un compilador que se le da: Rust en la ventana, `scidesk-pdf` en Node (ficha 0040) |
 | `src/title-page.ts` | Portada aparte desde `authors.json` y `people.json` (ficha 0034) |
 | `src/recovery.ts` | Registro de cambios sin guardar en la carpeta local de datos de cada equipo (`LocalStore`) y su recuperación al abrir (ficha 0039) |

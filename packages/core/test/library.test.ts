@@ -123,7 +123,7 @@ describe("bundled styles", () => {
         else expect(plain[0], s.name).toMatch(/1/);
       }
     }
-  });
+  }, 20000); // 18 styles through citeproc-js: close to 5 s alone, more with the other files in parallel
 
   it("changing the style changes the export at once", async () => {
     const fs = new MemoryFs();

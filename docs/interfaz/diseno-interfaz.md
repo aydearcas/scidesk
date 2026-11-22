@@ -323,6 +323,8 @@ Accesibilidad:
 
 La estructura no cambia de una fase a otra. En la fase 1 las vistas que no existen todavía no aparecen en la barra de vistas.
 
+**Esqueleto de la fase 1 hecho el 22/11/2026** ([ficha 0044](../decisiones/0044-esqueleto-de-la-ventana.md)): la estructura, la vista Artículo con el navegador, la cinta, la burbuja, el menú contextual mínimo, la biblioteca y los autores como vistas grandes, el panel derecho y los dos esquemas de atajos. La ficha dice lo que falta de la fila «1 (MVP)» y qué se ha decidido donde la propuesta chocaba con lo ya hecho.
+
 ## 11. Dónde va cada función del plan
 
 | Sección del plan | Dónde está en la interfaz |

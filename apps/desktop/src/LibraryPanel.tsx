@@ -1,6 +1,6 @@
-// The library panel (PLAN 5.6, record 0037): see, search, edit and delete references, with
-// how many times each one is cited. Minimal: its place in the interface (side panel,
-// concept navigator, own tab) waits for the interface decisions (D1–D8).
+// The library (PLAN 5.6, record 0037): see, search, edit and delete references, with how
+// many times each one is cited. Since record 0044 it is a large view in its own tab, with
+// its filters in the left panel (LibraryFilters) and the chosen reference in "Details".
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,8 +30,53 @@ const FIELDS: { key: keyof ReferenceFields; multiline?: boolean; for?: string[] 
   { key: "accessed", for: ["webpage", "dataset", "article"] },
 ];
 
-export function LibraryPanel({ project, version, uses, onChanged, onDelete }: {
+export type LibraryFilter = "all" | "cited" | "uncited";
+
+/** The library view's left panel: filters with their counts, and the imports. */
+export function LibraryFilters({ project, uses, filter, onFilter, onImport }: {
+  project: Project; uses: Map<string, number>; filter: LibraryFilter; onFilter: (f: LibraryFilter) => void; onImport: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const refs = project.library.references;
+  const cited = refs.filter((r) => (uses.get(r.id) ?? 0) > 0).length;
+  const counts: Record<LibraryFilter, number> = { all: refs.length, cited, uncited: refs.length - cited };
+  // imports: references grouped by the file they came from
+  const imports = new Map<string, { kind: string; date: string; n: number }>();
+  for (const r of refs) {
+    if (!r.source?.file) continue;
+    const i = imports.get(r.source.file) ?? { kind: r.source.kind, date: r.source.date ?? r.added, n: 0 };
+    i.n++;
+    imports.set(r.source.file, i);
+  }
+  return (
+    <nav className="navigator" aria-label={t("library")}>
+      <div className="panel-head"><span className="panel-title">{t("library")}</span></div>
+      <ul className="nav-tree">
+        {(["all", "cited", "uncited"] as LibraryFilter[]).map((f) => (
+          <li key={f}><button className={`nav-item level-1${filter === f ? " active" : ""}`} aria-pressed={filter === f} onClick={() => onFilter(f)}>
+            <span className="nav-label">{t(`ui.libraryFilters.${f}`)}</span><span className="nav-count">{counts[f]}</span>
+          </button></li>
+        ))}
+      </ul>
+      <div className="panel-head"><span className="panel-title">{t("ui.imports")}</span></div>
+      {imports.size === 0 ? <p className="muted pad small">{t("ui.noImports")}</p> : (
+        <ul className="nav-tree">
+          {[...imports].map(([file, i]) => (
+            <li key={file}><div className="nav-item level-1 static" title={file}><span className="nav-label">{file.split("/").pop()}<span className="muted small"> · {new Date(i.date).toLocaleDateString(i18n.language)}</span></span><span className="nav-count">{i.n}</span></div></li>
+          ))}
+        </ul>
+      )}
+      <div className="pad"><button className="btn" onClick={onImport}>{t("importRefs")}</button></div>
+      <p className="muted pad small">{project.manifest.library.mode === "own" ? t("ui.ownLibrary") : t("zoteroLibrary")}</p>
+    </nav>
+  );
+}
+
+export function LibraryPanel({ project, version, uses, onChanged, onDelete, filter = "all", onSelect }: {
   project: Project;
+  filter?: LibraryFilter;
+  /** A reference was chosen: shown in "Details". */
+  onSelect?: (id: string) => void;
   /** Bumped when the library changes in place. */
   version: number;
   uses: Map<string, number>;
@@ -45,7 +90,8 @@ export function LibraryPanel({ project, version, uses, onChanged, onDelete }: {
   const [problem, setProblem] = useState("");
   const own = project.manifest.library.mode === "own";
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the library object changes in place
-  const hits = useMemo(() => searchLibrary(project.library, query, Infinity), [project, version, query]);
+  const all = useMemo(() => searchLibrary(project.library, query, Infinity), [project, version, query]);
+  const hits = all.filter(({ entry }) => filter === "all" || (filter === "cited") === (uses.get(entry.id) ?? 0) > 0);
 
   const start = (id: string | null) => {
     setFieldError(null); setProblem("");
@@ -131,7 +177,7 @@ export function LibraryPanel({ project, version, uses, onChanged, onDelete }: {
           const n = uses.get(entry.id) ?? 0;
           return (
             <li key={entry.id}>
-              <button className="ref-item" onClick={() => own && start(entry.id)} disabled={!own}>
+              <button className="ref-item" onClick={() => { onSelect?.(entry.id); if (own) start(entry.id); }}>
                 <span><b>{s.authors || "—"}</b> {s.year ?? t("noDate")} <span className={n ? "cited" : "muted"}>· {n ? t("citedTimes", { count: n }) : t("notCited")}</span></span>
                 <span className="result-title">{s.title}{s.container ? <span className="muted"> · {s.container}</span> : null}</span>
               </button>

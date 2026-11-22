@@ -2,8 +2,9 @@
 // order, with which affiliations, correspondence, equal contribution and conflicts; the
 // project's directory of people and groups; the shared affiliations; and the CRediT
 // matrix. It edits copies of people.json and authors.json and saves both at once, after the
-// core's check. A plain dialog: its final place and look wait for the interface decisions.
-import { useMemo, useState } from "react";
+// core's check. Since record 0044 it is a large view in its own tab (asView); the dialog
+// form stays for other uses.
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   addAuthor, AuthorshipError, checkAuthorship, defaultCitationName, displayName, moveAuthor, newAffiliation, newGroup, newPerson,
@@ -12,7 +13,7 @@ import {
 } from "@scidesk/core";
 import { CREDIT_ROLES, type AuthorsFile, type PeopleFile } from "@scidesk/formats";
 
-type Tab = "authors" | "people" | "affiliations" | "credit";
+export type Tab = "authors" | "people" | "affiliations" | "credit";
 const EQUAL_TOKENS = ["e1", "e2", "e3"];
 
 /** ISO 3166-1 alpha-2 codes the browser can name, sorted by their name in the interface language. */
@@ -39,10 +40,18 @@ function opt<T extends object>(o: T, key: string, value: string | string[] | und
   return next as T;
 }
 
-export function AuthorsDialog({ project, folder, onClose, onSaved }: { project: Project; folder: string; onClose: () => void; onSaved: (warnings: number) => void }) {
+export function AuthorsDialog({ project, folder, onClose, onSaved, asView = false, initialTab = "authors", onDirty }: {
+  project: Project; folder: string; onClose: () => void; onSaved: (warnings: number) => void;
+  /** In a tab of the central area instead of a modal dialog. */
+  asView?: boolean;
+  initialTab?: Tab;
+  /** Whether there are changes not saved yet (the tab shows it). */
+  onDirty?: (dirty: boolean) => void;
+}) {
   const { t, i18n } = useTranslation();
   const art = project.articles.find((a) => a.folder === folder)!;
-  const [tab, setTab] = useState<Tab>("authors");
+  const [tab, setTab] = useState<Tab>(initialTab);
+  useEffect(() => setTab(initialTab), [initialTab]);
   const [people, setPeople] = useState<PeopleFile>(() => structuredClone(project.people));
   const [authors, setAuthors] = useState<AuthorsFile>(() => structuredClone(art.authors));
   const [personSel, setPersonSel] = useState<string | null>(null);
@@ -64,6 +73,8 @@ export function AuthorsDialog({ project, folder, onClose, onSaved }: { project: 
   const updAff = (id: string, f: (a: AffiliationEntry) => AffiliationEntry) => setPeople((ps) => ({ ...ps, affiliations: ps.affiliations.map((a) => (a.id === id ? f(a) : a)) }));
   const updAuthor = (i: number, f: (a: ArticleAuthor) => ArticleAuthor) => setAuthors((as) => ({ ...as, authors: as.authors.map((a, j) => (j === i ? f(a) : a)) }));
 
+  const dirty = JSON.stringify(people) !== JSON.stringify(project.people) || JSON.stringify(authors) !== JSON.stringify(art.authors);
+  useEffect(() => onDirty?.(dirty), [dirty, onDirty]);
   const save = async () => {
     setSaveError(null);
     try {
@@ -298,30 +309,34 @@ export function AuthorsDialog({ project, folder, onClose, onSaved }: { project: 
 
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
+  const inner = (
+    <>
+      <h2 id="authors-title">{t("authorsTitle")}</h2>
+      <div className="tabs" role="tablist">
+        {(["authors", "people", "affiliations", "credit"] as Tab[]).map((k) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(`authorTabs.${k}`)}</button>
+        ))}
+      </div>
+      <div className="authors-body">
+        {tab === "authors" ? authorsTab() : tab === "people" ? peopleTab() : tab === "affiliations" ? affiliationsTab() : creditTab()}
+      </div>
+      {(errors.length > 0 || warnings.length > 0 || saveError) && (
+        <ul className="issues">
+          {(saveError ?? errors).map((i, n) => <li key={`e${n}`} className="field-error">{issueText(i)}</li>)}
+          {warnings.map((i, n) => <li key={`w${n}`} className="muted">⚠ {issueText(i)}</li>)}
+        </ul>
+      )}
+      <div className="dialog-actions">
+        <span className="muted">{t("authorsSaveNote")}</span>
+        <button className="btn" onClick={() => { if (asView) { setPeople(structuredClone(project.people)); setAuthors(structuredClone(art.authors)); setSaveError(null); } onClose(); }} disabled={asView && !dirty}>{asView ? t("ui.discardChanges") : t("cancel")}</button>
+        <button className="btn primary" onClick={() => void save()} disabled={errors.length > 0 || (asView && !dirty)}>{t("saveAuthors")}</button>
+      </div>
+    </>
+  );
+  if (asView) return <section className="authors-view" aria-labelledby="authors-title">{inner}</section>;
   return (
     <div className="overlay">
-      <div className="authors-dialog" role="dialog" aria-modal="true" aria-label={t("authorsTitle")}>
-        <h2>{t("authorsTitle")}</h2>
-        <div className="tabs" role="tablist">
-          {(["authors", "people", "affiliations", "credit"] as Tab[]).map((k) => (
-            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{t(`authorTabs.${k}`)}</button>
-          ))}
-        </div>
-        <div className="authors-body">
-          {tab === "authors" ? authorsTab() : tab === "people" ? peopleTab() : tab === "affiliations" ? affiliationsTab() : creditTab()}
-        </div>
-        {(errors.length > 0 || warnings.length > 0 || saveError) && (
-          <ul className="issues">
-            {(saveError ?? errors).map((i, n) => <li key={`e${n}`} className="field-error">{issueText(i)}</li>)}
-            {warnings.map((i, n) => <li key={`w${n}`} className="muted">⚠ {issueText(i)}</li>)}
-          </ul>
-        )}
-        <div className="dialog-actions">
-          <span className="muted">{t("authorsSaveNote")}</span>
-          <button onClick={onClose}>{t("cancel")}</button>
-          <button onClick={() => void save()} disabled={errors.length > 0}>{t("saveAuthors")}</button>
-        </div>
-      </div>
+      <div className="authors-dialog" role="dialog" aria-modal="true" aria-labelledby="authors-title">{inner}</div>
     </div>
   );
 }

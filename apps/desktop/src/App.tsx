@@ -1,22 +1,35 @@
-// The vertical slice's window (R42): open a project, write, cite, export a DOCX for
-// co-authors and import the copy that comes back, with its proposals. No styled interface
-// yet: that is the rest of phase 1.
+// The window of phase 1 (record 0044, design proposal sections 3, 4, 7 and 9): title bar
+// with classic menus and Export, view bar, concept navigator, central tabs (manuscript,
+// library, authors, settings), right panel with Warnings, Review and Details, and status
+// bar. All the work (open, write, cite, save, export, import a copy, paste from Word,
+// autosave and recovery) is the vertical slice's and later records', unchanged.
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  addTablePart, BUNDLED_STYLES, checkArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addEmptyTable, addFigure, addTablePart, articleOutline, checkArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, Recovery, referenceUses, renderCitations, saveDocument, setCitationStyle, styleResources,
-  type CheckReport, type CheckWarning, type PendingRecovery, type Project, type Rendering,
+  type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
-import { NodeSelection } from "@tiptap/pm/state";
+import { EditorState, NodeSelection } from "@tiptap/pm/state";
 import { newId, type DocumentFile, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { citationLabels, extensions, hooks, refreshCitationLabels, refreshXrefLabels } from "./editor.ts";
-import { AuthorsDialog } from "./AuthorsDialog.tsx";
+import { citationLabels, extensions, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels } from "./editor.ts";
+import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
+import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
+import { SelectionBubble, XrefPicker } from "./EditorMenus.tsx";
+import { Icon, type IconName } from "./icons.tsx";
 import { cleanOfficeHtml, isOfficeHtml, readPaste } from "./paste.ts";
-import { LibraryPanel } from "./LibraryPanel.tsx";
+import { LibraryFilters, LibraryPanel, type LibraryFilter } from "./LibraryPanel.tsx";
+import { ContextMenu, MenuBar, MenuButton, type MenuDef, type MenuEntry } from "./Menus.tsx";
+import { Navigator, type NavTarget } from "./Navigator.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
+import { ReviewPanel } from "./ReviewPanel.tsx";
+import { Ribbon } from "./Ribbon.tsx";
+import { SettingsView } from "./SettingsView.tsx";
+import { StatusBar } from "./StatusBar.tsx";
+import { actionFor, comboOf, EDITOR_ACTIONS, SCHEMES, shortcutLabel, type Action } from "./shortcuts.ts";
+import { effectiveScheme, useSettings } from "./settings.ts";
 import { hasPreviewProject, inTauri, localStore, memoryFs, openFolder, previewFs, resources, typstCompiler } from "./platform.ts";
 
 const BODY = "manuscript/article.scidoc";
@@ -29,40 +42,73 @@ const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
 
-/** Word's standard colours (the row under the theme colours) and the usual highlights. */
-const TEXT_COLORS: [string, string][] = [["#C00000", "darkRed"], ["#FF0000", "red"], ["#FFC000", "orange"], ["#00B050", "green"], ["#0070C0", "blue"], ["#002060", "darkBlue"], ["#7030A0", "purple"], ["#7F7F7F", "gray"]];
-const HIGHLIGHTS = ["yellow", "green", "cyan", "magenta", "red", "blue", "lightGray"] as const;
+/** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015). */
+type CenterTab = `doc:${string}` | "library" | "authors" | "settings";
+type View = "article" | "library";
+type RightTab = "warnings" | "review" | "details";
+const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings" };
+const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
+/** The title of an article as saved (the tab of an article that is not on screen). */
+const savedTitle = (a: ArticleData) => {
+  const title = ((a.documents.get(BODY)?.doc as PMNode | undefined)?.content ?? []).find((n) => n.type === "title");
+  const text = (n: PMNode): string => (n.type === "text" ? n.text ?? "" : (n.content ?? []).map(text).join(""));
+  return title ? text(title).trim() : "";
+};
 
 const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
 
 export function App() {
   const { t, i18n } = useTranslation();
+  const [settings, updateSettings] = useSettings();
+  const scheme = effectiveScheme(settings);
+  const keys = (a: Action) => shortcutLabel(SCHEMES[scheme][a], i18n.language);
   const [project, setProject] = useState<Project | null>(null);
   const [dirty, setDirty] = useState(false);
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessageState] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [rendering, setRendering] = useState<Rendering | null>(null);
-  const [proposals, setProposals] = useState<ProposalSetFile | null>(null);
-  const [returnedBy, setReturnedBy] = useState("");
-  const [panel, setPanel] = useState<"library" | "checks" | "proposals">("library");
+  const [proposals, setProposals] = useState<{ set: ProposalSetFile; name: string } | null>(null);
   const [report, setReport] = useState<CheckReport | null>(null);
+  const [outline, setOutline] = useState<ArticleOutline | null>(null);
   const [uses, setUses] = useState<Map<string, number>>(new Map());
+  const [useSites, setUseSites] = useState<Map<string, ReferenceUse[]>>(new Map());
   // the quick citation dialog: the citation being edited (its position), or a new one
-  const [editingAuthors, setEditingAuthors] = useState(false);
   const [citing, setCiting] = useState<{ pos: number | null; items: CiteItem[] } | null>(null);
+  const [xrefOpen, setXrefOpen] = useState(false);
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
+  // every message replaces the previous one, with its file link or none
+  const setMessage = (text: string, file: { url: string; name: string } | null = null) => { setMessageState(text); setDownload(file); };
   const refsInput = useRef<HTMLInputElement>(null);
+  const figureInput = useRef<HTMLInputElement>(null);
   const [libraryVersion, setLibraryVersion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [recoveries, setRecoveries] = useState<PendingRecovery[]>([]);
+  // the window's layout
+  const [view, setView] = useState<View>("article");
+  const [tabs, setTabs] = useState<CenterTab[]>([]);
+  const [tab, setTab] = useState<CenterTab>("doc:");
+  // the article on screen; the editor keeps the state (and the undo history) of the others
+  const [activeFolder, setActiveFolder] = useState<string | null>(null);
+  const editorStates = useRef(new Map<string, EditorState>());
+  const [rightTab, setRightTab] = useState<RightTab>("warnings");
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const [navActive, setNavActive] = useState<NavTarget | null>(null);
+  const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all");
+  const [authorsTab, setAuthorsTab] = useState<AuthorsTab>("authors");
+  const [authorsKey, setAuthorsKey] = useState(0);
+  const [authorsDirty, setAuthorsDirty] = useState(false);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [showSections, setShowSections] = useState(false);
   const recovery = useRef<Recovery | null>(null);
   // edits counted, so that a save that ran while typing does not mark newer text as saved
   const editVersion = useRef(0);
   const savingNow = useRef(false);
   const dirtySince = useRef<number | null>(null);
-  const article = project?.articles[0] ?? null;
+  // a click in the text shows what it selects in "Details"
+  const pointerInEditor = useRef(false);
+  const article = project?.articles.find((a) => a.folder === activeFolder) ?? project?.articles[0] ?? null;
+  const docTab: CenterTab = `doc:${article?.folder ?? ""}`;
   // pasting from Word with tables (record 0042): set below, called by the editor
   const pasteTables = useRef<(html: string) => boolean>(() => false);
 
@@ -78,6 +124,7 @@ export function App() {
         event.preventDefault();
         return pasteTables.current(html);
       },
+      attributes: { "aria-label": "manuscript" },
     },
     extensions,
     content: { type: "doc", content: [] },
@@ -86,6 +133,7 @@ export function App() {
     enableContentCheck: true,
     onContentError: ({ error }) => setError(`${t("cannotShow")}: ${error.message}`),
   }, []);
+  useEffect(() => { editor?.view.dom.setAttribute("aria-label", t("ui.manuscript")); }, [editor, t]);
 
   const recompute = useCallback(async () => {
     if (!project || !article || !editor) return;
@@ -98,13 +146,22 @@ export function App() {
       refreshCitationLabels();
       setRendering(r);
       // how often each reference is cited, with what is on screen and not saved yet
-      setUses(new Map([...referenceUses(project, { [`${article.folder}/${BODY}`]: doc })].map(([id, u]) => [id, u.length])));
+      const sites = referenceUses(project, { [`${article.folder}/${BODY}`]: doc });
+      setUseSites(sites);
+      setUses(new Map([...sites].map(([id, u]) => [id, u.length])));
       // the checks, with what is on screen (record 0041)
       setReport(checkArticle(project, article.folder, { [BODY]: doc }));
+      // the navigator, and the places of tables and figures with their numbers
+      const o = articleOutline(project, article.folder, { [BODY]: doc });
+      setOutline(o);
+      partInfo.clear();
+      for (const p of o.tables) partInfo.set(p.id, { label: t("ui.tableN", { n: p.number }), caption: p.caption, cited: p.cited, uncitedText: t("ui.notCitedFlag") });
+      for (const p of o.figures) partInfo.set(p.id, { label: t("ui.figureN", { n: p.number }), caption: p.caption, cited: p.cited, uncitedText: t("ui.notCitedFlag") });
+      refreshPartLabels();
     } catch (e) {
       setError(String(e));
     }
-  }, [project, article, editor]);
+  }, [project, article, editor, t]);
 
   // citations are renumbered after a pause (~200 ms, PLAN 7.6)
   useEffect(() => {
@@ -115,12 +172,55 @@ export function App() {
     return () => { editor.off("update", onUpdate); clearTimeout(timer); };
   }, [editor, recompute]);
 
+  // what the selection is, for "Details"
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    const down = () => { pointerInEditor.current = true; };
+    const onSelection = () => {
+      const sel = editor.state.selection;
+      let next: Selected | null = null;
+      if (sel instanceof NodeSelection) {
+        const n = sel.node;
+        if (n.type.name === "citation") next = { kind: "citation", id: n.attrs.id as string, items: n.attrs.items as CiteItem[] };
+        else if (n.type.name === "tableRef" || n.type.name === "figureRef") next = { kind: "part", id: n.attrs.id as string, part: n.type.name === "tableRef" ? "table" : "figure" };
+        else if (n.type.name === "xref") next = { kind: "xref", target: n.attrs.target as string };
+      }
+      if (next) {
+        setSelected(next);
+        if (pointerInEditor.current) setRightTab("details");
+      } else setSelected((s) => (s && (s.kind === "citation" || s.kind === "part" || s.kind === "xref") ? null : s));
+      pointerInEditor.current = false;
+    };
+    dom.addEventListener("mousedown", down);
+    editor.on("selectionUpdate", onSelection);
+    return () => { dom.removeEventListener("mousedown", down); editor.off("selectionUpdate", onSelection); };
+  }, [editor]);
+
+  /** A document in the editor with a fresh undo history (Ctrl+Z never goes back to another document). */
+  const freshState = useCallback((doc: PMNode) => {
+    try {
+      return EditorState.create({ doc: editor!.schema.nodeFromJSON(doc), plugins: editor!.state.plugins });
+    } catch (e) {
+      setError(`${t("cannotShow")}: ${e instanceof Error ? e.message : String(e)}`);
+      return EditorState.create({ doc: editor!.schema.nodeFromJSON({ type: "doc", content: [] }), plugins: editor!.state.plugins });
+    }
+  }, [editor, t]);
+  const loadDoc = useCallback((doc: PMNode) => { if (editor) editor.view.updateState(freshState(doc)); }, [editor, freshState]);
+
   const show = useCallback(async (p: Project) => {
     setProject(p);
     setProposals(null);
     setError("");
-    const doc = p.articles[0].documents.get(BODY)!.doc;
-    editor?.commands.setContent(doc as never, { emitUpdate: false });
+    setSelected(null);
+    setNavActive(null);
+    // every manuscript of the project in its tab, the first on screen
+    setTabs(p.articles.map((a) => `doc:${a.folder}` as CenterTab));
+    setTab(`doc:${p.articles[0].folder}`);
+    setActiveFolder(p.articles[0].folder);
+    editorStates.current.clear();
+    setView("article");
+    loadDoc(p.articles[0].documents.get(BODY)!.doc as PMNode);
     setDirty(false);
     dirtySince.current = null;
     setLastSaved(null);
@@ -128,7 +228,7 @@ export function App() {
     const rec = new Recovery(await localStore(), p);
     recovery.current = rec;
     setRecoveries((await rec.pending()).pending);
-  }, [editor]);
+  }, [loadDoc]);
   useEffect(() => { void recompute(); }, [project, recompute]);
 
   const run = <A extends unknown[]>(f: (...a: A) => Promise<void>) => async (...a: A) => {
@@ -185,15 +285,22 @@ export function App() {
     if (!keep) { await rec.discard(p); setMessage(t("recoveryDiscarded")); return; }
     const { snapshot } = await rec.apply(p);
     if (p.entry.article === article?.folder && p.entry.path === BODY) {
-      editor?.commands.setContent(p.entry.file.doc as never, { emitUpdate: false });
+      loadDoc(p.entry.file.doc as PMNode);
       setDirty(false);
       void recompute();
-    }
+    } else editorStates.current.delete(p.entry.article); // shown from the disk when its tab is opened
     setMessage(snapshot ? t("recoveredWithSnapshot", { snapshot }) : t("recovered"));
   });
 
   // in the browser preview the demo lives in the browser's storage: reloading the page is reopening it
-  const openDemo = run(async () => show(await createDemoProject(inTauri ? memoryFs() : previewFs(true))));
+  // with a second article, a letter, to try two manuscripts in their tabs (record 0044)
+  // one at a time: two clicks would build two demos over the same browser storage
+  const opening = useRef(false);
+  const openDemo = run(async () => {
+    if (opening.current) return;
+    opening.current = true;
+    try { await show(await createDemoProject(inTauri ? memoryFs() : previewFs(true), "corte-vertical", { letter: true })); } finally { opening.current = false; }
+  });
   const reopenPreview = run(async () => show(await loadProject(previewFs(false))));
   const wordInput = useRef<HTMLInputElement>(null);
   // a new project from a Word document: in the app, into an empty folder the user chooses
@@ -209,8 +316,100 @@ export function App() {
   });
   const open = run(async () => {
     const r = await openFolder();
-    if (r) show(await loadProject(r.fs));
+    if (r) await show(await loadProject(r.fs));
   });
+
+  // ---------------------------------------------------------------- tabs and panels
+
+  const openTab = (k: CenterTab) => {
+    setTabs((ts) => (ts.includes(k) ? ts : [...ts, k]));
+    setTab(k);
+  };
+  /**
+   * Shows another article's manuscript: what is on screen is saved first, its editor state
+   * (with its undo history) is kept, and the other article's is restored or loaded.
+   */
+  const switchArticle = run(async (folder: string) => {
+    if (!project || !editor) return;
+    if (folder === article?.folder) { openTab(`doc:${folder}`); return; }
+    const next = project.articles.find((a) => a.folder === folder);
+    if (!next) return;
+    if (dirty) await save();
+    if (article) editorStates.current.set(article.folder, editor.state);
+    editor.view.updateState(editorStates.current.get(folder) ?? freshState(next.documents.get(BODY)!.doc as PMNode));
+    editVersion.current++;
+    dirtySince.current = null;
+    setDirty(false);
+    setLastSaved(null);
+    setSelected(null);
+    setNavActive(null);
+    setProposals(null);
+    setActiveFolder(folder);
+    openTab(`doc:${folder}`);
+  });
+  const selectTab = (k: CenterTab) => { if (isDoc(k)) void switchArticle(k.slice(4)); else setTab(k); };
+  const closeTab = (k: CenterTab) => {
+    const docs = tabs.filter(isDoc);
+    // a manuscript tab closes only while another one stays open
+    if (isDoc(k) && docs.length < 2) return;
+    setTabs((ts) => ts.filter((x) => x !== k));
+    if (isDoc(k)) {
+      editorStates.current.delete(k.slice(4));
+      if (k === docTab) void switchArticle(docs.find((d) => d !== k)!.slice(4));
+    } else if (tab === k) setTab(docTab);
+    if (k === "library" && view === "library") setView("article");
+  };
+  const chooseView = (v: View) => {
+    setView(v);
+    if (!settings.left) updateSettings({ left: true });
+    openTab(v === "library" ? "library" : docTab);
+  };
+  const showRight = (r: RightTab) => { setRightTab(r); if (!settings.right) updateSettings({ right: true }); };
+
+  // ---------------------------------------------------------------- going to things in the text
+
+  /**
+   * Selects the first node that matches and shows it. `focus: false` leaves the focus where
+   * it is: Tiptap's focus() gives it to the text a frame later, which would take it from a
+   * dialog opened right after (Enter would then split the paragraph).
+   */
+  const selectNode = (match: (n: { type: { name: string }; attrs: Record<string, unknown> }) => boolean, focus = true) => {
+    if (!editor) return false;
+    let target = -1;
+    editor.state.doc.descendants((node, pos) => {
+      if (target >= 0) return false;
+      if (match(node as never)) target = pos;
+      return true;
+    });
+    if (target < 0) return false;
+    openTab(docTab);
+    const node = editor.state.doc.nodeAt(target)!;
+    const chain = focus ? editor.chain().focus() : editor.chain();
+    (node.isAtom ? chain.setNodeSelection(target) : chain.setTextSelection(target + 1)).scrollIntoView().run();
+    // a heading at the top of the page, not just inside it
+    requestAnimationFrame(() => (editor.view.nodeDOM(target) as HTMLElement | null)?.scrollIntoView?.({ block: node.isInline ? "center" : "start", behavior: "smooth" }));
+    return true;
+  };
+  const goToBlock = (block: string) => selectNode((n) => n.attrs.id === block);
+  const goToPart = (id: string) => selectNode((n) => (n.type.name === "tableRef" || n.type.name === "figureRef") && n.attrs.id === id);
+  const goToCitation = (id: string, focus = true) => selectNode((n) => n.type.name === "citation" && n.attrs.id === id, focus);
+  // a warning takes to its block: in the text, or to the table or figure it is in
+  const goTo = (w: CheckWarning) => {
+    if (!w.where) return;
+    if (w.where.path === BODY) goToBlock(w.where.block);
+    else selectNode((n) => (n.type.name === "tableRef" || n.type.name === "figureRef") && n.attrs.src === w.where!.path);
+  };
+  const onNav = (target: NavTarget) => {
+    setNavActive(target);
+    if (target.kind === "block") goToBlock(target.block);
+    else if (target.kind === "part") { goToPart(target.id); setSelected({ kind: "part", id: target.id, part: target.part }); showRight("details"); }
+    else if (target.kind === "abstract") { setSelected({ kind: "abstract", lang: target.lang }); showRight("details"); }
+    else if (target.kind === "title-page") { setSelected({ kind: "title-page" }); showRight("details"); }
+    else { setAuthorsTab(target.kind === "credit" ? "credit" : "authors"); openTab("authors"); }
+  };
+
+  // ---------------------------------------------------------------- citing and inserting
+
   // quick citation: on a selected citation it edits that one, otherwise it inserts a new one
   const openQuickCite = useCallback(() => {
     if (!editor || !project) return;
@@ -218,7 +417,8 @@ export function App() {
     if (sel instanceof NodeSelection && sel.node.type.name === "citation") setCiting({ pos: sel.from, items: sel.node.attrs.items as CiteItem[] });
     else setCiting({ pos: null, items: [] });
   }, [editor, project]);
-  useEffect(() => { hooks.quickCite = openQuickCite; }, [openQuickCite]);
+  const openXref = useCallback(() => { if (project) setXrefOpen(true); }, [project]);
+  useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; }, [openQuickCite, openXref]);
   const finishCitation = (items: CiteItem[]) => {
     if (!editor || !citing) return;
     const pos = citing.pos;
@@ -227,25 +427,40 @@ export function App() {
     else editor.chain().focus().command(({ tr }) => { tr.setNodeMarkup(pos, undefined, { ...tr.doc.nodeAt(pos)!.attrs, items }); return true; }).run();
   };
   const closeQuickCite = () => { setCiting(null); editor?.commands.focus(); };
+  // a cross-reference: "tabla " and the number, unless the word is already typed before it
+  const insertXref = (p: OutlinePart, kind: "table" | "figure") => {
+    setXrefOpen(false);
+    if (!editor) return;
+    openTab(docTab);
+    const word = t(kind === "table" ? "ui.tableWord" : "ui.figureWord");
+    const { from } = editor.state.selection;
+    const before = editor.state.doc.textBetween(Math.max(0, from - word.length - 1), from, " ", " ").toLowerCase();
+    const typed = before.endsWith(`${word.toLowerCase()} `);
+    const content: object[] = [...(typed ? [] : [{ type: "text", text: `${word} ` }]), { type: "xref", attrs: { target: p.id } }];
+    editor.chain().focus().insertContent(content as never).run();
+  };
+  const insertTable = run(async () => {
+    if (!project || !article || !editor) return;
+    const { ref, path } = await addEmptyTable(project, article.folder);
+    openTab(docTab);
+    editor.chain().focus().insertContent(ref as never).run();
+    setMessage(t("ui.tableAdded", { path }));
+  });
+  const insertFigure = run(async () => {
+    const file = figureInput.current?.files?.[0];
+    if (figureInput.current) figureInput.current.value = "";
+    if (!file || !project || !article || !editor) return;
+    const { ref, path } = await addFigure(project, article.folder, { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) });
+    openTab(docTab);
+    editor.chain().focus().insertContent(ref as never).run();
+    setMessage(t("ui.figureAdded", { path }));
+  });
+
   const chooseStyle = run(async (id: string) => {
     if (!project || !article) return;
     await setCitationStyle(project, article.folder, id);
     await recompute();
   });
-  // a warning takes to its block: in the text, or to the table or figure it is in
-  const goTo = (w: CheckWarning) => {
-    if (!editor || !w.where) return;
-    let target = -1;
-    editor.state.doc.descendants((node, pos) => {
-      if (target >= 0) return false;
-      if (w.where!.path === BODY ? node.attrs.id === w.where!.block : (node.type.name === "tableRef" || node.type.name === "figureRef") && node.attrs.src === w.where!.path) target = pos;
-      return true;
-    });
-    if (target < 0) return;
-    const node = editor.state.doc.nodeAt(target)!;
-    const chain = editor.chain().focus();
-    (node.isAtom ? chain.setNodeSelection(target) : chain.setTextSelection(target + 1)).scrollIntoView().run();
-  };
   const ignore = async (w: CheckWarning, status: "correct" | "not-applicable", note: string) => {
     if (!project || !article) return;
     await ignoreWarning(project, article.folder, w.id, status, note);
@@ -284,8 +499,12 @@ export function App() {
   const removeReference = async (id: string) => {
     if (!project || !article || !editor) return;
     await deleteReference(project, id, { [`${article.folder}/${BODY}`]: editor.getJSON() as PMNode });
+    if (selected?.kind === "reference" && selected.id === id) setSelected(null);
     libraryChanged(t("refDeleted"));
   };
+
+  // ---------------------------------------------------------------- exporting and importing
+
   const exportAs = (kind: "coauthors" | "journal" | "title-page") => run(async () => {
     if (!project || !article) return;
     await save();
@@ -293,8 +512,8 @@ export function App() {
       ? { ...(await exportTitlePage(project, article.folder, resources)), snapshot: null }
       : await exportDocx(project, article.folder, kind, resources);
     // in the browser preview the file is offered as a link, never downloaded on its own
-    if (!inTauri) setDownload({ url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
-    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
+    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""),
+      inTauri ? null : { url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
   });
   // the PDF for the journal (record 0040): Typst in Rust; the browser preview offers the Typst source instead
   const exportPdfFile = run(async () => {
@@ -303,21 +522,17 @@ export function App() {
     const compile = await typstCompiler();
     if (!compile) {
       const b = await manuscriptTypst(project, article.folder, resources);
-      setDownload({ url: URL.createObjectURL(new Blob([b.source], { type: "text/plain" })), name: `${article.folder}.typ` });
-      setMessage(t("pdfInBrowser") + (b.warnings.length ? ` — ${b.warnings.join("; ")}` : ""));
+      setMessage(t("pdfInBrowser") + (b.warnings.length ? ` — ${b.warnings.join("; ")}` : ""), { url: URL.createObjectURL(new Blob([b.source], { type: "text/plain" })), name: `${article.folder}.typ` });
       return;
     }
     const r = await exportPdf(project, article.folder, resources, compile);
     setMessage(t("pdfExported", { path: r.path, pages: r.pages }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
   });
-  const onCopy = run(async () => {
-    const file = fileInput.current?.files?.[0];
-    if (!file || !project || !article) return;
-    if (!returnedBy.trim()) { if (fileInput.current) fileInput.current.value = ""; throw new Error(t("needReturnedBy")); }
-    const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy.trim() } });
-    setProposals(r.set);
-    if (fileInput.current) fileInput.current.value = "";
-  });
+  const importReturnedCopy = async (file: File, returnedBy: string) => {
+    if (!project || !article) return;
+    const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
+    setProposals({ set: r.set, name: returnedBy });
+  };
 
   const onRefs = run(async () => {
     const file = refsInput.current?.files?.[0];
@@ -329,103 +544,315 @@ export function App() {
     if (refsInput.current) refsInput.current.value = "";
   });
 
+  // ---------------------------------------------------------------- shortcuts outside the text
+
+  const shortcutRef = useRef<(e: KeyboardEvent) => void>(() => {});
+  shortcutRef.current = (e: KeyboardEvent) => {
+    if (e.defaultPrevented) return;
+    const action = actionFor(scheme, comboOf(e));
+    if (!action) return;
+    if (action === "save") { e.preventDefault(); void run(save)(); }
+    else if (action === "cite" && project && !citing) { e.preventDefault(); openQuickCite(); }
+    else if (action === "xref" && project) { e.preventDefault(); openXref(); }
+    // a text format pressed outside the text does nothing (and not the browser's Ctrl+S)
+    else if (EDITOR_ACTIONS.includes(action)) e.preventDefault();
+  };
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => shortcutRef.current(e);
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, []);
+
+  // ---------------------------------------------------------------- menus
+
+  const exportItems: MenuEntry[] = [
+    { label: t("ui.export.coauthors"), hint: t("ui.export.coauthorsHint"), onSelect: () => void exportAs("coauthors")(), disabled: !project },
+    { label: t("ui.export.journal"), hint: t("ui.export.journalHint"), onSelect: () => void exportAs("journal")(), disabled: !project },
+    { label: t("ui.export.pdf"), hint: inTauri ? t("ui.export.pdfHint") : t("ui.export.pdfHintBrowser"), onSelect: () => void exportPdfFile(), disabled: !project },
+    { label: t("ui.export.titlePage"), hint: t("ui.export.titlePageHint"), onSelect: () => void exportAs("title-page")(), disabled: !project },
+  ];
+  const noProject = !project;
+  const menus: MenuDef[] = [
+    { id: "file", label: t("ui.menu.file"), items: [
+      ...(inTauri ? [{ label: t("open"), onSelect: () => void open() }] : []),
+      { label: t("demo"), onSelect: () => void openDemo() },
+      ...(!inTauri && hasPreviewProject() ? [{ label: t("reopenPreview"), onSelect: () => void reopenPreview() }] : []),
+      { label: t("fromWord"), onSelect: () => wordInput.current?.click() },
+      "-",
+      { label: t("ui.saveNow"), shortcut: keys("save"), onSelect: () => void run(save)(), disabled: noProject },
+      "-",
+      ...exportItems.map((e) => (e === "-" ? e : { ...e, hint: undefined, label: `${t("ui.exportPrefix")} ${e.label}` })),
+    ] },
+    { id: "edit", label: t("ui.menu.edit"), items: [
+      { label: t("ui.undo"), shortcut: keys("undo"), onSelect: () => editor?.chain().focus().undo().run(), disabled: noProject },
+      { label: t("ui.redo"), shortcut: keys("redo"), onSelect: () => editor?.chain().focus().redo().run(), disabled: noProject },
+      "-",
+      { label: t("ui.pastePlain"), shortcut: shortcutLabel("Mod-Shift-v", i18n.language), onSelect: () => {}, disabled: true, title: t("ui.pastePlainHint") },
+      { label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor?.chain().focus().selectAll().run(), disabled: noProject },
+    ] },
+    { id: "insert", label: t("ui.menu.insert"), items: [
+      { label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite, disabled: noProject },
+      { label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref, disabled: noProject },
+      "-",
+      { label: t("ui.insertTable"), onSelect: () => void insertTable(), disabled: noProject },
+      { label: t("ui.insertFigure"), onSelect: () => figureInput.current?.click(), disabled: noProject },
+      { label: t("ui.pending"), onSelect: () => editor?.chain().focus().insertContent(t("ui.pendingMarker")).run(), disabled: noProject },
+    ] },
+    { id: "references", label: t("ui.menu.references"), items: [
+      { label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite, disabled: noProject },
+      { label: t("importRefs"), onSelect: () => refsInput.current?.click(), disabled: noProject },
+      { label: t("ui.openLibrary"), onSelect: () => chooseView("library"), disabled: noProject },
+    ] },
+    { id: "review", label: t("ui.menu.review"), items: [
+      { label: t("ui.warnings"), onSelect: () => showRight("warnings"), disabled: noProject },
+      { label: t("importCopy"), onSelect: () => showRight("review"), disabled: noProject },
+      { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
+    ] },
+    { id: "view", label: t("ui.menu.view"), items: [
+      { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
+      { label: t("ui.views.library"), checked: view === "library", onSelect: () => chooseView("library"), disabled: noProject },
+      "-",
+      { label: t("ui.leftPanel"), checked: settings.left, onSelect: () => updateSettings({ left: !settings.left }) },
+      { label: t("ui.rightPanel"), checked: settings.right, onSelect: () => updateSettings({ right: !settings.right }) },
+    ] },
+    { id: "settings", label: t("ui.settings"), items: [
+      { label: t("ui.openSettings"), onSelect: () => openTab("settings") },
+      "-",
+      { label: "Español", checked: settings.lang === "es", onSelect: () => updateSettings({ lang: "es" }) },
+      { label: "English", checked: settings.lang === "en", onSelect: () => updateSettings({ lang: "en" }) },
+      "-",
+      { label: t("ui.schemes.word-es"), checked: scheme === "word-es", onSelect: () => updateSettings({ scheme: "word-es" }) },
+      { label: t("ui.schemes.international"), checked: scheme === "international", onSelect: () => updateSettings({ scheme: "international" }) },
+    ] },
+    { id: "help", label: t("ui.menu.help"), items: [
+      { label: t("ui.shortcutsHelp"), onSelect: () => openTab("settings") },
+      { label: t("ui.about"), onSelect: () => setMessage(`SciDesk 0.1 · AGPL-3.0 · ${t("attribution")}`) },
+    ] },
+  ];
+
+  // the right-click menu, on what is under the pointer
+  const onContextMenu = (e: React.MouseEvent) => {
+    if (!editor || !project) return;
+    e.preventDefault();
+    const at = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+    const node = at && at.inside >= 0 ? editor.state.doc.nodeAt(at.inside) : null;
+    // without focus(): it would take the focus back from the menu a frame later
+    if (node?.isAtom && at) editor.commands.setNodeSelection(at.inside);
+    else if (at && editor.state.selection.empty) editor.commands.setTextSelection(at.pos);
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+  const contextItems = (): MenuEntry[] => {
+    if (!editor) return [];
+    const sel = editor.state.selection;
+    const onCitation = sel instanceof NodeSelection && sel.node.type.name === "citation";
+    const exec = (cmd: "cut" | "copy") => { editor.commands.focus(); document.execCommand(cmd); };
+    return [
+      ...(onCitation ? [
+        { label: t("ui.editCitation"), shortcut: keys("cite"), onSelect: openQuickCite },
+        { label: t("ui.removeCitation"), onSelect: () => editor.chain().focus().deleteSelection().run() },
+        "-" as const,
+      ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }]),
+      { label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref },
+      { label: t("ui.pending"), onSelect: () => editor.chain().focus().insertContent(t("ui.pendingMarker")).run() },
+      "-",
+      { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
+      { label: t("ui.copy"), shortcut: shortcutLabel("Mod-c", i18n.language), onSelect: () => exec("copy"), disabled: sel.empty },
+      { label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor.chain().focus().selectAll().run() },
+    ];
+  };
+
+  // ---------------------------------------------------------------- panel widths
+
+  const drag = (side: "left" | "right") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    const start = e.clientX;
+    const from = side === "left" ? settings.leftWidth : settings.rightWidth;
+    const el = document.documentElement;
+    let width = from;
+    const move = (m: PointerEvent) => {
+      width = Math.max(200, Math.min(520, from + (side === "left" ? m.clientX - start : start - m.clientX)));
+      el.style.setProperty(side === "left" ? "--left-width" : "--right-width", `${width}px`);
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      updateSettings(side === "left" ? { leftWidth: width } : { rightWidth: width });
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  useEffect(() => {
+    document.documentElement.style.setProperty("--left-width", `${settings.leftWidth}px`);
+    document.documentElement.style.setProperty("--right-width", `${settings.rightWidth}px`);
+  }, [settings.leftWidth, settings.rightWidth]);
+
+  // ---------------------------------------------------------------- the window
+
+  const activeWarnings = report?.warnings.filter((w) => !w.ignored && w.level !== "info").length ?? 0;
+  const shownProposals = proposals?.set.proposals.filter((p) => p.status !== "noise-hidden").length ?? 0;
+  const titleText = outline?.title?.text || t("ui.untitled");
+  const left = !!project && settings.left;
+  const right = !!project && settings.right;
+  const targets = { tables: outline?.tables ?? [], figures: outline?.figures ?? [] };
+  const tabLabel = (k: CenterTab) => {
+    if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : t("ui.settings");
+    const a = project?.articles.find((x) => x.folder === k.slice(4));
+    const title = a === article ? outline?.title?.text : a ? savedTitle(a) : "";
+    return title || t("ui.manuscript");
+  };
+
   return (
-    <div className="app">
-      <header>
-        <strong>SciDesk</strong>
-        {inTauri && <button onClick={open}>{t("open")}</button>}
-        <button onClick={openDemo}>{t("demo")}</button>
-        {!inTauri && !project && hasPreviewProject() && <button onClick={reopenPreview}>{t("reopenPreview")}</button>}
-        <label className="file-button">{t("fromWord")}<input ref={wordInput} type="file" accept=".docx" onChange={fromWord} /></label>
-        <span className="spacer" />
-        <button onClick={() => void i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}>{t("language")}</button>
+    <div className={`app${left ? " with-left" : ""}${right ? " with-right" : ""}${project ? " with-ribbon" : ""}`}>
+      <header className="titlebar">
+        <span className="brand"><span className="brand-mark" aria-hidden="true">S</span>SciDesk</span>
+        <MenuBar menus={menus} label={t("ui.menus")} />
+        <span className="crumb" title={project ? `${project.manifest.name} › ${titleText}` : undefined}>
+          {project && <><span>{project.manifest.name}</span><Icon name="chevronRight" size={14} /><b>{titleText}</b></>}
+        </span>
+        {!inTauri && <span className="preview-badge" title={t("previewNote")}>{t("ui.browserPreview")}</span>}
+        <MenuButton id="export-button" label={t("ui.export.button")} className="btn primary export" items={exportItems} align="right">
+          {t("ui.export.button")} <Icon name="chevronDown" size={14} />
+        </MenuButton>
       </header>
-      {!inTauri && <p className="note">{t("previewNote")}</p>}
-      {error && <p className="error" role="alert">{error}</p>}
-      {!project ? <p className="empty">{t("noProject")}</p> : (
-        <main>
-          <section className="editor-column">
-            <div className="toolbar">
-              <button onClick={run(save)} disabled={!dirty}>{t("save")}</button>
-              <span className="status" aria-live="polite">{saving ? t("saving") : dirty ? t("unsaved") : lastSaved ? t("savedAt", { time: lastSaved.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit", second: "2-digit" }) }) : t("saved")}</span>
-              {/* colour and highlight (record 0043); the final toolbar comes with the interface skeleton */}
-              <select value="" aria-label={t("textColor")} title={t("textColor")} onChange={(e) => {
-                const v = e.target.value;
-                if (!editor || !v) return;
-                const c = editor.chain().focus();
-                (v === "auto" ? c.unsetMark("textColor") : c.setMark("textColor", { color: v })).run();
-              }}>
-                <option value="">{t("textColor")}</option>
-                <option value="auto">{t("colorAuto")}</option>
-                {TEXT_COLORS.map(([hex, key]) => <option key={hex} value={hex} style={{ color: hex }}>■ {t(`colors.${key}`)}</option>)}
-              </select>
-              <select value="" aria-label={t("highlightColor")} title={t("highlightColor")} onChange={(e) => {
-                const v = e.target.value;
-                if (!editor || !v) return;
-                const c = editor.chain().focus();
-                (v === "none" ? c.unsetMark("highlight") : c.setMark("highlight", { color: v })).run();
-              }}>
-                <option value="">{t("highlightColor")}</option>
-                <option value="none">{t("highlightNone")}</option>
-                {HIGHLIGHTS.map((h) => <option key={h} value={h}>{t(`highlights.${h}`)}</option>)}
-              </select>
-              <button onClick={openQuickCite} title={t("quickCiteShortcut")}>{t("cite")}</button>
-              <select value={article!.article.citationStyle.id} onChange={(e) => void chooseStyle(e.target.value)} aria-label={t("citationStyle")} title={t("citationStyle")}>
-                {!BUNDLED_STYLES.some((s) => s.id === article!.article.citationStyle.id) && <option value={article!.article.citationStyle.id}>{article!.article.citationStyle.id}</option>}
-                {BUNDLED_STYLES.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <label className="file-button">{t("importRefs")}<input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" onChange={onRefs} /></label>
-              <button onClick={exportAs("coauthors")}>{t("exportDocx")}</button>
-              <button onClick={exportAs("journal")}>{t("exportJournal")}</button>
-              <button onClick={exportPdfFile}>{t("exportPdf")}</button>
-              <button onClick={() => setEditingAuthors(true)}>{t("authors")}</button>
-              <button onClick={exportAs("title-page")}>{t("exportTitlePage")}</button>
-            </div>
-            <EditorContent editor={editor} className="page" />
-            {rendering && rendering.bibliography.length > 0 && (
-              <ol className="bibliography">
-                {rendering.bibliography.map((b) => (
-                  <li key={b.ref}>
-                    {b.label && <span className="bib-label">{b.label}</span>}
-                    <span>{b.runs.map((r, i) => <span key={i} style={{ fontWeight: r.bold ? 700 : undefined, fontStyle: r.italic ? "italic" : undefined, verticalAlign: r.sup ? "super" : r.sub ? "sub" : undefined, fontSize: r.sup || r.sub ? "smaller" : undefined }}>{r.text}</span>)}</span>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </section>
-          <aside>
-            <div className="tabs" role="tablist">
-              <button role="tab" aria-selected={panel === "library"} onClick={() => setPanel("library")}>{t("library")}</button>
-              <button role="tab" aria-selected={panel === "checks"} onClick={() => setPanel("checks")}>
-                {t("checksTab")}{report && report.warnings.some((w) => !w.ignored && w.level !== "info") ? ` (${report.warnings.filter((w) => !w.ignored && w.level !== "info").length})` : ""}
-              </button>
-              <button role="tab" aria-selected={panel === "proposals"} onClick={() => setPanel("proposals")}>{t("proposals")}</button>
-            </div>
-            {panel === "checks" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} />}
-            {panel === "library" ? <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} /> : panel === "checks" ? null : <>
-            <label>{t("returnedBy")} <input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
-            <label className="file">{t("importCopy")} <input ref={fileInput} type="file" accept=".docx" onChange={onCopy} /></label>
-            {proposals && (proposals.proposals.filter((p) => p.status !== "noise-hidden").length === 0
-              ? <p>{t("noProposals")}</p>
-              : (
-                <ul className="proposals">
-                  {proposals.proposals.filter((p) => p.status !== "noise-hidden").map((p) => (
-                    <li key={p.id}>
-                      <span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <b>{p.author.name}</b> {t(`kinds.${p.kind}`)}
-                      <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>
-                    </li>
-                  ))}
-                </ul>
-              ))}
-            {proposals && <p className="integrity">{proposals.integrity === "ok" ? t("integrityOk") : t("integrityBad")}</p>}
-            </>}
+
+      {/* the toolbar across the whole window; the side panels start under it (the user's choice, record 0044) */}
+      {project && editor && (
+        <div className="ribbon-row">
+          <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)} />
+        </div>
+      )}
+      <div className="workspace">
+        <nav className="viewbar" aria-label={t("ui.views.label")}>
+          {(["article", "library"] as View[]).map((v) => (
+            <button key={v} className={`view-button${view === v && project ? " active" : ""}`} aria-pressed={view === v && !!project} disabled={!project} onClick={() => chooseView(v)}>
+              <Icon name={v === "article" ? "article" : "library"} size={20} /><span>{t(`ui.views.${v}`)}</span>
+            </button>
+          ))}
+          <span className="spacer" />
+          <button className={`view-button${tab === "settings" ? " active" : ""}`} onClick={() => openTab("settings")}><Icon name="settings" size={20} /><span>{t("ui.settings")}</span></button>
+        </nav>
+
+        {left && (
+          <aside className="left-panel">
+            {view === "article"
+              ? <Navigator project={project!} folder={article!.folder} report={report} outline={outline} active={navActive} onGo={onNav}
+                  articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} />
+              : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} />}
           </aside>
+        )}
+        {left && <div className="resizer" role="separator" aria-orientation="vertical" aria-label={t("ui.leftPanel")} onPointerDown={drag("left")} />}
+
+        <main className="center">
+          <div className="tabbar" role="tablist" aria-label={t("ui.openTabs")}>
+            {(project ? tabs : tabs.filter((k) => k === "settings")).map((k) => (
+              <div key={k} className={`tab${tab === k ? " active" : ""}`}>
+                <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
+                {(!isDoc(k) || tabs.filter(isDoc).length > 1) && <button className="tab-close" aria-label={t("ui.closeTab", { name: tabLabel(k) })} onClick={() => closeTab(k)}><Icon name="close" size={13} /></button>}
+              </div>
+            ))}
+            <span className="spacer" />
+            {project && <>
+              <button className="icon-button" aria-pressed={settings.left} title={t("ui.leftPanel")} aria-label={t("ui.leftPanel")} onClick={() => updateSettings({ left: !settings.left })}><Icon name="panelLeft" size={16} /></button>
+              <button className="icon-button" aria-pressed={settings.right} title={t("ui.rightPanel")} aria-label={t("ui.rightPanel")} onClick={() => updateSettings({ right: !settings.right })}><Icon name="panelRight" size={16} /></button>
+            </>}
+          </div>
+          {error && <p className="error-banner" role="alert">{error}<button className="icon-button" aria-label={t("ui.close")} onClick={() => setError("")}><Icon name="close" size={14} /></button></p>}
+
+          {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
+          <div className="tab-body manuscript-tab" hidden={!project || !isDoc(tab)}>
+            <div className="desk">
+              <div className="paper" onContextMenu={onContextMenu}>
+                <EditorContent editor={editor} className="page" />
+                {rendering && rendering.bibliography.length > 0 && (
+                  <section className="bibliography" aria-label={t("ui.bibliography")}>
+                    <p className="part-note">{t("ui.bibliographyAuto")}</p>
+                    <ol>
+                      {rendering.bibliography.map((b) => (
+                        <li key={b.ref}>
+                          {b.label && <span className="bib-label">{b.label}</span>}
+                          <span>{b.runs.map((r, i) => <span key={i} style={{ fontWeight: r.bold ? 700 : undefined, fontStyle: r.italic ? "italic" : undefined, verticalAlign: r.sup ? "super" : r.sub ? "sub" : undefined, fontSize: r.sup || r.sub ? "smaller" : undefined }}>{r.text}</span>)}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
+                )}
+              </div>
+            </div>
+            {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} />}
+          </div>
+
+          {project && tab === "library" && (
+            <div className="tab-body library-tab">
+              <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} filter={libraryFilter}
+                onSelect={(id) => { setSelected({ kind: "reference", id }); showRight("details"); }} />
+            </div>
+          )}
+          {project && article && tabs.includes("authors") && (
+            <div className="tab-body authors-tab" hidden={tab !== "authors"}>
+              <AuthorsDialog key={`${authorsKey}-${article.folder}`} asView project={project} folder={article.folder} initialTab={authorsTab} onDirty={setAuthorsDirty}
+                onClose={() => setAuthorsKey((k) => k + 1)}
+                onSaved={(n) => { setAuthorsKey((k) => k + 1); setMessage(n ? t("authorsSavedWarnings", { count: n }) : t("authorsSaved")); void recompute(); }} />
+            </div>
+          )}
+          {tab === "settings" && <div className="tab-body settings-tab"><SettingsView settings={settings} onChange={updateSettings} /></div>}
+
+          {!project && tab !== "settings" && (
+            <div className="tab-body start">
+              <div className="start-card">
+                <h1>SciDesk</h1>
+                <p className="muted">{t("noProject")}</p>
+                <div className="start-actions">
+                  <button className="btn primary" onClick={() => void openDemo()}>{t("demo")}</button>
+                  <button className="btn" onClick={() => wordInput.current?.click()}>{t("fromWord")}</button>
+                  {inTauri && <button className="btn" onClick={() => void open()}>{t("open")}</button>}
+                  {!inTauri && hasPreviewProject() && <button className="btn" onClick={() => void reopenPreview()}>{t("reopenPreview")}</button>}
+                </div>
+                {!inTauri && <p className="muted small">{t("previewNote")}</p>}
+                <p className="muted small">{t("ui.startLater")}</p>
+              </div>
+            </div>
+          )}
         </main>
+
+        {right && <div className="resizer" role="separator" aria-orientation="vertical" aria-label={t("ui.rightPanel")} onPointerDown={drag("right")} />}
+        {right && (
+          <aside className="right-panel" aria-label={t("ui.rightPanel")}>
+            <div className="tabs right-tabs" role="tablist">
+              <button role="tab" aria-selected={rightTab === "warnings"} onClick={() => setRightTab("warnings")}>{t("ui.warnings")}{activeWarnings ? <span className="count">{activeWarnings}</span> : null}</button>
+              <button role="tab" aria-selected={rightTab === "review"} onClick={() => setRightTab("review")}>{t("ui.review")}{shownProposals ? <span className="count">{shownProposals}</span> : null}</button>
+              <button role="tab" aria-selected={rightTab === "details"} onClick={() => setRightTab("details")}>{t("ui.details")}</button>
+            </div>
+            <div className="right-body">
+              {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} />}
+              {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} />}
+              {rightTab === "details" && (
+                <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}
+                  onEditCitation={() => { if (selected?.kind === "citation") goToCitation(selected.id, false); openQuickCite(); }}
+                  onGoCitation={goToCitation} onGoPart={goToPart}
+                  onOpenReference={(id) => { setSelected({ kind: "reference", id }); }}
+                  onExportTitlePage={() => void exportAs("title-page")()}
+                  onOpenAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }} />
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
+
+      {message && (
+        <div className="toast" role="status">
+          <span>{message}{download && <> · <a href={download.url} download={download.name}><Icon name="download" size={14} /> {download.name}</a></>}</span>
+          <button className="icon-button" aria-label={t("ui.close")} onClick={() => setMessage("")}><Icon name="close" size={14} /></button>
+        </div>
       )}
-      {editingAuthors && project && article && (
-        <AuthorsDialog project={project} folder={article.folder} onClose={() => setEditingAuthors(false)}
-          onSaved={(n) => { setEditingAuthors(false); setMessage(n ? t("authorsSavedWarnings", { count: n }) : t("authorsSaved")); }} />
-      )}
+      <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
+        onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }} />
+
+      {/* hidden file inputs, opened from the menus and buttons */}
+      <input ref={wordInput} type="file" accept=".docx" hidden onChange={() => void fromWord()} aria-label={t("fromWord")} />
+      <input ref={refsInput} type="file" accept=".ris,.nbib,.txt,.bib,.json" hidden onChange={() => void onRefs()} aria-label={t("importRefs")} />
+      <input ref={figureInput} type="file" accept=".png,.jpg,.jpeg,.tif,.tiff,.svg" hidden onChange={() => void insertFigure()} aria-label={t("ui.insertFigure")} />
+
+      {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} items={contextItems()} label={t("ui.contextMenu")} onClose={() => setContextMenu(null)} />}
       {recoveries[0] && (
         <div className="overlay">
           <div className="recovery-dialog" role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">
@@ -434,15 +861,15 @@ export function App() {
             {recoveries[0].state === "disk-changed" && <p className="field-error">{t("recoveryDiskChanged")}</p>}
             <div className="dialog-actions">
               <span className="spacer" />
-              <button onClick={() => void recover(recoveries[0], false)}>{t("recoveryDiscard")}</button>
-              <button onClick={() => void recover(recoveries[0], true)} autoFocus>{t("recoveryApply")}</button>
+              <button className="btn" onClick={() => void recover(recoveries[0], false)}>{t("recoveryDiscard")}</button>
+              <button className="btn primary" onClick={() => void recover(recoveries[0], true)} autoFocus>{t("recoveryApply")}</button>
             </div>
           </div>
         </div>
       )}
       {citing && project && <QuickCite library={project.library} initial={citing.items} uses={uses} onDone={finishCitation} onClose={closeQuickCite} />}
-      {message && <p className="message">{message}{download && <> · <a href={download.url} download={download.name}>{download.name}</a></>}</p>}
-      <footer>{t("attribution")}</footer>
+      {xrefOpen && <XrefPicker targets={targets} onPick={insertXref} onClose={() => { setXrefOpen(false); editor?.commands.focus(); }} />}
     </div>
   );
 }
+

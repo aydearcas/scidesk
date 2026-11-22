@@ -2,13 +2,14 @@
   "name": "@scidesk/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "SciDesk desktop app (Tauri 2 + React + Tiptap). Vertical slice.",
+  "description": "SciDesk desktop app (Tauri 2 + React + Tiptap).",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "tauri": "tauri"
   },
   "devDependencies": {

@@ -1,13 +1,18 @@
 // The minimal checks panel (PLAN 5.8, R12, R43, record 0041): word counts against the
 // journal's limits, by section; warnings in three levels, each taking to its place; and
 // marking a warning "correct" or "not applicable", with an optional note, so that it does
-// not come back (it stays listed among the ignored ones, and can be restored).
+// not come back (it stays listed among the ignored ones, and can be restored). Since record
+// 0044 it is the "Warnings" tab of the right panel, grouped by level, each level with its
+// colour and its shape (blocking: octagon; worth checking: triangle; information: circle).
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CheckReport, CheckWarning } from "@scidesk/core";
+import type { CheckLevel, CheckReport, CheckWarning } from "@scidesk/core";
+import { LevelIcon } from "./icons.tsx";
 
-export function ChecksPanel({ report, onGo, onIgnore, onRestore }: {
+export function ChecksPanel({ report, onGo, onIgnore, onRestore, showSections = false }: {
   report: CheckReport | null;
+  /** Open the words by section (from the status bar). */
+  showSections?: boolean;
   onGo: (w: CheckWarning) => void;
   onIgnore: (w: CheckWarning, status: "correct" | "not-applicable", note: string) => Promise<void>;
   onRestore: (w: CheckWarning) => Promise<void>;
@@ -26,7 +31,7 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore }: {
 
   const item = (w: CheckWarning) => (
     <li key={w.id} className={`check ${w.level}`}>
-      <div><span className={`tag level-${w.level}`}>{t(`levels.${w.level}`)}</span> {message(w)}{place(w) && <span className="muted"> · {place(w)}</span>}</div>
+      <div className="check-text"><LevelIcon level={w.level} /><span><span className="sr-only">{t(`levels.${w.level}`)}: </span>{message(w)}{place(w) && <span className="muted"> · {place(w)}</span>}</span></div>
       {w.ignored ? (
         <div className="check-actions">
           <span className="muted">{t(`ignoredAs.${w.ignored.status}`)}{w.ignored.note ? `: ${w.ignored.note}` : ""}</span>
@@ -40,9 +45,9 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore }: {
         </form>
       ) : (
         <div className="check-actions">
-          {canGo(w) && <button onClick={() => onGo(w)}>{t("goTo")}</button>}
-          <button onClick={() => setMarking({ id: w.id, status: "correct", note: "" })}>{t("ignoreAs.correct")}</button>
-          <button onClick={() => setMarking({ id: w.id, status: "not-applicable", note: "" })}>{t("ignoreAs.not-applicable")}</button>
+          {canGo(w) && <button className="btn" onClick={() => onGo(w)}>{t("goTo")}</button>}
+          <button className="btn quiet" onClick={() => setMarking({ id: w.id, status: "correct", note: "" })}>{t("ignoreAs.correct")}</button>
+          <button className="btn quiet" onClick={() => setMarking({ id: w.id, status: "not-applicable", note: "" })}>{t("ignoreAs.not-applicable")}</button>
         </div>
       )}
     </li>
@@ -58,13 +63,21 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore }: {
           <tr><th>{t("countTablesFigures")}</th><td>{of(counts.tables, limits.tables)} · {of(counts.figures, limits.figures)}</td></tr>
         </tbody>
       </table>
-      <details>
+      <details open={showSections || undefined}>
         <summary>{t("bySection")}</summary>
         <ul className="sections">
           {counts.sections.map((s, i) => <li key={i} className={s.counted ? "" : "muted"}><span>{s.heading || t("beforeFirstHeading")}</span><span>{s.words}{s.counted ? "" : ` (${t("notCounted")})`}</span></li>)}
         </ul>
       </details>
-      {active.length === 0 ? <p className="muted">{t("noWarnings")}</p> : <ul className="check-list">{active.map(item)}</ul>}
+      {active.length === 0 ? <p className="muted">{t("noWarnings")}</p> : (["blocking", "review", "info"] as CheckLevel[]).map((level) => {
+        const list = active.filter((w) => w.level === level);
+        return list.length ? (
+          <section key={level} className={`check-group ${level}`}>
+            <h4><LevelIcon level={level} size={14} /> {t(`levels.${level}`)} · {list.length}</h4>
+            <ul className="check-list">{list.map(item)}</ul>
+          </section>
+        ) : null;
+      })}
       {ignored.length > 0 && (
         <>
           <button className="link" onClick={() => setShowIgnored((v) => !v)}>{t("ignoredCount", { count: ignored.length })}</button>

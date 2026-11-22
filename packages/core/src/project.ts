@@ -104,36 +104,67 @@ export async function saveJson(project: Project, path: string, value: unknown) {
 const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
 const paragraph = (text: string, lang: string | null = null): PMNode => ({ type: "paragraph", attrs: { id: newId("b"), lang }, content: text ? [{ type: "text", text }] : undefined });
 
-/** A new project with one article: what the "new article" wizard creates (IMRaD, minimal). */
-export async function createProject(fs: ProjectFs, opts: { name: string; fileName: string; title: string; lang?: string }) {
-  if ((await fs.list("")).length) throw new Error("the folder is not empty");
-  const lang = opts.lang ?? "es";
-  const articleId = newId("a");
-  const headings = lang === "es"
-    ? [["Introducción", "introduction"], ["Métodos", "methods"], ["Resultados", "results"], ["Discusión", "discussion"], ["Bibliografía", "references"]]
-    : [["Introduction", "introduction"], ["Methods", "methods"], ["Results", "results"], ["Discussion", "discussion"], ["References", "references"]];
+/** Headings of a new article: IMRaD, or a letter's single body (record 0015). */
+const HEADINGS: Record<string, [string, string][]> = {
+  es: [["Introducción", "introduction"], ["Métodos", "methods"], ["Resultados", "results"], ["Discusión", "discussion"], ["Bibliografía", "references"]],
+  en: [["Introduction", "introduction"], ["Methods", "methods"], ["Results", "results"], ["Discussion", "discussion"], ["References", "references"]],
+};
+const LETTER_HEADINGS: Record<string, [string, string][]> = { es: [["Bibliografía", "references"]], en: [["References", "references"]] };
+
+/** The files of a new article, by path in the project (validated before they are written). */
+function articleFiles(id: string, folder: string, opts: { title: string; lang: string; articleType: string }): Record<string, unknown> {
+  const { lang } = opts;
+  const headings = (opts.articleType === "letter" ? LETTER_HEADINGS : HEADINGS)[lang] ?? HEADINGS.en;
   const body: PMNode[] = [{ type: "title", attrs: { id: newId("b"), lang }, content: [{ type: "text", text: opts.title }] }];
+  if (opts.articleType === "letter") body.push(paragraph(""));
   for (const [text, role] of headings) {
     body.push({ type: "heading", attrs: { id: newId("b"), level: 1, role, lang: null }, content: [{ type: "text", text }] });
     if (role !== "references") body.push(paragraph(""));
   }
   const doc = (documentType: string, content: PMNode[]) => ({ schemaVersion: 1, documentType, lang, doc: { type: "doc", content }, changes: {}, comments: {} });
-  const files: Record<string, unknown> = {
+  const base = `articles/${folder}`;
+  return {
+    [`${base}/article.json`]: { schemaVersion: 1, id, articleType: opts.articleType, lang, translations: [], journal: null, citationStyle: { id: "http://www.zotero.org/styles/reumatologia-clinica-scidesk-prototype" }, referenceTermsLang: null, ignoredWarnings: [] },
+    [`${base}/authors.json`]: { schemaVersion: 1, authors: [] },
+    [`${base}/manuscript/article.scidoc`]: doc("article", body),
+    [`${base}/manuscript/abstract.scidoc`]: doc("abstract", [{ type: "abstractSection", attrs: { id: newId("b"), lang }, content: [paragraph("")] }]),
+  };
+}
+
+async function writeValidated(fs: ProjectFs, files: Record<string, unknown>) {
+  for (const [p, v] of Object.entries(files)) {
+    const issues = validate(formatOfPath(p)!, v, p);
+    if (issues.length) throw new ProjectError("invalid template", issues);
+  }
+  for (const [p, v] of Object.entries(files)) await fs.write(p, stableStringify(v));
+}
+
+/** A new project with one article: what the "new article" wizard creates (IMRaD, minimal). */
+export async function createProject(fs: ProjectFs, opts: { name: string; fileName: string; title: string; lang?: string }) {
+  if ((await fs.list("")).length) throw new Error("the folder is not empty");
+  const lang = opts.lang ?? "es";
+  const articleId = newId("a");
+  await writeValidated(fs, {
     [`${opts.fileName}.scidesk`]: { format: "scidesk-project", schemaVersion: 1, id: crypto.randomUUID(), name: opts.name, created: now(), articles: [{ id: articleId, folder: "main" }], library: { mode: "own" } },
     "references/library.json": { schemaVersion: 1, references: [] },
     "people/people.json": { schemaVersion: 1, affiliations: [], people: [] },
-    "articles/main/article.json": { schemaVersion: 1, id: articleId, articleType: "original", lang, translations: [], journal: null, citationStyle: { id: "http://www.zotero.org/styles/reumatologia-clinica-scidesk-prototype" }, referenceTermsLang: null, ignoredWarnings: [] },
-    "articles/main/authors.json": { schemaVersion: 1, authors: [] },
-    "articles/main/manuscript/article.scidoc": doc("article", body),
-    "articles/main/manuscript/abstract.scidoc": doc("abstract", [{ type: "abstractSection", attrs: { id: newId("b"), lang }, content: [paragraph("")] }]),
-  };
-  for (const [p, v] of Object.entries(files)) {
-    const fmt = formatOfPath(p)!;
-    const issues = validate(fmt, v, p);
-    if (issues.length) throw new ProjectError("invalid template", issues);
-    await fs.write(p, stableStringify(v));
-  }
+    ...articleFiles(articleId, "main", { title: opts.title, lang, articleType: "original" }),
+  });
   return loadProject(fs);
+}
+
+/**
+ * Another article in the same project (record 0015): its folder under articles/, with the
+ * project's library and directory of people in common. The manifest is written last, so a
+ * failure leaves the project as it was. Gives the project loaded again.
+ */
+export async function addArticle(project: Project, opts: { folder: string; title: string; lang?: string; articleType?: string }): Promise<Project> {
+  if (project.manifest.articles.some((a) => a.folder === opts.folder) || (await project.fs.list(`articles/${opts.folder}`)).length) throw new Error(`there is already an article in articles/${opts.folder}`);
+  const id = newId("a");
+  const manifest = { ...project.manifest, articles: [...project.manifest.articles, { id, folder: opts.folder }] };
+  await writeValidated(project.fs, articleFiles(id, opts.folder, { title: opts.title, lang: opts.lang ?? "es", articleType: opts.articleType ?? "original" }));
+  await writeValidated(project.fs, { [project.manifestPath]: manifest });
+  return loadProject(project.fs);
 }
 
 export { now };

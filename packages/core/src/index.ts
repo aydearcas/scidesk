@@ -19,3 +19,4 @@ export * from "./recovery.ts";
 export * from "./typst-export.ts";
 export * from "./checks.ts";
 export * from "./paste-table.ts";
+export * from "./outline.ts";

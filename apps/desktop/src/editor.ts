@@ -1,7 +1,8 @@
 // The editor's ProseMirror schema, as Tiptap extensions. Node and mark names and their
 // attributes are those of the .scidoc format (packages/formats, record 0031): the editor's
-// JSON is saved as it is (R34). Vertical slice: title, headings, paragraphs, bold, italic,
-// superscript, subscript and citations.
+// JSON is saved as it is (R34): title, headings, paragraphs, lists, bold, italic, underline,
+// superscript, subscript, colour and highlight, citations, cross-references and the places
+// of tables and figures.
 import { Extension, Mark, Node, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { HIGHLIGHT_COLORS, newId } from "@scidesk/formats";
@@ -15,6 +16,7 @@ import Superscript from "@tiptap/extension-superscript";
 import Text from "@tiptap/extension-text";
 import { BulletList, ListItem, OrderedList } from "@tiptap/extension-list";
 import { UndoRedo } from "@tiptap/extensions";
+import { actionFor, comboOf, EDITOR_ACTIONS, keyScheme } from "./shortcuts.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -51,8 +53,8 @@ export function refreshCitationLabels() {
   for (const [id, els] of citationViews) for (const el of els) fillCitation(el, id);
 }
 
-/** What the quick-citation shortcut opens (set by the window). */
-export const hooks = { quickCite: () => {} };
+/** What the shortcuts that open a dialog do (set by the window). */
+export const hooks = { quickCite: () => {}, xref: () => {} };
 
 /** Numbers of tables and figures by first cross-reference, then position (as the export). */
 export const xrefLabels = new Map<string, string>();
@@ -153,11 +155,33 @@ const BlockIds = Extension.create({
 });
 
 /**
- * Where a table or a figure goes. In the vertical slice it is a block that is not edited
- * here: the part lives in its own file and is exported in place. Editing it inside the
- * document (the composite document, record 0021) comes with the interface skeleton.
+ * Where a table or a figure goes. It is a block that is not edited here: the part lives in
+ * its own file and is exported in place. It shows its number and caption as they will come
+ * out ("Tabla 2 · Características basales"), set by the window from the article's outline.
+ * Editing it inside the document (the composite document, record 0021) comes later.
  */
-const partRef = (name: "tableRef" | "figureRef", label: string) => Node.create({
+export interface PartInfo { label: string; caption: string; cited: boolean; uncitedText: string }
+export const partInfo = new Map<string, PartInfo>();
+const partViews = new Map<string, Set<HTMLElement>>();
+function fillPart(el: HTMLElement, id: string) {
+  const info = partInfo.get(id);
+  const head = document.createElement("b");
+  head.textContent = info?.label ?? el.dataset.fallback ?? "";
+  const caption = document.createElement("span");
+  caption.textContent = info?.caption ? ` · ${info.caption}` : "";
+  const parts: globalThis.Node[] = [head, caption];
+  if (info && !info.cited) {
+    const flag = document.createElement("span");
+    flag.className = "part-uncited";
+    flag.textContent = info.uncitedText;
+    parts.push(flag);
+  }
+  el.replaceChildren(...parts);
+}
+export function refreshPartLabels() {
+  for (const [id, els] of partViews) for (const el of els) fillPart(el, id);
+}
+const partRef = (name: "tableRef" | "figureRef") => Node.create({
   name,
   group: "block",
   atom: true,
@@ -168,17 +192,48 @@ const partRef = (name: "tableRef" | "figureRef", label: string) => Node.create({
     src: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute("data-src") },
   }),
   parseHTML: () => [{ tag: `div[data-${name}]` }],
-  renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, "data-src": node.attrs.src, class: "part-ref", contenteditable: "false" }, `${label} · ${node.attrs.src}`],
+  renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, "data-src": node.attrs.src, class: "part-ref", contenteditable: "false" }, String(node.attrs.src)],
+  addNodeView: () => ({ node }) => {
+    const dom = document.createElement("div");
+    dom.className = `part-ref ${name}`;
+    dom.contentEditable = "false";
+    const id = node.attrs.id as string;
+    dom.setAttribute(`data-${name.toLowerCase()}`, id);
+    dom.dataset.fallback = String(node.attrs.src ?? "");
+    fillPart(dom, id);
+    if (!partViews.has(id)) partViews.set(id, new Set());
+    partViews.get(id)!.add(dom);
+    return { dom, destroy: () => partViews.get(id)?.delete(dom) };
+  },
 });
 
 /**
- * Quick citation: Ctrl+Shift+C (Cmd+Shift+C on the Mac), in both shortcut schemes (D6,
- * record 0043); never Ctrl+Alt (AltGr on Spanish keyboards).
+ * The shortcuts of the scheme in use (R19, record 0044), read on every key press so that
+ * changing the scheme in Settings needs no reload. The marks' own shortcuts are removed:
+ * Ctrl+B is "search" in "Word en español", not bold. The quick citation is Ctrl+Shift+C in
+ * both schemes (D6, record 0043). Never Ctrl+Alt (AltGr on Spanish keyboards).
  */
-const QuickCiteKey = Extension.create({
-  name: "quickCiteKey",
-  addKeyboardShortcuts: () => ({ "Mod-Shift-c": () => { hooks.quickCite(); return true; } }),
+const SchemeKeys = Extension.create({
+  name: "schemeKeys",
+  addProseMirrorPlugins() {
+    const editor = this.editor;
+    return [new Plugin({
+      key: new PluginKey("schemeKeys"),
+      props: {
+        handleKeyDown: (_view, event) => {
+          const action = actionFor(keyScheme.current, comboOf(event));
+          if (!action || !EDITOR_ACTIONS.includes(action)) return false;
+          if (action === "cite") hooks.quickCite();
+          else if (action === "xref") hooks.xref();
+          else editor.commands.toggleMark(action);
+          event.preventDefault();
+          return true;
+        },
+      },
+    })];
+  },
 });
+const noKeys = { addKeyboardShortcuts: () => ({}) };
 
 /** "#c00000", "rgb(192, 0, 0)" -> "#C00000"; anything else (named colours, black) -> null. */
 export function cssColor(value: string | null | undefined): string | null {
@@ -195,7 +250,6 @@ const Underline = Mark.create({
   name: "underline",
   parseHTML: () => [{ tag: "u" }, { style: "text-decoration", getAttrs: (v) => (/underline/.test(String(v)) ? null : false) }],
   renderHTML: () => ["u", 0],
-  addKeyboardShortcuts() { return { "Mod-u": () => this.editor.commands.toggleMark(this.name) }; },
 });
 const TextColor = Mark.create({
   name: "textColor",
@@ -224,14 +278,14 @@ const Highlight = Mark.create({
 
 export const extensions = [
   BlockIds,
-  QuickCiteKey,
+  SchemeKeys,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
   Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | tableRef | figureRef)*" }),
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),
   OrderedList.extend({ addAttributes: () => ({ id: plain("id"), start: { default: 1, parseHTML: (el: HTMLElement) => Number(el.getAttribute("start") ?? 1) } }) }),
   ListItem,
-  partRef("tableRef", "▦ Tabla"),
-  partRef("figureRef", "▣ Figura"),
+  partRef("tableRef"),
+  partRef("figureRef"),
   Text,
   Paragraph.extend({ addAttributes: () => ({ id: plain("id"), lang: plain("lang") }) }),
   Heading.extend({
@@ -242,10 +296,10 @@ export const extensions = [
   Title,
   Citation,
   Xref,
-  Bold,
-  Italic,
-  Superscript,
-  Subscript,
+  Bold.extend(noKeys),
+  Italic.extend(noKeys),
+  Superscript.extend(noKeys),
+  Subscript.extend(noKeys),
   Underline,
   TextColor,
   Highlight,

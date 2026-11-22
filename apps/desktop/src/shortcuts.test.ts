@@ -1,0 +1,45 @@
+// The two shortcut schemes (R19, D6, record 0044).
+import { describe, expect, it } from "vitest";
+import { ACTIONS, actionFor, comboOf, SCHEMES, shortcutLabel } from "./shortcuts.ts";
+
+const key = (k: string, o: Partial<KeyboardEvent> = {}) => ({ key: k, ctrlKey: true, metaKey: false, shiftKey: false, altKey: false, ...o });
+
+describe("shortcut schemes", () => {
+  it("are Word's in Spanish and the international ones", () => {
+    expect(actionFor("word-es", comboOf(key("n")))).toBe("bold");
+    expect(actionFor("word-es", comboOf(key("k")))).toBe("italic");
+    expect(actionFor("word-es", comboOf(key("s")))).toBe("underline");
+    expect(actionFor("word-es", comboOf(key("g")))).toBe("save");
+    expect(actionFor("word-es", comboOf(key("b")))).toBe("find");
+    expect(actionFor("international", comboOf(key("b")))).toBe("bold");
+    expect(actionFor("international", comboOf(key("i")))).toBe("italic");
+    expect(actionFor("international", comboOf(key("s")))).toBe("save");
+  });
+
+  it("cite with Ctrl+Shift+C in both (D6)", () => {
+    for (const s of ["word-es", "international"] as const) {
+      expect(actionFor(s, comboOf(key("C", { shiftKey: true })))).toBe("cite");
+      expect(SCHEMES[s].cite).toBe("Mod-Shift-c");
+    }
+  });
+
+  it("never use Ctrl+Alt, and Ctrl+Alt (AltGr) is never a shortcut", () => {
+    for (const s of Object.values(SCHEMES)) for (const c of Object.values(s)) expect(c).not.toMatch(/Alt/);
+    // AltGr+2 on a Spanish keyboard types "@": not bold, not anything
+    expect(comboOf(key("@", { altKey: true }))).toBeNull();
+    expect(comboOf({ key: "n", ctrlKey: false, metaKey: false, shiftKey: false, altKey: false })).toBeNull();
+  });
+
+  it("give one action per key in each scheme, and every action a key", () => {
+    for (const s of Object.values(SCHEMES)) {
+      const combos = ACTIONS.map((a) => s[a]);
+      expect(combos.every(Boolean)).toBe(true);
+      expect(new Set(combos).size).toBe(combos.length);
+    }
+  });
+
+  it("are shown as the interface says them", () => {
+    expect(shortcutLabel("Mod-Shift-c", "es")).toBe("Ctrl+Mayús+C");
+    expect(shortcutLabel("Mod-Shift-c", "en")).toBe("Ctrl+Shift+C");
+  });
+});

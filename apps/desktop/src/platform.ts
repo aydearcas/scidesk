@@ -135,7 +135,13 @@ export const hasPreviewProject = () => {
 };
 export function previewFs(fresh: boolean): ProjectFs {
   const s = storage();
-  if (fresh && s) for (let i = s.length - 1; i >= 0; i--) { const k = s.key(i); if (k?.startsWith(PREVIEW)) s.removeItem(k); }
+  // the keys first, then removed: removing while walking by index can skip keys (the
+  // browser may reorder them), and a file left behind made "the folder is not empty"
+  if (fresh && s) {
+    const keys: string[] = [];
+    for (let i = 0; i < s.length; i++) { const k = s.key(i); if (k?.startsWith(PREVIEW)) keys.push(k); }
+    for (const k of keys) s.removeItem(k);
+  }
   return new PreviewFs();
 }
 
