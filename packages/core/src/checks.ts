@@ -9,13 +9,14 @@ import type { ArticleFile, PMNode } from "@scidesk/formats";
 import { citationsOf } from "./citations.ts";
 import { composite, numbering } from "./docx-export.ts";
 import { now, saveJson, type Project } from "./project.ts";
-import { headingRole } from "./sections.ts";
+import { CLOSING_ORDER, headingRole } from "./sections.ts";
 
 export type CheckLevel = "blocking" | "review" | "info";
 export type CheckCode =
   | "word-limit" | "abstract-word-limit" | "references-limit" | "tables-limit" | "figures-limit" | "figures-tables-limit"
   | "authors-limit" | "authors-advised" | "keywords-limit" | "keywords-min" | "title-characters"
-  | "pending" | "uncited-table" | "uncited-figure" | "uncited-reference" | "no-limits" | "own-font";
+  | "pending" | "uncited-table" | "uncited-figure" | "uncited-reference" | "no-limits" | "own-font"
+  | "missing-declaration" | "missing-section" | "section-order" | "extra-section";
 
 export interface CheckWarning {
   /** Stable: the same thing gives the same id after any edit elsewhere. */
@@ -206,6 +207,28 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
     if (limits.keywordsMin !== undefined && a.keywords < limits.keywordsMin) add({ id: `keywords-min:${a.lang}`, code: "keywords-min", level: "review", params: { value: a.keywords, limit: limits.keywordsMin, lang: a.lang }, where: { path: "manuscript/abstract.scidoc", block: a.block } });
   }
   over("title-characters", "title-characters", titleCharacters, limits.titleCharacters, "blocking", {}, title ? { path: "manuscript/article.scidoc", block: title.attrs!.id as string } : undefined);
+
+  // ---------------------------------------------------------------- sections the journal asks for (record 0072)
+  // the level-1 sections of the body, by their type (their own, or what their name says)
+  const sectionsHere = (tree.content ?? []).filter((n) => n.type === "heading" && ((n.attrs!.level as number) ?? 1) === 1 && !(n.marks ?? []).some((m) => m.type === "deletion"))
+    .map((n) => ({ role: headingRole(n), block: n.attrs!.id as string, text: blockText(n).trim() }));
+  const has = (role: string) => sectionsHere.some((s) => s.role === role);
+  // a declaration the journal requires in the manuscript, missing: it would be sent back
+  for (const d of journal?.declarations ?? []) {
+    const placement = d.placement?.value;
+    if (!d.required.value || (placement && placement !== "manuscript" && placement !== "before-references") || has(d.kind)) continue;
+    add({ id: `missing-declaration:${d.kind}`, code: "missing-declaration", level: "blocking", params: { role: d.kind, placement: placement ?? "manuscript" } });
+  }
+  // the sections of this type of article, when the journal fixes them: missing, in another order, or not among them
+  const fixed = rules?.sections?.value;
+  if (fixed?.length) {
+    const body = sectionsHere.filter((s) => !(CLOSING_ORDER as readonly string[]).includes(s.role ?? ""));
+    for (const role of fixed) if (!(CLOSING_ORDER as readonly string[]).includes(role) && !has(role)) add({ id: `missing-section:${role}`, code: "missing-section", level: "review", params: { role } });
+    const inOrder = body.filter((s) => s.role && fixed.includes(s.role as never)).map((s) => s.role!);
+    const expected = fixed.filter((r) => inOrder.includes(r));
+    if (inOrder.join() !== expected.join()) add({ id: `section-order:${art.article.articleType}`, code: "section-order", level: "review", params: { roles: fixed.join(",") } });
+    for (const s of body) if (!s.role || !fixed.includes(s.role as never)) add({ id: `extra-section:${s.block}`, code: "extra-section", level: "review", params: { heading: s.text, roles: fixed.join(",") }, where: { path: "manuscript/article.scidoc", block: s.block } });
+  }
 
   // ---------------------------------------------------------------- pending markers, in every document of the article
   for (const [path, file] of documents) {

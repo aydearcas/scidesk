@@ -7,6 +7,7 @@
 // acknowledgements, funding, declarations, appendices) when they are of level 1.
 import type { PMNode } from "@scidesk/formats";
 import { saveJson, type Project } from "./project.ts";
+import { BODY_ORDER, CLOSING_ORDER, isClosingRole } from "./section-order.ts";
 
 export const SECTION_NUMBERING = ["none", "1.", "1"] as const;
 export type SectionNumbering = (typeof SECTION_NUMBERING)[number];
@@ -112,11 +113,9 @@ export function headingRole(n: PMNode): string | null {
   return (n.attrs?.role as string | null) ?? roleFromName(textOf(n));
 }
 
-/** The usual order of the sections, for where a new one goes: the body, then the closing ones. */
-export const BODY_ORDER = ["background-objective", "background", "introduction", "objective", "methods", "patients-methods", "case-presentation", "results", "discussion", "discussion-conclusions", "conclusions"] as const;
-export const CLOSING_ORDER = ["ethics", "consent", "registration", "contributions", "acknowledgements", "funding", "conflicts", "data-availability", "ai-use", "references", "appendix"] as const;
+/** The usual order of the sections, for where a new one goes (section-order.ts). */
+export { BODY_ORDER, CLOSING_ORDER, isClosingRole } from "./section-order.ts";
 const RANK = new Map<string, number>([...BODY_ORDER, ...CLOSING_ORDER].map((r, i) => [r, i]));
-export const isClosingRole = (role: string | null | undefined) => !!role && (CLOSING_ORDER as readonly string[]).includes(role);
 
 /** A top-level heading of the document, by its index among the document's children. */
 export interface TopHeading { index: number; level: number; role: string | null }

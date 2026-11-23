@@ -31,7 +31,9 @@ describe("new article plan", () => {
 
   it("a case report takes the journal's fixed sections and an unstructured abstract", async () => {
     const p = articlePlan({ title: "T", lang: "es", articleType: "case-report", journal: await rc() });
-    expect(p.sections.map((s) => s.role)).toEqual(["introduction", "case-presentation", "discussion", "conclusions", "references"]);
+    expect(p.sections.map((s) => s.role)).toEqual(["introduction", "case-presentation", "discussion", "conclusions", "ai-use", "references"]);
+    // record 0072: the AI declaration the journal requires before the references
+    expect(p.sections.find((s) => s.role === "ai-use")!.label).toBe("Uso de inteligencia artificial");
     expect(p.abstracts[0].sections).toBeNull();
   });
 
@@ -39,7 +41,7 @@ describe("new article plan", () => {
     const p = articlePlan({ title: "T", lang: "es", articleType: "letter", journal: await rc() });
     expect(p.abstracts).toEqual([]);
     expect(p.opening).toBe("Señor editor");
-    expect(p.sections.map((s) => s.role)).toEqual(["references"]);
+    expect(p.sections.map((s) => s.role)).toEqual(["ai-use", "references"]);
   });
 });
 

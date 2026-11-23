@@ -49,18 +49,18 @@ describe("checks", () => {
     expect(refs.counted).toBe(false);
     expect(r.counts.main).toBe(r.counts.sections.filter((s) => s.counted).reduce((a, s) => a + s.words, 0));
     expect(r.counts.main).toBeGreaterThan(2000);
-    expect(r.warnings.map((w) => [w.level, w.id, w.params.value, w.params.limit])).toEqual([["blocking", "references-limit", 37, 30]]);
+    expect(r.warnings.map((w) => [w.level, w.id, w.params.value, w.params.limit])).toEqual([["blocking", "references-limit", 37, 30], ["blocking", "missing-declaration:ai-use", undefined, undefined]]);
     // stricter limits: every one of them shows
     const prof = structuredClone(p.journals.get("reumatologia-clinica")!);
     const original = prof.articleTypes.find((t) => t.articleType === "original")!;
     original.limits = { ...original.limits, words: { value: 2000, source: "guide" }, abstractWords: { value: 150, source: "guide" }, tables: { value: 1, source: "guide" }, titleCharacters: { value: 100, source: "guide" }, keywords: { value: 5, source: "guide" } };
     p.journals.set("reumatologia-clinica", prof);
-    expect(ids(checkArticle(p, "main")).sort()).toEqual(["abstract-word-limit:es", "keywords-limit:es", "references-limit", "tables-limit", "title-characters", "word-limit"]);
+    expect(ids(checkArticle(p, "main")).sort()).toEqual(["abstract-word-limit:es", "keywords-limit:es", "missing-declaration:ai-use", "references-limit", "tables-limit", "title-characters", "word-limit"]);
   });
 
   it("says when the journal has no limits for the article type", async () => {
     const { p } = await kneeOa("narrative-review");
-    expect(checkArticle(p, "main").warnings.map((w) => [w.level, w.code])).toEqual([["info", "no-limits"]]);
+    expect(checkArticle(p, "main").warnings.map((w) => [w.level, w.code])).toEqual([["blocking", "missing-declaration"], ["info", "no-limits"]]);
   });
 
   it("finds pending markers everywhere, with ids that survive edits elsewhere; ignoring and restoring them", async () => {
@@ -117,9 +117,10 @@ describe("checks", () => {
   it("says when an article is ready to submit, and what stands in the way", async () => {
     const { p } = await kneeOa();
     // too many references for the journal: blocked
-    expect(readiness(checkArticle(p, "main"))).toMatchObject({ ready: false, missing: ["blocking"], blocking: 1, pending: 0 });
-    // marked as correct, it no longer stops it
+    expect(readiness(checkArticle(p, "main"))).toMatchObject({ ready: false, missing: ["blocking"], blocking: 2, pending: 0 });
+    // marked as correct, they no longer stop it (the AI declaration: as if it went elsewhere)
     await ignoreWarning(p, "main", "references-limit", "correct");
+    await ignoreWarning(p, "main", "missing-declaration:ai-use", "not-applicable");
     expect(readiness(checkArticle(await loadProject(p.fs), "main"))).toEqual({ ready: true, missing: [], blocking: 0, pending: 0 });
     // a pending marker left in the text stops it again
     const q = await loadProject(p.fs);
@@ -157,5 +158,31 @@ describe("checks", () => {
     await setCountTableWords(p, "main", null);
     expect((await loadProject(fs)).articles[0].article).not.toHaveProperty("countTableWords");
     expect(checkArticle(p, "main").counts.tableWordsBy).toBe("journal");
+  });
+
+  it("warns of a declaration the journal requires and of the sections it fixes, and they go once added (record 0072)", async () => {
+    const { p } = await kneeOa("case-report");
+    const art = p.articles[0];
+    const ids0 = checkArticle(p, "main").warnings.map((w) => w.id);
+    expect(ids0).toContain("missing-declaration:ai-use");
+    expect(ids0).toContain("missing-section:case-presentation");
+    // the example's own sections (Epidemiología, Fisiopatología…) are not among a case report's
+    const extra = checkArticle(p, "main").warnings.filter((w) => w.code === "extra-section").map((w) => w.params.heading);
+    expect(extra.length).toBeGreaterThan(0);
+    // a heading typed by hand, without a type of its own, is enough: its name says what it is
+    const body = structuredClone(art.documents.get("manuscript/article.scidoc")!.doc as PMNode);
+    const refs = body.content!.findIndex((n) => n.type === "heading" && n.attrs!.role === "references");
+    body.content!.splice(refs, 0, { type: "heading", attrs: { id: "b-aiuse00001", level: 1, role: null, lang: null }, content: [{ type: "text", text: "Uso de inteligencia artificial" }] });
+    expect(checkArticle(p, "main", { "manuscript/article.scidoc": body }).warnings.map((w) => w.id)).not.toContain("missing-declaration:ai-use");
+    // the fixed sections in another order
+    const intro = body.content!.findIndex((n) => n.type === "heading" && n.attrs!.role === "introduction");
+    const disc = body.content!.findIndex((n) => n.type === "heading" && n.attrs!.role === "conclusions");
+    expect(intro).toBeGreaterThan(-1);
+    expect(disc).toBeGreaterThan(intro);
+    const swapped = structuredClone(body);
+    const [d] = swapped.content!.splice(disc, 1);
+    swapped.content!.splice(intro, 0, d);
+    expect(checkArticle(p, "main", { "manuscript/article.scidoc": swapped }).warnings.map((w) => w.code)).toContain("section-order");
+    expect(checkArticle(p, "main", { "manuscript/article.scidoc": body }).warnings.map((w) => w.code)).not.toContain("section-order");
   });
 });

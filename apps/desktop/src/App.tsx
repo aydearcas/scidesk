@@ -1749,6 +1749,7 @@ export function App() {
             </div>
             <div className="right-body">
               {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections}
+                onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
               {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} />}
               {rightTab === "details" && (

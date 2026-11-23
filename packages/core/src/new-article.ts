@@ -5,6 +5,7 @@
 // the user sees is what gets created. Also the journals the wizard offers.
 import { newId, type JournalProfileFile, type PMNode } from "@scidesk/formats";
 import { REUMATOLOGIA_CLINICA } from "./resources.ts";
+import { CLOSING_ORDER } from "./section-order.ts";
 
 /** Article types the wizard offers, in its order (the format has more: record 0031). */
 export const NEW_ARTICLE_TYPES = ["original", "brief-original", "systematic-review", "narrative-review", "case-report", "letter"] as const;
@@ -75,6 +76,11 @@ export function articlePlan(opts: NewArticleOptions): ArticlePlan {
   const structured = abstractRules ? abstractRules.structured.value : IMRAD.has(opts.articleType);
   const abstractRoles = abstractRules?.sections?.value ?? ABSTRACT_SECTIONS.map((role) => ({ role, label: {} as Record<string, string> }));
   const roles = rules?.sections?.value ?? TYPE_SECTIONS[opts.articleType] ?? IMRAD_SECTIONS;
+  // record 0072: the declarations the journal requires in the manuscript, as sections before the references
+  const declared = (opts.journal?.declarations ?? [])
+    .filter((d) => d.required.value && (!d.placement || d.placement.value === "manuscript" || d.placement.value === "before-references"))
+    .map((d) => d.kind as string).filter((k) => !roles.includes(k as never));
+  const closing = CLOSING_ORDER.filter((r) => declared.includes(r));
   return {
     titles: langs.map((lang, i) => ({ lang, text: i === 0 ? opts.title : "" })),
     abstracts: letter ? [] : langs.map((lang) => ({
@@ -83,7 +89,7 @@ export function articlePlan(opts: NewArticleOptions): ArticlePlan {
       keywords: true,
     })),
     opening: letter && rules?.opening ? rules.opening.value : null,
-    sections: [...roles.filter((r) => r !== "references"), "references"].map((role) => ({ role, label: sectionLabel(role, opts.lang) })),
+    sections: [...roles.filter((r) => r !== "references"), ...closing, "references"].map((role) => ({ role, label: sectionLabel(role, opts.lang) })),
   };
 }
 

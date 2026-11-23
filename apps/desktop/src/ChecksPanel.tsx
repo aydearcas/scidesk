@@ -6,10 +6,12 @@
 // colour and its shape (blocking: octagon; worth checking: triangle; information: circle).
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CheckLevel, CheckReport, CheckWarning } from "@scidesk/core";
+import { sectionLabel, type CheckLevel, type CheckReport, type CheckWarning } from "@scidesk/core";
 import { LevelIcon } from "./icons.tsx";
 
-export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, journalSays, showSections = false }: {
+export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, journalSays, showSections = false, onAddSection }: {
+  /** Record 0072: adds a section the journal asks for, in its place. */
+  onAddSection: (role: string) => void;
   /** Record 0056: whether the tables' words count (null: as the journal says). */
   onTableWords: (value: boolean | null) => Promise<void>;
   /** What the journal's profile says about the tables' words, if it says anything. */
@@ -21,7 +23,7 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
   onIgnore: (w: CheckWarning, status: "correct" | "not-applicable", note: string) => Promise<void>;
   onRestore: (w: CheckWarning) => Promise<void>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [marking, setMarking] = useState<{ id: string; status: "correct" | "not-applicable"; note: string } | null>(null);
   const [showIgnored, setShowIgnored] = useState(false);
   if (!report) return <p className="muted">{t("checksPending")}</p>;
@@ -29,7 +31,15 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
   const active = report.warnings.filter((w) => !w.ignored);
   const ignored = report.warnings.filter((w) => w.ignored);
   const of = (value: number, limit?: number) => (limit !== undefined ? <span className={value > limit ? "over" : ""}>{value} / {limit}</span> : <span>{value}</span>);
-  const message = (w: CheckWarning) => t(`checks.${w.code === "no-limits" && !w.params.journal ? "no-journal" : w.code}`, w.params as Record<string, string>);
+  // record 0072: sections by their name in the interface's language
+  const sectionName = (role: string) => sectionLabel(role, i18n.language);
+  const message = (w: CheckWarning) => t(`checks.${w.code === "no-limits" && !w.params.journal ? "no-journal" : w.code}`, {
+    ...(w.params as Record<string, string>),
+    ...(w.params.role ? { section: sectionName(String(w.params.role)) } : {}),
+    ...(w.params.roles ? { order: String(w.params.roles).split(",").map(sectionName).join(" · ") } : {}),
+    where: w.params.placement === "before-references" ? t("beforeReferences") : "",
+  });
+  const canAdd = (w: CheckWarning) => (w.code === "missing-declaration" || w.code === "missing-section") && !!w.params.role;
   const canGo = (w: CheckWarning) => !!w.where && w.where.path !== "manuscript/abstract.scidoc";
   const place = (w: CheckWarning) => (w.where?.path === "manuscript/abstract.scidoc" ? t("inAbstract") : w.where && w.where.path !== "manuscript/article.scidoc" ? t("inPart", { path: w.where.path }) : "");
 
@@ -49,6 +59,7 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
         </form>
       ) : (
         <div className="check-actions">
+          {canAdd(w) && <button className="btn" onClick={() => onAddSection(String(w.params.role))}>{t("addNamed", { section: sectionName(String(w.params.role)) })}</button>}
           {canGo(w) && <button className="btn" onClick={() => onGo(w)}>{t("goTo")}</button>}
           <button className="btn quiet" onClick={() => setMarking({ id: w.id, status: "correct", note: "" })}>{t("ignoreAs.correct")}</button>
           <button className="btn quiet" onClick={() => setMarking({ id: w.id, status: "not-applicable", note: "" })}>{t("ignoreAs.not-applicable")}</button>
