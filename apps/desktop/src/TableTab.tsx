@@ -3,15 +3,16 @@
 // merge, split, header row, alignment, note call, general note) and, when it was just pasted
 // from Word, what was kept and what was dropped, with "Undo the paste". Its tools work on the
 // manuscript too (the context menu and "Details" give the same commands).
-import { useEffect, useReducer, useRef } from "react";
+import { useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { Editor } from "@tiptap/core";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Node as PMNodeType } from "@tiptap/pm/model";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, CellSelection, deleteColumn, deleteRow, mergeCells, splitCell, TableMap, toggleHeaderRow } from "@tiptap/pm/tables";
-import { addNote, PartTab, setAlign } from "./parts.ts";
+import { addNote, partAround, PartTab, setAlign } from "./parts.ts";
 import { Icon, type IconName } from "./icons.tsx";
+import { TableLinesTools } from "./TableLinesTools.tsx";
 
 export type TableCommand = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
 
@@ -108,6 +109,45 @@ export function TableTools({ run, state }: { run: (cmd: TableCommand) => void; s
           })}
         </div>
       ))}
+      <TableLinesTools state={state} run={run} />
+    </div>
+  );
+}
+
+/**
+ * Record 0075: the table bar in the manuscript, as Word's contextual table tabs: the same
+ * tools as the table's tab, shown under the ribbon while the cursor is in a table (its cells,
+ * caption or notes). The text does not jump when it shows or goes: the sheet scrolls by its
+ * height.
+ */
+const ANCHORS = typeof CSS !== "undefined" && CSS.supports("overflow-anchor", "auto");
+export function TableContextBar({ editor, label, onOpenTab, scroller }: {
+  editor: Editor;
+  /** "Tabla 2", by the table's id. */
+  label: (id: string) => string;
+  onOpenTab: (id: string) => void;
+  /** The sheet's scrolling box, kept still when the bar shows or goes. */
+  scroller: React.RefObject<HTMLElement | null>;
+}) {
+  const { t } = useTranslation();
+  const [, redraw] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => { editor.on("transaction", redraw); return () => { editor.off("transaction", redraw); }; }, [editor]);
+  const part = editor.isDestroyed ? null : partAround(editor.state.selection.$from);
+  const id = part && part.node.type.name === "tablePart" ? String(part.node.attrs.id) : null;
+  const bar = useRef<HTMLDivElement>(null);
+  const height = useRef(0);
+  useLayoutEffect(() => {
+    // Chromium keeps the text still by itself (scroll anchoring); WebKit needs the sheet scrolled
+    const box = ANCHORS ? null : scroller.current;
+    if (id && bar.current) { height.current = bar.current.offsetHeight; if (box) box.scrollTop += height.current; }
+    else if (!id && height.current && box) { box.scrollTop -= height.current; height.current = 0; }
+  }, [id !== null]); // eslint-disable-line react-hooks/exhaustive-deps -- only when it shows or goes
+  if (!id) return null;
+  return (
+    <div ref={bar} className="table-tab-head table-context-bar" role="region" aria-label={label(id)}>
+      <span className="table-context-label"><Icon name="table" size={15} /> {label(id)}</span>
+      <TableTools state={editor.state} run={(cmd) => { cmd(editor.state, editor.view.dispatch); editor.view.focus(); }} />
+      <button className="btn quiet table-context-open" onMouseDown={(e) => e.preventDefault()} onClick={() => onOpenTab(id)}>{t("ui.openInTab")}</button>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import { Autocorrect } from "./autocorrect.ts";
 import { Indent, IndentBackspace, MAX_INDENT } from "./indent.ts";
 import { SectionNumbers } from "./section-numbers.ts";
 import { alignAttribute, Blockquote, setBlockAlign } from "./align.ts";
+import { TableLines } from "./table-lines.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -433,6 +434,7 @@ export const extensions = [
   Indent,
   IndentBackspace,
   SectionNumbers,
+  TableLines,
   Heading.extend({
     addAttributes() {
       return {

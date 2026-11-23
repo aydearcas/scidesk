@@ -16,6 +16,7 @@ import { ID_OF_NODE, newId, type PMNode as JsonNode } from "@scidesk/formats";
 import { copyPart, freePartPath, label } from "@scidesk/core";
 import { actionFor, comboOf, keyScheme } from "./shortcuts.ts";
 import { columnResize } from "./columnResize.ts";
+import { tableLinesPlugin } from "./table-lines.ts";
 
 const PART_TYPES = new Set(["tablePart", "figurePart"]);
 /** Nodes whose borders an edit may not cut: text never moves from one file (or language) to another. */
@@ -131,6 +132,8 @@ const Table = Node.create({
   addAttributes: () => ({
     id: data("id"),
     columnWidths: { default: null, parseHTML: (el: HTMLElement) => { try { return JSON.parse(el.getAttribute("data-widths") ?? "null"); } catch { return null; } }, renderHTML: () => ({}) },
+    // record 0076: the table's style (null: the journal's); its lines are drawn by table-lines.ts
+    style: { default: null, parseHTML: (el: HTMLElement) => el.getAttribute("data-table-style"), renderHTML: (a: Record<string, unknown>) => (a.style ? { "data-table-style": a.style } : {}) },
   }),
   parseHTML: () => [{ tag: "table" }],
   renderHTML: ({ node, HTMLAttributes }) => {
@@ -158,6 +161,12 @@ const cell = (name: "tableCell" | "tableHeader", role: string, tag: "td" | "th")
       default: null,
       parseHTML: (el: HTMLElement) => (ALIGNS.includes(el.getAttribute("data-align") ?? "") ? el.getAttribute("data-align") : null),
       renderHTML: (a: Record<string, unknown>) => (a.align ? { "data-align": a.align } : {}),
+    },
+    // record 0076: the cell's own borders, kept on copy and paste inside SciDesk
+    borders: {
+      default: null,
+      parseHTML: (el: HTMLElement) => { try { return JSON.parse(el.getAttribute("data-borders") ?? "null"); } catch { return null; } },
+      renderHTML: (a: Record<string, unknown>) => (a.borders ? { "data-borders": JSON.stringify(a.borders) } : {}),
     },
   }),
   parseHTML: () => [{ tag }],
@@ -666,6 +675,7 @@ export class PartTab {
           tableEditing(),
           columnResize(),
           labelsPlugin(() => editor.state.doc),
+          tableLinesPlugin(),
         ],
       }),
       nodeViews: editor.extensionManager.nodeViews as Record<string, NodeViewConstructor>,

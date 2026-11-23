@@ -72,7 +72,7 @@ describe("typst export", () => {
     expect(source.match(/#figure\(kind: table/g)).toHaveLength(2);
     expect(source).toContain("#strong[Tabla 1.]");
     expect(source).toContain("table(columns: (34fr, 20fr, 20fr, 26fr)");
-    expect(source).toMatch(/table\.header\(table\.cell\(rowspan: 2\)\[#metadata\([^)]*\) <[^>]*>Característica\], table\.cell\(colspan: 2\)/);
+    expect(source).toMatch(/table\.header\(table\.cell\(stroke: \(top: \(paint: rgb\("#000000"\), thickness: 1pt\), .*?, rowspan: 2\)\[#metadata\([^)]*\) <[^>]*>Característica\], table\.cell\(stroke: .*?, colspan: 2\)/);
     expect(source).toContain("Acelerada#super[a]");
     expect(source).toContain("#super[b] ");
     expect(source).toMatch(/más abajo \(tabla 1\)/);

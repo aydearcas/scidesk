@@ -31,6 +31,7 @@ import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 import { headingRole, NUMBERED_LEVELS, sectionNumberingOf, sectionNumbers, type SectionNumbering } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
+import { tableNodeBorders, type Line } from "./table-borders.ts";
 
 export type ExportProfile = "coauthors" | "journal";
 export interface ExportResources extends CitationResources {
@@ -385,8 +386,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     return [new TextRun({ text: `${lbl} `, bold: true }), s, raw(fieldXml(FIELDS.seq(lbl), runXml({ text: String(num), bold: true }))), e, new TextRun({ text: ". ", bold: true })];
   };
 
-  const border = { style: BorderStyle.SINGLE, size: 8, color: "000000" };
+  // record 0076: the lines of each cell, from the table's style and the cells' own borders
   const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const LINE_STYLES = { single: BorderStyle.SINGLE, double: BorderStyle.DOUBLE, dashed: BorderStyle.DASHED, dotted: BorderStyle.DOTTED } as const;
+  const wordLine = (l: Line | null) => (l ? { style: LINE_STYLES[l.style], size: Math.min(96, Math.max(2, Math.round(l.width * 8))), color: l.color.slice(1) } : none);
   const ALIGN = { left: AlignmentType.LEFT, center: AlignmentType.CENTER, right: AlignmentType.RIGHT, decimal: AlignmentType.RIGHT } as const;
   function table(part: PMNode, opts: { pageBreakBefore?: boolean } = {}) {
     const id = part.attrs!.id as string;
@@ -399,18 +402,15 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     const lastHeader = rows.findLastIndex((r, i) => isHeader(r) && rows.slice(0, i + 1).every(isHeader));
     const widths = (tbl.attrs?.columnWidths as number[] | null) ?? null;
     const total = widths?.reduce((a, b) => a + b, 0) ?? 0;
+    const lines = tableNodeBorders(tbl, fmt?.tableStyle?.value);
     out.push(new Table({
       width: { size: textWidth, type: WidthType.DXA },
       ...(widths ? { columnWidths: widths.map((w) => Math.round((w / total) * textWidth)) } : {}),
       rows: rows.map((row, i) => new TableRow({
         tableHeader: i <= lastHeader,
-        children: (row.content ?? []).map((cell) => new TableCell({
+        children: (row.content ?? []).map((cell, j) => new TableCell({
           columnSpan: cell.attrs!.colspan as number, rowSpan: cell.attrs!.rowspan as number,
-          borders: {
-            top: i === 0 ? border : none,
-            bottom: i === lastHeader || i + ((cell.attrs!.rowspan as number) ?? 1) - 1 === rows.length - 1 ? border : none,
-            left: none, right: none,
-          },
+          borders: { top: wordLine(lines[i][j].top), bottom: wordLine(lines[i][j].bottom), left: wordLine(lines[i][j].left), right: wordLine(lines[i][j].right) },
           children: (cell.content ?? []).map((p) => p.type === "paragraph"
             ? para(p, { alignment: cell.attrs!.align ? ALIGN[cell.attrs!.align as keyof typeof ALIGN] : undefined, spacing: { line: 240 } }, [], letters)
             : (warnings.push("lists inside table cells are exported as paragraphs"), para({ type: "paragraph", attrs: {}, content: [] }))),

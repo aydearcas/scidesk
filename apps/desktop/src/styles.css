@@ -8,6 +8,8 @@
   --panel: #FAFBFC;       /* side panels */
   --paper: #FFFFFF;
   --line: #E1E4E8;
+  /* record 0076: a table edge without a line, as Word's gridlines (never exported) */
+  --gridline: #C9D3D8;
   --line-strong: #C9CED6;
   --text: #1B1F24;
   --text-2: #3A4350;
@@ -564,6 +566,25 @@ fieldset.checks legend { font-size: 12px; color: var(--text-3); padding: 0 4px; 
 .doc-font-fields label { display: flex; flex-direction: column; gap: 4px; flex: 1; font-size: 13px; color: var(--text-2); }
 .doc-font-fields label:last-child { flex: 0 0 140px; }
 .doc-font-sample { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 4px 0; background: var(--bars); color: var(--text); }
+/* record 0076: the borders menu of the table bar */
+.floating-panel { position: fixed; z-index: 40; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 8px; color: var(--text); }
+.borders-panel { display: flex; flex-direction: column; gap: 8px; width: 320px; }
+.borders-presets { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.borders-preset { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 0; border-radius: var(--radius); background: none; color: var(--text); cursor: pointer; font-size: 13px; text-align: left; }
+.borders-preset:hover, .borders-preset:focus-visible { background: var(--bars); }
+.table-tools .tool.borders-button { gap: 2px; padding: 0 6px; }
+.borders-preset.on { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.borders-preset:disabled { opacity: 0.4; cursor: default; background: none; }
+/* record 0076: the gridlines (edges without a line) only on the table being edited */
+.page .part-grid.editing-grid, .part-grid.editing-grid { --gridline-on: var(--gridline); }
+.borders-preset.wide { grid-column: 1 / -1; border-top: 1px solid var(--line); border-radius: 0; padding-top: 6px; margin-top: 2px; }
+.borders-pen { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.borders-pen label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--text-2); }
+.borders-colors { grid-column: 1 / -1; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.borders-color-label { font-size: 12px; color: var(--text-2); margin-right: 4px; }
+.borders-colors .swatch { width: 18px; height: 18px; border-radius: 3px; border: 1px solid var(--line); cursor: pointer; padding: 0; }
+.borders-colors .swatch.on { outline: 2px solid var(--accent); outline-offset: 1px; }
+.borders-sample { grid-column: 1 / -1; height: 10px; margin: 2px 4px 4px; }
 .recovery-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); width: min(520px, calc(100vw - 32px)); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .recovery-dialog h2 { margin: 0; font-size: 16px; }
 .recovery-dialog p { margin: 0; }
@@ -609,8 +630,9 @@ mark { color: #000; padding: 0 1px; }
 .page .part-caption::before { content: attr(data-label) " "; font-weight: 700; }
 .page .part-caption[data-uncited]::after { content: "△ " attr(data-uncited); margin-left: calc(8px * var(--zoom)); font: calc(11px * var(--zoom)) var(--ui-font); color: var(--review); background: var(--review-soft); border-radius: 8px; padding: 0 calc(7px * var(--zoom)); white-space: nowrap; }
 .page .part-grid { border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 0.875em; line-height: 1.35; margin: calc(4px * var(--zoom)) 0 calc(6px * var(--zoom)); }
-.page .part-grid td, .page .part-grid th { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: calc(3px * var(--zoom)) calc(6px * var(--zoom)); vertical-align: top; text-align: left; position: relative; }
-.page .part-grid th { font-weight: 700; border-bottom: 1.5px solid var(--text-2); }
+/* record 0076: the cells' lines are drawn by table-lines.ts (the same as the Word and the PDF) */
+.page .part-grid td, .page .part-grid th { padding: calc(3px * var(--zoom)) calc(6px * var(--zoom)); vertical-align: top; text-align: left; position: relative; }
+.page .part-grid th { font-weight: 700; }
 .page .part-grid [data-align=center] { text-align: center; }
 .page .part-grid [data-align=right], .page .part-grid [data-align=decimal] { text-align: right; font-variant-numeric: tabular-nums; }
 .page .part-grid p { margin: 0; }
@@ -632,6 +654,10 @@ body.resizing-column { user-select: none; }
 .table-tab-body { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .table-tab-body .desk { flex: 1; }
 /* the table's toolbar in one row (sheet 8, record 0048) */
+/* record 0075: the table bar in the manuscript, stuck to the top of the sheet's box */
+.table-context-bar { position: sticky; top: -24px; z-index: 6; margin: -24px -24px 24px; gap: 8px; box-shadow: 0 1px 3px rgb(16 24 40 / 0.08); }
+.table-context-label { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; color: var(--accent); white-space: nowrap; padding-right: 8px; border-right: 1px solid var(--line); }
+.table-context-open { margin-left: auto; white-space: nowrap; }
 .table-tab-head { display: flex; align-items: center; padding: 4px 12px; border-bottom: 1px solid var(--line); background: var(--panel); overflow-x: auto; scrollbar-width: thin; container: tablebar / inline-size; }
 /* with room, the text tools show their text; without it (both side panels open), their icon, so the bar stays in one row */
 .table-tab-head .table-tools .tool.both .tool-icon { display: none; }

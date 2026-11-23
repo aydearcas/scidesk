@@ -17,6 +17,7 @@ import type { Project } from "./project.ts";
 import { pendingCount } from "./checks.ts";
 import { headingRole, sectionNumberingOf, sectionNumbers } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
+import { tableNodeBorders, type Line } from "./table-borders.ts";
 
 export interface TypstBundle {
   /** main.typ */
@@ -176,8 +177,13 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     const widths = tbl.attrs?.columnWidths as number[] | null | undefined;
     const cols = widths?.length === columns ? `(${widths.map((w) => `${+w.toFixed(3)}fr`).join(", ")})` : String(columns);
     const ALIGN: Record<string, string> = { left: "left", center: "center", right: "right", decimal: "right" };
-    const cell = (c: PMNode) => {
+    // record 0076: each cell's lines, as in the Word (Typst has no double line: a thicker one)
+    const lines = tableNodeBorders(tbl, fmt?.tableStyle?.value);
+    const stroke = (l: Line | null) => (l ? `(paint: rgb(${str(l.color)}), thickness: ${+(l.style === "double" ? l.width * 2 : l.width).toFixed(2)}pt${l.style === "dashed" ? `, dash: "dashed"` : l.style === "dotted" ? `, dash: "dotted"` : ""})` : "none");
+    const cell = (c: PMNode, i: number, j: number) => {
+      const b = lines[i]?.[j];
       const args = [
+        b ? `stroke: (top: ${stroke(b.top)}, bottom: ${stroke(b.bottom)}, left: ${stroke(b.left)}, right: ${stroke(b.right)})` : "",
         (c.attrs!.colspan as number) > 1 ? `colspan: ${c.attrs!.colspan}` : "",
         (c.attrs!.rowspan as number) > 1 ? `rowspan: ${c.attrs!.rowspan}` : "",
         c.attrs!.align ? `align: ${ALIGN[c.attrs!.align as string] ?? "left"}` : "",
@@ -185,15 +191,13 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
       const body = (c.content ?? []).map((p) => (p.type === "paragraph" ? paragraph(p, letters) : list(p))).join("\n\n");
       return args.length ? `table.cell(${args.join(", ")})[${body}]` : `[${body}]`;
     };
-    const head = rows.slice(0, lastHeader + 1).map((r) => (r.content ?? []).map(cell).join(", "));
-    const body = rows.slice(lastHeader + 1).map((r) => (r.content ?? []).map(cell).join(", "));
+    const head = rows.slice(0, lastHeader + 1).map((r, i) => (r.content ?? []).map((c, j) => cell(c, i, j)).join(", "));
+    const body = rows.slice(lastHeader + 1).map((r, i) => (r.content ?? []).map((c, j) => cell(c, i + lastHeader + 1, j)).join(", "));
     out.push(`${pageBreak ? "#pagebreak(weak: true)\n" : ""}${marker(part)}
 #figure(kind: table, numbering: none, gap: 0.6em,
   caption: figure.caption(position: top, separator: none)[${capLabel("table", tableNo.get(id)!)}${paragraph(cap, letters)}],
   table(columns: ${cols}, stroke: none, align: left, inset: (x: 4pt, y: 3pt),
-    table.hline(),
-${head.length ? `    table.header(${head.join(",\n      ")}),\n    table.hline(stroke: 0.5pt),\n` : ""}    ${body.join(",\n    ")}${body.length ? "," : ""}
-    table.hline()))
+${head.length ? `    table.header(${head.join(",\n      ")}),\n` : ""}    ${body.join(",\n    ")}${body.length ? "," : ""}))
 ${notesOf(notes, letters)}
 #v(0.8em, weak: true)`);
   }

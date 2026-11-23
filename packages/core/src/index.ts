@@ -28,3 +28,4 @@ export * from "./lang.ts";
 export * from "./spelling.ts";
 export * from "./sections.ts";
 export * from "./document-font.ts";
+export * from "./table-borders.ts";

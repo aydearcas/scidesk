@@ -156,10 +156,19 @@ const ordered = <F extends TSchema[], R extends TSchema>(first: [...F], rest: R,
   return schema;
 };
 
+/** Record 0076: the table styles, and the line of a cell's own border (as Word's: style, width in points, colour). */
+export const TABLE_STYLES = ["three-line", "rows", "grid", "none"] as const;
+export const BORDER_LINE_STYLES = ["none", "single", "double", "dashed", "dotted"] as const;
+const BorderLine = Strict({
+  style: enumOf(BORDER_LINE_STYLES),
+  width: Type.Optional(Type.Number({ minimum: 0.25, maximum: 6, description: "Points; 0.5 when absent." })),
+  color: Type.Optional(Type.String({ pattern: "^#[0-9A-Fa-f]{6}$", description: "Black when absent." })),
+});
 const CellAttrs = Strict({
   colspan: Type.Integer({ minimum: 1 }),
   rowspan: Type.Integer({ minimum: 1 }),
   align: OptAttr(enumOf(["left", "center", "right", "decimal"])),
+  borders: OptAttr(Strict({ top: Type.Optional(BorderLine), bottom: Type.Optional(BorderLine), left: Type.Optional(BorderLine), right: Type.Optional(BorderLine) }, { description: "The cell's own borders, over the table style's (record 0076); a side with style none has no line." })),
 });
 const cellContent = Type.Array(Type.Union([Type.Ref("Paragraph"), Type.Ref("BulletList"), Type.Ref("OrderedList")]), { minItems: 1 });
 
@@ -206,6 +215,7 @@ const blockDefs = {
     attrs: Strict({
       id: BlockId,
       columnWidths: OptAttr(Type.Array(Type.Number({ exclusiveMinimum: 0 }), { minItems: 1, description: "Relative widths of the columns (record 0022); null lets the export decide." })),
+      style: OptAttr(enumOf(TABLE_STYLES, "The table's lines (record 0076): three-line (top, under the header, bottom), rows (also between rows), grid (all), none; absent: the journal's, else three-line.")),
     }),
     content: Type.Array(Type.Ref("TableRow"), { minItems: 1 }),
     marks: nodeMarks,

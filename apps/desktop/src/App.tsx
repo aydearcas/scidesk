@@ -24,7 +24,7 @@ import { numberable, setSectionNumberStyle } from "./section-numbers.ts";
 import { addSection, addSubsection, canMoveSection, childIndexAt, headingIndex, moveSection, moveSectionTo, removeHeading, roleOfNode, setSectionRole, topHeadings } from "./sections-edit.ts";
 import { FindBar } from "./FindBar.tsx";
 import { addNote, blockInsertPos, clearImages, partAround, partContext, placed, relabel, setAlign, setPartAttrs } from "./parts.ts";
-import { cellInfo, TableTabView, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
+import { cellInfo, TableContextBar, TableTabView, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
 import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
@@ -55,6 +55,7 @@ import { PROJECT_LAYOUT } from "@scidesk/formats";
 const PROJECT_DICTIONARY = PROJECT_LAYOUT.dictionary;
 import { NewArticle, type NewArticleChoice } from "./NewArticle.tsx";
 import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, updateRecentArticle, type RecentArticle, type RecentProject } from "./recent.ts";
+import { setJournalTableStyle } from "./table-lines.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -1449,6 +1450,9 @@ export function App() {
       { label: t("ui.sections.removeHeading"), onSelect: () => removeHeading(editor, index) },
     ];
   };
+  // record 0076: the journal's table style, the default of tables without their own
+  const journalTableStyle = (project && article?.article.journal ? project.journals.get(article.article.journal)?.manuscriptFormat?.tableStyle?.value : null) ?? null;
+  useEffect(() => { if (editor && !editor.isDestroyed) setJournalTableStyle(editor.view, journalTableStyle); }, [editor, journalTableStyle]);
   const changeNumbering = run(async (value: SectionNumbering | null) => {
     if (!project || !article) return;
     await setSectionNumbering(project, article.folder, value);
@@ -1676,6 +1680,9 @@ export function App() {
           {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
           <div className={`tab-body manuscript-tab${settings.preview && project ? " with-preview" : ""}`} hidden={!project || !isDoc(tab)}>
             <div className="desk" ref={deskRef}>
+              {/* record 0075: the table bar, while the cursor is in a table */}
+              {editor && project && <TableContextBar editor={editor} scroller={deskRef} onOpenTab={openTableTab}
+                label={(id) => t("ui.tableN", { n: outline?.tables.find((x) => x.id === id)?.number ?? "?" })} />}
               <div className={PAGED ? "pages-wrap" : undefined} ref={pagesRef} style={PAGED ? ({ "--per-row": perRow } as React.CSSProperties) : undefined}>
               {PAGED && (
                 <div className="sheets" aria-hidden="true">

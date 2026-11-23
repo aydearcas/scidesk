@@ -19,6 +19,8 @@ const PATHS: Record<string, string> = {
   generalNote: "M6 4h12v16H6z M9 9h6 M9 13h6 M9 17h3",
   alignLeft: "M4 6h16 M4 10h10 M4 14h16 M4 18h10",
   plus: "M12 5v14 M5 12h14",
+  // record 0076: a table's borders
+  borders: "M4 4h16v16H4z M12 4v16 M4 12h16",
   // record 0073: justified text, and a block quotation (a bar beside indented lines)
   alignJustify: "M4 6h16 M4 10h16 M4 14h16 M4 18h16",
   blockquote: "M5 5v14 M9 7h10 M9 11h10 M9 15h7",

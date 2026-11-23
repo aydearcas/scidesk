@@ -1631,6 +1631,40 @@
           ],
           "type": "object"
         },
+        "tableStyle": {
+          "additionalProperties": false,
+          "description": "The lines of the tables (record 0076).",
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "three-line",
+                "rows",
+                "grid",
+                "none"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
         "tables": {
           "additionalProperties": false,
           "properties": {

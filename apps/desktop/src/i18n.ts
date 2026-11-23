@@ -251,7 +251,13 @@ const es = {
       missingNow: "No se encuentra la carpeta de «{{name}}»: se muestra aparte en los recientes.", locatedOther: "La carpeta elegida es otro proyecto ({{name}}); «{{old}}» sigue en la lista.",
       interface: "Interfaz: {{lang}}", shortcuts: "Atajos: {{scheme}}", changeLang: "Cambiar el idioma de la interfaz", changeScheme: "Cambiar el esquema de atajos",
     },
-    tableBar: { rows: "Filas", columns: "Columnas", merge: "Combinar", split: "Dividir", headerRow: "Fila de encabezado", decimal: "0,0", noteCall: "Llamada a nota", generalNoteShort: "Nota general" },
+    tableBar: { rows: "Filas", columns: "Columnas", merge: "Combinar", split: "Dividir", headerRow: "Fila de encabezado", decimal: "0,0", noteCall: "Llamada a nota", generalNoteShort: "Nota general", lines: "Bordes" },
+    tableStyle: { title: "Estilo de tabla", button: "Estilo", asJournal: "Como la revista ({{name}})", "three-line": "Tres líneas", rows: "Líneas entre filas", grid: "Cuadrícula", none: "Sin líneas" },
+    borders: {
+      title: "Bordes de las celdas seleccionadas", button: "Bordes", bottom: "Borde inferior", top: "Borde superior", left: "Borde izquierdo", right: "Borde derecho", none: "Sin borde", all: "Todos los bordes", outside: "Bordes externos", inside: "Bordes internos", insideH: "Borde horizontal interior", insideV: "Borde vertical interior",
+      reset: "Quitar los bordes propios (los del estilo de tabla)", takeAway: "Ya está: pulsa para quitarlo", pen: "Línea", lineStyle: "Estilo de línea", width: "Grosor", color: "Color", points: "{{n}} pt",
+      styles: { single: "Continua", double: "Doble", dashed: "Discontinua", dotted: "Punteada" },
+    },
     pasteNotice: {
       title: "Pegada desde Word, con su archivo {{path}}", titleN: "Pegada desde Word: es la Tabla {{n}}, con su archivo {{path}}",
       kept: "Se ha conservado", dropped: "Se ha descartado", undo: "Deshacer el pegado", undone: "Pegado deshecho. El archivo de la tabla queda en «Sin colocar en el texto».",
@@ -581,7 +587,13 @@ const en: typeof es = {
       missingNow: "The folder of “{{name}}” is not found: it is shown apart in the recent projects.", locatedOther: "The folder you chose is another project ({{name}}); “{{old}}” stays in the list.",
       interface: "Interface: {{lang}}", shortcuts: "Shortcuts: {{scheme}}", changeLang: "Change the interface language", changeScheme: "Change the shortcut scheme",
     },
-    tableBar: { rows: "Rows", columns: "Columns", merge: "Merge", split: "Split", headerRow: "Header row", decimal: "0.0", noteCall: "Note call", generalNoteShort: "General note" },
+    tableBar: { rows: "Rows", columns: "Columns", merge: "Merge", split: "Split", headerRow: "Header row", decimal: "0.0", noteCall: "Note call", generalNoteShort: "General note", lines: "Borders" },
+    tableStyle: { title: "Table style", button: "Style", asJournal: "As the journal ({{name}})", "three-line": "Three lines", rows: "Lines between rows", grid: "Grid", none: "No lines" },
+    borders: {
+      title: "Borders of the selected cells", button: "Borders", bottom: "Bottom border", top: "Top border", left: "Left border", right: "Right border", none: "No border", all: "All borders", outside: "Outside borders", inside: "Inside borders", insideH: "Inside horizontal border", insideV: "Inside vertical border",
+      reset: "Remove the cells' own borders (the table style's)", takeAway: "Already there: press to take it away", pen: "Line", lineStyle: "Line style", width: "Width", color: "Colour", points: "{{n}} pt",
+      styles: { single: "Single", double: "Double", dashed: "Dashed", dotted: "Dotted" },
+    },
     pasteNotice: {
       title: "Pasted from Word, with its file {{path}}", titleN: "Pasted from Word: it is Table {{n}}, with its file {{path}}",
       kept: "Kept", dropped: "Dropped", undo: "Undo the paste", undone: "Paste undone. The table's file stays in “Not placed in the text”.",

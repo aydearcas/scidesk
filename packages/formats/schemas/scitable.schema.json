@@ -2332,6 +2332,22 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "description": "The table's lines (record 0076): three-line (top, under the header, bottom), rows (also between rows), grid (all), none; absent: the journal's, else three-line.",
+                  "enum": [
+                    "three-line",
+                    "rows",
+                    "grid",
+                    "none"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -2438,6 +2454,136 @@
                 }
               ]
             },
+            "borders": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "The cell's own borders, over the table style's (record 0076); a side with style none has no line.",
+                  "properties": {
+                    "bottom": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "left": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "right": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "top": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "colspan": {
               "minimum": 1,
               "type": "integer"
@@ -2504,6 +2650,136 @@
                     "right",
                     "decimal"
                   ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "borders": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "description": "The cell's own borders, over the table style's (record 0076); a side with style none has no line.",
+                  "properties": {
+                    "bottom": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "left": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "right": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    },
+                    "top": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "color": {
+                          "description": "Black when absent.",
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
+                        },
+                        "style": {
+                          "enum": [
+                            "none",
+                            "single",
+                            "double",
+                            "dashed",
+                            "dotted"
+                          ]
+                        },
+                        "width": {
+                          "description": "Points; 0.5 when absent.",
+                          "maximum": 6,
+                          "minimum": 0.25,
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "style"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
                 },
                 {
                   "type": "null"

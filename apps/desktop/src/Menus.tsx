@@ -120,6 +120,19 @@ export function ContextMenu({ x, y, items, label, onClose }: { x: number; y: num
   );
 }
 
+/** Record 0076: a panel with free content that floats over the window, at a point (the borders menu of the table bar, whose row would cut a drop-down). */
+export function FloatingPanel({ x, y, label, onClose, children }: { x: number; y: number; label: string; onClose: () => void; children: ReactNode }) {
+  const root = useRef<HTMLDivElement>(null);
+  useDismiss(true, root, onClose);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { e.preventDefault(); onClose(); } };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [onClose]);
+  const left = Math.max(8, Math.min(x, window.innerWidth - 340));
+  return <div ref={root} className="floating-panel" role="dialog" aria-label={label} style={{ left, top: y }}>{children}</div>;
+}
+
 /** A drop-down panel with free content (the colour palettes). */
 export function Popover({ id, label, title, className, button, children, disabled }: {
   id: string; label: string; title?: string; className?: string; button: ReactNode; children: (close: () => void) => ReactNode; disabled?: boolean;
