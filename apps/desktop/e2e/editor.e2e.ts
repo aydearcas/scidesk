@@ -4,6 +4,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 /** Ctrl on Windows, Cmd on macOS: what the app calls "Mod". */
 const MOD = "ControlOrMeta";
+/** The end of the line: End does not go there on a Mac, Cmd+Right does. */
+const END = process.platform === "darwin" ? "Meta+ArrowRight" : "End";
 
 async function openDemo(page: Page) {
   const errors: string[] = [];
@@ -81,9 +83,12 @@ test("a click in empty keywords writes there, not in the next block (phase 1 tes
   const { editor } = await openDemo(page);
   const keywords = editor.locator(".keywords").first();
   // empty them: from the end, until no text is left
-  await keywords.locator(".keyword").last().click();
-  await page.keyboard.press("End");
-  for (let i = 0; i < 150 && (await keywords.textContent()) !== ""; i++) await page.keyboard.press("Backspace");
+  // at the end of the last one
+  const last = editor.locator(".keywords .keyword").last();
+  const lastBox = (await last.boundingBox())!;
+  await last.click({ position: { x: lastBox.width - 1, y: lastBox.height / 2 } });
+  await page.keyboard.press(END);
+  for (let i = 0; i < 150 && (await keywords.textContent({ timeout: 2000 })) !== ""; i++) await page.keyboard.press("Backspace");
   await expect(keywords).toHaveText("");
   const next = await editor.locator("h1", { hasText: /^Introducción$/ }).locator("xpath=following-sibling::p[1]").textContent();
   // a click in the room to the right of "Palabras clave:"
@@ -100,7 +105,7 @@ test("Ir in the warnings scrolls only the sheet and selects the pending marker (
   await openDemo(page);
   const discussion = page.locator(".ProseMirror > h1", { hasText: /^Discusión$/ }).locator("xpath=following-sibling::p[1]");
   await discussion.click();
-  await page.keyboard.press("End");
+  await page.keyboard.press(END);
   await page.keyboard.type(" XX", { delay: 15 });
   await page.locator(".desk").evaluate((d) => { d.scrollTop = 0; });
   await page.getByRole("button", { name: "Ir", exact: true }).first().click();
@@ -115,7 +120,7 @@ test("Tab in the last cell of a table adds a row", async ({ page }) => {
   const table = editor.locator("figure.part-table table");
   const rows = await table.locator("tr").count();
   await table.locator("tr").last().locator("td, th").last().click();
-  await page.keyboard.press("End");
+  await page.keyboard.press(END);
   await page.keyboard.press("Tab");
   await expect(table.locator("tr")).toHaveCount(rows + 1);
   await page.keyboard.type("n = 12", { delay: 15 });
