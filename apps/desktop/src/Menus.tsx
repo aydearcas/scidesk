@@ -8,7 +8,11 @@ export type MenuEntry =
   /** Record 0079: the title of a group of items (the table's right-click menu). */
   | { heading: string }
   | { label: string; onSelect: () => void; shortcut?: string; disabled?: boolean; checked?: boolean; hint?: string; title?: string; strong?: boolean };
-export interface MenuDef { id: string; label: string; items: MenuEntry[] }
+export interface MenuDef {
+  id: string; label: string; items: MenuEntry[];
+  /** Record 0091: not a menu but a button that is on or off ("Revisar" opens its bar). */
+  toggle?: { pressed: boolean; onToggle: () => void; title?: string };
+}
 
 function focusItem(list: HTMLElement | null, delta: number | "first" | "last") {
   if (!list) return;
@@ -60,7 +64,11 @@ export function MenuBar({ menus, label }: { menus: MenuDef[]; label: string }) {
   useDismiss(open !== null, root, close);
   const button = (id: string) => root.current?.querySelector<HTMLButtonElement>(`[data-menu="${id}"]`);
   const openAt = (i: number, focusFirst: boolean) => {
-    const m = menus[(i + menus.length) % menus.length];
+    // a toggle has no menu: the next one that has
+    let k = (i + menus.length) % menus.length;
+    const step = i < menus.findIndex((x) => x.id === open) ? -1 : 1;
+    for (let n = 0; menus[k].toggle && n < menus.length; n++) k = (k + step + menus.length) % menus.length;
+    const m = menus[k];
     setOpen(m.id);
     button(m.id)?.focus();
     if (focusFirst) requestAnimationFrame(() => focusItem(root.current?.querySelector(".menu-list") ?? null, "first"));
@@ -72,7 +80,15 @@ export function MenuBar({ menus, label }: { menus: MenuDef[]; label: string }) {
         if (open && e.key === "ArrowRight") { e.preventDefault(); openAt(i + 1, true); }
         else if (open && e.key === "ArrowLeft") { e.preventDefault(); openAt(i - 1, true); }
       }}>
-      {menus.map((m) => (
+      {menus.map((m) => m.toggle ? (
+        <div key={m.id} className="menu">
+          <button id={`menu-${m.id}`} data-menu={m.id} role="menuitemcheckbox" aria-checked={m.toggle.pressed} title={m.toggle.title}
+            className={`menu-button menu-toggle${m.toggle.pressed ? " on" : ""}`}
+            onClick={() => { setOpen(null); m.toggle!.onToggle(); }}>
+            {m.label}
+          </button>
+        </div>
+      ) : (
         <div key={m.id} className="menu">
           <button id={`menu-${m.id}`} data-menu={m.id} role="menuitem" aria-haspopup="menu" aria-expanded={open === m.id} className={`menu-button${open === m.id ? " open" : ""}`}
             onClick={() => setOpen(open === m.id ? null : m.id)}

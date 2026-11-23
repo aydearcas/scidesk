@@ -876,3 +876,16 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 .status-item.status-tracking { color: #fff; background: var(--accent); font-weight: 600; }
 .track-name-dialog input { width: 100%; height: 32px; padding: 0 8px; margin: 8px 0 4px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; }
 .settings-view .user-name { width: min(360px, 100%); height: 30px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; }
+
+/* record 0091: "Revisar" as a toggle in the title bar, and its bar under the ribbon, across the window */
+.titlebar .menu-button.menu-toggle.on { background: var(--chrome-hover); box-shadow: inset 0 -2px 0 var(--chrome-ink); }
+.ribbon-row .review-bar { border-top: 1px solid var(--line); border-bottom: 0; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+/* narrow windows: one row still, without the group titles and with the icons alone where there is one */
+@container (max-width: 1320px) { .review-bar .tool-label { display: none; } .review-bar .tool.both .tool-text { display: none; } .review-bar .tool.both { padding: 0 6px; } }
+.review-bar .tool-group { display: flex; align-items: center; gap: 2px; padding-right: 8px; margin-right: 4px; border-right: 1px solid var(--line); }
+.review-bar .tool-group:last-child { border-right: 0; }
+.review-bar .tool-label { font-size: 11px; color: var(--text-3); margin-right: 4px; white-space: nowrap; }
+.review-bar .tool { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 8px; border: 1px solid transparent; border-radius: var(--radius); background: none; cursor: pointer; font-size: 12.5px; white-space: nowrap; color: inherit; }
+.review-bar .tool:hover:not(:disabled) { background: var(--line); }
+.review-bar .tool.on { background: var(--band, #e3f1f3); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.review-bar .tool:disabled { opacity: 0.45; cursor: default; }

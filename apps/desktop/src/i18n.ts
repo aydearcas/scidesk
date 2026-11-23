@@ -165,6 +165,13 @@ const es = {
       note: "Como el PDF para la revista. La paginación en Word puede variar.", clickHint: "Pulsa para ir a ese párrafo",
       error: "La vista previa no se ha podido componer", desktopOnly: "La vista previa la compone Typst en la ventana de escritorio; la vista en el navegador no la tiene.",
     },
+    reviewBar: {
+      label: "Barra de revisión", toggleHint: "Muestra u oculta la barra de revisión",
+      changes: "Cambios", review: "Revisión", language: "Idioma y corrección",
+      track: "Control de cambios", accept: "Aceptar", reject: "Rechazar", previous: "Anterior", next: "Siguiente", acceptAll: "Aceptar todos", rejectAll: "Rechazar todos",
+      warnings: "Avisos", importCopy: "Copia devuelta", authors: "Autores",
+      spellcheck: "Ortografía", autocorrect: "Autocorrección", es: "Español", enUS: "Inglés (EE. UU.)", enGB: "Inglés (R. U.)", variants: "Homogeneizar el inglés…",
+    },
     track: {
       toggle: "Control de cambios", status: "Control de cambios", statusHint: "Cada cambio queda como una propuesta con tu nombre. Pulsa para desactivarlo.",
       on: "Control de cambios activado: lo que escribas o borres quedará marcado con tu nombre ({{name}}).", off: "Control de cambios desactivado. Los cambios marcados siguen ahí hasta que los aceptes o rechaces.",
@@ -533,6 +540,13 @@ const en: typeof es = {
       toggle: "Preview", title: "Preview", composing: "Composing…", pages_one: "1 page", pages_other: "{{count}} pages", page: "Page {{n}}",
       note: "As the PDF for the journal. Word's pagination may differ.", clickHint: "Click to go to that paragraph",
       error: "The preview could not be composed", desktopOnly: "Typst composes the preview in the desktop window; the browser preview does not have it.",
+    },
+    reviewBar: {
+      label: "Review bar", toggleHint: "Shows or hides the review bar",
+      changes: "Changes", review: "Review", language: "Language and proofing",
+      track: "Track changes", accept: "Accept", reject: "Reject", previous: "Previous", next: "Next", acceptAll: "Accept all", rejectAll: "Reject all",
+      warnings: "Warnings", importCopy: "Returned copy", authors: "Authors",
+      spellcheck: "Spelling", autocorrect: "Autocorrect", es: "Spanish", enUS: "English (US)", enGB: "English (UK)", variants: "Make the English one variety…",
     },
     track: {
       toggle: "Track changes", status: "Tracking changes", statusHint: "Every change is kept as a proposal with your name. Click to turn it off.",

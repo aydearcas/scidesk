@@ -45,6 +45,9 @@ const PATHS: Record<string, string> = {
   omega: "M5 19h4v-2.5A6.5 6.5 0 1 1 15 16.5V19h4",
   chevronDown: "M6 9l6 6 6-6",
   chevronRight: "M9 6l6 6-6 6",
+  chevronLeft: "M15 6l-6 6 6 6",
+  // record 0091: tracked changes, a pencil over lines of text
+  trackChanges: "M4 6h11 M4 10h8 M4 14h5 M11.5 20.5l.9-3.6 6.8-6.8 2.7 2.7-6.8 6.8z",
   close: "M6 6l12 12 M18 6L6 18",
   panelLeft: "M4 5h16v14H4z M9 5v14",
   panelRight: "M4 5h16v14H4z M15 5v14",

@@ -64,6 +64,7 @@ import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } f
 import { revealIn } from "./reveal.ts";
 import { changeAt, changeInfo, decide, isTracking, setTracking, stepChange, track, type ChangeRecord } from "./track-changes.ts";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
+import { ReviewBar } from "./ReviewBar.tsx";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -1468,28 +1469,8 @@ export function App() {
       { label: t("importRefs"), onSelect: () => refsInput.current?.click(), disabled: noProject },
       { label: t("ui.openLibrary"), onSelect: () => chooseView("library"), disabled: noProject },
     ] },
-    { id: "review", label: t("ui.menu.review"), items: [
-      { label: t("ui.warnings"), onSelect: () => showRight("warnings"), disabled: noProject },
-      { label: t("importCopy"), onSelect: () => showRight("review"), disabled: noProject },
-      { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
-      "-",
-      // record 0090: tracked changes, as Word's Review tab
-      { label: t("ui.track.toggle"), shortcut: keys("suggestions"), checked: tracking, onSelect: () => void toggleTracking(), disabled: noProject },
-      { label: t("ui.track.acceptHere"), onSelect: () => decideHere(true), disabled: noProject || !(editor && changeAt(editor.state)) },
-      { label: t("ui.track.rejectHere"), onSelect: () => decideHere(false), disabled: noProject || !(editor && changeAt(editor.state)) },
-      { label: t("ui.track.next"), onSelect: () => moveToChange(1), disabled: noProject },
-      { label: t("ui.track.previous"), onSelect: () => moveToChange(-1), disabled: noProject },
-      { label: t("ui.track.acceptAll"), onSelect: () => decideAll(true), disabled: noProject },
-      { label: t("ui.track.rejectAll"), onSelect: () => decideAll(false), disabled: noProject },
-      "-",
-      { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
-      { label: t("ui.autocorrect.toggle"), title: t("ui.autocorrect.hint"), checked: settings.autocorrect, onSelect: () => updateSettings({ autocorrect: !settings.autocorrect }) },
-      // record 0060: the language of the selection, or of the paragraph
-      { label: t("ui.lang.setEs"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("es"), onSelect: () => editor && setLanguage(editor, "es"), disabled: noProject },
-      { label: t("ui.lang.setEnUS"), title: t("ui.lang.hint"), checked: !!cursorLang && cursorLang.lang.startsWith("en") && !/^en-gb$/i.test(cursorLang.lang), onSelect: () => editor && setLanguage(editor, "en-US"), disabled: noProject },
-      { label: t("ui.lang.setEnGB"), title: t("ui.lang.hint"), checked: !!cursorLang && /^en-gb$/i.test(cursorLang.lang), onSelect: () => editor && setLanguage(editor, "en-GB"), disabled: noProject },
-      { label: t("ui.variants.menu"), onSelect: () => setVariantsOpen(/^en-gb$/i.test(article?.article.lang ?? "") ? "GB" : "US"), disabled: noProject },
-    ] },
+    // record 0091: "Revisar" is a toggle that opens the review bar (ReviewBar.tsx), not a menu
+    { id: "review", label: t("ui.menu.review"), items: [], toggle: { pressed: settings.reviewBar, onToggle: () => updateSettings({ reviewBar: !settings.reviewBar }), title: t("ui.reviewBar.toggleHint") } },
     { id: "view", label: t("ui.menu.view"), items: [
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
       { label: t("ui.views.library"), checked: view === "library", onSelect: () => chooseView("library"), disabled: noProject },
@@ -1946,6 +1927,15 @@ export function App() {
           <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)}
             freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()} docFont={docFonts?.writing ?? { family: "Calibri", size: 12 }}
             onSave={() => void run(save)()} saveState={{ dirty, saving, lastSaved }} />
+          {settings.reviewBar && (
+            <ReviewBar editor={editor} disabled={!isDoc(tab)} tracking={tracking} onTracking={() => void toggleTracking()}
+              onDecide={(accept, all) => (all ? decideAll(accept) : decideHere(accept, changeAt(editor.state)?.id))} onStep={moveToChange}
+              onWarnings={() => showRight("warnings")} onImportCopy={() => showRight("review")} onAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }}
+              spellcheck={settings.spellcheck} onSpellcheck={() => updateSettings({ spellcheck: !settings.spellcheck })}
+              autocorrect={settings.autocorrect} onAutocorrect={() => updateSettings({ autocorrect: !settings.autocorrect })}
+              lang={cursorLang?.lang ?? article?.article.lang ?? null} onLang={(l) => setLanguage(editor, l)}
+              onVariants={() => setVariantsOpen(/^en-gb$/i.test(article?.article.lang ?? "") ? "GB" : "US")} />
+          )}
         </div>
       )}
       <div className="workspace">
