@@ -7,17 +7,19 @@ export type SchemeId = "word-es" | "international";
 export type Action =
   | "bold" | "italic" | "underline" | "superscript" | "subscript" | "undo" | "redo"
   | "cite" | "xref" | "save" | "find" | "replace" | "newArticle" | "openProject"
-  | "alignLeft" | "alignCenter" | "alignRight" | "justify"
+  | "alignLeft" | "alignCenter" | "alignRight" | "justify" | "pageBreak"
   // listed and reserved, not built yet (phase 1 V1 and phase 2)
   | "comment" | "suggestions" | "palette";
 
 /** Actions that work today; the others show "coming later" in Settings. */
-export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify"];
+export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak"];
 /** Actions that act on the text, run by the editor when it has the focus. */
-export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify"];
+export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak"];
 
 const COMMON: Partial<Record<Action, string>> = {
   superscript: "Mod-.", subscript: "Mod-,", undo: "Mod-z", redo: "Mod-y",
+  // record 0078: a page break is Ctrl+Enter in Word, in Spanish and in English
+  pageBreak: "Mod-Enter",
   cite: "Mod-Shift-c", xref: "Mod-Shift-r", comment: "Mod-Shift-m", suggestions: "Mod-Shift-e", palette: "Mod-Shift-p",
 };
 export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
@@ -28,7 +30,7 @@ export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
   international: { ...COMMON, bold: "Mod-b", italic: "Mod-i", underline: "Mod-u", save: "Mod-s", find: "Mod-f", replace: "Mod-h", newArticle: "Mod-n", openProject: "Mod-o", alignLeft: "Mod-l", alignCenter: "Mod-e", alignRight: "Mod-r", justify: "Mod-j" } as Record<Action, string>,
 };
 /** Order of the actions in the table of Settings. */
-export const ACTIONS: readonly Action[] = ["newArticle", "openProject", "bold", "italic", "underline", "superscript", "subscript", "alignLeft", "alignCenter", "alignRight", "justify", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
+export const ACTIONS: readonly Action[] = ["newArticle", "openProject", "bold", "italic", "underline", "superscript", "subscript", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
 
 /**
  * Keys that open the web view's own tools: its find bar (which searches the whole window,
@@ -69,7 +71,7 @@ export function shortcutLabel(combo: string | undefined, lang: string): string {
   if (!combo) return "";
   const parts = combo.split("-");
   const key = parts.pop()!;
-  const k = key.length === 1 ? key.toUpperCase() : key;
+  const k = key.length === 1 ? key.toUpperCase() : key === "Enter" && lang.startsWith("es") ? "Intro" : key;
   if (isMac) return parts.map((p) => (p === "Mod" ? "⌘" : p === "Shift" ? "⇧" : p)).join("") + k;
   return [...parts.map((p) => (p === "Mod" ? "Ctrl" : p === "Shift" ? (lang.startsWith("es") ? "Mayús" : "Shift") : p)), k].join("+");
 }

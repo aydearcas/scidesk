@@ -273,6 +273,8 @@ ${notesOf(notes)}
     else if (n.type === "bulletList" || n.type === "orderedList") out.push(`${marker(n)}${list(n)}`);
     // record 0073: a block quotation, indented on both sides as in the Word
     else if (n.type === "blockquote") out.push(`${marker(n)}#pad(x: 1.25cm)[${(n.content ?? []).map((p) => paragraph(p)).join("\n\n")}]`);
+    // record 0078: a page break (two with an empty paragraph between: a blank page)
+    else if (n.type === "pageBreak") out.push(`${marker(n)}#pagebreak();`);
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
     else if (n.type === "figurePart") { if (!captionsList) await figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);

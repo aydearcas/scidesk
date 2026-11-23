@@ -2,6 +2,7 @@
 // with format and cite, and the cross-reference picker (Ctrl+Shift+R).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
+import { NodeSelection } from "@tiptap/pm/state";
 import { useTranslation } from "react-i18next";
 import type { OutlinePart } from "@scidesk/core";
 import { Icon } from "./icons.tsx";
@@ -27,7 +28,9 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
     editor,
     selector: ({ editor: e }) => {
       const { from, to, empty } = e.state.selection;
-      const text = !empty && e.state.doc.textBetween(from, to, " ").trim().length > 0;
+      // a whole table or figure selected (its move handle, record 0077) is not text to format
+      const block = e.state.selection instanceof NodeSelection && !e.state.selection.node.isInline;
+      const text = !empty && !block && e.state.doc.textBetween(from, to, " ").trim().length > 0;
       return { show: text && e.isFocused, from, bold: e.isActive("bold"), italic: e.isActive("italic"), underline: e.isActive("underline"), sup: e.isActive("superscript"), sub: e.isActive("subscript") };
     },
   });

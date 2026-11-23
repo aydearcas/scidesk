@@ -39,6 +39,8 @@ const FIRST = 60;
 export const partContext = {
   lang: "es",
   uncited: "no citada",
+  /** What an empty caption says, in grey, until something is written (a table's title, a figure's caption). */
+  captionHint: (_kind: "table" | "figure") => "",
   noImage: (path: string) => path,
   /** Paths of the article's part files, also those not in the text (a copy never takes one). */
   files: (): Iterable<string> => [],
@@ -516,9 +518,11 @@ function labelDecorations(doc: PMNode, article: PMNode): DecorationSet {
     const id = String(part.attrs.id);
     const isTable = part.type.name === "tablePart";
     const caption = part.firstChild!;
+    const hint = caption.content.size ? "" : partContext.captionHint(isTable ? "table" : "figure");
     decos.push(Decoration.node(pos + 1, pos + 1 + caption.nodeSize, {
       "data-label": `${isTable ? L.table : L.figure} ${numbers.get(id) ?? "?"}.`,
       ...(cited.has(id) ? {} : { "data-uncited": partContext.uncited }),
+      ...(hint ? { "data-placeholder": hint } : {}),
     }));
     // specific notes lettered by first call (R11); general notes have no letter
     const specific = new Set<string>();

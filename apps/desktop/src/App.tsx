@@ -56,6 +56,8 @@ const PROJECT_DICTIONARY = PROJECT_LAYOUT.dictionary;
 import { NewArticle, type NewArticleChoice } from "./NewArticle.tsx";
 import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, updateRecentArticle, type RecentArticle, type RecentProject } from "./recent.ts";
 import { setJournalTableStyle } from "./table-lines.ts";
+import { partDrag } from "./part-drag.ts";
+import { insertPageBreak } from "./page-break.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -329,10 +331,15 @@ export function App() {
     return c.doc;
   }, []);
   // the texts of the parts follow the interface language
-  useEffect(() => { document.documentElement.style.setProperty("--ph-title", JSON.stringify(t("ui.titlePlaceholder"))); }, [t]);
+  useEffect(() => {
+    document.documentElement.style.setProperty("--ph-title", JSON.stringify(t("ui.titlePlaceholder")));
+    document.documentElement.style.setProperty("--page-break-label", JSON.stringify(t("ui.pageBreak")));
+  }, [t]);
   useEffect(() => {
     partContext.uncited = t("ui.notCitedFlag");
     partContext.noImage = (path) => t("ui.noImage", { path });
+    partContext.captionHint = (kind) => t(kind === "table" ? "ui.tableTitleHint" : "ui.figureCaptionHint");
+    partDrag.title = (kind) => t(kind === "table" ? "ui.moveTable" : "ui.moveFigure");
     if (editor) relabel(editor.view);
   }, [editor, t]);
 
@@ -1219,6 +1226,8 @@ export function App() {
     const x = Math.min(Math.max(clientX, col.left + 1), col.right - 1);
     return editor.view.posAtCoords({ left: x, top: clientY })?.pos ?? null;
   };
+  // dragging a table or a figure (record 0077) finds its gap with the sheets of this render
+  useEffect(() => { partDrag.pointerPos = pointerPos; });
   /**
    * A press in a side margin, level with a line of text: the start of that line (left margin)
    * or its end (right margin), as if the press had been just inside the text; with Shift, the
@@ -1298,6 +1307,7 @@ export function App() {
     { label: t("ui.export.titlePage"), hint: t("ui.export.titlePageHint"), onSelect: () => void exportAs("title-page")(), disabled: !project },
   ];
   const noProject = !project;
+  const pageBreakHere = (blank: boolean) => { if (!editor) return; insertPageBreak(blank)(editor.state, editor.view.dispatch); editor.view.focus(); };
   const menus: MenuDef[] = [
     { id: "file", label: t("ui.menu.file"), items: [
       { label: t("ui.newArticle"), shortcut: keys("newArticle"), onSelect: () => void newArticle() },
@@ -1310,7 +1320,7 @@ export function App() {
       "-",
       { label: t("ui.saveNow"), shortcut: keys("save"), onSelect: () => void run(save)(), disabled: noProject },
       "-",
-      ...exportItems.map((e) => (e === "-" ? e : { ...e, hint: undefined, label: `${t("ui.exportPrefix")} ${e.label}` })),
+      ...exportItems.map((e) => (e === "-" || "heading" in e ? e : { ...e, hint: undefined, label: `${t("ui.exportPrefix")} ${e.label}` })),
     ] },
     { id: "edit", label: t("ui.menu.edit"), items: [
       { label: t("ui.undo"), shortcut: keys("undo"), onSelect: () => editor?.chain().focus().undo().run(), disabled: noProject },
@@ -1328,6 +1338,11 @@ export function App() {
       "-",
       { label: t("ui.insertTable"), onSelect: () => void insertTable(), disabled: noProject },
       { label: t("ui.insertFigure"), onSelect: () => figureInput.current?.click(), disabled: noProject },
+      "-",
+      // record 0078: as Word's Insert › Blank page and Page break
+      { label: t("ui.blankPage"), onSelect: () => pageBreakHere(true), disabled: noProject || !isDoc(tab) },
+      { label: t("ui.pageBreak"), shortcut: keys("pageBreak"), onSelect: () => pageBreakHere(false), disabled: noProject || !isDoc(tab) },
+      "-",
       { label: t("ui.pending"), onSelect: () => editor?.chain().focus().insertContent(t("ui.pendingMarker")).run(), disabled: noProject },
     ] },
     { id: "references", label: t("ui.menu.references"), items: [
@@ -1541,6 +1556,40 @@ export function App() {
     const omitted = citeItems.length > 0 && citeItems.every((i) => i.suppressAuthor);
     const omitItem: MenuEntry[] = onCitation && (omitsAuthor(rendering?.format ?? null) || citeItems.some((i) => i.suppressAuthor))
       ? [{ label: t("omitAuthor"), checked: omitted, title: t("omitAuthorHint"), onSelect: () => setOmitAuthor(view, sel.from, !omitted) }] : [];
+    const citeEntries: MenuEntry[] = onCitation ? [
+      { label: t("ui.editCitation"), shortcut: keys("cite"), onSelect: openQuickCite },
+      ...omitItem,
+      { label: t("ui.removeCitation"), onSelect: () => { view.dispatch(view.state.tr.deleteSelection()); view.focus(); } },
+    ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }];
+    const pendingItem: MenuEntry = { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } };
+    const clipboard: MenuEntry[] = [
+      { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
+      { label: t("ui.copy"), shortcut: shortcutLabel("Mod-c", i18n.language), onSelect: () => exec("copy"), disabled: sel.empty },
+      ...(inTab ? [] : [{ label: t("ui.selectAll"), shortcut: shortcutLabel("Mod-a", i18n.language), onSelect: () => editor.chain().focus().selectAll().run() }]),
+    ];
+    // record 0079: in a table (of the text or in its tab), the items in titled groups, as the user asked
+    if (inTab || part?.node.type.name === "tablePart") {
+      const tableId = part ? String(part.node.attrs.id) : null;
+      return [
+        ...(inTab ? [] : spellItems),
+        { heading: t("ui.tableMenu.edit") },
+        ...tableItems.filter((x) => x !== "-"),
+        ...(inTab ? [] : [{ label: t("ui.insertTable"), onSelect: () => void insertTable() }]),
+        { heading: t("ui.tableMenu.footer") },
+        ...noteItems,
+        { heading: t("ui.tableMenu.references") },
+        ...citeEntries,
+        ...(inTab ? [] : [{ label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref }]),
+        pendingItem,
+        "-",
+        ...(tableId ? [
+          { label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(tableId) },
+          { label: t("ui.removeTableFromText"), onSelect: () => removePart(tableId) },
+          "-" as const,
+        ] : []),
+        ...clipboard,
+      ];
+    }
     return [
       ...(inTab ? [] : spellItems),
       ...numberItem,
@@ -1554,6 +1603,8 @@ export function App() {
         "-" as const,
       ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }]),
       ...(inTab ? [] : [{ label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref }]),
+      // at the cursor, or after the table or figure the cursor is in (as Insert › Insert table)
+      ...(inTab ? [] : [{ label: t("ui.insertTable"), onSelect: () => void insertTable() }]),
       { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } },
       "-",
       { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },

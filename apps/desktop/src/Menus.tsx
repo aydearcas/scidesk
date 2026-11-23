@@ -5,7 +5,9 @@ import { Icon } from "./icons.tsx";
 
 export type MenuEntry =
   | "-"
-  | { label: string; onSelect: () => void; shortcut?: string; disabled?: boolean; checked?: boolean; hint?: string; title?: string };
+  /** Record 0079: the title of a group of items (the table's right-click menu). */
+  | { heading: string }
+  | { label: string; onSelect: () => void; shortcut?: string; disabled?: boolean; checked?: boolean; hint?: string; title?: string; strong?: boolean };
 export interface MenuDef { id: string; label: string; items: MenuEntry[] }
 
 function focusItem(list: HTMLElement | null, delta: number | "first" | "last") {
@@ -28,9 +30,9 @@ function MenuList({ items, onClose, labelledBy, className }: { items: MenuEntry[
         else if (e.key === "End") { e.preventDefault(); focusItem(ref.current, "last"); }
         else if (e.key === "Escape" || e.key === "Tab") { e.preventDefault(); onClose(true); }
       }}>
-      {items.map((it, i) => it === "-" ? <div key={i} className="menu-sep" role="separator" /> : (
+      {items.map((it, i) => it === "-" ? <div key={i} className="menu-sep" role="separator" /> : "heading" in it ? <div key={i} className="menu-heading" role="presentation">{it.heading}</div> : (
         <button key={i} role={it.checked === undefined ? "menuitem" : "menuitemcheckbox"} aria-checked={it.checked} disabled={it.disabled} title={it.title}
-          className={`menu-item${it.hint ? " with-hint" : ""}`}
+          className={`menu-item${it.hint ? " with-hint" : ""}${it.strong ? " strong" : ""}`}
           onClick={() => { onClose(false); it.onSelect(); }}>
           <span className="menu-check">{it.checked ? <Icon name="check" size={14} /> : null}</span>
           <span className="menu-label">{it.label}{it.hint && <span className="menu-hint">{it.hint}</span>}</span>

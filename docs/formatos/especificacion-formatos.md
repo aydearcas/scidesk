@@ -68,6 +68,7 @@ Un `.scidoc` es el **JSON de ProseMirror tal cual** (R34) dentro de un envoltori
 | `heading` | `id`, `level` (1–6), `role`, `lang`, `numbered` | texto | **Las secciones no son nodos contenedores:** un encabezado con `role` empieza la sección (como `sec-type` de JATS). `numbered: false` (opcional) lo deja sin número, con sus subsecciones, cuando el artículo numera las secciones (ficha 0070) |
 | `paragraph` | `id`, `lang`, `indent`, `align` | texto | `indent` (opcional, 1 a 8): sangría izquierda en pasos de 1,25 cm, como «Aumentar sangría» de Word (ficha 0069). `align` (opcional: `center`, `right`, `justify`; también en `heading` y `title`): alineación propia del bloque (ficha 0073) |
 | `blockquote` | `id` | `paragraph`+ | Cita en bloque (`disp-quote` de JATS), sangrada a los dos lados (ficha 0073) |
+| `pageBreak` | `id` | — | Salto de página: lo que sigue empieza en una página nueva (`w:br w:type="page"` en el Word, `pagebreak()` en Typst). Dos seguidos con un párrafo vacío entre ellos son una página en blanco (ficha 0078) |
 | `bulletList`, `orderedList` | `id` (`start` en la numerada) | `listItem`+ | `listItem` empieza por un párrafo |
 | `equation` | `id` (`e-`), `latex` | — | Llega en la fase 4; está en el formato desde la v1 (P6) |
 | `tableRef` | `id` (`t-`), `src` (`tables/*.scitable`) | — | Dónde va una tabla; la tabla vive en su archivo |

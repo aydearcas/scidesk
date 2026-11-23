@@ -127,7 +127,8 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
         if (f && f.phase === "instr") continue;
         if (ln === "t" || ln === "delText") push(e.textContent ?? "", kind, rev);
         else if (ln === "tab") push("\t", kind, rev);
-        else if (ln === "br") push("\n", kind, rev);
+        // record 0078: a page or column break is layout, not text (a page break block exports as one)
+        else if (ln === "br") { if (!["page", "column"].includes(attr(e, "type"))) push("\n", kind, rev); }
         else if (ln === "noBreakHyphen") push("\u2011", kind, rev);
       }
     };

@@ -132,7 +132,7 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
   );
   const part = (p: OutlinePart, kind: "table" | "figure") => item(
     { kind: "part", id: p.id, part: kind },
-    <>{p.number} · {p.caption || <span className="muted">{t("ui.noCaption")}</span>}</>,
+    <>{p.number} · {p.caption || <span className="muted">{t(kind === "table" ? "ui.noTitle" : "ui.noCaption")}</span>}</>,
     p.cited ? undefined : <span className="nav-flag" title={t(kind === "table" ? "ui.uncitedTable" : "ui.uncitedFigure")}><Icon name="review" size={14} className="level-icon review" /><span className="sr-only">{t(kind === "table" ? "ui.uncitedTable" : "ui.uncitedFigure")}</span></span>,
   );
   const group = (icon: IconName, label: string, right: React.ReactNode, children: React.ReactNode, target?: NavTarget) => (

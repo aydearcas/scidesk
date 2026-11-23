@@ -18,7 +18,7 @@
 import JSZip from "jszip";
 import {
   AlignmentType, BorderStyle, BookmarkEnd, BookmarkStart, Document, Footer, ImageRun, ImportedXmlComponent,
-  LineNumberRestartFormat, Packer, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
+  LineNumberRestartFormat, Packer, PageBreak, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
   bookmarkUniqueNumericId, type ParagraphChild,
 } from "docx";
 import {
@@ -359,10 +359,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   }
 
   type Opts = Record<string, unknown>;
-  const para = (n: PMNode, opts: Opts = {}, lead: ParagraphChild[] = [], notes?: Map<string, string>, wrap: { before?: ParagraphChild[]; after?: ParagraphChild[] } = {}) => {
+  const para = (n: PMNode, opts: Opts = {}, lead: ParagraphChild[] = [], notes?: Map<string, string>, wrap: { before?: ParagraphChild[]; after?: ParagraphChild[] } = {}, own?: ParagraphChild[]) => {
     // generated text ("Tabla 1. ", a note's letter, "Palabras clave: ") goes before the
     // block's bookmark: the reader leaves it out, so it never comes back as an edit
-    const children = inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around);
+    const children = own ?? inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around);
     if (markers && n.attrs?.id) {
       const [s, e] = bm(blockBookmark(n.attrs.id as string));
       children.unshift(s);
@@ -521,6 +521,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     } else if (n.type === "paragraph") out.push(para(n));
     else if (n.type === "bulletList" || n.type === "orderedList") list(n, 0);
     else if (n.type === "blockquote") for (const p of n.content ?? []) out.push(para(p, { style: S("quote") }));
+    // record 0078: a page break, in a paragraph of its own as Word writes Ctrl+Enter (its bookmark around it)
+    else if (n.type === "pageBreak") out.push(para(n, {}, [], undefined, {}, [new PageBreak()]));
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
     else if (n.type === "figurePart") { if (!captionsList) figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);

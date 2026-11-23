@@ -196,9 +196,11 @@ const blockDefs = {
   }, { description: "Where a figure of figures/ goes. The caption and notes live in its .scifigure." }),
   // record 0073: a block quotation (JATS disp-quote), indented on both sides
   BlockQuote: Strict({ type: Type.Literal("blockquote"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("Paragraph"), { minItems: 1 }), marks: nodeMarks }, { description: "Block quotation: one or more paragraphs set apart from the text (record 0073)." }),
+  // record 0078: a page break between two blocks (Word: w:br w:type="page"; Typst: pagebreak())
+  PageBreak: Strict({ type: Type.Literal("pageBreak"), attrs: Strict({ id: BlockId }), marks: nodeMarks }, { description: "Page break: what follows starts on a new page (record 0078). Two in a row with an empty paragraph between make a blank page." }),
   Body: Type.Union([
     Type.Ref("Paragraph"), Type.Ref("Heading"), Type.Ref("Title"), Type.Ref("BulletList"), Type.Ref("OrderedList"), Type.Ref("BlockQuote"),
-    Type.Ref("Equation"), Type.Ref("TableRef"), Type.Ref("FigureRef"),
+    Type.Ref("Equation"), Type.Ref("TableRef"), Type.Ref("FigureRef"), Type.Ref("PageBreak"),
   ]),
 
   // --- tables (.scitable)

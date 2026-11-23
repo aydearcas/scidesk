@@ -27,6 +27,8 @@ import { Indent, IndentBackspace, MAX_INDENT } from "./indent.ts";
 import { SectionNumbers } from "./section-numbers.ts";
 import { alignAttribute, Blockquote, setBlockAlign } from "./align.ts";
 import { TableLines } from "./table-lines.ts";
+import { PartDrag, handleElement } from "./part-drag.ts";
+import { PageBreak, insertPageBreak } from "./page-break.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -155,7 +157,9 @@ function fillPart(el: HTMLElement, id: string) {
     flag.textContent = info.uncitedText;
     parts.push(flag);
   }
-  el.replaceChildren(...parts);
+  // the drag handle (record 0077) stays
+  const handle = el.querySelector(":scope > .part-handle");
+  el.replaceChildren(...(handle ? [handle] : []), ...parts);
 }
 export function refreshPartLabels() {
   for (const [id, els] of partViews) for (const el of els) fillPart(el, id);
@@ -172,10 +176,12 @@ const partRef = (name: "tableRef" | "figureRef") => Node.create({
   }),
   parseHTML: () => [{ tag: `div[data-${name}]` }],
   renderHTML: ({ node }) => ["div", { [`data-${name}`]: node.attrs.id, "data-src": node.attrs.src, class: "part-ref", contenteditable: "false" }, String(node.attrs.src)],
-  addNodeView: () => ({ node }) => {
+  addNodeView: () => ({ node, getPos, editor }) => {
     const dom = document.createElement("div");
     dom.className = `part-ref ${name}`;
     dom.contentEditable = "false";
+    // moved by dragging, as the parts shown in place (record 0077)
+    dom.append(handleElement(editor.view, name === "tableRef" ? "table" : "figure", () => (typeof getPos === "function" ? getPos() : null)));
     const id = node.attrs.id as string;
     dom.setAttribute(`data-${name.toLowerCase()}`, id);
     dom.dataset.fallback = String(node.attrs.src ?? "");
@@ -210,6 +216,8 @@ const SchemeKeys = Extension.create({
           if (action === "cite") hooks.quickCite();
           else if (action === "xref") hooks.xref();
           // record 0073: alignment, as Word's Ctrl+Q/T/D/J or Ctrl+L/E/R/J
+          // record 0078: Ctrl+Enter, a page break at the cursor
+          else if (action === "pageBreak") insertPageBreak()(editor.state, editor.view.dispatch);
           else if (action === "alignLeft" || action === "alignCenter" || action === "alignRight" || action === "justify") setBlockAlign(editor, action === "alignLeft" ? "left" : action === "alignCenter" ? "center" : action === "alignRight" ? "right" : "justify");
           else editor.commands.toggleMark(action);
           event.preventDefault();
@@ -417,8 +425,9 @@ export const extensions = [
   SchemeKeys,
   FindHighlight,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
-  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | blockquote | abstractPart | tablePart | figurePart | tableRef | figureRef)*" }),
+  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | blockquote | abstractPart | tablePart | figurePart | tableRef | figureRef | pageBreak)*" }),
   Blockquote,
+  PageBreak,
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),
   OrderedList.extend({ addAttributes: () => ({ id: plain("id"), start: { default: 1, parseHTML: (el: HTMLElement) => Number(el.getAttribute("start") ?? 1) } }) }),
   ListItem,
@@ -435,6 +444,7 @@ export const extensions = [
   IndentBackspace,
   SectionNumbers,
   TableLines,
+  PartDrag,
   Heading.extend({
     addAttributes() {
       return {

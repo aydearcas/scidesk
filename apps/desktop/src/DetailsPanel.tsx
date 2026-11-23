@@ -119,7 +119,7 @@ export function DetailsPanel({ selected, project, folder, outline, rendering, us
         <h3>{t(p.kind === "table" ? "ui.tableN" : "ui.figureN", { n: p.number })}</h3>
         {selected.kind === "xref" && <p className="muted">{t("ui.xrefTo")}</p>}
         <dl className="props">
-          <dt>{t("ui.caption")}</dt><dd>{p.caption || <span className="muted">{t("ui.noCaption")}</span>}</dd>
+          <dt>{t(p.kind === "table" ? "ui.tableTitle" : "ui.caption")}</dt><dd>{p.caption || <span className="muted">{t(p.kind === "table" ? "ui.noTitle" : "ui.noCaption")}</span>}</dd>
           <dt>{t("ui.notes")}</dt><dd>{p.notes}</dd>
           <dt>{t("ui.citedInText")}</dt><dd>{p.cited ? t("ui.yes") : <span className="warn-text">{t("ui.no")}</span>}</dd>
           <dt>{t("ui.file")}</dt><dd className="mono">{p.src}</dd>
@@ -238,7 +238,7 @@ function TableDetails({ p, xref, cells, warnings, atEnd, onGoBlock, onGoPart, on
         <dd>{p.citedIn.length ? p.citedIn.map((c, i) => (
           <span key={`${c.block}-${i}`}>{i > 0 && ", "}<button className="link" onClick={() => onGoBlock(c.block)}>{t("ui.tableInfo.paragraphN", { section: c.section ?? t("ui.tableInfo.beforeSections"), n: c.paragraph })}</button></span>
         )) : <span className="warn-text">{t("ui.tableInfo.notCited")}</span>}</dd>
-        <dt>{t("ui.caption")}</dt><dd>{p.caption || <span className="muted">{t("ui.noCaption")}</span>}</dd>
+        <dt>{t("ui.tableTitle")}</dt><dd>{p.caption || <span className="muted">{t("ui.noTitle")}</span>}</dd>
         <dt>{t("ui.tableInfo.size")}</dt><dd>{size}</dd>
         <dt>{t("ui.notes")}</dt><dd>{s.specificNotes + s.generalNotes ? list([s.specificNotes ? t("ui.tableInfo.notesSpecific", { count: s.specificNotes }) : "", s.generalNotes ? t("ui.tableInfo.notesGeneral", { count: s.generalNotes }) : ""].filter(Boolean)) : t("ui.tableInfo.noNotes")}</dd>
         <dt>{t("ui.file")}</dt><dd className="mono">{p.src}</dd>
@@ -279,7 +279,7 @@ function TableDetails({ p, xref, cells, warnings, atEnd, onGoBlock, onGoPart, on
       <div className="dialog-actions wrap">
         <button className="btn" onClick={() => onGoPart(p.id)}>{t("ui.tableInfo.showInManuscript")}</button>
         <button className="btn" onClick={() => onOpenTableTab(p.id)}>{t("ui.openInTab")}</button>
-        <button className="btn quiet" onClick={() => onRemovePart(p.id)}>{t("ui.removeFromText")}</button>
+        <button className="btn quiet" onClick={() => onRemovePart(p.id)}>{t("ui.removeTableFromText")}</button>
       </div>
     </div>
   );

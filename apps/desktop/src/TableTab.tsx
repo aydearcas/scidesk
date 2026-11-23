@@ -100,8 +100,8 @@ export function TableTools({ run, state }: { run: (cmd: TableCommand) => void; s
             const on = state && pressed ? pressed(state) : undefined;
             return (
               <button key={key} className={`tool${icon && !text ? " icon-only" : ""}${icon && text ? " both" : ""}${on ? " on" : ""}`} aria-pressed={pressed ? !!on : undefined}
-                title={key === "specificNote" ? `${t(`ui.${key}`)} · ${t("ui.specificNoteHint")}` : t(`ui.${key}`)}
-                aria-label={t(`ui.${key}`)} disabled={!state || !cmd(state)} onMouseDown={(e) => e.preventDefault()} onClick={() => run(cmd)}>
+                title={key === "specificNote" ? `${t(`ui.${key}`)} · ${t("ui.specificNoteHint")}` : key === "generalNote" ? t("ui.tableBar.footnoteTitle") : t(`ui.${key}`)}
+                aria-label={key === "generalNote" ? t("ui.tableBar.footnoteTitle") : t(`ui.${key}`)} disabled={!state || !cmd(state)} onMouseDown={(e) => e.preventDefault()} onClick={() => run(cmd)}>
                 {icon && <span className="tool-icon"><Icon name={icon} size={17} /></span>}
                 {text === "noteCall" ? <><sup className="note-letter">a</sup><span className="tool-text"> {t("ui.tableBar.noteCall")}</span></> : text === "decimal" ? t("ui.tableBar.decimal") : text ? <span className="tool-text">{t(`ui.tableBar.${text}`)}</span> : null}
               </button>

@@ -186,6 +186,9 @@
         },
         {
           "$ref": "#/$defs/FigureRef"
+        },
+        {
+          "$ref": "#/$defs/PageBreak"
         }
       ]
     },
@@ -1437,6 +1440,41 @@
         "type",
         "attrs",
         "content"
+      ],
+      "type": "object"
+    },
+    "PageBreak": {
+      "additionalProperties": false,
+      "description": "Page break: what follows starts on a new page (record 0078). Two in a row with an empty paragraph between make a blank page.",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "pageBreak",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs"
       ],
       "type": "object"
     },
