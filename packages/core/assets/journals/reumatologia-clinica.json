@@ -81,6 +81,10 @@
           "source": "guide",
           "value": 2
         },
+        "keywords": {
+          "source": "guide",
+          "value": 6
+        },
         "references": {
           "source": "guide",
           "value": 15
@@ -92,14 +96,70 @@
       }
     },
     {
+      "articleType": "systematic-review",
+      "journalName": {
+        "es": "Revisión sistemática y metaanálisis"
+      },
+      "limits": {
+        "authorsAdvised": {
+          "source": "guide",
+          "value": 6
+        },
+        "figures": {
+          "source": "guide",
+          "value": 6
+        },
+        "keywords": {
+          "source": "guide",
+          "value": 6
+        },
+        "references": {
+          "source": "guide",
+          "value": 30
+        },
+        "tables": {
+          "source": "guide",
+          "value": 6
+        },
+        "words": {
+          "source": "guide",
+          "value": 3000
+        }
+      }
+    },
+    {
+      "articleType": "narrative-review",
+      "journalName": {
+        "es": "Revisión"
+      },
+      "limits": {
+        "keywords": {
+          "source": "guide",
+          "value": 6
+        },
+        "words": {
+          "source": "guide",
+          "value": 6000
+        }
+      }
+    },
+    {
       "articleType": "case-report",
       "journalName": {
         "es": "Caso clínico"
       },
       "limits": {
+        "authorsAdvised": {
+          "source": "guide",
+          "value": 6
+        },
         "figures": {
           "source": "guide",
           "value": 1
+        },
+        "keywords": {
+          "source": "guide",
+          "value": 6
         },
         "references": {
           "source": "guide",
@@ -163,6 +223,39 @@
   },
   "declarations": [
     {
+      "kind": "funding",
+      "placement": {
+        "source": "guide",
+        "value": "manuscript"
+      },
+      "required": {
+        "source": "guide",
+        "value": true
+      }
+    },
+    {
+      "kind": "conflicts",
+      "placement": {
+        "source": "guide",
+        "value": "title-page"
+      },
+      "required": {
+        "source": "guide",
+        "value": true
+      }
+    },
+    {
+      "kind": "data-availability",
+      "placement": {
+        "source": "guide",
+        "value": "submission-form"
+      },
+      "required": {
+        "source": "guide",
+        "value": true
+      }
+    },
+    {
       "kind": "ai-use",
       "placement": {
         "source": "guide",
@@ -170,11 +263,61 @@
       },
       "required": {
         "source": "guide",
-        "value": true
+        "value": false
+      }
+    },
+    {
+      "kind": "ethics",
+      "placement": {
+        "source": "guide",
+        "value": "manuscript"
+      },
+      "required": {
+        "source": "guide",
+        "value": false
+      }
+    },
+    {
+      "kind": "consent",
+      "placement": {
+        "source": "guide",
+        "value": "manuscript"
+      },
+      "required": {
+        "source": "guide",
+        "value": false
+      }
+    },
+    {
+      "kind": "registration",
+      "required": {
+        "source": "guide",
+        "value": false
+      }
+    },
+    {
+      "kind": "acknowledgements",
+      "placement": {
+        "source": "guide",
+        "value": "title-page"
+      },
+      "required": {
+        "source": "guide",
+        "value": false
       }
     }
   ],
   "figures": {
+    "formats": {
+      "source": "guide",
+      "value": [
+        "TIFF",
+        "JPEG",
+        "EPS",
+        "PDF",
+        "Microsoft Office"
+      ]
+    },
     "minDpi": {
       "source": "guide",
       "value": {
@@ -190,6 +333,10 @@
   },
   "id": "reumatologia-clinica",
   "journal": {
+    "homepage": {
+      "source": "guide",
+      "value": "https://www.reumatologiaclinica.org"
+    },
     "nlmAbbreviation": {
       "source": "guide",
       "value": "Reumatol Clin"
@@ -256,9 +403,76 @@
   },
   "notes": [
     {
-      "checked": "2026-11-20",
       "source": "guide",
-      "value": "La guía actual no da el límite de palabras del resumen (una versión anterior decía 250 para originales)."
+      "value": "La guía no da el límite de palabras del resumen (una versión anterior decía 250 para originales)."
+    },
+    {
+      "source": "guide",
+      "value": "La guía no dice si las palabras de las tablas cuentan en el límite del texto; SciDesk no las cuenta."
+    },
+    {
+      "source": "guide",
+      "value": "Los límites del original son la extensión «recomendada»; las revisiones sistemáticas, con o sin metaanálisis, se publican como originales y siguen PRISMA; las revisiones (excepto las narrativas) deben registrarse e indicar el número de registro en el texto."
+    },
+    {
+      "source": "guide",
+      "value": "Las revisiones narrativas, editoriales (1.500 palabras), artículos especiales y consensos (6.000 palabras) son por encargo o con aprobación previa del comité editorial."
+    },
+    {
+      "source": "guide",
+      "value": "Tipos sin equivalente en SciDesk: protocolo (SPIRIT, PRISMA-P, STROBE o COREQ, con apartados propios), estudio cualitativo (COREQ), conferencia clinicopatológica (6.000 palabras) y «Reumatología clínica en imágenes» (menos de 300 palabras, 10 referencias, 4 autores)."
+    },
+    {
+      "source": "guide",
+      "value": "Carta al editor: tras «Señor editor», introducción, material y métodos, resultados y discusión sin dividir ni titular los apartados."
+    },
+    {
+      "source": "guide",
+      "value": "Ensayos clínicos: registro público obligatorio, con el número al final del resumen; CONSORT con su lista y diagrama de flujo en el envío."
+    },
+    {
+      "source": "guide",
+      "value": "Ética y consentimiento: los estudios con pacientes o voluntarios necesitan la aprobación del comité ético y el consentimiento informado, que deben constar en el artículo."
+    },
+    {
+      "source": "guide",
+      "value": "Conflictos de intereses: resumen en la página inicial (también «ninguno») y formulario detallado en el envío, con la misma información."
+    },
+    {
+      "source": "guide",
+      "value": "Financiación: entidades y número de beca en el formato de Elsevier, y una frase fija cuando no hubo financiación."
+    },
+    {
+      "source": "guide",
+      "value": "Uso de IA generativa: solo si se usó (no para gramática, ortografía o referencias), en una sección propia antes de las referencias."
+    },
+    {
+      "source": "guide",
+      "value": "Disponibilidad de los datos: se indica en el envío y aparece con el artículo publicado."
+    },
+    {
+      "source": "guide",
+      "value": "Doble ciego: la página inicial lleva título, autores, filiaciones, agradecimientos, conflictos y el autor de correspondencia; el manuscrito no debe identificar a los autores ni sus filiaciones."
+    },
+    {
+      "source": "guide",
+      "value": "Abreviaturas no estándar: en una nota al pie de la primera página del manuscrito."
+    },
+    {
+      "source": "guide",
+      "value": "Tablas como texto editable, en el texto o al final, numeradas por orden de aparición, con las notas debajo; sin líneas verticales ni celdas sombreadas."
+    },
+    {
+      "source": "guide",
+      "value": "Inglés: se admite el británico o el estadounidense, sin mezclarlos."
+    },
+    {
+      "source": "guide",
+      "value": "Resumen gráfico opcional: como mínimo 531 × 1328 píxeles (alto × ancho), legible a 5 × 13 cm."
+    },
+    {
+      "source": "guide",
+      "value": "Pies de figura en un documento aparte; cada figura en su archivo."
     }
   ],
   "optionalDocuments": [
@@ -294,7 +508,7 @@
   "schemaVersion": 1,
   "sources": [
     {
-      "accessed": "2026-11-20",
+      "accessed": "2026-11-23",
       "id": "guide",
       "kind": "author-guide",
       "lang": "es",
@@ -319,6 +533,10 @@
     "system": {
       "source": "guide",
       "value": "Editorial Manager"
+    },
+    "url": {
+      "source": "guide",
+      "value": "https://www.editorialmanager.com/REUMATOLCLIN/default.aspx"
     }
   }
 }

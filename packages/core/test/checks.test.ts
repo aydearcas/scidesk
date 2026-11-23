@@ -143,6 +143,21 @@ describe("checks", () => {
     expect(readiness(checkArticle(fresh, "main")).missing).toEqual(["empty", "abstract", "keywords", "authors"]);
   });
 
+  it("asks for the declarations Reumatología Clínica requires, and not the conditional ones (record 0086)", async () => {
+    const { createProject } = await import("../src/project.ts");
+    const journal = JSON.parse(await readAsset("journals/reumatologia-clinica.json"));
+    const p = await createProject(new MemoryFs(), { name: "N", fileName: "n", title: "Nuevo", articleType: "original", journal, readStyle: (f) => readAsset(`styles/${f}`) });
+    const body = structuredClone(p.articles[0].documents.get("manuscript/article.scidoc")!.doc as PMNode);
+    const titles = (body.content ?? []).filter((n) => n.type === "heading").map((n) => (n.content ?? []).map((c) => c.text).join(""));
+    // funding in the manuscript, before the references; no AI section (only when AI was used)
+    expect(titles.slice(-2)).toEqual(["Financiación", "Bibliografía"]);
+    const declarations = (doc?: PMNode) => checkArticle(p, "main", doc ? { "manuscript/article.scidoc": doc } : undefined).warnings.filter((w) => w.code === "missing-declaration").map((w) => w.id);
+    expect(declarations()).toEqual([]);
+    // without it, the article cannot be sent
+    body.content = body.content!.filter((n) => !(n.type === "heading" && (n.content ?? []).some((c) => c.text === "Financiación")));
+    expect(declarations(body)).toEqual(["missing-declaration:funding"]);
+  });
+
   it("counts the tables' words when the journal or the article says so (record 0056)", async () => {
     const { fs, p } = await kneeOa();
     const base = checkArticle(p, "main").counts;

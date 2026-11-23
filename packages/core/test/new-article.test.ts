@@ -31,9 +31,9 @@ describe("new article plan", () => {
 
   it("a case report takes the journal's fixed sections and an unstructured abstract", async () => {
     const p = articlePlan({ title: "T", lang: "es", articleType: "case-report", journal: await rc() });
-    expect(p.sections.map((s) => s.role)).toEqual(["introduction", "case-presentation", "discussion", "conclusions", "ai-use", "references"]);
-    // record 0072: the AI declaration the journal requires before the references
-    expect(p.sections.find((s) => s.role === "ai-use")!.label).toBe("Uso de inteligencia artificial");
+    expect(p.sections.map((s) => s.role)).toEqual(["introduction", "case-presentation", "discussion", "conclusions", "funding", "references"]);
+    // records 0072 and 0086: the funding statement the journal requires; the AI one only when AI was used
+    expect(p.sections.find((s) => s.role === "funding")!.label).toBe("Financiación");
     expect(p.abstracts[0].sections).toBeNull();
   });
 
@@ -41,7 +41,7 @@ describe("new article plan", () => {
     const p = articlePlan({ title: "T", lang: "es", articleType: "letter", journal: await rc() });
     expect(p.abstracts).toEqual([]);
     expect(p.opening).toBe("Señor editor");
-    expect(p.sections.map((s) => s.role)).toEqual(["ai-use", "references"]);
+    expect(p.sections.map((s) => s.role)).toEqual(["funding", "references"]);
   });
 });
 
@@ -51,9 +51,10 @@ describe("journals", () => {
     expect(searchJournals("CLINICA").map((j) => j.id)).toEqual(["reumatologia-clinica", "medicina-clinica"]);
     expect(searchJournals("").length).toBeGreaterThan(5);
     const s = journalSummary(await rc(), "original", "es");
-    expect(s).toMatchObject({ typeName: "Original", structuredAbstract: true, blind: "double", separateTitlePage: true, checked: "2026-11-20", typeMissing: false });
+    expect(s).toMatchObject({ typeName: "Original", structuredAbstract: true, blind: "double", separateTitlePage: true, checked: "2026-11-23", typeMissing: false });
     expect(s.limits).toMatchObject({ words: 3000, tables: 6, figures: 6, references: 30 });
-    expect(journalSummary(await rc(), "systematic-review", "es").typeMissing).toBe(true);
+    expect(journalSummary(await rc(), "systematic-review", "es")).toMatchObject({ typeName: "Revisión sistemática y metaanálisis", typeMissing: false });
+    expect(journalSummary(await rc(), "protocol", "es").typeMissing).toBe(true);
     expect(journalTranslations(await rc(), "es")).toEqual(["en"]);
   });
 

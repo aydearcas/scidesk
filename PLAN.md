@@ -468,6 +468,20 @@ Un panel que se va actualizando mientras escribes. Es la cara del programa y lo 
 5. **Formato abierto de perfil**: un archivo JSON con esquema publicado, en el que cada dato lleva su fuente (enlace a la guía) y la fecha en que se comprobó. Al principio, el catálogo es solo un repositorio con los perfiles que vayas creando; la infraestructura para que otros aporten los suyos llega cuando haga falta (R45).
 6. **Aviso de caducidad**: si un perfil se comprobó hace más de un año, el programa lo avisa y enlaza la guía.
 
+**Cómo lo hace el usuario (decidido el 23/11/2026, ficha 0086).** Cada perfil se crea cuando alguien lo necesita, uno a uno:
+- La pieza central es un **formulario del perfil** con la guía al lado: límites por tipo de artículo, resumen, palabras clave, formato, revisión y declaraciones.
+  - **Sin IA**, lo rellenas tú, campo a campo, y puedes pegar la frase de la guía de donde sale cada dato.
+  - **Con IA**, el paquete para LLM del punto 3 devuelve el perfil, y llega a ese mismo formulario ya relleno para que lo revises dato a dato. No es trabajo doble: la pantalla de revisión y la de rellenar son la misma.
+- No se busca en el texto de la guía con patrones («3000 palabras»…): descartado.
+- **Los perfiles se guardan en el programa**, no solo en el proyecto, para reutilizarlos y editarlos. El programa guarda en su carpeta de datos de cada equipo (como los ajustes y los recientes) los perfiles que creas, revisas o importas.
+  - Al elegir una revista en otro proyecto, sale entre las conocidas, junto al catálogo que trae el programa.
+  - Se pueden editar cuando la guía cambia o algo estaba mal.
+  - Cada proyecto sigue llevando su propia copia en `resources/journals/`, para que viaje con él a otro equipo o a un coautor.
+  - Al editar un perfil del programa, los proyectos que lo usan ofrecen actualizar su copia; nunca se cambia sola.
+- Durante el desarrollo no se preparan perfiles de serie salvo el de Reumatología Clínica. El programa lo usarán muchas personas con revistas distintas, y los perfiles se hacen bajo demanda.
+- Más adelante, en la vista «Revistas», se podrá generar con LLM un lote de perfiles de una selección de revistas. Primero, uno a uno.
+- Hoy (fase 1) la revista solo se elige al crear el artículo, y únicamente Reumatología Clínica tiene perfil. Elegir o cambiar de revista después, el formulario y el paquete llegan con la vista «Revista».
+
 **Módulo de adaptación a revista** **[V1]**
 
 Al elegir revista o cambiar de revista, el módulo compara el proyecto con el perfil y muestra un informe en dos partes:
@@ -574,6 +588,13 @@ Sus propuestas llegan por el mismo mecanismo que las de los coautores (6.5): **u
 - Qué busca: rayas (—) usadas como incisos, punto y coma en exceso y dos puntos "descriptivos" ("El resultado: una mejora…"). La lista de patrones se puede ampliar.
 - Primer paso, sin IA: el programa cuenta esos signos por párrafo y por sección y señala los que pasan de un umbral (por ejemplo, por cada 1000 palabras). No son errores, porque la raya y el punto y coma son correctos; el problema es el abuso. Por eso los umbrales se pueden ajustar y dependen del idioma. Este aviso aparece en el panel de comprobaciones (5.8).
 - Segundo paso, con IA: los párrafos señalados van en un paquete (nivel 2) o a la API, y vuelven propuestas de otra redacción, que aceptas o rechazas una a una en la vista de propuestas (6.5).
+
+**Funciones de redacción con paquetes y prompts establecidos** (ideas del usuario del 23/11/2026, ficha 0086). Cada una sería un paquete con su prompt fijo, y su respuesta llegaría como propuestas que aceptas o rechazas (6.5):
+- **Traducir al inglés o al español**, evitando los artefactos típicos de la IA: rayas para incisos, «;» en exceso y «:» explicativos. Lo que se manda depende de lo traducido (nivel 2 o 3).
+- **Corregir artefactos de IA** en un texto ya escrito: el segundo paso de «Revisar rasgos típicos» (arriba).
+- **Proponer conclusiones** a partir de los resultados y la discusión.
+- **Elaborar la discusión** a partir de los resultados, con las referencias de la biblioteca que elijas.
+- Pendiente: evaluar qué otras funciones aprovecharían este método (por ejemplo, recortar al límite de palabras, la carta de presentación, la respuesta a los revisores o las palabras clave MeSH).
 
 **Paquetes para LLM** **[V1]**, al estilo de revsis-app. En lugar de conectar el programa a un modelo, SciDesk prepara un paquete (una carpeta o un ZIP) con:
 - Las instrucciones para el LLM.
