@@ -8,6 +8,6 @@
   "scripts": {
     "test": "npm test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "ci": "npm run typecheck && npm run build -w @scidesk/desktop && cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --bin scidesk-pdf && npm test && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml"
+    "ci": "npm run typecheck && npm run build -w @scidesk/desktop && cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --bin scidesk-pdf && npm test && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml && npm run e2e -w @scidesk/desktop -- --project=chromium"
   }
 }

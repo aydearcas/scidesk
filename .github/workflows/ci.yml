@@ -1,11 +1,15 @@
 # Continuous integration (record 0081): every push and pull request is type-checked, built and
-# tested on a clean Windows and a clean macOS machine. The same steps run locally with `npm run ci`.
+# tested on a clean Windows and a clean macOS machine, the editor in Chromium and WebKit. The same
+# steps run locally with `npm run ci` (the editor only in Chromium: the Edge already installed).
 name: CI
 
 on:
   push:
   pull_request:
   workflow_dispatch:
+  # every day too, so that a new WebKit or Chromium that breaks the editor shows up (R37)
+  schedule:
+    - cron: "0 5 * * *"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -56,3 +60,18 @@ jobs:
 
       - name: Test (Rust)
         run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+      # The editor in Chromium and WebKit (R37, record 0082), the browser view with Tauri simulated
+      - name: Install the browsers
+        run: npx playwright install chromium webkit
+
+      - name: Test the editor (Chromium, WebKit)
+        run: npm run e2e -w @scidesk/desktop
+
+      - name: Keep the editor report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: apps/desktop/playwright-report/
+          retention-days: 14

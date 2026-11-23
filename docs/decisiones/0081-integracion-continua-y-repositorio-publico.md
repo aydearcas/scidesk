@@ -13,7 +13,7 @@
   4. compilación de `scidesk-pdf`, para que las pruebas del PDF y del SVG no se salten;
   5. pruebas de npm (Vitest) y de Rust (`cargo test`).
 - **Los mismos pasos en local con `npm run ci`.**
-- **Primer paso, sin las pruebas del editor en WebKit.** Las pruebas de la interfaz con Playwright en Chromium y WebKit (R37) son el paso siguiente: todavía no existen.
+- **Primer paso, sin las pruebas del editor en WebKit,** que llegaron después con la [0082](0082-pruebas-del-editor-con-playwright.md).
 
 ## Por qué
 - Es lo que pedía el plan desde la fase 1: compilar y probar en macOS sin depender del MacBook, y detectar lo que solo funciona en el equipo de desarrollo (archivos sin commit, rutas propias, programas instalados a mano).
@@ -28,4 +28,4 @@
 ## Consecuencias
 - Cada commit enviado a GitHub es público desde ese momento, también su autor y su correo.
 - La carpeta del repositorio en el equipo sigue llamándose `sciscribe`: el nombre no afecta al programa ni al repositorio, y cambiarlo obliga a cerrar las sesiones y rehacer los enlaces de `node_modules`.
-- Pendiente: las pruebas del editor con Playwright en Chromium y WebKit, y compilar el instalador en la integración continua.
+- Las pruebas del editor con Playwright en Chromium y WebKit, hechas en la [0082](0082-pruebas-del-editor-con-playwright.md). Pendiente: compilar el instalador en la integración continua.
