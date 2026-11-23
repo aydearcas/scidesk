@@ -53,7 +53,11 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
   });
   const canAdd = (w: CheckWarning) => (w.code === "missing-declaration" || w.code === "missing-section") && !!w.params.role;
   const canGo = (w: CheckWarning) => !!w.where && w.where.path !== "manuscript/abstract.scidoc";
-  const place = (w: CheckWarning) => (w.where?.path === "manuscript/abstract.scidoc" ? t("inAbstract") : w.where && w.where.path !== "manuscript/article.scidoc" ? t("inPart", { path: w.where.path }) : "");
+  const place = (w: CheckWarning) => [
+    w.where?.path === "manuscript/abstract.scidoc" ? t("inAbstract") : w.where && w.where.path !== "manuscript/article.scidoc" ? t("inPart", { path: w.where.path }) : "",
+    // record 0089: a figure's text alternative also goes to the journal
+    w.params.field === "alt" ? t("inAlt") : "",
+  ].filter(Boolean).join(" · ");
 
   const item = (w: CheckWarning) => (
     <li key={w.id} className={`check ${w.level}`}>

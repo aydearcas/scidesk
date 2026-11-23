@@ -200,4 +200,76 @@ describe("blinded manuscript (R9)", () => {
     p.journals.set("reumatologia-clinica", prof);
     expect(blindedArticle(p, art)).toBe(art);
   });
+
+  it("replaces across a citation, checks the text alternative and strips the images' metadata (record 0089)", async () => {
+    const p = await kneeOa();
+    const art = p.articles[0];
+    const file = art.documents.get("manuscript/article.scidoc")!;
+    const body = structuredClone(file.doc) as PMNode;
+    const citation: PMNode = { type: "citation", attrs: { id: "c-blind00001", items: [{ ref: p.library.references[0].id }] } };
+    body.content!.push({ type: "paragraph", attrs: { id: "b-blind00007", lang: null }, content: [
+      { type: "text", text: "Como describimos" }, citation, { type: "text", text: " en nuestro estudio previo, la prevalencia era alta." }] });
+    await saveDocument(p, art, "manuscript/article.scidoc", { ...file, doc: body as never });
+    const figPath = "figures/figura-1.scifigure";
+    const fig = art.documents.get(figPath)!;
+    await saveDocument(p, art, figPath, { ...fig, doc: { ...(fig.doc as PMNode), attrs: { ...(fig.doc as PMNode).attrs, alt: "Evolución en el Hospital Ficticio del Mar" } } as never });
+    // the figure's PNG says who made it
+    const pngPath = "articles/main/figures/figura-1.png";
+    const png = (await p.fs.readBytes(pngPath))!;
+    const tEXt = new TextEncoder().encode("Author\0Lucia Herrera");
+    const chunk = new Uint8Array(12 + tEXt.length);
+    new DataView(chunk.buffer).setUint32(0, tEXt.length);
+    chunk.set(new TextEncoder().encode("tEXt"), 4);
+    chunk.set(tEXt, 8);
+    await p.fs.write(pngPath, new Uint8Array([...png.subarray(0, 33), ...chunk, ...png.subarray(33)]));
+
+    const warnings = blind(checkArticle(p, "main"));
+    const self = warnings.find((w) => w.code === "blind-self-citation" && w.where?.block === "b-blind00007")!;
+    expect(self.params.match).toBe("Como describimos en nuestro estudio previo");
+    const alt = warnings.find((w) => w.code === "blind-institution" && w.params.field === "alt")!;
+    expect(alt.params.match).toBe("Hospital Ficticio del Mar");
+    expect(alt.where?.path).toBe(figPath);
+
+    await setBlindReplacement(p, "main", String(self.params.match), "[eliminado para la revisión]");
+    await setBlindReplacement(p, "main", "Hospital Ficticio del Mar", "[centro eliminado para la revisión]");
+    const blinded = blindedArticle(p, art);
+    // the citation stays, after the replacement
+    expect((blinded.documents.get("manuscript/article.scidoc")!.doc as PMNode).content!.find((b) => b.attrs?.id === "b-blind00007")!.content)
+      .toEqual([{ type: "text", text: "[eliminado para la revisión]" }, citation, { type: "text", text: ", la prevalencia era alta." }]);
+    expect((blinded.documents.get(figPath)!.doc as PMNode).attrs!.alt).toBe("Evolución en el [centro eliminado para la revisión]");
+    expect(blind(checkArticle(p, "main")).filter((w) => !w.ignored && (w.where?.block === "b-blind00007" || w.params.field === "alt"))).toEqual([]);
+
+    // Reumatología Clínica takes the figures apart: written next to the Word, clean and with a neutral name
+    const res = await nodeResources();
+    const asText = (b: Uint8Array | null | undefined) => new TextDecoder().decode(b ?? new Uint8Array());
+    const apart = await exportDocx(p, "main", "journal", res);
+    expect(apart.figureFiles).toEqual(["articles/main/exports/main-revista-figuras/figura-1.png"]);
+    const written = await p.fs.readBytes(apart.figureFiles![0]);
+    expect(asText(written!.subarray(1, 4))).toBe("PNG");
+    expect(asText(written)).not.toContain("Herrera");
+    expect((await exportDocx(p, "main", "coauthors", res)).figureFiles).toBeUndefined();
+
+    // a journal that takes them in the Word: no metadata in the image, the text alternative
+    // replaced; the co-authors' Word as it is
+    const prof = structuredClone(p.journals.get("reumatologia-clinica")!);
+    prof.manuscriptFormat!.figureCaptionsList = { ...prof.manuscriptFormat!.figureCaptionsList!, value: false };
+    p.journals.set("reumatologia-clinica", prof);
+    const media = async (bytes: Uint8Array) => {
+      const z = await JSZip.loadAsync(bytes);
+      const files = Object.keys(z.files).filter((f) => f.startsWith("word/media/"));
+      return { files, text: (await Promise.all(files.map((f) => z.file(f)!.async("string")))).join(""), xml: await z.file("word/document.xml")!.async("string") };
+    };
+    const journal = await media((await exportDocx(p, "main", "journal", res)).bytes);
+    expect(journal.files.length).toBe(1);
+    expect(journal.text).not.toContain("Herrera");
+    expect(journal.xml).toContain("Evolución en el [centro eliminado para la revisión]");
+    expect(journal.xml).not.toContain("Ficticio del Mar");
+    const coauthors = await media((await exportDocx(p, "main", "coauthors", res)).bytes);
+    expect(coauthors.text).toContain("Lucia Herrera");
+    // and in the PDF
+    const bundle = await manuscriptTypst(p, "main", res);
+    expect(bundle.files["figures/figura-1.png"]).toBeDefined();
+    expect(asText(bundle.files["figures/figura-1.png"])).not.toContain("Herrera");
+    expect(bundle.source).toContain("Evolución en el [centro eliminado para la revisión]");
+  });
 });

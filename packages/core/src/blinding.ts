@@ -219,38 +219,42 @@ export function blindingWarnings(project: Project, art: ArticleData, documents: 
 
   // ---------------------------------------------------------------- the text that goes to the journal
   const TEXT = new Set(["paragraph", "heading", "title", "tableCaption", "tableNote", "figureCaption", "figureNote", "keyword", "tableCell", "tableHeader"]);
+  /** The checks of one text: a block, or a figure's text alternative (`field` "alt", record 0089). */
+  const checkText = (text: string, where: CheckWarning["where"], key: string, field?: "alt") => {
+    if (!text.trim()) return;
+    const folded = fold(text);
+    const extra: Record<string, string> = field ? { field } : {};
+    for (const p of byPerson) for (const hit of forms(findAll(text, folded, p.terms))) {
+      out.push({ id: `blind-author:${key}:${p.id}:${fold(hit.term)}`, code: "blind-author", level: "review", params: { term: hit.term, match: hit.term, name: p.name, text: around(text, hit.index, hit.length), ...extra }, where });
+    }
+    // the longest name first; a word two institutions share is said once
+    const taken: Hit[] = [];
+    const hits = byInstitution.flatMap((a) => findAll(text, folded, a.terms).map((hit) => ({ a, hit }))).sort((x, y) => y.hit.length - x.hit.length);
+    const kept: typeof hits = [];
+    for (const h of hits) {
+      if (taken.some((t) => h.hit.index < t.index + t.length && t.index < h.hit.index + h.hit.length)) continue;
+      taken.push(h.hit);
+      kept.push(h);
+    }
+    for (const a of byInstitution) for (const hit of forms(kept.filter((h) => h.a === a).map((h) => h.hit))) {
+      out.push({ id: `blind-institution:${key}:${a.id}:${fold(hit.term)}`, code: "blind-institution", level: "review", params: { term: hit.term, match: hit.term, institution: a.name, text: around(text, hit.index, hit.length), ...extra }, where });
+    }
+    for (const a of byInstitution) {
+      const city = a.city ? forms(findAll(text, folded, [a.city], taken)) : [];
+      for (const hit of city) out.push({ id: `blind-city:${key}:${fold(hit.term)}`, code: "blind-city", level: "review", params: { term: hit.term, match: hit.term, institution: a.name, text: around(text, hit.index, hit.length), ...extra }, where });
+    }
+    selfCitations(text).forEach((m, i) => out.push({ id: `blind-self-citation:${key}:${i}`, code: "blind-self-citation", level: "review", params: { text: around(text, m.index, m.length), match: text.slice(m.index, m.index + m.length), ...extra }, where }));
+    ethicsWithCode(text).forEach((m, i) => out.push({ id: `blind-ethics:${key}:${i}`, code: "blind-ethics", level: "review", params: { text: text.slice(m.index, m.index + m.length).replace(/\s+/g, " ").trim().slice(0, 160), match: text.slice(m.code.index, m.code.index + m.code.length), ...extra }, where }));
+  };
+
   for (const [path, file] of documents) {
     if (!/^(?:manuscript\/.*\.scidoc|tables\/.*\.scitable|figures\/.*\.scifigure)$/.test(path)) continue;
     const visit = (n: PMNode, block: string | null) => {
       if ((n.marks ?? []).some((m) => m.type === "deletion")) return;
       const id = typeof n.attrs?.id === "string" ? (n.attrs.id as string) : block;
+      if (typeof n.attrs?.alt === "string" && id) checkText(n.attrs.alt as string, { path, block: id }, `${path}:${id}:alt`, "alt");
       if (TEXT.has(n.type) && !(n.content ?? []).some((c) => TEXT.has(c.type) || c.type === "paragraph")) {
-        const text = blockText(n);
-        if (!text.trim()) return;
-        const folded = fold(text);
-        const where = id ? { path, block: id } : undefined;
-        const key = `${path}:${id}`;
-        for (const p of byPerson) for (const hit of forms(findAll(text, folded, p.terms))) {
-          out.push({ id: `blind-author:${key}:${p.id}:${fold(hit.term)}`, code: "blind-author", level: "review", params: { term: hit.term, match: hit.term, name: p.name, text: around(text, hit.index, hit.length) }, where });
-        }
-        // the longest name first; a word two institutions share is said once
-        const taken: Hit[] = [];
-        const hits = byInstitution.flatMap((a) => findAll(text, folded, a.terms).map((hit) => ({ a, hit }))).sort((x, y) => y.hit.length - x.hit.length);
-        const kept: typeof hits = [];
-        for (const h of hits) {
-          if (taken.some((t) => h.hit.index < t.index + t.length && t.index < h.hit.index + h.hit.length)) continue;
-          taken.push(h.hit);
-          kept.push(h);
-        }
-        for (const a of byInstitution) for (const hit of forms(kept.filter((h) => h.a === a).map((h) => h.hit))) {
-          out.push({ id: `blind-institution:${key}:${a.id}:${fold(hit.term)}`, code: "blind-institution", level: "review", params: { term: hit.term, match: hit.term, institution: a.name, text: around(text, hit.index, hit.length) }, where });
-        }
-        for (const a of byInstitution) {
-          const city = a.city ? forms(findAll(text, folded, [a.city], taken)) : [];
-          for (const hit of city) out.push({ id: `blind-city:${key}:${fold(hit.term)}`, code: "blind-city", level: "review", params: { term: hit.term, match: hit.term, institution: a.name, text: around(text, hit.index, hit.length) }, where });
-        }
-        selfCitations(text).forEach((m, i) => out.push({ id: `blind-self-citation:${key}:${i}`, code: "blind-self-citation", level: "review", params: { text: around(text, m.index, m.length), match: text.slice(m.index, m.index + m.length) }, where }));
-        ethicsWithCode(text).forEach((m, i) => out.push({ id: `blind-ethics:${key}:${i}`, code: "blind-ethics", level: "review", params: { text: text.slice(m.index, m.index + m.length).replace(/\s+/g, " ").trim().slice(0, 160), match: text.slice(m.code.index, m.code.index + m.code.length) }, where }));
+        checkText(blockText(n), id ? { path, block: id } : undefined, `${path}:${id}`);
         return;
       }
       n.content?.forEach((c) => visit(c, id));
@@ -352,11 +356,14 @@ function exactOccurrences(text: string, find: string): number[] {
 }
 
 /**
- * The replacements in a run of text nodes (a stretch of a block between citations and other
- * inline nodes). A replacement takes the marks of the first character it replaces.
+ * The replacements in a run of inline nodes (a stretch of a block between hard breaks). As in
+ * the checks' text, citations, cross-references, note calls and deleted text count as nothing:
+ * a replacement can go across them (record 0089), and they stay, after it. A replacement
+ * takes the marks of the first character it replaces.
  */
+const isText = (n: PMNode) => n.type === "text" && !(n.marks ?? []).some((m) => m.type === "deletion");
 function replaceRun(run: PMNode[], rules: { text: string; replacement: string }[]): PMNode[] {
-  const full = run.map((n) => n.text ?? "").join("");
+  const full = run.map((n) => (isText(n) ? n.text ?? "" : "")).join("");
   const hits: { start: number; end: number; replacement: string }[] = [];
   for (const r of rules) for (const i of exactOccurrences(full, r.text)) {
     if (hits.some((h) => i < h.end && h.start < i + r.text.length)) continue;
@@ -366,6 +373,7 @@ function replaceRun(run: PMNode[], rules: { text: string; replacement: string }[
   const out: PMNode[] = [];
   let at = 0;
   for (const n of run) {
+    if (!isText(n)) { out.push(n); continue; }
     const length = (n.text ?? "").length;
     let text = "";
     for (let i = at; i < at + length; i++) {
@@ -379,18 +387,23 @@ function replaceRun(run: PMNode[], rules: { text: string; replacement: string }[
   return out;
 }
 
-/** A node with the replacements made in all its text (deleted text is left alone). */
+/** A node with the replacements made in all its text and its text alternative (deleted text is left alone). */
 function replaceIn(n: PMNode, rules: { text: string; replacement: string }[]): PMNode {
-  if (!n.content) return n;
+  const alt = n.attrs?.alt;
+  const attrs = typeof alt === "string" && alt
+    ? { ...n.attrs, alt: replaceRun([{ type: "text", text: alt }], rules).map((t) => t.text).join("") }
+    : n.attrs;
+  if (!n.content) return attrs === n.attrs ? n : { ...n, attrs };
   const content: PMNode[] = [];
   let run: PMNode[] = [];
   const flush = () => { if (run.length) content.push(...replaceRun(run, rules)); run = []; };
   for (const c of n.content) {
-    if (c.type === "text" && !(c.marks ?? []).some((m) => m.type === "deletion")) run.push(c);
+    // inline: text, and nodes without content (citations, cross-references, note calls)
+    if (c.type === "text" || (!c.content && c.type !== "hardBreak" && /^(?:citation|xref|noteRef)$/.test(c.type))) run.push(c);
     else { flush(); content.push(replaceIn(c, rules)); }
   }
   flush();
-  return { ...n, content };
+  return { ...n, ...(attrs !== n.attrs ? { attrs } : {}), content };
 }
 
 /** The level-1 sections taken out of the blinded version: their heading and what follows it, up to the next one. */

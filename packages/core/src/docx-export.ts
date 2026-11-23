@@ -30,6 +30,7 @@ import { sameLang } from "./lang.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 import { blindedArticle } from "./blinding.ts";
+import { isSvg, stripImageMetadata } from "./image-metadata.ts";
 import { headingRole, NUMBERED_LEVELS, sectionNumberingOf, sectionNumbers, type SectionNumbering } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
 import { tableNodeBorders, type Line } from "./table-borders.ts";
@@ -47,12 +48,12 @@ export interface ExportResources extends CitationResources {
 }
 export type Rasterizer = (bytes: Uint8Array) => Promise<{ png: Uint8Array; width: number; height: number }>;
 
-/** Whether the bytes are an SVG document (record 0068). */
-export function isSvg(bytes: Uint8Array): boolean {
-  const head = new TextDecoder().decode(bytes.subarray(0, 4096));
-  return head.includes("<svg");
+export { isSvg } from "./image-metadata.ts";
+export interface ExportResult {
+  bytes: Uint8Array; snapshot: string | null; path: string; warnings: string[];
+  /** Record 0089: the figures to upload apart (when the journal wants their captions listed), without metadata and with neutral names. */
+  figureFiles?: string[];
 }
-export interface ExportResult { bytes: Uint8Array; snapshot: string | null; path: string; warnings: string[] }
 
 export const LABELS: Record<string, { bib: string; abstract: string; keywords: string; captions: string; table: string; figure: string }> = {
   es: { bib: "Bibliografía", abstract: "Resumen", keywords: "Palabras clave", captions: "Pies de figura", ...SEQ_LABELS.es },
@@ -449,7 +450,9 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const svgFallback = new Map<string, { png: Uint8Array; width: number; height: number } | string>();
   for (const part of figures.values()) {
     const image = part.attrs!.image as string;
-    const bytes = await project.fs.readBytes(`articles/${folder}/${image}`);
+    const original = await project.fs.readBytes(`articles/${folder}/${image}`);
+    // R9, record 0089: the journal gets the images without who made them or where
+    const bytes = original && !markers ? stripImageMetadata(original) : original;
     imageBytes.set(image, bytes);
     if (bytes && isSvg(bytes) && !svgFallback.has(image)) {
       if (!res.rasterize) svgFallback.set(image, "SVG images need the app or the scidesk-pdf binary to be embedded");
@@ -618,5 +621,20 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const name = profile === "coauthors" ? "coautores" : "revista";
   const path = `articles/${folder}/exports/${folder}-${name}${snapshot ? `-${snapshot.id}` : ""}.docx`;
   await project.fs.write(path, bytes);
-  return { bytes, snapshot: snapshot?.id ?? null, path, warnings: [...new Set(warnings)] };
+  // R9, record 0089: when the journal takes the figures as separate files, they are written
+  // next to the Word, without their metadata and named by their number ("figura-1.png"),
+  // so that neither the file nor its name says who made it
+  const figureFiles: string[] = [];
+  if (captionsList) {
+    for (const [id, part] of [...figures.entries()].sort((a, b) => figureNo.get(a[0])! - figureNo.get(b[0])!)) {
+      const image = part.attrs!.image as string;
+      const data = imageBytes.get(image);
+      if (!data) continue;
+      const ext = (/\.([a-z0-9]+)$/i.exec(image)?.[1] ?? "bin").toLowerCase();
+      const file = `articles/${folder}/exports/${folder}-${name}-figuras/${L.figure.toLowerCase()}-${figureNo.get(id)}.${ext}`;
+      await project.fs.write(file, data);
+      figureFiles.push(file);
+    }
+  }
+  return { bytes, snapshot: snapshot?.id ?? null, path, warnings: [...new Set(warnings)], ...(figureFiles.length ? { figureFiles } : {}) };
 }

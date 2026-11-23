@@ -61,5 +61,5 @@ Los avisos de cegado (ficha 0087) tenían dos salidas: cambiar el texto o marcar
 - **Sustituir el nombre de un archivo de figura.** El Word no muestra el nombre original; servirá cuando se envíen las figuras aparte.
 
 ## Qué queda
-- **Los metadatos de las imágenes** (EXIF, autor de un SVG).
-- **Sustituir también a través de una cita** («como describimos [3] en…» se sustituye solo si la frase entera está entre dos citas).
+- ~~**Los metadatos de las imágenes** (EXIF, autor de un SVG).~~ Hecho en la ficha 0089.
+- ~~**Sustituir también a través de una cita**.~~ Hecho en la ficha 0089.

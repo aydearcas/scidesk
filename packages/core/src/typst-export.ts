@@ -16,6 +16,7 @@ import { sameLang } from "./lang.ts";
 import type { Project } from "./project.ts";
 import { journalExportWarnings } from "./checks.ts";
 import { blindedArticle } from "./blinding.ts";
+import { stripImageMetadata } from "./image-metadata.ts";
 import { headingRole, sectionNumberingOf, sectionNumbers } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
 import { tableNodeBorders, type Line } from "./table-borders.ts";
@@ -228,7 +229,9 @@ ${notesOf(notes, letters)}
     const caption = `${capLabel("figure", figureNo.get(id)!)}${paragraph(cap)}`;
     if (!withImage) { out.push(`${marker(part)}#par[${caption}]\n${notesOf(notes)}`); return; }
     const image = part.attrs!.image as string;
-    const bytes = await project.fs.readBytes(`articles/${folder}/${image}`);
+    // R9, record 0089: the PDF for the journal gets the images without their metadata
+    const original = await project.fs.readBytes(`articles/${folder}/${image}`);
+    const bytes = original && stripImageMetadata(original);
     let body: string;
     if (!bytes) { warnings.push(`${image} is missing`); body = `[\\[${typstEscape(image)}\\]]`; }
     else if (!IMAGE_TYPES.test(image)) { warnings.push(`${image}: TIFF and EPS images are not in the PDF yet`); body = `[\\[${typstEscape(image)}\\]]`; }

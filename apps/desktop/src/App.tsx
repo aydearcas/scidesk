@@ -1121,7 +1121,9 @@ export function App() {
       ? { ...(await exportTitlePage(project, article.folder, resources)), snapshot: null }
       : await exportDocx(project, article.folder, kind, resources);
     // in the browser preview the file is offered as a link, never downloaded on its own
-    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${coreWarnings(r.warnings, t)}` : ""),
+    // record 0089: the figures the journal takes apart, written next to the Word
+    const figures = "figureFiles" in r && r.figureFiles?.length ? t("exportedFigures", { count: r.figureFiles.length, folder: r.figureFiles[0].replace(/\/[^/]*$/, "") }) : "";
+    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + figures + (r.warnings.length ? ` — ${coreWarnings(r.warnings, t)}` : ""),
       inTauri ? null : { url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
   });
   // the PDF for the journal (record 0040): Typst in Rust; the browser preview offers the Typst source instead
