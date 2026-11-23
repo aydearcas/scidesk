@@ -10,6 +10,7 @@ import type { TFunction } from "i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, deletePartFile, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, setBlindOmitted, setBlindReplacement, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, omitsAuthor, documentFontsOf, setDocumentFont, fontList, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
+  setTrackChanges, registries,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -61,6 +62,8 @@ import { partDrag } from "./part-drag.ts";
 import { insertPageBreak } from "./page-break.ts";
 import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
 import { revealIn } from "./reveal.ts";
+import { changeAt, changeInfo, decide, isTracking, setTracking, stepChange, track, type ChangeRecord } from "./track-changes.ts";
+import { TrackNameDialog } from "./TrackNameDialog.tsx";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -359,6 +362,8 @@ export function App() {
     };
     const c = composeArticle(a);
     if (c.warnings.length) setError(c.warnings.join("; "));
+    // record 0090: who made each tracked change of this article
+    track.registry = registries(a).changes as Record<string, ChangeRecord>;
     return c.doc;
   }, []);
   // the texts of the parts follow the interface language
@@ -392,6 +397,7 @@ export function App() {
     setView("article");
     journaled.current.clear();
     loadDoc(composed(p, first));
+    syncTracking(first);
     setDirty(false);
     dirtySince.current = null;
     setLastSaved(null);
@@ -445,6 +451,9 @@ export function App() {
   const [cursorLang, setCursorLang] = useState<{ lang: string; fragment: boolean } | null>(null);
   // record 0063: the dialog that makes the English British or American
   const [variantsOpen, setVariantsOpen] = useState<"GB" | "US" | null>(null);
+  // record 0090: tracked changes on, and the name they carry asked for the first time
+  const [tracking, setTrackingOn] = useState(false);
+  const [askName, setAskName] = useState(false);
   // record 0074: the document font dialog, and a tick to re-read article.json after it
   const [docFontOpen, setDocFontOpen] = useState(false);
   const [fontTick, setFontTick] = useState(0);
@@ -491,7 +500,7 @@ export function App() {
     setSaving(true);
     const version = editVersion.current;
     try {
-      await saveComposite(project, article, editor.getJSON() as PMNode);
+      await saveComposite(project, article, editor.getJSON() as PMNode, { changes: track.registry });
       if (version === editVersion.current) {
         // everything on screen is on disk: nothing left to recover
         for (const path of journaled.current) await recovery.current?.clear(article.folder, path);
@@ -517,7 +526,7 @@ export function App() {
       clearTimeout(journal);
       // each file whose content differs from the disk, as it would be saved
       journal = setTimeout(() => {
-        for (const [path, file] of changedDocuments(splitArticle(editor.getJSON() as PMNode, article), article)) {
+        for (const [path, file] of changedDocuments(splitArticle(editor.getJSON() as PMNode, article, { changes: track.registry }), article)) {
           journaled.current.add(path);
           void recovery.current?.record(article.folder, path, file).catch(() => {});
         }
@@ -540,6 +549,7 @@ export function App() {
     const { snapshot } = await rec.apply(p);
     if (p.entry.article === article?.folder && project) {
       loadDoc(composed(project, article));
+      syncTracking(article);
       setDirty(false);
       void recompute();
     } else editorStates.current.delete(p.entry.article); // shown from the disk when its tab is opened
@@ -713,6 +723,7 @@ export function App() {
     const kept = editorStates.current.get(folder);
     const doc = composed(project, next);
     editor.view.updateState(kept ?? freshState(doc));
+    syncTracking(next);
     journaled.current.clear();
     editVersion.current++;
     dirtySince.current = null;
@@ -830,6 +841,8 @@ export function App() {
   const openFind = (replace: boolean) => { openTab(docTab); setFinding({ replace, focus: Date.now() }); };
   useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; });
   useEffect(() => { hooks.find = (replace) => openFind(replace); });
+  useEffect(() => { hooks.tracking = () => void toggleTracking(); });
+  useEffect(() => { track.author = { name: settings.userName.trim() }; }, [settings.userName]);
   const finishCitation = (items: CiteItem[]) => {
     if (!editor || !citing) return;
     const { view, pos } = citing;
@@ -1460,6 +1473,15 @@ export function App() {
       { label: t("importCopy"), onSelect: () => showRight("review"), disabled: noProject },
       { label: t("ui.authorsGroup"), onSelect: () => { setAuthorsTab("authors"); openTab("authors"); }, disabled: noProject },
       "-",
+      // record 0090: tracked changes, as Word's Review tab
+      { label: t("ui.track.toggle"), shortcut: keys("suggestions"), checked: tracking, onSelect: () => void toggleTracking(), disabled: noProject },
+      { label: t("ui.track.acceptHere"), onSelect: () => decideHere(true), disabled: noProject || !(editor && changeAt(editor.state)) },
+      { label: t("ui.track.rejectHere"), onSelect: () => decideHere(false), disabled: noProject || !(editor && changeAt(editor.state)) },
+      { label: t("ui.track.next"), onSelect: () => moveToChange(1), disabled: noProject },
+      { label: t("ui.track.previous"), onSelect: () => moveToChange(-1), disabled: noProject },
+      { label: t("ui.track.acceptAll"), onSelect: () => decideAll(true), disabled: noProject },
+      { label: t("ui.track.rejectAll"), onSelect: () => decideAll(false), disabled: noProject },
+      "-",
       { label: t("ui.spell.toggle"), checked: settings.spellcheck, onSelect: () => updateSettings({ spellcheck: !settings.spellcheck }) },
       { label: t("ui.autocorrect.toggle"), title: t("ui.autocorrect.hint"), checked: settings.autocorrect, onSelect: () => updateSettings({ autocorrect: !settings.autocorrect }) },
       // record 0060: the language of the selection, or of the paragraph
@@ -1652,7 +1674,67 @@ export function App() {
     await apply(true);
     setMessage(t("ui.spell.ignored", { word }), null, { label: t("ui.undo"), run: () => void apply(false).then(() => setMessage(t("ui.spell.unignored", { word }))) });
   });
+  // ---------------------------------------------------------------- tracked changes (record 0090)
+  // back to the text after a menu (as the page break)
+  const refocus = () => editor?.view.focus();
+  /** Tracking as the article left it (article.json, as Word keeps it in the document). */
+  const syncTracking = (a: ArticleData) => {
+    if (!editor) return;
+    const on = !!a.article.trackChanges;
+    if (isTracking(editor.state) !== on) setTracking(editor, on);
+    setTrackingOn(on);
+  };
+  /** The name of who signs first, to start the name dialog from. */
+  const firstAuthorName = () => {
+    const first = article?.authors.authors[0];
+    const p = first && project?.people.people.find((x) => x.id === first.person);
+    return p ? (p.kind === "person" ? `${p.given} ${p.family}` : p.name) : "";
+  };
+  /** Turns tracked changes on or off; the first time, the name they carry is asked for. */
+  const toggleTracking = run(async (name?: string) => {
+    if (!editor || !project || !article) return;
+    const on = !isTracking(editor.state);
+    const who = (name ?? settings.userName).trim();
+    if (on && !who) { setAskName(true); return; }
+    if (name) { updateSettings({ userName: who }); track.author = { name: who }; }
+    setTracking(editor, on);
+    setTrackingOn(on);
+    await setTrackChanges(project, article.folder, on);
+    setMessage(t(on ? "ui.track.on" : "ui.track.off", { name: who }));
+    refocus();
+  });
+  const changeHere = editor && project ? changeAt(editor.state) : null;
+  const decideHere = (accept: boolean, id = changeHere?.id) => {
+    if (!editor || !id) return;
+    decide(editor, accept, id);
+    refocus();
+  };
+  const decideAll = (accept: boolean) => {
+    if (!editor) return;
+    decide(editor, accept);
+    refocus();
+  };
+  const moveToChange = (dir: 1 | -1) => {
+    if (!editor) return;
+    if (!stepChange(editor, dir)) setMessage(t("ui.track.none"));
+    refocus();
+  };
+
+  /** Record 0090: on a tracked change, accepting or rejecting it comes first. */
   const contextItems = (): MenuEntry[] => {
+    if (!editor) return [];
+    const inTab = contextMenu?.tab && !contextMenu.tab.isDestroyed ? contextMenu.tab : null;
+    const here = changeAt((inTab ?? editor.view).state);
+    const info = here ? changeInfo(here.id) : null;
+    const changeItems: MenuEntry[] = here ? [
+      { heading: info ? t("ui.track.by", { name: info.author.name, date: new Date(info.date).toLocaleString(i18n.language, { dateStyle: "short", timeStyle: "short" }) }) : t("ui.track.change") },
+      { label: t("ui.track.accept"), onSelect: () => decideHere(true, here.id) },
+      { label: t("ui.track.reject"), onSelect: () => decideHere(false, here.id) },
+      "-",
+    ] : [];
+    return [...changeItems, ...baseContextItems()];
+  };
+  const baseContextItems = (): MenuEntry[] => {
     if (!editor) return [];
     // in a table's tab (record 0067), the same commands act on the tab's view
     const inTab = contextMenu?.tab && !contextMenu.tab.isDestroyed ? contextMenu.tab : null;
@@ -2040,6 +2122,7 @@ export function App() {
         </div>
       )}
       <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
+        tracking={tracking} onTracking={() => void toggleTracking()}
         cursorLang={cursorLang} onLang={(l) => editor && setLanguage(editor, l)}
         landscape={isDoc(tab) ? cursorLandscape : null} onLandscape={(on) => landscapeHere(on)}
         onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }}
@@ -2078,6 +2161,10 @@ export function App() {
             setMessage(t("ui.docFont.saved", { family: w.family, size: w.size.toLocaleString(i18n.language) }));
             void recompute();
           })()} />
+      )}
+      {askName && (
+        <TrackNameDialog suggested={firstAuthorName()} onClose={() => { setAskName(false); editor?.commands.focus(); }}
+          onSave={(name) => { setAskName(false); void toggleTracking(name); }} />
       )}
       {variantsOpen && editor && (
         <EnglishVariants editor={editor} initial={variantsOpen} onClose={() => { setVariantsOpen(null); editor.commands.focus(); }}

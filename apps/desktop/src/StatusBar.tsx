@@ -9,7 +9,10 @@ import { LevelIcon } from "./icons.tsx";
 export interface ZoomControl { value: number; fit: boolean; set: (z: "fit" | number) => void; step: (dir: 1 | -1) => void }
 const ZOOMS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
 
-export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home, cursorLang, onLang, landscape = null, onLandscape }: {
+export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home, cursorLang, onLang, landscape = null, onLandscape, tracking = false, onTracking }: {
+  /** Record 0090: tracked changes are on (shown only then, as Word's status bar), and turning them off. */
+  tracking?: boolean;
+  onTracking?: () => void;
   /** Record 0085: the orientation of the pages of the selection (null: none of it can change). */
   landscape?: boolean | null;
   onLandscape?: (on: boolean) => void;
@@ -89,6 +92,7 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
           </select>
         </label>
       )}
+      {tracking && <button className="status-item status-tracking" onClick={onTracking} title={t("ui.track.statusHint")}>{t("ui.track.status")}</button>}
       <button className={`status-item${limit !== undefined && words > limit ? " over" : ""}`} onClick={onWords} title={t("bySection")}>
         {t("ui.wordsOf", { words: words.toLocaleString(i18n.language), limit: limit !== undefined ? ` / ${limit.toLocaleString(i18n.language)}` : "" })}
       </button>

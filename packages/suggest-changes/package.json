@@ -1,0 +1,14 @@
+{
+  "name": "@scidesk/suggest-changes",
+  "version": "0.1.8-scidesk.1",
+  "private": true,
+  "description": "SciDesk's own copy of @handlewithcare/prosemirror-suggest-changes 0.1.8 (MIT), the tracked changes of the editor (record 0020): see README.md for what was changed.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./src/index.d.ts", "import": "./src/index.js" }
+  },
+  "peerDependencies": {
+    "@tiptap/pm": "3.35.0"
+  }
+}

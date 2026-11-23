@@ -165,6 +165,15 @@ const es = {
       note: "Como el PDF para la revista. La paginación en Word puede variar.", clickHint: "Pulsa para ir a ese párrafo",
       error: "La vista previa no se ha podido componer", desktopOnly: "La vista previa la compone Typst en la ventana de escritorio; la vista en el navegador no la tiene.",
     },
+    track: {
+      toggle: "Control de cambios", status: "Control de cambios", statusHint: "Cada cambio queda como una propuesta con tu nombre. Pulsa para desactivarlo.",
+      on: "Control de cambios activado: lo que escribas o borres quedará marcado con tu nombre ({{name}}).", off: "Control de cambios desactivado. Los cambios marcados siguen ahí hasta que los aceptes o rechaces.",
+      accept: "Aceptar el cambio", reject: "Rechazar el cambio", acceptHere: "Aceptar el cambio del cursor", rejectHere: "Rechazar el cambio del cursor",
+      acceptAll: "Aceptar todos los cambios", rejectAll: "Rechazar todos los cambios", next: "Cambio siguiente", previous: "Cambio anterior",
+      none: "No hay cambios marcados.", change: "Cambio marcado", by: "{{name}} · {{date}}",
+      nameSetting: "Tu nombre", namePlaceholder: "Nombre y apellidos", nameNote: "Lo llevan tus cambios marcados y tus comentarios, en SciDesk y en el Word para coautores. Se guarda en este equipo.",
+      nameTitle: "¿Con qué nombre firmas tus cambios?", nameIntro: "Con el control de cambios, lo que escribas o borres queda marcado con tu nombre, como en Word. Se guarda en este equipo y lo puedes cambiar en Ajustes.", nameSave: "Activar el control de cambios",
+    },
     spell: { toggle: "Corrector ortográfico", addToProject: "Añadir «{{word}}» al diccionario del proyecto", added: "«{{word}}» está en el diccionario del proyecto (resources/dictionary.txt)", noSuggestions: "Sin sugerencias", ignore: "Ignorar «{{word}}» en este artículo", ignored: "«{{word}}» ya no se subraya en este artículo (article.json)", unignored: "«{{word}}» se vuelve a subrayar" },
     autocorrect: { toggle: "Autocorrección científica", hint: "Al escribir: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, espacio duro entre número y unidad, signo menos, comillas «» (“” en inglés). Ctrl+Z deshace cada cambio." },
     keepSource: { pasted: "Pegado desde Word con la fuente del documento", action: "Mantener formato de origen", done: "Pegado con las fuentes y tamaños de Word (Ctrl+Z lo deshace)", stale: "El texto ha cambiado desde el pegado: vuelve a pegarlo para mantener su formato" },
@@ -256,7 +265,7 @@ const es = {
     actions: {
       bold: "Negrita", italic: "Cursiva", underline: "Subrayado", superscript: "Superíndice", subscript: "Subíndice", alignLeft: "Alinear a la izquierda", alignCenter: "Centrar", alignRight: "Alinear a la derecha", justify: "Justificar", pageBreak: "Salto de página", heading1: "Título 1 (sección)", heading2: "Título 2", heading3: "Título 3", normalParagraph: "Párrafo normal", undo: "Deshacer", redo: "Rehacer", save: "Guardar ahora (después, versión con nombre)",
       newArticle: "Nuevo artículo", openProject: "Abrir una carpeta (en el texto, Ctrl+A de «Word en español» sigue seleccionando todo)",
-      cite: "Insertar cita", xref: "Insertar referencia cruzada", find: "Buscar", replace: "Reemplazar", comment: "Comentario", suggestions: "Modo de sugerencias", palette: "Buscar o ejecutar una orden",
+      cite: "Insertar cita", xref: "Insertar referencia cruzada", find: "Buscar", replace: "Reemplazar", comment: "Comentario", suggestions: "Control de cambios", palette: "Buscar o ejecutar una orden",
     },
     home: {
       start: "Empezar", startText: "Un proyecto es una carpeta con el artículo, sus autores, las referencias, las tablas y las figuras.",
@@ -525,6 +534,15 @@ const en: typeof es = {
       note: "As the PDF for the journal. Word's pagination may differ.", clickHint: "Click to go to that paragraph",
       error: "The preview could not be composed", desktopOnly: "Typst composes the preview in the desktop window; the browser preview does not have it.",
     },
+    track: {
+      toggle: "Track changes", status: "Tracking changes", statusHint: "Every change is kept as a proposal with your name. Click to turn it off.",
+      on: "Track changes on: what you type or delete is marked with your name ({{name}}).", off: "Track changes off. The marked changes stay until you accept or reject them.",
+      accept: "Accept the change", reject: "Reject the change", acceptHere: "Accept the change at the cursor", rejectHere: "Reject the change at the cursor",
+      acceptAll: "Accept all changes", rejectAll: "Reject all changes", next: "Next change", previous: "Previous change",
+      none: "There are no tracked changes.", change: "Tracked change", by: "{{name}} · {{date}}",
+      nameSetting: "Your name", namePlaceholder: "Full name", nameNote: "Your tracked changes and comments carry it, in SciDesk and in the Word for co-authors. It is kept on this computer.",
+      nameTitle: "What name do your changes carry?", nameIntro: "With track changes on, what you type or delete is marked with your name, as in Word. It is kept on this computer, and can be changed in Settings.", nameSave: "Turn on track changes",
+    },
     spell: { toggle: "Spell checker", addToProject: "Add “{{word}}” to the project dictionary", added: "“{{word}}” is in the project dictionary (resources/dictionary.txt)", noSuggestions: "No suggestions", ignore: "Ignore “{{word}}” in this article", ignored: "“{{word}}” is no longer underlined in this article (article.json)", unignored: "“{{word}}” is underlined again" },
     autocorrect: { toggle: "Scientific autocorrection", hint: "While typing: +- → ±, <= → ≤, >= → ≥, -> → →, 2 x 2 → 2 × 2, non-breaking space between number and unit, minus sign, quotation marks “” («» in Spanish). Ctrl+Z undoes each change." },
     keepSource: { pasted: "Pasted from Word with the document's font", action: "Keep source formatting", done: "Pasted with Word's fonts and sizes (Ctrl+Z undoes it)", stale: "The text has changed since the paste: paste it again to keep its formatting" },
@@ -615,7 +633,7 @@ const en: typeof es = {
     actions: {
       bold: "Bold", italic: "Italic", underline: "Underline", superscript: "Superscript", subscript: "Subscript", alignLeft: "Align left", alignCenter: "Center", alignRight: "Align right", justify: "Justify", pageBreak: "Page break", heading1: "Heading 1 (section)", heading2: "Heading 2", heading3: "Heading 3", normalParagraph: "Normal paragraph", undo: "Undo", redo: "Redo", save: "Save now (later, a named version)",
       newArticle: "New article", openProject: "Open a folder (in the text, “Word en español”'s Ctrl+A still selects everything)",
-      cite: "Insert citation", xref: "Insert cross-reference", find: "Find", replace: "Replace", comment: "Comment", suggestions: "Suggestions mode", palette: "Search or run a command",
+      cite: "Insert citation", xref: "Insert cross-reference", find: "Find", replace: "Replace", comment: "Comment", suggestions: "Track changes", palette: "Search or run a command",
     },
     home: {
       start: "Start", startText: "A project is a folder with the article, its authors, the references, the tables and the figures.",

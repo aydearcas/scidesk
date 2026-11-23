@@ -33,6 +33,7 @@ import { revealIn, scrollerOf } from "./reveal.ts";
 import { ClickInside } from "./click-inside.ts";
 import { ListBackspace } from "./list-backspace.ts";
 import { Landscape } from "./landscape.ts";
+import { Deletion, Insertion, Modification, TrackChanges, withNodeMarks } from "./track-changes.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -70,7 +71,7 @@ export function refreshCitationLabels() {
 }
 
 /** What the shortcuts that open a dialog do (set by the window). */
-export const hooks = { quickCite: () => {}, xref: () => {}, find: (_replace: boolean) => {} };
+export const hooks = { quickCite: () => {}, xref: () => {}, find: (_replace: boolean) => {}, tracking: () => {} };
 
 /** Numbers of tables and figures by first cross-reference, then position (as the export). */
 export const xrefLabels = new Map<string, string>();
@@ -218,6 +219,8 @@ const SchemeKeys = Extension.create({
           if (action === "find" || action === "replace" || combo === "Mod-f") { hooks.find(action === "replace"); event.preventDefault(); return true; }
           if (!action || !EDITOR_ACTIONS.includes(action)) return false;
           if (action === "cite") hooks.quickCite();
+          // record 0090: tracked changes on or off
+          else if (action === "suggestions") hooks.tracking();
           else if (action === "xref") hooks.xref();
           // record 0073: alignment, as Word's Ctrl+Q/T/D/J or Ctrl+L/E/R/J
           // record 0078: Ctrl+Enter, a page break at the cursor
@@ -442,7 +445,9 @@ const FontSize = Mark.create({
   renderHTML: ({ mark }) => ["span", { "data-font-size": String(mark.attrs.size), class: "own-font", style: `font-size: calc(${Number(mark.attrs.size)}pt * var(--zoom))` }, 0],
 });
 
-export const extensions = [
+// record 0090: blocks and atoms take the tracked-change marks (withNodeMarks)
+export const extensions = withNodeMarks([
+  TrackChanges,
   ...partExtensions,
   SchemeKeys,
   FindHighlight,
@@ -496,6 +501,9 @@ export const extensions = [
   LangMark,
   LangPaste,
   Autocorrect,
+  Insertion,
+  Deletion,
+  Modification,
   UndoRedo,
   Spellcheck,
-];
+]);

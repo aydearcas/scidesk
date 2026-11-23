@@ -35,9 +35,11 @@ export interface Settings {
   preview: boolean;
   /** Record 0065: scientific autocorrection while typing (±, ≤, units, minus, quotes). */
   autocorrect: boolean;
+  /** Record 0090: the name tracked changes and comments carry, as Word's user name. */
+  userName: string;
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true, preview: false, autocorrect: true };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true, preview: false, autocorrect: true, userName: "" };
 
 /** The language of the system, for a computer without settings yet. */
 const systemLang = (): Settings["lang"] => (typeof navigator !== "undefined" && !navigator.language.toLowerCase().startsWith("es") ? "en" : "es");

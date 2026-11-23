@@ -25,6 +25,7 @@
     "@scidesk/core": "0.1.0",
     "@scidesk/formats": "0.1.0",
     "@scidesk/spell": "0.1.0",
+    "@scidesk/suggest-changes": "0.1.8-scidesk.1",
     "@tauri-apps/api": "2.12.5",
     "@tauri-apps/plugin-dialog": "2.8.4",
     "@tiptap/core": "3.35.0",

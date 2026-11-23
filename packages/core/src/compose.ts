@@ -60,11 +60,16 @@ function usedIds(n: PMNode, out = new Set<string>()) {
   return out;
 }
 
-/** Every change and comment of the article's files, as one registry (ids are unique). */
-function registries(art: ArticleData) {
+/** Who made each tracked change and each comment the editor knows (record 0090): its registry, by id. */
+export interface Registries { changes?: Record<string, unknown>; comments?: Record<string, unknown> }
+
+/** Every change and comment of the article's files, as one registry (ids are unique), with the editor's own over them. */
+export function registries(art: ArticleData, extra: Registries = {}) {
   const changes: Record<string, unknown> = {};
   const comments: Record<string, unknown> = {};
   for (const f of art.documents.values()) { Object.assign(changes, f.changes); Object.assign(comments, f.comments); }
+  Object.assign(changes, extra.changes);
+  Object.assign(comments, extra.comments);
   return { changes, comments };
 }
 
@@ -80,8 +85,8 @@ function envelope(art: ArticleData, path: string, documentType: string, doc: PMN
  * (with a reference in the place of each part), the abstract and one file per part. A
  * part removed from the text is not in the result: its file stays on disk (rule 4).
  */
-export function splitArticle(doc: PMNode, art: ArticleData): Map<string, DocumentFile> {
-  const reg = registries(art);
+export function splitArticle(doc: PMNode, art: ArticleData, extra: Registries = {}): Map<string, DocumentFile> {
+  const reg = registries(art, extra);
   const out = new Map<string, DocumentFile>();
   const body: PMNode[] = [];
   for (const n of doc.content ?? []) {
@@ -141,8 +146,8 @@ export function changedDocuments(split: Map<string, DocumentFile>, art: ArticleD
 }
 
 /** Writes the files of the tree that changed (each validated); gives their paths. */
-export async function saveComposite(project: Project, art: ArticleData, doc: PMNode): Promise<string[]> {
-  const changed = changedDocuments(splitArticle(doc, art), art);
+export async function saveComposite(project: Project, art: ArticleData, doc: PMNode, extra: Registries = {}): Promise<string[]> {
+  const changed = changedDocuments(splitArticle(doc, art, extra), art);
   // the parts first and the body last: a body never points at a part that is not written
   const order = [...changed.keys()].sort((a, b) => Number(a === BODY_PATH) - Number(b === BODY_PATH));
   for (const path of order) await saveDocument(project, art, path, changed.get(path)!);

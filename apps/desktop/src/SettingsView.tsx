@@ -15,6 +15,11 @@ export function SettingsView({ settings, onChange }: { settings: Settings; onCha
       <h2 id="settings-title">{t("ui.settings")}</h2>
       <p className="muted">{t("ui.settingsLocal")}</p>
       <fieldset className="setting">
+        <legend>{t("ui.track.nameSetting")}</legend>
+        <input className="user-name" value={settings.userName} maxLength={80} onChange={(e) => onChange({ userName: e.target.value })} placeholder={t("ui.track.namePlaceholder")} aria-label={t("ui.track.nameSetting")} />
+        <p className="muted small">{t("ui.track.nameNote")}</p>
+      </fieldset>
+      <fieldset className="setting">
         <legend>{t("ui.interfaceLanguage")}</legend>
         {(["es", "en"] as const).map((l) => (
           <label key={l} className="inline"><input type="radio" name="lang" checked={settings.lang === l} onChange={() => onChange({ lang: l })} />{l === "es" ? "Español" : "English"}</label>

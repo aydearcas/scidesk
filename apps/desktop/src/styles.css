@@ -864,3 +864,15 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 .variants-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
 .variants-word { font-family: var(--doc-font, serif); }
 .variants-note { font-size: 11px; color: var(--text-2); border: 1px solid var(--line); border-radius: 8px; padding: 0 6px; }
+
+/* record 0090: tracked changes in the text, in the colour of their author (as Word) */
+.ProseMirror ins.change { color: var(--change-color); text-decoration: underline; text-decoration-color: var(--change-color); background: none; }
+.ProseMirror del.change { color: var(--change-color); text-decoration: line-through; text-decoration-color: var(--change-color); }
+.ProseMirror span.change-modification { text-decoration: underline dotted; text-decoration-color: var(--change-color); }
+/* a whole block added or deleted: a bar in the margin, as Word's change lines */
+.ProseMirror ins.change:has(> p, > h1, > h2, > h3, > h4, > div, > ul, > ol, > table, > blockquote),
+.ProseMirror del.change:has(> p, > h1, > h2, > h3, > h4, > div, > ul, > ol, > table, > blockquote) { display: block; text-decoration: none; box-shadow: inset 3px 0 0 var(--change-color); padding-left: 6px; }
+.ProseMirror del.change:has(> p, > h1, > h2, > h3, > h4, > div, > ul, > ol, > table, > blockquote) > * { text-decoration: line-through; text-decoration-color: var(--change-color); }
+.status-item.status-tracking { color: #fff; background: var(--accent); font-weight: 600; }
+.track-name-dialog input { width: 100%; height: 32px; padding: 0 8px; margin: 8px 0 4px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; }
+.settings-view .user-name { width: min(360px, 100%); height: 30px; padding: 0 8px; border: 1px solid var(--line-strong); border-radius: var(--radius); font: inherit; }

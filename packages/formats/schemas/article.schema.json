@@ -235,6 +235,10 @@
       ],
       "description": "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none'; null or absent: as the journal profile says, and none when it does not say (record 0070)."
     },
+    "trackChanges": {
+      "description": "Tracked changes are on: every edit is a proposal with its author, as Word's w:trackRevisions (record 0090).",
+      "type": "boolean"
+    },
     "translations": {
       "description": "Other languages of the title, the abstract and the keywords (Reumatología Clínica: en).",
       "items": {

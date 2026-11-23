@@ -867,7 +867,8 @@ Cada parte termina con algo usable, y la 2a prueba el modelo de propuestas antes
 - Comentarios y control de cambios en el editor, con la implementación elegida en el prototipo 7 (R31).
 - Exportar a DOCX con comentarios y cambios.
 - Importar una copia devuelta con control de cambios y comentarios, verla en la vista de propuestas (6.5), y aceptar y rechazar.
-- Citas de Zotero, Mendeley y EndNote de un Word importado convertidas en citas vivas (R1).
+- ~~Citas de Zotero, Mendeley y EndNote de un Word importado convertidas en citas vivas (R1).~~ Pasan al final de la fase 2, después de la 2b (decisión del usuario del 23/11, ficha 0090).
+- **[Hecho, ficha 0090]** Control de cambios en el editor; quedan los comentarios.
 - Historial de versiones con nombre (P15).
 - **Terminado cuando:** un coautor o un revisor lingüístico te devuelve una copia con control de cambios y comentarios, y la integras sin perder citas ni formato.
 
