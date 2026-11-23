@@ -26,7 +26,13 @@
 - Un clic que mete una tabla en el texto sin preguntar sorprende. El usuario quería ver antes las opciones.
 - Con la tabla entera seleccionada, «Insertar cita», «Añadir nota general» o «Marcar un pendiente» habrían escrito encima de la selección y la habrían quitado del texto. Por eso no se ofrecen.
 
-## Qué queda
-- **«Abrir en su pestaña» para una tabla sin colocar,** que pidió el usuario: no está.
-  - La pestaña de una tabla es una segunda vista de la tabla dentro del texto (ficha 0045), y una tabla sin colocar no está en él.
-  - Hace falta un editor aparte para el archivo de la tabla, que guarde en él y no en el texto. Queda pendiente de que el usuario decida si lo quiere.
+## «Abrir en su pestaña» para una tabla sin colocar
+Lo pidió el usuario después, y se hizo el mismo día (23/11).
+- **Cómo funciona:** el menú de una tabla sin colocar ofrece también «Abrir en su pestaña».
+  - La pestaña de una tabla del texto es una segunda vista de esa tabla dentro del texto (ficha 0045). Esta no está en el texto, así que su pestaña (`file:<ruta>`, `UnplacedTableTab` en `TableTab.tsx`) tiene un editor propio sobre su archivo, con las mismas herramientas.
+  - Cada cambio se escribe en el `.scitable` tras 0,8 s de pausa y al cerrar la pestaña.
+  - La pestaña se llama «… · sin colocar», y la línea de debajo dice que lo escrito va a su archivo.
+- **Al volver al texto:** «Insertar en el texto» escribe antes lo último de la pestaña y la cierra (`closeFileTab`). «Eliminar del proyecto» también la cierra antes.
+- **Limitaciones:**
+  - Lo escrito en esa pestaña no pasa por el registro de recuperación: la pausa de escritura es corta por eso.
+  - Las citas de una tabla sin colocar no se numeran mientras no esté en el texto.

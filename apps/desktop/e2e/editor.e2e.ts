@@ -133,6 +133,28 @@ test("a table in the navigator: its menu; out of the text, a click opens its men
   await expect(editor.locator("figure.part-table")).toHaveCount(1);
 });
 
+test("a table out of the text opens in its tab, is edited there and goes back with the change", async ({ page }) => {
+  const { editor } = await openDemo(page);
+  const nav = page.locator("nav.navigator");
+  await nav.locator("button.nav-item", { hasText: "Características basales" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Eliminar tabla del texto" }).click();
+  const unplaced = nav.locator("li.nav-group", { hasText: "Sin colocar en el texto" }).locator("button.nav-item", { hasText: "Características basales" });
+  await unplaced.click();
+  await page.getByRole("menuitem", { name: "Abrir en su pestaña" }).click();
+  const tab = page.locator(".tab-body.table-tab:not([hidden])");
+  await expect(tab.getByText(/no está en el texto/)).toBeVisible();
+  const cell = tab.locator("td", { hasText: "Edad" }).locator("p").first();
+  await cell.click();
+  await page.keyboard.press(END);
+  await page.keyboard.type(" (media)", { delay: 15 });
+  await expect(cell).toContainText("(media)");
+  // back into the text: its tab closes and the text has the change
+  await unplaced.click();
+  await page.getByRole("menuitem", { name: /Insertar en el texto/ }).click();
+  await expect(editor.locator("figure.part-table")).toContainText("Edad, años (media)");
+  await expect(page.locator(".tab-body.table-tab:not([hidden])")).toHaveCount(0);
+});
+
 test("the whole table selected: its menu acts on the table and types nothing over it", async ({ page }) => {
   const { editor } = await openDemo(page);
   const table = editor.locator("figure.part-table");

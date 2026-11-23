@@ -25,7 +25,7 @@ import { numberable, setSectionNumberStyle } from "./section-numbers.ts";
 import { addSection, addSubsection, canMoveSection, childIndexAt, headingIndex, moveSection, moveSectionTo, removeHeading, roleOfNode, setSectionRole, topHeadings } from "./sections-edit.ts";
 import { FindBar } from "./FindBar.tsx";
 import { addNote, blockInsertPos, clearImages, partAround, partContext, placed, relabel, setAlign, setPartAttrs } from "./parts.ts";
-import { cellInfo, TableContextBar, TableTabView, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
+import { cellInfo, TableContextBar, TableTabView, UnplacedTableTab, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
 import { AuthorsDialog, type Tab as AuthorsTab } from "./AuthorsDialog.tsx";
 import { ChecksPanel } from "./ChecksPanel.tsx";
 import { DetailsPanel, type Selected } from "./DetailsPanel.tsx";
@@ -86,12 +86,14 @@ const SHEET_GAP = 16;
 const MARGIN_PX = (25 / 25.4) * 96;
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
-type CenterTab = `doc:${string}` | `table:${string}` | "library" | "authors" | "settings";
+// file:<path>: a table not placed in the text, in an editor of its own over its file
+type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings";
 type View = "article" | "library";
 type RightTab = "warnings" | "review" | "details";
 const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings" };
 const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
 const isTableTab = (k: string): k is `table:${string}` => k.startsWith("table:");
+const isFileTab = (k: string): k is `file:${string}` => k.startsWith("file:");
 const IMAGE_TYPES: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", svg: "image/svg+xml" };
 /** The title of an article as saved (the tab of an article that is not on screen). */
 const savedTitle = (a: ArticleData) => {
@@ -136,6 +138,8 @@ export function App() {
   // the citation being written: in the manuscript or in a table's tab (record 0067), and where
   const [citing, setCiting] = useState<{ view: EditorView; pos: number | null; items: CiteItem[] } | null>(null);
   const tabViews = useRef(new Map<string, EditorView>());
+  // the writing of each unplaced table open in its tab, to do before it goes back into the text
+  const unplacedFlush = useRef(new Map<string, () => Promise<void>>());
   const [xrefOpen, setXrefOpen] = useState(false);
   // find and replace in the manuscript; `focus` changes each time it is asked for again
   const [finding, setFinding] = useState<{ replace: boolean; focus: number } | null>(null);
@@ -665,6 +669,13 @@ export function App() {
     setTab(k);
   };
   const openTableTab = (id: string) => openTab(`table:${id}`);
+  /** An unplaced table's file, written and its tab closed (before it goes back into the text or is deleted). */
+  const closeFileTab = async (src: string) => {
+    await unplacedFlush.current.get(src)?.();
+    const k: CenterTab = `file:${src}`;
+    setTabs((ts) => ts.filter((x) => x !== k));
+    setTab((cur) => (cur === k ? docTab : cur));
+  };
   /**
    * Shows another article's manuscript: what is on screen is saved first, its editor state
    * (with its undo history) is kept, and the other article's is restored or loaded.
@@ -677,7 +688,7 @@ export function App() {
     if (dirty) await save();
     if (article) editorStates.current.set(article.folder, editor.state);
     // a table's tab belongs to the article it is in
-    setTabs((ts) => ts.filter((k) => !isTableTab(k)));
+    setTabs((ts) => ts.filter((k) => !isTableTab(k) && !isFileTab(k)));
     const kept = editorStates.current.get(folder);
     const doc = composed(project, next);
     editor.view.updateState(kept ?? freshState(doc));
@@ -789,7 +800,7 @@ export function App() {
   const openQuickCite = useCallback(() => {
     if (!editor || !project) return;
     // record 0067: in a table's tab, into the tab's view (which passes it on to the manuscript)
-    const view = (isTableTab(tab) && tabViews.current.get(tab.slice(6))) || editor.view;
+    const view = (isTableTab(tab) && tabViews.current.get(tab.slice(6))) || (isFileTab(tab) && tabViews.current.get(tab)) || editor.view;
     const sel = view.state.selection;
     if (sel instanceof NodeSelection && sel.node.type.name === "citation") setCiting({ view, pos: sel.from, items: sel.node.attrs.items as CiteItem[] });
     else setCiting({ view, pos: null, items: [] });
@@ -856,7 +867,10 @@ export function App() {
     setMessage(t("ui.tableAdded", { path }));
   });
   // a table or figure that left the text (its file was kept) comes back at the cursor
-  const placeAgain = (path: string) => { insertPart(path); setMessage(t("ui.placedAgain", { path })); };
+  const placeAgain = (path: string) => {
+    // open in its tab: its last changes to the file first, and the tab closes
+    void closeFileTab(path).then(() => { insertPart(path); setMessage(t("ui.placedAgain", { path })); });
+  };
   /**
    * "Adapt to the journal" (record 0047): a fragment's own font and size are removed from the
    * whole article in one step (Ctrl+Z undoes it), after saving and keeping a snapshot.
@@ -1527,8 +1541,10 @@ export function App() {
       ];
     }
     const { src } = target;
+    const isTable = outline?.unplaced.find((u) => u.src === src)?.kind === "table";
     return [
       { label: t("ui.partMenu.insert"), strong: true, onSelect: () => { openTab(docTab); placeAgain(src); } },
+      ...(isTable ? [{ label: t("ui.openInTab"), onSelect: () => openTab(`file:${src}`) }] : []),
       "-",
       { label: t("ui.partMenu.delete"), onSelect: () => setFloatMenu({ x, y, label: src, items: [
         { heading: t("ui.partMenu.confirm", { path: src.split("/").pop() }) },
@@ -1539,6 +1555,7 @@ export function App() {
   };
   const deleteUnplaced = run(async (src: string) => {
     if (!project || !article) return;
+    await closeFileTab(src);
     await save();
     const snap = await saveSnapshot(project, article.folder, t("ui.partMenu.confirm", { path: src }));
     await deletePartFile(project, article.folder, src);
@@ -1750,6 +1767,10 @@ export function App() {
       const p = outline?.tables.find((x) => x.id === k.slice(6));
       return p ? `${t("ui.tableN", { n: p.number })}${p.caption ? ` · ${p.caption}` : ""}` : t("ui.tableTools");
     }
+    if (isFileTab(k)) {
+      const u = outline?.unplaced.find((x) => x.src === k.slice(5));
+      return `${u?.caption || k.slice(5)} · ${t("ui.unplacedShort")}`;
+    }
     if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : t("ui.settings");
     const a = project?.articles.find((x) => x.folder === k.slice(4));
     const title = a === article ? outline?.title?.text : a ? savedTitle(a) : "";
@@ -1815,7 +1836,7 @@ export function App() {
           <div className="tabbar" role="tablist" aria-label={t("ui.openTabs")} hidden={!project && !tabs.includes("settings")}>
             {(project ? tabs : tabs.filter((k) => k === "settings")).map((k) => (
               <div key={k} className={`tab${tab === k ? " active" : ""}`}>
-                <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : isTableTab(k) ? "table" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
+                <button role="tab" aria-selected={tab === k} onClick={() => selectTab(k)} title={tabLabel(k)}><Icon name={isDoc(k) ? "article" : isTableTab(k) || isFileTab(k) ? "table" : TAB_ICONS[k]} size={15} /><span className="tab-label">{tabLabel(k)}</span>{k === docTab && dirty ? <span className="dot" title={t("unsaved")} /> : null}{k === "authors" && authorsDirty ? <span className="dot" title={t("unsaved")} /> : null}</button>
                 {(!isDoc(k) || tabs.filter(isDoc).length > 1) && <button className="tab-close" aria-label={t("ui.closeTab", { name: tabLabel(k) })} onClick={() => closeTab(k)}><Icon name="close" size={13} /></button>}
               </div>
             ))}
@@ -1876,6 +1897,14 @@ export function App() {
                 notice={(() => { const n = pasteNotices.get(k.slice(6)); return n ? { ...n, number: outline?.tables.find((x) => x.id === k.slice(6))?.number ?? null } : null; })()}
                 onUndoPaste={() => { const n = pasteNotices.get(k.slice(6)); if (n) undoPaste(n.tables); }}
                 onDismissNotice={() => setPasteNotices((m) => { const next = new Map(m); next.delete(k.slice(6)); return next; })} />
+            </div>
+          ))}
+          {project && article && tabs.filter(isFileTab).map((k) => (
+            <div key={k} className="tab-body table-tab" hidden={tab !== k}>
+              <UnplacedTableTab project={project} folder={article.folder} src={k.slice(5)} title={tabLabel(k)} onCells={setCells}
+                onView={(v) => { if (v) tabViews.current.set(k, v); else tabViews.current.delete(k); }} onContextMenu={onTabContextMenu}
+                onSaved={() => void recompute()}
+                register={(src, flush) => { if (flush) unplacedFlush.current.set(src, flush); else unplacedFlush.current.delete(src); }} />
             </div>
           ))}
           {project && tab === "library" && (

@@ -3,14 +3,17 @@
 // merge, split, header row, alignment, note call, general note) and, when it was just pasted
 // from Word, what was kept and what was dropped, with "Undo the paste". Its tools work on the
 // manuscript too (the context menu and "Details" give the same commands).
-import { useEffect, useLayoutEffect, useReducer, useRef } from "react";
+import { useEffect, useLayoutEffect, useReducer, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { Editor } from "@tiptap/core";
+import { Editor } from "@tiptap/core";
+import { saveDocument, type Project } from "@scidesk/core";
+import type { PMNode } from "@scidesk/formats";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Node as PMNodeType } from "@tiptap/pm/model";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, CellSelection, deleteColumn, deleteRow, mergeCells, splitCell, TableMap, toggleHeaderRow } from "@tiptap/pm/tables";
-import { addNote, partAround, PartTab, setAlign } from "./parts.ts";
+import { addNote, partAround, PartTab, placed, setAlign } from "./parts.ts";
+import { extensions } from "./editor.ts";
 import { Icon, type IconName } from "./icons.tsx";
 import { TableLinesTools } from "./TableLinesTools.tsx";
 
@@ -155,8 +158,10 @@ export function TableContextBar({ editor, label, onOpenTab, scroller }: {
 /** What a paste from Word kept and dropped (sheet 8), shown in the tab until it is closed. */
 export interface PasteNotice { tables: string[]; number: number | null; path: string; kept: string; dropped: string }
 
-export function TableTabView({ editor, id, title, onGone, onCells, notice, onUndoPaste, onDismissNotice, onView, onContextMenu }: {
+export function TableTabView({ editor, id, title, onGone, onCells, notice, onUndoPaste, onDismissNotice, onView, onContextMenu, hint }: {
   editor: Editor; id: string; title: string; onGone: () => void;
+  /** The line under the table (an unplaced table says where what is written goes). */
+  hint?: string;
   /** Record 0067: the tab's view while it exists (the quick citation goes into it), and its right-click menu. */
   onView: (view: EditorView | null) => void;
   onContextMenu: (e: React.MouseEvent, view: EditorView) => void;
@@ -209,8 +214,62 @@ export function TableTabView({ editor, id, title, onGone, onCells, notice, onUnd
       <div className="desk">
         <div className="paper wide" onContextMenu={(e) => { if (tab.current) onContextMenu(e, tab.current.view); }}><div className="page" ref={host} /></div>
       </div>
-      <p className="muted small table-tab-hint">{t("ui.tableTabHint")}</p>
+      <p className="muted small table-tab-hint">{hint ?? t("ui.tableTabHint")}</p>
     </div>
+  );
+}
+
+/**
+ * A table not placed in the text, in its tab (the user's request after record 0084): the tab of
+ * a table is a second view of the table in the text, and this one is not there, so it gets an
+ * editor of its own over its file. Each change is written to the .scitable after a short pause
+ * and when the tab closes; `register` gives the app that writing, to do it before the table
+ * goes back into the text.
+ */
+export function UnplacedTableTab({ project, folder, src, title, onCells, onView, onContextMenu, onSaved, register }: {
+  project: Project; folder: string; src: string; title: string;
+  onCells: (info: CellInfo | null) => void;
+  onView: (view: EditorView | null) => void;
+  onContextMenu: (e: React.MouseEvent, view: EditorView) => void;
+  onSaved: () => void;
+  register: (src: string, flush: (() => Promise<void>) | null) => void;
+}) {
+  const [own, setOwn] = useState<{ editor: Editor; id: string } | null>(null);
+  const saved = useRef(onSaved);
+  saved.current = onSaved;
+  useEffect(() => {
+    const art = project.articles.find((a) => a.folder === folder);
+    const file = art?.documents.get(src);
+    if (!art || !file) return;
+    const part = file.doc as PMNode;
+    const editor = new Editor({ element: document.createElement("div"), extensions, content: { type: "doc", content: [placed(part as never, src) as never] } });
+    let timer = 0;
+    let pending = false;
+    const flush = async () => {
+      window.clearTimeout(timer);
+      if (!pending) return;
+      pending = false;
+      const node = editor.state.doc.firstChild?.toJSON() as PMNode | undefined;
+      if (!node) return;
+      const { src: _src, ...attrs } = node.attrs ?? {};
+      await saveDocument(project, art, src, { ...art.documents.get(src)!, doc: { ...node, attrs } } as never);
+      saved.current();
+    };
+    editor.on("update", () => { pending = true; window.clearTimeout(timer); timer = window.setTimeout(() => void flush(), 800); });
+    register(src, flush);
+    setOwn({ editor, id: String(part.attrs?.id) });
+    return () => {
+      register(src, null);
+      setOwn(null);
+      void flush().finally(() => editor.destroy());
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one editor per file
+  }, [project, folder, src]);
+  const { t } = useTranslation();
+  if (!own) return null;
+  return (
+    <TableTabView editor={own.editor} id={own.id} title={title} onGone={() => {}} hint={t("ui.unplacedTabHint", { path: src })} onCells={onCells} onView={onView} onContextMenu={onContextMenu}
+      notice={null} onUndoPaste={() => {}} onDismissNotice={() => {}} />
   );
 }
 
