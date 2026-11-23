@@ -6,8 +6,9 @@
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import {
-  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, omitsAuthor, documentFontsOf, setDocumentFont, fontList, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -58,6 +59,7 @@ import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, upda
 import { setJournalTableStyle } from "./table-lines.ts";
 import { partDrag } from "./part-drag.ts";
 import { insertPageBreak } from "./page-break.ts";
+import { revealIn } from "./reveal.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -99,6 +101,18 @@ const savedTitle = (a: ArticleData) => {
 };
 
 const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+
+
+/** The core's warnings are in English (it also serves the command line): the ones a user meets, in the interface's language (phase 1 test). */
+function coreWarning(w: string, t: TFunction): string {
+  let m = /^(\d+) pending marker\(s\) left in the text/.exec(w);
+  if (m) return t("corePending", { count: Number(m[1]) });
+  if (/^the pasted table has no "Tabla N\." caption/.test(w)) return t("corePasteNoCaption");
+  m = /^(\d+) table\(s\) without a "Tabla N\." caption/.exec(w);
+  if (m) return t("coreUncaptioned", { count: Number(m[1]) });
+  return w;
+}
+const coreWarnings = (ws: string[], t: TFunction) => ws.map((w) => coreWarning(w, t)).join("; ");
 
 export function App() {
   const { t, i18n } = useTranslation();
@@ -527,7 +541,7 @@ export function App() {
     if (!target) return;
     const { project: p, report } = await projectFromWord(target.fs, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, checkLang: checkWords });
     await show(p, target.path);
-    setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${report.warnings.join("; ")}` : ""));
+    setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${coreWarnings(report.warnings, t)}` : ""));
   });
   const open = run(async () => {
     if (!inTauri) return;
@@ -615,7 +629,8 @@ export function App() {
     }
     const target = inTauri ? await createProjectFolder(c.location!, c.folder) : { fs: previewFs(true), path: PREVIEW_PLACE, name: c.folder };
     let p = await createProject(target.fs, {
-      name: c.title.slice(0, 80), fileName: c.folder, title: c.title, lang: c.lang, translations: c.translations, articleType: c.articleType,
+      // the name the user gave the folder, not the title cut at 80 characters (phase 1 test)
+      name: c.folder, fileName: c.folder, title: c.title, lang: c.lang, translations: c.translations, articleType: c.articleType,
       journal: c.profile, citationStyle: c.citationStyle, readStyle: styleText,
       library: c.zotero ? zoteroLibraryMode(c.zotero) : undefined,
     });
@@ -720,7 +735,11 @@ export function App() {
     // a block: the cursor at its first text (inside a table, figure or abstract: its first line)
     (node.isAtom ? chain.setNodeSelection(target) : chain.command(({ tr }) => { tr.setSelection(TextSelection.near(tr.doc.resolve(target + 1))); return true; })).scrollIntoView().run();
     // a heading at the top of the page, not just inside it
-    requestAnimationFrame(() => (editor.view.nodeDOM(target) as HTMLElement | null)?.scrollIntoView?.({ block: node.isInline ? "center" : "start", behavior: "smooth" }));
+    // (only the desk scrolls: scrollIntoView moved the whole window near the end of the text)
+    requestAnimationFrame(() => {
+      const el = editor.view.nodeDOM(target) as HTMLElement | null;
+      if (el && deskRef.current) revealIn(deskRef.current, el, node.isInline ? "center" : "start", true);
+    });
     return true;
   };
   const goToBlock = (block: string) => selectNode((n) => n.attrs.id === block);
@@ -731,6 +750,24 @@ export function App() {
     if (!w.where) return;
     // every block is in the one tree: the body's, the abstract's and those of each part
     if (!goToBlock(w.where.block)) selectNode((n) => /^(table|figure)(Ref|Part)$/.test(n.type.name) && n.attrs.src === w.where!.path);
+    // a pending marker: selected, ready to be typed over (phase 1 test)
+    else if (w.code === "pending" && typeof w.params.marker === "string") selectMarker(w.where.block, w.params.marker);
+  };
+  const selectMarker = (block: string, marker: string) => {
+    if (!editor) return;
+    const found: { from: number; to: number }[] = [];
+    editor.state.doc.descendants((node, pos) => {
+      if (found.length) return false;
+      if (node.attrs.id !== block) return true;
+      node.descendants((child, at) => {
+        if (found.length || !child.isText) return !found.length;
+        const i = child.text!.indexOf(marker);
+        if (i >= 0) found.push({ from: pos + 1 + at + i, to: pos + 1 + at + i + marker.length });
+        return false;
+      });
+      return false;
+    });
+    if (found.length) editor.chain().focus().setTextSelection(found[0]).run();
   };
   const onNav = (target: NavTarget) => {
     setNavActive(target);
@@ -932,8 +969,8 @@ export function App() {
         for (const x of pasted) next.set(x.id, { tables: pasted.map((y) => y.id), number: null, path: x.path, kept: keptOf(x.part), dropped });
         return next;
       });
-      const extra = (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${[...new Set(warnings)].join("; ")}` : "");
-      setMessage(`${t("ui.pasteNotice.toast", { count: tables })}${dropped ? `. ${t("ui.pasteNotice.dropped")} ${dropped}` : ""}${extra}`, null, { label: t("ui.pasteNotice.undo"), run: () => undoPaste(pasted.map((x) => x.id)) });
+      const extra = (images ? ` — ${t("pastedImagesDropped", { count: images })}` : "") + (warnings.length ? ` — ${coreWarnings([...new Set(warnings)], t)}` : "");
+      setMessage(`${t("ui.pasteNotice.toast", { count: tables })}${dropped ? `. ${t("ui.pasteNotice.dropped")} ${dropped}` : ""}${extra}`, null, { label: t("ui.pasteNotice.undo"), run: () => undoPaste(pasted.map((x) => x.id), pasted.map((x) => x.path)) });
     })();
     return true;
   };
@@ -968,9 +1005,10 @@ export function App() {
   };
   /**
    * Undo the paste: Ctrl+Z's step if nothing changed since; otherwise the pasted tables leave
-   * the text. Their files stay, as for any table taken out of the text (rule 4, record 0021).
+   * the text. Their files go too (phase 1 test: they stayed "not placed in the text"): the paste
+   * created them, so undoing it leaves the project as before.
    */
-  const undoPaste = (ids: string[]) => {
+  const undoPaste = (ids: string[], paths = ids.map((id) => pasteNotices.get(id)?.path).filter((p): p is string => !!p)) => {
     if (!editor) return;
     if (lastPaste.current && lastPaste.current.doc === editor.state.doc && ids.every((id) => lastPaste.current!.tables.includes(id))) {
       editor.commands.undo();
@@ -981,6 +1019,14 @@ export function App() {
     }
     lastPaste.current = null;
     setPasteNotices((m) => { const next = new Map(m); for (const id of ids) next.delete(id); return next; });
+    // the files, once the tables are out of the text (a Ctrl+Y afterwards writes them again)
+    if (project && article) {
+      const folder = article.folder;
+      void run(async () => {
+        for (const path of paths) await discardPastedPart(project, folder, path);
+        await recompute();
+      })();
+    }
   };
   const libraryChanged = (msg: string) => { setLibraryVersion((v) => v + 1); setMessage(msg); void recompute(); };
   /**
@@ -1024,7 +1070,7 @@ export function App() {
       ? { ...(await exportTitlePage(project, article.folder, resources)), snapshot: null }
       : await exportDocx(project, article.folder, kind, resources);
     // in the browser preview the file is offered as a link, never downloaded on its own
-    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""),
+    setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + (r.warnings.length ? ` — ${coreWarnings(r.warnings, t)}` : ""),
       inTauri ? null : { url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
   });
   // the PDF for the journal (record 0040): Typst in Rust; the browser preview offers the Typst source instead
@@ -1034,11 +1080,11 @@ export function App() {
     const compile = await typstCompiler();
     if (!compile) {
       const b = await manuscriptTypst(project, article.folder, resources);
-      setMessage(t("pdfInBrowser") + (b.warnings.length ? ` — ${b.warnings.join("; ")}` : ""), { url: URL.createObjectURL(new Blob([b.source], { type: "text/plain" })), name: `${article.folder}.typ` });
+      setMessage(t("pdfInBrowser") + (b.warnings.length ? ` — ${coreWarnings(b.warnings, t)}` : ""), { url: URL.createObjectURL(new Blob([b.source], { type: "text/plain" })), name: `${article.folder}.typ` });
       return;
     }
     const r = await exportPdf(project, article.folder, resources, compile);
-    setMessage(t("pdfExported", { path: r.path, pages: r.pages }) + (r.warnings.length ? ` — ${r.warnings.join("; ")}` : ""));
+    setMessage(t("pdfExported", { path: r.path, pages: r.pages }) + (r.warnings.length ? ` — ${coreWarnings(r.warnings, t)}` : ""));
   });
   const importReturnedCopy = async (file: File, returnedBy: string) => {
     if (!project || !article) return;

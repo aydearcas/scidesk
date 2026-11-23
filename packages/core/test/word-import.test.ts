@@ -5,7 +5,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { MemoryFs } from "../src/fs.ts";
-import { projectFromWord } from "../src/word-import.ts";
+import { projectFromWord, shortTitle } from "../src/word-import.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { loadProject } from "../src/project.ts";
 import { nodeResources } from "../src/node-fs.ts";
@@ -135,5 +135,14 @@ describe("new article from a Word document", () => {
   it("refuses a folder that is not empty", async () => {
     const fs = new MemoryFs({ "x.txt": "hola" });
     await expect(projectFromWord(fs, new Uint8Array(readFileSync(SENT)), { fileName: "sent.docx" })).rejects.toThrow(/not empty/);
+  });
+});
+
+describe("the project's name from the title", () => {
+  it("is cut at a word, not in the middle of one (phase 1 test)", () => {
+    const title = "Eficacia y seguridad de los inmunosupresores en la dermatomiositis del adulto: revisión sistemática";
+    expect(shortTitle(title, 80)).toBe("Eficacia y seguridad de los inmunosupresores en la dermatomiositis del adulto…");
+    expect(shortTitle("Un título corto", 80)).toBe("Un título corto");
+    expect(shortTitle(title, 80).length).toBeLessThanOrEqual(80);
   });
 });

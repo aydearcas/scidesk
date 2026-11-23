@@ -95,9 +95,10 @@ export async function exportTitlePage(project: Project, folder: string, res: Exp
     out.push(new Paragraph({ spacing: { before: 240 }, children: [new TextRun({ text: `* ${m.T.corresponding}: `, bold: true }), new TextRun(c.name + (c.email ? `. ${m.T.email}: ${c.email}` : ""))] }));
   }
   for (const a of m.authors) if (a.members?.length) out.push(new Paragraph({ children: [new TextRun({ text: `${m.T.members} ${a.name}: `, bold: true }), new TextRun(a.members.join(", "))] }));
-  // conflicts: one sentence when every author declares the same
-  out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.T.conflicts)] }));
+  // conflicts: one sentence when every author declares the same; none declared, no empty
+  // heading (phase 1 test), only the warning
   const texts = new Set(m.conflicts.map((c) => c.text));
+  if (m.conflicts.length) out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.T.conflicts)] }));
   if (!m.conflicts.length) warnings.push(m.T.noConflicts);
   else if (texts.size === 1 && m.conflicts.length === m.authors.length) out.push(new Paragraph({ children: [new TextRun([...texts][0])] }));
   else m.conflicts.forEach((c) => out.push(new Paragraph({ children: [new TextRun({ text: `${c.name}: `, italics: true }), new TextRun(c.text)] })));

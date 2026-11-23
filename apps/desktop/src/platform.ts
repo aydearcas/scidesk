@@ -86,6 +86,9 @@ class TauriFs implements ProjectFs {
   async list(dir: string) {
     return (await this.invoke("list_files", { dir })) as string[];
   }
+  async remove(path: string) {
+    await this.invoke("remove_file", { path });
+  }
 }
 
 /** A project folder the window works in: its file system, its name and where it is. */
@@ -214,6 +217,10 @@ class PreviewFs extends MemoryFs {
   override async write(path: string, data: string | Uint8Array) {
     await super.write(path, data);
     try { storage()?.setItem(PREVIEW + path, b64((await this.readBytes(path))!)); } catch { /* quota: memory only */ }
+  }
+  override async remove(path: string) {
+    await super.remove(path);
+    try { storage()?.removeItem(PREVIEW + path); } catch { /* nothing kept */ }
   }
 }
 

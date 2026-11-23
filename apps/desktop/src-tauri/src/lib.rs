@@ -253,6 +253,19 @@ fn write_file(state: State<ProjectRoot>, request: Request) -> Result<(), String>
     write_atomic(&full, bytes)
 }
 
+/// Removes a file of the project (a pasted table that was undone); nothing if it is not there.
+/// Only regular files inside the open project folder, never a folder.
+#[tauri::command]
+fn remove_file(state: State<ProjectRoot>, path: String) -> Result<(), String> {
+    let full = resolve(&root(&state)?, &path)?;
+    match fs::symlink_metadata(&full) {
+        Ok(m) if m.is_file() => fs::remove_file(&full).map_err(|e| e.to_string()),
+        Ok(_) => Err("not a file".into()),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 /// Every file under a folder of the project, as project-relative paths with "/".
 #[tauri::command]
 fn list_files(state: State<ProjectRoot>, dir: String) -> Result<Vec<String>, String> {
@@ -425,7 +438,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
         .manage(preview::PreviewState::default())
-        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, raster_image, zotero::zotero_get])
+        .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, remove_file, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, raster_image, zotero::zotero_get])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");
 }

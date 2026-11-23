@@ -38,6 +38,9 @@ export class NodeFs implements ProjectFs {
       throw e;
     }
   }
+  async remove(path: string) {
+    await rm(this.abs(path), { force: true });
+  }
   async list(dir: string) {
     const start = dir ? this.abs(dir) : this.root;
     const out: string[] = [];

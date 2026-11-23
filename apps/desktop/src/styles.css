@@ -522,7 +522,8 @@ label.inline { display: inline-flex; align-items: center; gap: 6px; }
 .ref-form label.invalid input, .ref-form label.invalid textarea { border-color: var(--del); }
 .ref-form button, .authors-view button:not(.ref-item):not([role=tab]):not(.help-tip-button), .authors-dialog button:not(.ref-item):not([role=tab]):not(.help-tip-button), .quick-cite .dialog-actions button, .recovery-dialog button:not(.btn), .check-actions button:not(.btn) { height: 28px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); cursor: pointer; }
 .ref-form button[type=submit] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.authors-view button.btn.primary, .authors-dialog button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+/* as specific as the rule above (its :not() count), or that one wins and the button is white on white */
+.authors-view button.btn.primary:not(.ref-item):not([role=tab]):not(.help-tip-button), .authors-dialog button.btn.primary:not(.ref-item):not([role=tab]):not(.help-tip-button) { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .field-error { color: var(--del); font-size: 12px; }
 .dialog-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .dialog-actions .muted { flex: 1; font-size: 12px; }

@@ -116,3 +116,15 @@ export async function addTablePart(project: Project, folder: string, part: PMNod
   await saveDocument(project, art, path, { schemaVersion: 1, documentType: "table", lang: art.article.lang, doc: part, changes: {}, comments: {} } as never);
   return { path, ref: { type: "tableRef", attrs: { id: part.attrs!.id, src: path } } };
 }
+
+/**
+ * Undoing a paste (phase 1 test): the tables it created leave the project, file included, as
+ * if never pasted. Only for files the paste itself created; a table taken out of the text in
+ * any other way keeps its file (rule 4, record 0021).
+ */
+export async function discardPastedPart(project: Project, folder: string, path: string): Promise<void> {
+  const art = project.articles.find((a) => a.folder === folder);
+  if (!art) throw new Error(`no article ${folder}`);
+  art.documents.delete(path);
+  await project.fs.remove(`articles/${folder}/${path}`);
+}

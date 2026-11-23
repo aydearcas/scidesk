@@ -42,6 +42,10 @@ const es = {
   highlights: { yellow: "Amarillo", green: "Verde brillante", cyan: "Turquesa", magenta: "Fucsia", red: "Rojo", blue: "Azul", lightGray: "Gris 25 %" },
   pastedTables_one: "Tabla pegada desde Word: se guarda en su archivo, con su título y sus notas", pastedTables_other: "{{count}} tablas pegadas desde Word, cada una en su archivo con su título y sus notas",
   pastedImagesDropped_one: "la imagen pegada no se inserta (añádela como figura)", pastedImagesDropped_other: "las {{count}} imágenes pegadas no se insertan (añádelas como figuras)",
+  // the core's warnings, which it writes in English (also for the command line): coreWarning() in App.tsx
+  corePending_one: "queda 1 pendiente en el texto (XX, ??, [REF]…)", corePending_other: "quedan {{count}} pendientes en el texto (XX, ??, [REF]…)",
+  corePasteNoCaption: "la tabla pegada no tenía delante «Tabla N.»: escribe su título",
+  coreUncaptioned_one: "1 tabla sin «Tabla N.» al lado: su título está vacío", coreUncaptioned_other: "{{count}} tablas sin «Tabla N.» al lado: su título está vacío",
   checksTab: "Comprobaciones", checksPending: "Calculando…", noWarnings: "Ningún aviso.", goTo: "Ir", addNamed: "Añadir «{{section}}»", beforeReferences: " (antes de la bibliografía)", restoreWarning: "Restaurar", ignoreNote: "Nota (opcional)",
   ignoredCount_one: "1 aviso ignorado", ignoredCount_other: "{{count}} avisos ignorados", inAbstract: "en el resumen", inPart: "en {{path}}",
   tableWords: {
@@ -262,8 +266,8 @@ const es = {
     },
     pasteNotice: {
       title: "Pegada desde Word, con su archivo {{path}}", titleN: "Pegada desde Word: es la Tabla {{n}}, con su archivo {{path}}",
-      kept: "Se ha conservado", dropped: "Se ha descartado", undo: "Deshacer el pegado", undone: "Pegado deshecho. El archivo de la tabla queda en «Sin colocar en el texto».",
-      undoneRemoved: "Se ha quitado del texto lo pegado; el archivo de la tabla queda en «Sin colocar en el texto».",
+      kept: "Se ha conservado", dropped: "Se ha descartado", undo: "Deshacer el pegado", undone: "Pegado deshecho.",
+      undoneRemoved: "Se ha quitado del texto lo pegado, con el archivo de la tabla.",
       caption: "el título", headerRows_one: "1 fila de encabezado", headerRows_other: "{{count}} filas de encabezado", merged_one: "1 celda combinada", merged_other: "{{count}} celdas combinadas",
       alignment: "la alineación", widths: "los anchos de las columnas",
       notes_one: "1 nota: la letra en superíndice se ha convertido en llamada", notes_other: "{{count}} notas: las letras en superíndice se han convertido en llamadas",
@@ -381,6 +385,9 @@ const en: typeof es = {
   highlights: { yellow: "Yellow", green: "Bright green", cyan: "Turquoise", magenta: "Pink", red: "Red", blue: "Blue", lightGray: "Grey 25%" },
   pastedTables_one: "Table pasted from Word: kept in its own file, with its caption and notes", pastedTables_other: "{{count}} tables pasted from Word, each in its own file with its caption and notes",
   pastedImagesDropped_one: "the pasted image is not inserted (add it as a figure)", pastedImagesDropped_other: "the {{count}} pasted images are not inserted (add them as figures)",
+  corePending_one: "1 pending marker left in the text (XX, ??, [REF]…)", corePending_other: "{{count}} pending markers left in the text (XX, ??, [REF]…)",
+  corePasteNoCaption: "the pasted table had no “Table N.” before it: write its title",
+  coreUncaptioned_one: "1 table without “Tabla N.” next to it: its title is empty", coreUncaptioned_other: "{{count}} tables without “Tabla N.” next to them: their titles are empty",
   checksTab: "Checks", checksPending: "Computing…", noWarnings: "No warnings.", goTo: "Go", addNamed: "Add “{{section}}”", beforeReferences: " (before the references)", restoreWarning: "Restore", ignoreNote: "Note (optional)",
   ignoredCount_one: "1 ignored warning", ignoredCount_other: "{{count}} ignored warnings", inAbstract: "in the abstract", inPart: "in {{path}}",
   tableWords: {
@@ -599,8 +606,8 @@ const en: typeof es = {
     },
     pasteNotice: {
       title: "Pasted from Word, with its file {{path}}", titleN: "Pasted from Word: it is Table {{n}}, with its file {{path}}",
-      kept: "Kept", dropped: "Dropped", undo: "Undo the paste", undone: "Paste undone. The table's file stays in “Not placed in the text”.",
-      undoneRemoved: "What was pasted has been taken out of the text; the table's file stays in “Not placed in the text”.",
+      kept: "Kept", dropped: "Dropped", undo: "Undo the paste", undone: "Paste undone.",
+      undoneRemoved: "What was pasted has been taken out of the text, with the table's file.",
       caption: "the caption", headerRows_one: "1 header row", headerRows_other: "{{count}} header rows", merged_one: "1 merged cell", merged_other: "{{count}} merged cells",
       alignment: "the alignment", widths: "the column widths",
       notes_one: "1 note: its superscript letter became a call", notes_other: "{{count}} notes: the superscript letters became calls",

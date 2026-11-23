@@ -5,7 +5,8 @@ import type { PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
 import { createDemoProject } from "../src/demo.ts";
 import { loadProject, saveDocument } from "../src/project.ts";
-import { addTablePart, tablePartFromPaste, type PastedCell } from "../src/paste-table.ts";
+import { addTablePart, discardPastedPart, tablePartFromPaste, type PastedCell } from "../src/paste-table.ts";
+import { articleOutline } from "../src/outline.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { checkArticle } from "../src/checks.ts";
 import { nodeResources } from "../src/node-fs.ts";
@@ -72,5 +73,18 @@ describe("pasted tables", () => {
     expect(xml).toContain("Con metotrexato.");
     // not cited in the text yet: the checks say so
     expect(checkArticle(reloaded, "main").warnings.some((w) => w.code === "uncited-table")).toBe(true);
+  });
+  it("undoing the paste takes the table's file away too (phase 1 test)", async () => {
+    const fs = new MemoryFs();
+    const p = await createDemoProject(fs);
+    const before = articleOutline(p, "main").unplaced.length;
+    const { path } = await addTablePart(p, "main", tablePartFromPaste(pasted()).part);
+    expect(articleOutline(p, "main").unplaced.length).toBe(before + 1);
+    await discardPastedPart(p, "main", path);
+    expect(await fs.readText(`articles/main/${path}`)).toBeNull();
+    expect(articleOutline(p, "main").unplaced.length).toBe(before);
+    // and the next paste takes the same name again
+    expect((await addTablePart(p, "main", tablePartFromPaste(pasted()).part)).path).toBe(path);
+    expect((await loadProject(fs)).articles[0].documents.has(path)).toBe(true);
   });
 });

@@ -372,7 +372,7 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
 
   // --- the project
   const titleText = (title[0].content ?? []).map((c) => c.text).join("");
-  const p = await createProject(fs, { name: opts.name ?? titleText.slice(0, 80), fileName: opts.fileName.replace(/\.docx$/i, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").toLowerCase().slice(0, 40) || "articulo", title: titleText, lang });
+  const p = await createProject(fs, { name: opts.name ?? shortTitle(titleText, 80), fileName: opts.fileName.replace(/\.docx$/i, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").toLowerCase().slice(0, 40) || "articulo", title: titleText, lang });
   const art = p.articles[0];
   // record 0060: Word's language marks, without those that repeat the language around them
   // and, with dictionaries, without those that are wrong (Spanish text marked as English)
@@ -428,4 +428,13 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
   }
   const project = await loadProject(fs);
   return { project, report: { title: titleText, headings, paragraphs, tables: tables.length, figures: figures.length, abstract: sections.some((x) => x.content.length), abstractLanguages: sections.filter((x) => x.content.length).map((x) => x.lang), crossReferences, warnings } };
+}
+
+/** A title cut to at most `max` characters at a word, with "…" (not in the middle of a word). */
+export function shortTitle(title: string, max: number): string {
+  const t = title.trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const at = cut.search(/\s\S*$/);
+  return (at > max / 2 ? cut.slice(0, at) : cut).replace(/[\s,;:.\-–—]+$/, "") + "…";
 }

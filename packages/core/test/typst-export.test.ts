@@ -35,6 +35,25 @@ describe("typst export", () => {
     expect(fontList()).toContain("Carlito");
   });
 
+  it("shares a wide table without widths equally, with smaller text (phase 1 test)", async () => {
+    const fs = new MemoryFs();
+    const p = await createDemoProject(fs, "corte-vertical", { parts: true });
+    const art = p.articles[0];
+    const [path, file] = [...art.documents].find(([, f]) => f.documentType === "table")!;
+    const wide = structuredClone(file);
+    const tbl = (wide.doc as PMNode).content!.find((n) => n.type === "table")!;
+    let k = 0;
+    const cell = (type: string) => ({ type, attrs: { colspan: 1, rowspan: 1, align: null }, content: [{ type: "paragraph", attrs: { id: `b-wide${String(k++).padStart(6, "0")}`, lang: null }, content: [{ type: "text", text: "Imprecisión" }] }] });
+    tbl.attrs = { ...tbl.attrs, columnWidths: null };
+    tbl.content = [{ type: "tableRow", content: Array.from({ length: 13 }, () => cell("tableHeader")) }, { type: "tableRow", content: Array.from({ length: 13 }, () => cell("tableCell")) }];
+    await saveDocument(p, art, path, wide);
+    const { source } = await manuscriptTypst(p, "main", res, { date });
+    expect(source).toContain("#set text(size: 0.7em, hyphenate: true);");
+    expect(source).toContain("#table(columns: (1fr,) * 13,");
+    // a narrow one keeps its size and Typst's own columns
+    expect(source.match(/#set text\(size: 0\.\d+em, hyphenate: true\)/g)).toHaveLength(1);
+  });
+
   it("writes the demo: title, citations of the style, bibliography, markers, no author", async () => {
     const fs = new MemoryFs();
     const p = await createDemoProject(fs);

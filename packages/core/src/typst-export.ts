@@ -175,7 +175,9 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     // the number of columns: the widest row, counting spans
     const columns = Math.max(...rows.map((r) => (r.content ?? []).reduce((a, c) => a + ((c.attrs!.colspan as number) ?? 1), 0)), 1);
     const widths = tbl.attrs?.columnWidths as number[] | null | undefined;
-    const cols = widths?.length === columns ? `(${widths.map((w) => `${+w.toFixed(3)}fr`).join(", ")})` : String(columns);
+    // without widths of its own, a wide table shares the page equally: as many auto columns as
+    // its content asks for ran off the page and over each other (phase 1 test, 13 columns)
+    const cols = widths?.length === columns ? `(${widths.map((w) => `${+w.toFixed(3)}fr`).join(", ")})` : columns >= 7 ? `(1fr,) * ${columns}` : String(columns);
     const ALIGN: Record<string, string> = { left: "left", center: "center", right: "right", decimal: "right" };
     // record 0076: each cell's lines, as in the Word (Typst has no double line: a thicker one)
     const lines = tableNodeBorders(tbl, fmt?.tableStyle?.value);
@@ -193,11 +195,15 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     };
     const head = rows.slice(0, lastHeader + 1).map((r, i) => (r.content ?? []).map((c, j) => cell(c, i, j)).join(", "));
     const body = rows.slice(lastHeader + 1).map((r, i) => (r.content ?? []).map((c, j) => cell(c, i + lastHeader + 1, j)).join(", "));
+    // a wide table (the GRADE one of the phase 1 test had 13 columns): smaller text, words split
+    // with hyphens and less room around each cell, or the text of a column ran over the next one
+    const perColumn = textWidthPt / columns;
+    const wide = perColumn < 40 ? { size: "0.7em", inset: "2pt" } : perColumn < 65 ? { size: "0.8em", inset: "3pt" } : null;
     out.push(`${pageBreak ? "#pagebreak(weak: true)\n" : ""}${marker(part)}
 #figure(kind: table, numbering: none, gap: 0.6em,
   caption: figure.caption(position: top, separator: none)[${capLabel("table", tableNo.get(id)!)}${paragraph(cap, letters)}],
-  table(columns: ${cols}, stroke: none, align: left, inset: (x: 4pt, y: 3pt),
-${head.length ? `    table.header(${head.join(",\n      ")}),\n` : ""}    ${body.join(",\n    ")}${body.length ? "," : ""}))
+  [${wide ? `#set text(size: ${wide.size}, hyphenate: true);\n  ` : ""}#table(columns: ${cols}, stroke: none, align: left, inset: (x: ${wide?.inset ?? "4pt"}, y: 3pt),
+${head.length ? `    table.header(${head.join(",\n      ")}),\n` : ""}    ${body.join(",\n    ")}${body.length ? "," : ""})])
 ${notesOf(notes, letters)}
 #v(0.8em, weak: true)`);
   }

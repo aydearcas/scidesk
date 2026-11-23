@@ -29,6 +29,8 @@ import { alignAttribute, Blockquote, setBlockAlign } from "./align.ts";
 import { TableLines } from "./table-lines.ts";
 import { PartDrag, handleElement } from "./part-drag.ts";
 import { PageBreak, insertPageBreak } from "./page-break.ts";
+import { revealIn, scrollerOf } from "./reveal.ts";
+import { ClickInside } from "./click-inside.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -318,7 +320,20 @@ const FindHighlight = Extension.create({
 
 /** What the find bar shows. */
 export const findState = (editor: { state: EditorStateType }): FindState => findKey.getState(editor.state) ?? { query: "", caseSensitive: false, matches: [], current: -1, scope: null };
-type EditorLike = { state: EditorStateType; view: { dispatch: (tr: TransactionType) => void } };
+type EditorLike = { state: EditorStateType; view: { dispatch: (tr: TransactionType) => void; dom?: Element; coordsAtPos?: (pos: number) => { left: number; right: number; top: number; bottom: number } } };
+/** Shows the current match: only the desk scrolls (the find bar keeps the focus, phase 1 test). */
+function revealMatch(editor: EditorLike) {
+  const f = findState(editor);
+  const m = f.matches[f.current];
+  const { view } = editor;
+  if (!m || !view.coordsAtPos || !view.dom) return;
+  const scroller = scrollerOf(view.dom);
+  if (!scroller) return;
+  try {
+    const a = view.coordsAtPos(m.from), b = view.coordsAtPos(m.to);
+    revealIn(scroller, new DOMRect(a.left, Math.min(a.top, b.top), Math.max(1, b.right - a.left), Math.max(a.bottom, b.bottom) - Math.min(a.top, b.top)), "center");
+  } catch { /* a position the view cannot measure (hidden): leave it */ }
+}
 export function setFind(editor: EditorLike, query: string, caseSensitive: boolean) {
   // the match at or after the cursor becomes the current one, as in Word
   const at = editor.state.selection.from;
@@ -326,6 +341,7 @@ export function setFind(editor: EditorLike, query: string, caseSensitive: boolea
   const matches = findMatches(editor.state.doc, query, caseSensitive).filter((m) => !scope || (m.from >= scope.from && m.to <= scope.to));
   const current = Math.max(0, matches.findIndex((m) => m.from >= at));
   editor.view.dispatch(editor.state.tr.setMeta(findKey, { query, caseSensitive, current }).setMeta("addToHistory", false));
+  revealMatch(editor);
 }
 /** Record 0066: searches only in the section of the cursor (or everywhere again, with false). */
 export function setFindScope(editor: EditorLike, inSection: boolean) {
@@ -340,8 +356,9 @@ export function findStep(editor: EditorLike, dir: -1 | 0 | 1, select = true) {
   const current = (f.current + dir + f.matches.length) % f.matches.length;
   const m = f.matches[current];
   let tr = editor.state.tr.setMeta(findKey, { current }).setMeta("addToHistory", false);
-  if (select) tr = tr.setSelection(TextSelection.create(tr.doc, m.from, m.to)).scrollIntoView();
+  if (select) tr = tr.setSelection(TextSelection.create(tr.doc, m.from, m.to));
   editor.view.dispatch(tr);
+  revealMatch(editor);
 }
 /** Replaces the current match (and goes to the next one); returns whether something was replaced. */
 export function replaceCurrent(editor: EditorLike, text: string) {
@@ -424,6 +441,7 @@ export const extensions = [
   ...partExtensions,
   SchemeKeys,
   FindHighlight,
+  ClickInside,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
   Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | blockquote | abstractPart | tablePart | figurePart | tableRef | figureRef | pageBreak)*" }),
   Blockquote,

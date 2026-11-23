@@ -31,7 +31,14 @@ test("opens the demo project without errors", async ({ page }) => {
 test("typing counts the words and saves after a pause", async ({ page }) => {
   await openDemo(page);
   const words = page.getByText(/^\d+ palabras$/).first();
-  const before = Number((await words.textContent())!.split(" ")[0]);
+  // the count is worked out after a pause: wait until it stops changing
+  let before = -1;
+  await expect.poll(async () => {
+    const now = Number((await words.textContent())!.split(" ")[0]);
+    const stable = now === before;
+    before = now;
+    return stable;
+  }, { intervals: [400] }).toBe(true);
   await methods(page).click();
   await page.keyboard.type("Estudio observacional de cohortes.", { delay: 15 });
   await expect(methods(page)).toHaveText("Estudio observacional de cohortes.");
@@ -68,6 +75,39 @@ test("cites with Ctrl+Shift+C and the citation is numbered", async ({ page }) =>
   await expect(dialog).toBeHidden();
   await expect(editor.locator(".citation")).toHaveCount(before + 1);
   await expect(methods(page).locator(".citation")).toHaveText(/^\d+$/);
+});
+
+test("a click in empty keywords writes there, not in the next block (phase 1 test)", async ({ page }) => {
+  const { editor } = await openDemo(page);
+  const keywords = editor.locator(".keywords").first();
+  // empty them: from the end, until no text is left
+  await keywords.locator(".keyword").last().click();
+  await page.keyboard.press("End");
+  for (let i = 0; i < 150 && (await keywords.textContent()) !== ""; i++) await page.keyboard.press("Backspace");
+  await expect(keywords).toHaveText("");
+  const next = await editor.locator("h1", { hasText: /^Introducción$/ }).locator("xpath=following-sibling::p[1]").textContent();
+  // a click in the room to the right of "Palabras clave:"
+  const box = (await keywords.boundingBox())!;
+  await editor.locator("h1", { hasText: /^Métodos$/ }).locator("xpath=following-sibling::p[1]").click();
+  await page.mouse.click(box.x + box.width * 0.8, box.y + box.height / 2);
+  await page.keyboard.type("Miositis; Rituximab", { delay: 15 });
+  // ";" starts the next keyword, and the space after it is not kept
+  await expect(keywords.locator(".keyword")).toHaveText(["Miositis", "Rituximab"]);
+  await expect(editor.locator("h1", { hasText: /^Introducción$/ }).locator("xpath=following-sibling::p[1]")).toHaveText(next!);
+});
+
+test("Ir in the warnings scrolls only the sheet and selects the pending marker (phase 1 test)", async ({ page }) => {
+  await openDemo(page);
+  const discussion = page.locator(".ProseMirror > h1", { hasText: /^Discusión$/ }).locator("xpath=following-sibling::p[1]");
+  await discussion.click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" XX", { delay: 15 });
+  await page.locator(".desk").evaluate((d) => { d.scrollTop = 0; });
+  await page.getByRole("button", { name: "Ir", exact: true }).first().click();
+  await expect.poll(() => page.evaluate(() => getSelection()?.toString())).toBe("XX");
+  // nothing but the desk has moved: the title bar is still at the top of the window
+  expect(await page.locator(".titlebar").evaluate((t) => t.getBoundingClientRect().top)).toBe(0);
+  expect(await page.evaluate(() => [...document.querySelectorAll("*")].filter((e) => e.scrollTop > 0 && !e.classList.contains("desk")).length)).toBe(0);
 });
 
 test("Tab in the last cell of a table adds a row", async ({ page }) => {

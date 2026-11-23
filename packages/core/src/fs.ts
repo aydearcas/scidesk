@@ -10,6 +10,8 @@ export interface ProjectFs {
   write(path: string, data: string | Uint8Array): Promise<void>;
   /** Every file under a folder ("" for the root), recursively, as relative paths. */
   list(dir: string): Promise<string[]>;
+  /** Removes a file; nothing if it is not there. Only for what SciDesk itself just created (a pasted table undone). */
+  remove(path: string): Promise<void>;
 }
 
 /** Normalises a relative path and refuses absolute paths and "..". */
@@ -40,5 +42,8 @@ export class MemoryFs implements ProjectFs {
   async list(dir: string) {
     const prefix = dir ? safePath(dir) + "/" : "";
     return [...this.files.keys()].filter((k) => k.startsWith(prefix)).sort();
+  }
+  async remove(path: string) {
+    this.files.delete(safePath(path));
   }
 }

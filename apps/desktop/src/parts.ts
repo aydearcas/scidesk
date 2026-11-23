@@ -88,6 +88,15 @@ const Keyword = Node.create({
   content: "inline*",
   parseHTML: () => [{ tag: "span.keyword", priority: FIRST }],
   renderHTML: () => ["span", { class: "keyword" }, 0],
+  // ";" starts the next keyword, as Enter does (what a user types between keywords, phase 1
+  // test), and the space after it is not kept at the start of the new one
+  addKeyboardShortcuts: () => ({
+    ";": ({ editor }) => editor.state.selection.$from.parent.type.name === "keyword" && editor.commands.splitBlock(),
+    " ": ({ editor }) => {
+      const { $from, empty } = editor.state.selection;
+      return empty && $from.parent.type.name === "keyword" && $from.parentOffset === 0;
+    },
+  }),
 });
 
 // ---------------------------------------------------------------- tables
