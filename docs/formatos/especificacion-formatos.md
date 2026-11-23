@@ -160,6 +160,7 @@ Mismo envoltorio que `.scidoc`, con `documentType: "table"` o `"figure"`.
 - **`citationStyle`:** `{ id, file? }`. Por defecto, el del perfil; el usuario puede elegir otro. `file` solo si el estilo no viene con SciDesk ni con el perfil.
 - **`referenceTermsLang`:** idioma de las palabras fijas de las referencias («En:», «editores»…). `null` es el idioma del manuscrito (ficha 0026).
 - **`ignoredWarnings`:** los avisos marcados como «es correcto» o «no aplica», con su nota, fecha y quién (R12). Cada aviso tiene un id estable.
+- **`documentFont`** (opcional): `{ family?, size? }`, la fuente y el tamaño en que se escribe el artículo (modo de fuente libre y Word para coautores); lo que falte sigue al perfil de revista, y si no lo dice, Calibri 12. La revista recibe siempre la suya (ficha 0074).
 - **`sectionNumbering`** (opcional): `"1."` (1., 1.1.), `"1"` (1, 1.1) o `"none"`; `null` o ausente, como diga el perfil de revista, y sin numerar si no lo dice (ficha 0070). Los números se calculan, nunca se guardan en el texto.
 
 Los nombres de los documentos del artículo son fijos (sección 8), así que `article.json` no los lista.

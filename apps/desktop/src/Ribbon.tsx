@@ -37,11 +37,10 @@ const LETTERS: Record<SchemeId, [string, string, string]> = { "word-es": ["N", "
 /** Fonts offered in the free font mode: Word's usual ones and Roboto (record 0011); the document's is the default. */
 export const FONTS = ["Arial", "Aptos", "Calibri", "Cambria", "Courier New", "Garamond", "Georgia", "Roboto", "Times New Roman", "Verdana"];
 export const SIZES = [8, 9, 10, 10.5, 11, 12, 14, 16, 18, 20, 24, 28, 36];
-/** The document's font and size: the first option of each list, which removes a fragment's own (so they are not offered twice). */
-const DOC_FONT = "Calibri";
-const DOC_SIZE = 12;
 
-export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled, freeFonts, onAdapt, onSave, saveState }: {
+export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFigure, disabled, freeFonts, onAdapt, onSave, saveState, docFont }: {
+  /** Record 0074: the font and size the article is written in; choosing them removes a fragment's own. */
+  docFont: { family: string; size: number };
   /** Save now (Ctrl+G or Ctrl+S): it works in every tab, as the menu and the shortcut do. */
   onSave: () => void;
   saveState: { dirty: boolean; saving: boolean; lastSaved: Date | null };
@@ -78,6 +77,10 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
   const tip = (label: string, a?: Action) => (a ? `${label} (${keys(a)})` : label);
   const keep = (e: React.MouseEvent) => e.preventDefault(); // the editor keeps its selection
   const [b, k, u] = LETTERS[scheme];
+  // the document's font and size in their place in each list (record 0047), whatever they are
+  const DOC_FONT = docFont.family, DOC_SIZE = docFont.size;
+  const fontList = FONTS.includes(DOC_FONT) ? FONTS : [...FONTS, DOC_FONT].sort((a, c) => a.localeCompare(c));
+  const sizeList = SIZES.includes(DOC_SIZE) ? SIZES : [...SIZES, DOC_SIZE].sort((a, c) => a - c);
   const toggle = (mark: string, on: boolean, label: string, a: Action, content: React.ReactNode) => (
     <button className={`tool${on ? " on" : ""}`} aria-pressed={on} title={tip(label, a)} aria-label={label} onMouseDown={keep} disabled={disabled}
       onClick={() => editor.chain().focus().toggleMark(mark).run()}>{content}</button>
@@ -108,17 +111,17 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
       {freeFonts && <>
         <select className="font-family" aria-label={t("ui.font")} title={s.font ? t("ui.font") : t("ui.documentFont")} value={s.font} disabled={disabled}
           onChange={(e) => { const v = e.target.value; const c = editor.chain().focus(); (v ? c.setMark("fontFamily", { family: v }) : c.unsetMark("fontFamily")).run(); }}>
-          {s.font && !FONTS.filter((f) => f !== DOC_FONT).includes(s.font) && <option value={s.font}>{s.font}</option>}
+          {s.font && !fontList.filter((f) => f !== DOC_FONT).includes(s.font) && <option value={s.font}>{s.font}</option>}
           {/* the document's font in its place in the list: choosing it removes a fragment's own */}
-          {FONTS.map((f) => (f === DOC_FONT
-            ? <option key={f} value="" title={t("ui.documentFont")}>{t("ui.documentFontShort")}</option>
+          {fontList.map((f) => (f === DOC_FONT
+            ? <option key={f} value="" title={t("ui.documentFont")}>{f}</option>
             : <option key={f} value={f} style={{ fontFamily: f }}>{f}</option>))}
         </select>
         <select className="font-size" aria-label={t("ui.fontSize")} title={s.size ? t("ui.fontSize") : t("ui.documentSize")} value={s.size} disabled={disabled}
           onChange={(e) => { const v = e.target.value; const c = editor.chain().focus(); (v ? c.setMark("fontSize", { size: Number(v) }) : c.unsetMark("fontSize")).run(); }}>
-          {s.size && !SIZES.filter((n) => n !== DOC_SIZE).map(String).includes(s.size) && <option value={s.size}>{s.size}</option>}
-          {SIZES.map((n) => (n === DOC_SIZE
-            ? <option key={n} value="" title={t("ui.documentSize")}>{t("ui.documentSizeShort")}</option>
+          {s.size && !sizeList.filter((n) => n !== DOC_SIZE).map(String).includes(s.size) && <option value={s.size}>{s.size}</option>}
+          {sizeList.map((n) => (n === DOC_SIZE
+            ? <option key={n} value="" title={t("ui.documentSize")}>{n.toLocaleString(i18n.language)}</option>
             : <option key={n} value={String(n)}>{n.toLocaleString(i18n.language)}</option>))}
         </select>
         <button className="tool" title={`${t("ui.adaptFonts")}: ${t("ui.adaptFontsHint")}`} onMouseDown={keep} disabled={disabled} onClick={onAdapt} aria-label={t("ui.adaptFonts")}><Icon name="adapt" size={21} /></button>

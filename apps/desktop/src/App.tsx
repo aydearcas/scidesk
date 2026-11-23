@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, omitsAuthor, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
+  exportPdf, manuscriptTypst, omitsAuthor, documentFontsOf, setDocumentFont, fontList, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -48,6 +48,7 @@ import { PreviewPane } from "./PreviewPane.tsx";
 import { checkWords, misspelledAt, refresh, setProjectWords, spellOptions, suggestions } from "./spellcheck.ts";
 import { foreignStretch, langAtCursor, otherLang, setLanguage } from "./lang.ts";
 import { EnglishVariants } from "./EnglishVariants.tsx";
+import { DocumentFontDialog } from "./DocumentFontDialog.tsx";
 import { formatDictionary, parseDictionary } from "@scidesk/spell";
 import { PROJECT_LAYOUT } from "@scidesk/formats";
 
@@ -404,6 +405,9 @@ export function App() {
   const [cursorLang, setCursorLang] = useState<{ lang: string; fragment: boolean } | null>(null);
   // record 0063: the dialog that makes the English British or American
   const [variantsOpen, setVariantsOpen] = useState<"GB" | "US" | null>(null);
+  // record 0074: the document font dialog, and a tick to re-read article.json after it
+  const [docFontOpen, setDocFontOpen] = useState(false);
+  const [fontTick, setFontTick] = useState(0);
   useEffect(() => {
     if (!editor) return;
     const onSel = () => { const l = langAtCursor(editor.state); setCursorLang((old) => (old && old.lang === l.lang && old.fragment === l.fragment ? old : l)); };
@@ -1353,6 +1357,7 @@ export function App() {
       "-",
       { label: t("ui.fontModes.journal"), checked: settings.fontMode === "journal", onSelect: () => updateSettings({ fontMode: "journal" }) },
       { label: t("ui.fontModes.free"), checked: settings.fontMode === "free", onSelect: () => updateSettings({ fontMode: "free" }) },
+      { label: t("ui.docFont.menu"), onSelect: () => setDocFontOpen(true), disabled: noProject },
       "-",
       { label: t("ui.zoomFit"), checked: settings.zoom === "fit", onSelect: () => setZoom("fit") },
       { label: "100 %", checked: settings.zoom === 100, onSelect: () => setZoom(100) },
@@ -1387,6 +1392,10 @@ export function App() {
   };
   // record 0070: the article's numbering (its own, its journal's or none); the editor draws it
   const sectionNumbering = project && article ? sectionNumberingOf(project, article.folder) : null;
+  // record 0074: the document's fonts; the text shows the journal's when adapted, the article's own in the free mode
+  void fontTick;
+  const docFonts = project && article ? documentFontsOf(project, article.folder) : null;
+  const viewFont = docFonts ? (settings.fontMode === "free" ? docFonts.writing : docFonts.journal) : null;
   void numberingTick; // the setting lives in article.json: a change re-renders through the tick
   useEffect(() => {
     if (editor && !editor.isDestroyed && sectionNumbering) setSectionNumberStyle(editor.view, sectionNumbering.value);
@@ -1594,7 +1603,8 @@ export function App() {
   };
 
   return (
-    <div className={`app${settings.fontMode === "journal" ? " fonts-journal" : ""}${left ? " with-left" : ""}${right ? " with-right" : ""}${project ? " with-ribbon" : ""}`}>
+    <div className={`app${settings.fontMode === "journal" ? " fonts-journal" : ""}${left ? " with-left" : ""}${right ? " with-right" : ""}${project ? " with-ribbon" : ""}`}
+      style={viewFont ? { ["--doc-font" as string]: `${fontList(viewFont.family).map((f) => `"${f}"`).join(", ")}, ${/times|cambria|georgia|garamond|serif/i.test(viewFont.family) ? "serif" : "sans-serif"}`, ["--doc-size" as string]: `${viewFont.size}pt` } : undefined}>
       <header className="titlebar">
         <span className="brand"><span className="brand-mark" aria-hidden="true">S</span>SciDesk</span>
         <MenuBar menus={menus} label={t("ui.menus")} />
@@ -1615,7 +1625,7 @@ export function App() {
       {project && editor && (
         <div className="ribbon-row">
           <Ribbon editor={editor} scheme={scheme} targets={targets} onCite={openQuickCite} onXref={insertXref} onTable={() => void insertTable()} onFigure={() => figureInput.current?.click()} disabled={!isDoc(tab)}
-            freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()}
+            freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()} docFont={docFonts?.writing ?? { family: "Calibri", size: 12 }}
             onSave={() => void run(save)()} saveState={{ dirty, saving, lastSaved }} />
         </div>
       )}
@@ -1807,6 +1817,17 @@ export function App() {
             </div>
           </div>
         </div>
+      )}
+      {docFontOpen && project && article && docFonts && (
+        <DocumentFontDialog fonts={docFonts} onClose={() => { setDocFontOpen(false); editor?.commands.focus(); }}
+          onSave={(v) => void run(async () => {
+            await setDocumentFont(project, article.folder, v);
+            setDocFontOpen(false);
+            setFontTick((n) => n + 1);
+            const w = documentFontsOf(project, article.folder).writing;
+            setMessage(t("ui.docFont.saved", { family: w.family, size: w.size.toLocaleString(i18n.language) }));
+            void recompute();
+          })()} />
       )}
       {variantsOpen && editor && (
         <EnglishVariants editor={editor} initial={variantsOpen} onClose={() => { setVariantsOpen(null); editor.commands.focus(); }}

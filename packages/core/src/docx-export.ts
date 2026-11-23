@@ -30,6 +30,7 @@ import { sameLang } from "./lang.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
 import { headingRole, NUMBERED_LEVELS, sectionNumberingOf, sectionNumbers, type SectionNumbering } from "./sections.ts";
+import { documentFontsOf } from "./document-font.ts";
 
 export type ExportProfile = "coauthors" | "journal";
 export interface ExportResources extends CitationResources {
@@ -275,7 +276,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   // record 0070: numbered sections, by Word itself from the heading styles
   const sectionStyle = sectionNumberingOf(project, folder).value;
   const numbered = sectionNumbers(tree, sectionStyle);
-  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value, lang, sectionNumbering: sectionStyle });
+  // record 0074: the journal gets its font (or the document's); co-authors, the one the article is written in
+  const fonts = documentFontsOf(project, folder);
+  const font = markers ? fonts.writing : fonts.journal;
+  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: font.size, font: font.family, lang, sectionNumbering: sectionStyle });
   /** A heading style, and no number when the sections are numbered and this one is not. */
   const headingOpts = (level: number, id?: string) => ({
     style: headingStyle(level),

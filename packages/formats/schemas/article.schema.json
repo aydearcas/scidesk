@@ -50,6 +50,30 @@
       ],
       "description": "Whether the words of the tables count in the text's word count; null or absent: as the journal profile says, and not when it does not say (record 0056)."
     },
+    "documentFont": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "family": {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            "size": {
+              "maximum": 72,
+              "minimum": 6,
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "The font and size the article is written in (the free font view, the Word for co-authors); what is absent follows the journal profile, then Calibri 12. The journal always gets its own (record 0074)."
+    },
     "id": {
       "description": "Id of a article.",
       "pattern": "^a-[a-z0-9]{1,24}$",

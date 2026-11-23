@@ -228,7 +228,7 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 :root { --zoom: 1; }
 .paper { width: calc(210mm * var(--zoom)); min-height: calc(297mm * var(--zoom)); margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 2px; box-shadow: 0 1px 3px rgb(16 24 40 / 0.08); cursor: text; }
 .paper.wide { width: auto; max-width: 1100px; min-height: 0; cursor: auto; }
-.page { padding: calc(2.5cm * var(--zoom)) calc(2.5cm * var(--zoom)) calc(1cm * var(--zoom)); font-family: var(--doc-font); font-size: calc(12pt * var(--zoom)); line-height: 1.6; color: var(--text); }
+.page { padding: calc(2.5cm * var(--zoom)) calc(2.5cm * var(--zoom)) calc(1cm * var(--zoom)); font-family: var(--doc-font); font-size: calc(var(--doc-size, 12pt) * var(--zoom)); line-height: 1.6; color: var(--text); }
 .page .ProseMirror { outline: none; }
 .page h1.title { font-size: 1.667em; line-height: 1.25; margin: 0 0 0.75em; }
 /* an empty title (the other language's, record 0048) says what goes there; the text is not touched */
@@ -559,6 +559,11 @@ fieldset.checks legend { font-size: 12px; color: var(--text-3); padding: 0 4px; 
 .credit thead th { font-weight: 600; }
 .credit select { font-size: 12px; min-height: 24px; }
 .issues { list-style: none; margin: 0; padding: 6px 0 0; border-top: 1px solid var(--line); font-size: 12px; max-height: 18vh; overflow-y: auto; }
+/* record 0074: the document font dialog */
+.doc-font-fields { display: flex; gap: 12px; }
+.doc-font-fields label { display: flex; flex-direction: column; gap: 4px; flex: 1; font-size: 13px; color: var(--text-2); }
+.doc-font-fields label:last-child { flex: 0 0 140px; }
+.doc-font-sample { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 4px 0; background: var(--bars); color: var(--text); }
 .recovery-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); width: min(520px, calc(100vw - 32px)); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .recovery-dialog h2 { margin: 0; font-size: 16px; }
 .recovery-dialog p { margin: 0; }
