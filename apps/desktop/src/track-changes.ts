@@ -223,6 +223,20 @@ export function withNodeMarks(extensions: AnyExtension[]): AnyExtension[] {
   });
 }
 
+// ---------------------------------------------------------------- how changes are shown (record 0092)
+
+/**
+ * Word's "Display for review": every mark ("all"), the final text with a line in the margin
+ * where something changed ("simple"), the final text ("none") or the text before the changes
+ * ("original"). Only the view changes: the document keeps every change.
+ */
+export const MARKUP_VIEWS = ["all", "simple", "none", "original"] as const;
+export type MarkupView = (typeof MARKUP_VIEWS)[number];
+/** Shows the changes as `view` says (a class on the page, so the table's tab follows it too). */
+export function setMarkupView(view: MarkupView) {
+  document.documentElement.dataset.markup = view;
+}
+
 // ---------------------------------------------------------------- commands for the window
 
 export const isTracking = (state: EditorState) => isSuggestChangesEnabled(state);

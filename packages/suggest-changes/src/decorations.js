@@ -2,6 +2,8 @@ import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { getSuggestionMarks } from "./utils.js";
 function pilcrow() {
     const span = document.createElement("span");
+    // SciDesk: a class, so that the views without markup can hide it
+    span.className = "change-pilcrow";
     span.appendChild(document.createTextNode("¶"));
     return span;
 }

@@ -6,5 +6,6 @@ Copia propia de [`@handlewithcare/prosemirror-suggest-changes`](https://github.c
 
 1. **Un cambio nuevo solo se une al contiguo si lo permite el programa** (incidencia #26 del original). `setCanJoinSuggestion(fn)` en `replaceStep.js`; SciDesk solo une cambios del mismo autor. Es el mismo cambio que hacía `prototypes/07-track-changes/tools/patch-suggest-changes.mjs`.
 2. **Las importaciones de `prosemirror-*` pasan a `@tiptap/pm/*`**, para que el editor y la pieza usen una sola copia de ProseMirror.
+3. **El «¶» de un párrafo partido o unido lleva la clase `change-pilcrow`** (`decorations.js`), para que las vistas sin marcas lo oculten (ficha 0092).
 
 Los cambios que SciDesk necesite después se anotan aquí, y se ofrecen al proyecto original.

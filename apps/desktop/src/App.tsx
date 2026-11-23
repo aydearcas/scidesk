@@ -62,7 +62,7 @@ import { partDrag } from "./part-drag.ts";
 import { insertPageBreak } from "./page-break.ts";
 import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
 import { revealIn } from "./reveal.ts";
-import { changeAt, changeInfo, decide, isTracking, setTracking, stepChange, track, type ChangeRecord } from "./track-changes.ts";
+import { changeAt, changeInfo, decide, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
 import { ReviewBar } from "./ReviewBar.tsx";
 
@@ -454,6 +454,9 @@ export function App() {
   const [variantsOpen, setVariantsOpen] = useState<"GB" | "US" | null>(null);
   // record 0090: tracked changes on, and the name they carry asked for the first time
   const [tracking, setTrackingOn] = useState(false);
+  // record 0092: how the changes are shown (Word's "Display for review"); it follows tracking on or off
+  const [markup, setMarkup] = useState<MarkupView>("none");
+  useEffect(() => { setMarkupView(markup); }, [markup]);
   const [askName, setAskName] = useState(false);
   // record 0074: the document font dialog, and a tick to re-read article.json after it
   const [docFontOpen, setDocFontOpen] = useState(false);
@@ -1664,6 +1667,7 @@ export function App() {
     const on = !!a.article.trackChanges;
     if (isTracking(editor.state) !== on) setTracking(editor, on);
     setTrackingOn(on);
+    setMarkup(on ? "all" : "none");
   };
   /** The name of who signs first, to start the name dialog from. */
   const firstAuthorName = () => {
@@ -1680,6 +1684,8 @@ export function App() {
     if (name) { updateSettings({ userName: who }); track.author = { name: who }; }
     setTracking(editor, on);
     setTrackingOn(on);
+    // as the user asked (record 0092): on, every mark; off, the text as it will be
+    setMarkup(on ? "all" : "none");
     await setTrackChanges(project, article.folder, on);
     setMessage(t(on ? "ui.track.on" : "ui.track.off", { name: who }));
     refocus();
@@ -1928,7 +1934,7 @@ export function App() {
             freeFonts={settings.fontMode === "free"} onAdapt={() => void adaptFonts()} docFont={docFonts?.writing ?? { family: "Calibri", size: 12 }}
             onSave={() => void run(save)()} saveState={{ dirty, saving, lastSaved }} />
           {settings.reviewBar && (
-            <ReviewBar editor={editor} disabled={!isDoc(tab)} tracking={tracking} onTracking={() => void toggleTracking()}
+            <ReviewBar editor={editor} disabled={!isDoc(tab)} tracking={tracking} onTracking={() => void toggleTracking()} markup={markup} onMarkup={setMarkup}
               onDecide={(accept, all) => (all ? decideAll(accept) : decideHere(accept, changeAt(editor.state)?.id))} onStep={moveToChange}
               onWarnings={() => showRight("warnings")} onImportCopy={() => showRight("review")} onAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }}
               spellcheck={settings.spellcheck} onSpellcheck={() => updateSettings({ spellcheck: !settings.spellcheck })}

@@ -889,3 +889,20 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 .review-bar .tool:hover:not(:disabled) { background: var(--line); }
 .review-bar .tool.on { background: var(--band, #e3f1f3); border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .review-bar .tool:disabled { opacity: 0.45; cursor: default; }
+
+/* record 0092: how tracked changes are shown, as Word's "Display for review" (the page's data-markup) */
+:root:not([data-markup="all"]) .change-pilcrow { display: none; }
+/* the final text: deletions hidden, insertions and format changes as plain text */
+:root[data-markup="none"] .ProseMirror del.change, :root[data-markup="simple"] .ProseMirror del.change,
+:root[data-markup="none"] .ProseMirror [data-node-deletion], :root[data-markup="simple"] .ProseMirror [data-node-deletion] { display: none; }
+:root[data-markup="none"] .ProseMirror ins.change, :root[data-markup="simple"] .ProseMirror ins.change,
+:root[data-markup="original"] .ProseMirror del.change { color: inherit; text-decoration: none; box-shadow: none; padding-left: 0; }
+:root[data-markup="none"] .ProseMirror del.change > *, :root[data-markup="original"] .ProseMirror del.change > * { text-decoration: none; }
+:root:not([data-markup="all"]) .ProseMirror span.change-modification { text-decoration: none; }
+/* the text before the changes: insertions hidden */
+:root[data-markup="original"] .ProseMirror ins.change, :root[data-markup="original"] .ProseMirror [data-node-insertion] { display: none; }
+/* simple markup: a red line in the margin of each block with a change, as Word */
+:root[data-markup="simple"] .ProseMirror :is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification) { box-shadow: -10px 0 0 0 var(--paper), -12px 0 0 0 #C62828; }
+.review-bar .tool.icon-only { width: 32px; justify-content: center; padding: 0; }
+.review-bar .tool-select select { height: 28px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); font: inherit; font-size: 12.5px; color: inherit; cursor: pointer; }
+.review-bar .tool-select { display: inline-flex; margin: 0 4px; }
