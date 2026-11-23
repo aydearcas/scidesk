@@ -826,7 +826,7 @@
     },
     "Heading": {
       "additionalProperties": false,
-      "description": "Section heading; `role` says which section it starts.",
+      "description": "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070).",
       "properties": {
         "attrs": {
           "additionalProperties": false,
@@ -852,6 +852,16 @@
               "maximum": 6,
               "minimum": 1,
               "type": "integer"
+            },
+            "numbered": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "role": {
               "anyOf": [

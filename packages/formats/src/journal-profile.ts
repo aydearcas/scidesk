@@ -103,6 +103,7 @@ export const JournalProfile = Strict({
     tables: Type.Optional(Sourced(Type.Enum(["in-text", "end"]))),
     figureCaptionsList: Type.Optional(Sourced(Type.Boolean(), "Figure captions in a list at the end.")),
     englishVariant: Type.Optional(Sourced(Type.Enum(["british", "american"]))),
+    sectionNumbering: Type.Optional(Sourced(Type.Enum(["none", "1.", "1"]), "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none' (record 0070).")),
   })),
   review: Type.Optional(Strict({
     blind: Sourced(Type.Enum(["double", "single", "open", "none"])),

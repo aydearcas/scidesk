@@ -163,7 +163,7 @@ const cellContent = Type.Array(Type.Union([Type.Ref("Paragraph"), Type.Ref("Bull
 
 const blockDefs = {
   Paragraph: textblock("paragraph", { id: BlockId, lang, indent: OptAttr(Type.Integer({ minimum: 1, maximum: 8 })) }, "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069)."),
-  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang }, "Section heading; `role` says which section it starts."),
+  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang, numbered: OptAttr(Type.Boolean()) }, "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070)."),
   Title: textblock("title", { id: BlockId, lang }, "Title of the article; one per language, the first is the main one."),
   BulletList: Strict({ type: Type.Literal("bulletList"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
   OrderedList: Strict({ type: Type.Literal("orderedList"), attrs: Strict({ id: BlockId, start: Type.Optional(Type.Integer({ minimum: 0 })) }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),

@@ -9,6 +9,7 @@ import type { ArticleFile, PMNode } from "@scidesk/formats";
 import { citationsOf } from "./citations.ts";
 import { composite, numbering } from "./docx-export.ts";
 import { now, saveJson, type Project } from "./project.ts";
+import { headingRole } from "./sections.ts";
 
 export type CheckLevel = "blocking" | "review" | "info";
 export type CheckCode =
@@ -152,7 +153,8 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
     if (n.type === "title") continue;
     if (n.type === "heading" && ((n.attrs!.level as number) ?? 1) === 1) {
-      const role = (n.attrs!.role as string) ?? null;
+      // record 0071: its own type, or the one its name says ("Agradecimientos" does not count)
+      const role = headingRole(n);
       current = { heading: blockText(n), role, words: 0, counted: !NOT_COUNTED.has(role ?? ""), block: (n.attrs!.id as string) ?? null, tableWords: 0 };
       sections.push(current);
       continue;

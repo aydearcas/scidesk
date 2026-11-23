@@ -24,6 +24,7 @@ import { Spellcheck } from "./spellcheck.ts";
 import { LangMark, LangPaste } from "./lang.ts";
 import { Autocorrect } from "./autocorrect.ts";
 import { Indent, IndentBackspace, MAX_INDENT } from "./indent.ts";
+import { SectionNumbers } from "./section-numbers.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -427,9 +428,14 @@ export const extensions = [
   } }) }),
   Indent,
   IndentBackspace,
+  SectionNumbers,
   Heading.extend({
     addAttributes() {
-      return { ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang") };
+      return {
+        ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang"),
+        // record 0070: false keeps the heading (and its subsections) without a number
+        numbered: { default: null, parseHTML: (el: HTMLElement) => (el.getAttribute("data-numbered") === "false" ? false : null), renderHTML: (a: Record<string, unknown>) => (a.numbered === false ? { "data-numbered": "false" } : {}) },
+      };
     },
   }).configure({ levels: [1, 2, 3, 4, 5, 6] }),
   Title,

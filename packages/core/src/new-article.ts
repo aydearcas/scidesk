@@ -27,14 +27,21 @@ export const SECTION_LABELS: Record<string, Record<string, string>> = {
     introduction: "Introducción", background: "Antecedentes", objective: "Objetivo", "background-objective": "Antecedentes y objetivo",
     methods: "Métodos", "patients-methods": "Pacientes y métodos", results: "Resultados", discussion: "Discusión", conclusions: "Conclusiones",
     "discussion-conclusions": "Discusión y conclusiones", "case-presentation": "Presentación del caso", references: "Bibliografía",
+    // record 0071: the closing sections, for "Add section"
+    acknowledgements: "Agradecimientos", funding: "Financiación", conflicts: "Conflicto de intereses", ethics: "Responsabilidades éticas",
+    consent: "Consentimiento informado", "data-availability": "Disponibilidad de datos", registration: "Registro", "ai-use": "Uso de inteligencia artificial",
+    contributions: "Contribución de los autores", appendix: "Apéndice", other: "Nueva sección",
   },
   en: {
     introduction: "Introduction", background: "Background", objective: "Objective", "background-objective": "Background and objective",
     methods: "Methods", "patients-methods": "Patients and methods", results: "Results", discussion: "Discussion", conclusions: "Conclusions",
     "discussion-conclusions": "Discussion and conclusions", "case-presentation": "Case presentation", references: "References",
+    acknowledgements: "Acknowledgements", funding: "Funding", conflicts: "Conflicts of interest", ethics: "Ethical considerations",
+    consent: "Informed consent", "data-availability": "Data availability", registration: "Registration", "ai-use": "Use of artificial intelligence",
+    contributions: "Author contributions", appendix: "Appendix", other: "New section",
   },
 };
-const sectionLabel = (role: string, lang: string) => (SECTION_LABELS[lang.slice(0, 2)] ?? SECTION_LABELS.en)[role] ?? role;
+export const sectionLabel = (role: string, lang: string) => (SECTION_LABELS[lang.slice(0, 2)] ?? SECTION_LABELS.en)[role] ?? role;
 
 export interface NewArticleOptions {
   title: string;

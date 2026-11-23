@@ -141,6 +141,26 @@
       "description": "Version of the format. Files with a lower version are migrated when opened.",
       "type": "number"
     },
+    "sectionNumbering": {
+      "anyOf": [
+        {
+          "const": "none",
+          "type": "string"
+        },
+        {
+          "const": "1.",
+          "type": "string"
+        },
+        {
+          "const": "1",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none'; null or absent: as the journal profile says, and none when it does not say (record 0070)."
+    },
     "translations": {
       "description": "Other languages of the title, the abstract and the keywords (Reumatología Clínica: en).",
       "items": {

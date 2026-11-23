@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import {
   addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
-  exportPdf, manuscriptTypst, omitsAuthor, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
+  exportPdf, manuscriptTypst, omitsAuthor, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
 import { EditorState, NodeSelection, TextSelection } from "@tiptap/pm/state";
@@ -20,6 +20,8 @@ import { closeHistory } from "@tiptap/pm/history";
 import { addColumnAfter, addColumnBefore, addRowAfter, addRowBefore, deleteColumn, deleteRow, isInTable, mergeCells, splitCell, toggleHeaderRow } from "@tiptap/pm/tables";
 import { newId, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { citationLabels, extensions, findStep, hooks, partInfo, refreshCitationLabels, refreshPartLabels, refreshXrefLabels, xrefLabels } from "./editor.ts";
+import { numberable, setSectionNumberStyle } from "./section-numbers.ts";
+import { addSection, addSubsection, canMoveSection, childIndexAt, headingIndex, moveSection, moveSectionTo, removeHeading, roleOfNode, setSectionRole, topHeadings } from "./sections-edit.ts";
 import { FindBar } from "./FindBar.tsx";
 import { addNote, blockInsertPos, clearImages, partAround, partContext, placed, relabel, setAlign, setPartAttrs } from "./parts.ts";
 import { cellInfo, TableTabView, type CellInfo, type PasteNotice, type TableCommand } from "./TableTab.tsx";
@@ -104,6 +106,9 @@ export function App() {
   const [message, setMessageState] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [rendering, setRendering] = useState<Rendering | null>(null);
+  // record 0070: the sections' numbers (for the navigator) and the article's numbering
+  const [sectionNos, setSectionNos] = useState<Map<string, string>>(new Map());
+  const [numberingTick, setNumberingTick] = useState(0);
   const [proposals, setProposals] = useState<{ set: ProposalSetFile; name: string } | null>(null);
   const [report, setReport] = useState<CheckReport | null>(null);
   const [outline, setOutline] = useState<ArticleOutline | null>(null);
@@ -219,6 +224,7 @@ export function App() {
       const live = liveDocuments(doc, article);
       const r = await renderCitations(project.library, [doc], article.article.citationStyle.id, article.article.referenceTermsLang ?? article.article.lang, await styleResources(project, article, resources));
       refreshXrefLabels(doc as never);
+      setSectionNos(numbersOfSections(doc, sectionNumberingOf(project, article.folder).value));
       citationLabels.clear();
       for (const [id, c] of r.citations) citationLabels.set(id, c.runs);
       refreshCitationLabels();
@@ -1379,6 +1385,67 @@ export function App() {
       other ? foreignStretch(editor.state, wrong.from, other).catch(() => null) : Promise.resolve(null),
     ]).then(([s, f]) => setContextMenu({ x, y, spell: { ...wrong, suggestions: s, foreign: f && other ? { ...f, lang: other } : null } }));
   };
+  // record 0070: the article's numbering (its own, its journal's or none); the editor draws it
+  const sectionNumbering = project && article ? sectionNumberingOf(project, article.folder) : null;
+  void numberingTick; // the setting lives in article.json: a change re-renders through the tick
+  useEffect(() => {
+    if (editor && !editor.isDestroyed && sectionNumbering) setSectionNumberStyle(editor.view, sectionNumbering.value);
+  }, [editor, sectionNumbering?.value]);
+  // record 0071: menus that float over the window (add a section, a section's own menu, its type)
+  const [floatMenu, setFloatMenu] = useState<{ x: number; y: number; items: MenuEntry[]; label: string } | null>(null);
+  const roleName = (role: string) => (role === "other" ? t("ui.sections.otherType") : sectionLabel(role, i18n.language));
+  const ADD_BODY = ["introduction", "objective", "methods", "case-presentation", "results", "discussion", "conclusions"];
+  /** The types a new section can have: those not in the article yet (appendices, any number), and "other". */
+  const addItems = (after?: number): MenuEntry[] => {
+    if (!editor || !article) return [];
+    const doc = editor.state.doc;
+    const present = new Set(topHeadings(doc).headings.filter((h) => h.level === 1).map((h) => h.role));
+    const lang = article.article.lang;
+    const entry = (role: string): MenuEntry => ({ label: roleName(role), onSelect: () => { openTab(docTab); addSection(editor, role, lang, after); } });
+    return [
+      ...ADD_BODY.filter((r) => !present.has(r)).map(entry),
+      "-",
+      ...CLOSING_ORDER.filter((r) => r === "appendix" || !present.has(r)).map(entry),
+      "-",
+      { label: t("ui.sections.other"), onSelect: () => { openTab(docTab); addSection(editor, "other", lang, after ?? childIndexAt(doc, editor.state.selection.from)); } },
+    ];
+  };
+  /** A heading's type: as its name says, or one chosen. */
+  const typeItems = (index: number): MenuEntry[] => {
+    if (!editor) return [];
+    const node = editor.state.doc.child(index);
+    const own = node.attrs.role as string | null;
+    const guessed = roleFromName(node.textContent);
+    return [
+      { label: guessed ? t("ui.sections.byName", { type: roleName(guessed) }) : t("ui.sections.byNameNone"), checked: own === null, onSelect: () => setSectionRole(editor, index, null) },
+      "-",
+      ...[...BODY_ORDER, ...CLOSING_ORDER, "other"].map((r) => ({ label: roleName(r), checked: own === r, onSelect: () => setSectionRole(editor, index, r) })),
+    ];
+  };
+  /** A section's own menu, from the navigator (by its heading's id) or the heading's context menu. */
+  const sectionItems = (index: number, x: number, y: number): MenuEntry[] => {
+    if (!editor || !article || index < 0) return [];
+    const doc = editor.state.doc;
+    const node = doc.child(index);
+    const role = roleOfNode(node);
+    const reopen = (items: MenuEntry[], label: string) => () => setFloatMenu({ x, y, items, label });
+    return [
+      { label: t("ui.sections.addMenu"), onSelect: reopen(addItems(index), t("ui.sections.add")) },
+      ...((node.attrs.level as number) < 3 ? [{ label: t("ui.sections.addSub"), onSelect: () => { openTab(docTab); addSubsection(editor, index, article.article.lang); } }] : []),
+      "-",
+      { label: t("ui.sections.up"), disabled: !canMoveSection(doc, index, -1), onSelect: () => { openTab(docTab); moveSection(editor, index, -1); } },
+      { label: t("ui.sections.down"), disabled: !canMoveSection(doc, index, 1), onSelect: () => { openTab(docTab); moveSection(editor, index, 1); } },
+      "-",
+      { label: t("ui.sections.type", { type: role ? roleName(role) : t("ui.sections.none") }), onSelect: reopen(typeItems(index), t("ui.sections.typeMenu")) },
+      { label: t("ui.sections.removeHeading"), onSelect: () => removeHeading(editor, index) },
+    ];
+  };
+  const changeNumbering = run(async (value: SectionNumbering | null) => {
+    if (!project || !article) return;
+    await setSectionNumbering(project, article.folder, value);
+    setNumberingTick((n) => n + 1);
+    void recompute();
+  });
   /** Record 0067: the right-click menu in a table's tab, on what is under the pointer. */
   const onTabContextMenu = (e: React.MouseEvent, view: EditorView) => {
     if (!project) return;
@@ -1447,6 +1514,15 @@ export function App() {
       ...(spell.foreign ? [{ label: t(`ui.lang.markAs.${spell.foreign.lang}`, { text: spell.foreign.text.length > 40 ? `${spell.foreign.text.slice(0, 38)}…` : spell.foreign.text }), onSelect: () => { const f = spell.foreign!; editor.chain().focus().setTextSelection({ from: f.from, to: f.to }).run(); setLanguage(editor, f.lang); } }] : []),
       "-",
     ] : [];
+    // record 0070: "Number this section" on a heading that can carry a number
+    const $sel = sel.$from;
+    const headingAt = !inTab && $sel.depth >= 1 && $sel.parent.type.name === "heading" && numberable($sel.parent) ? $sel.parent : null;
+    const topIndex = !inTab && $sel.depth === 1 && $sel.parent.type.name === "heading" ? $sel.index(0) : -1;
+    const sectionMenu: MenuEntry[] = topIndex >= 0 && contextMenu ? [{ label: t("ui.sections.menu"), onSelect: () => setFloatMenu({ x: contextMenu.x, y: contextMenu.y, items: sectionItems(topIndex, contextMenu.x, contextMenu.y), label: t("ui.sections.section") }) }] : [];
+    const numberItem: MenuEntry[] = headingAt && sectionNumbering && sectionNumbering.value !== "none" ? [{
+      label: t("ui.numbering.thisSection"), checked: headingAt.attrs.numbered !== false,
+      onSelect: () => { view.dispatch(view.state.tr.setNodeAttribute($sel.before($sel.depth), "numbered", headingAt.attrs.numbered === false ? null : false)); view.focus(); },
+    }, "-"] : [];
     // record 0067: "omit author", with the styles that print it (or to take it off a citation that has it)
     const citeItems = onCitation ? (sel.node.attrs.items as CiteItem[]) : [];
     const omitted = citeItems.length > 0 && citeItems.every((i) => i.suppressAuthor);
@@ -1454,6 +1530,8 @@ export function App() {
       ? [{ label: t("omitAuthor"), checked: omitted, title: t("omitAuthorHint"), onSelect: () => setOmitAuthor(view, sel.from, !omitted) }] : [];
     return [
       ...(inTab ? [] : spellItems),
+      ...numberItem,
+      ...(sectionMenu.length ? [...sectionMenu, "-" as const] : []),
       ...tableItems,
       ...(inTab ? (noteItems.length ? [...noteItems, "-" as const] : []) : partItems),
       ...(onCitation ? [
@@ -1554,6 +1632,14 @@ export function App() {
           <aside className="left-panel">
             {view === "article"
               ? <Navigator project={project!} folder={article!.folder} report={report} outline={outline} active={navActive} onGo={onNav}
+                  sectionNumbers={sectionNos} numbering={sectionNumbering} onNumbering={(v) => void changeNumbering(v)}
+                  onAddSection={(x, y) => setFloatMenu({ x, y, items: addItems(), label: t("ui.sections.add") })}
+                  onMoveSection={(block, target, after) => {
+                    if (!editor) return;
+                    const i = headingIndex(editor.state.doc, block), j = headingIndex(editor.state.doc, target);
+                    if (i >= 0 && j >= 0) { openTab(docTab); moveSectionTo(editor, i, j, after); }
+                  }}
+                  onSectionMenu={(block, x, y) => { if (!editor) return; const i = headingIndex(editor.state.doc, block); if (i >= 0) setFloatMenu({ x, y, items: sectionItems(i, x, y), label: t("ui.sections.section") }); }}
                   articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} onNewArticle={() => void newArticle()} />
               : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} onSyncZotero={() => void syncZotero(false)} />}
           </aside>
@@ -1706,6 +1792,7 @@ export function App() {
       <input ref={figureInput} type="file" accept=".png,.jpg,.jpeg,.tif,.tiff,.svg" hidden onChange={() => void insertFigure()} aria-label={t("ui.insertFigure")} />
 
       {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} items={contextItems()} label={t("ui.contextMenu")} onClose={() => setContextMenu(null)} />}
+      {floatMenu && <ContextMenu key={`${floatMenu.x},${floatMenu.y},${floatMenu.label},${floatMenu.items.length}`} x={floatMenu.x} y={floatMenu.y} items={floatMenu.items} label={floatMenu.label} onClose={() => setFloatMenu(null)} />}
       {recoveries[0] && (
         <div className="overlay">
           <div className="recovery-dialog" role="alertdialog" aria-modal="true" aria-labelledby="recovery-title">

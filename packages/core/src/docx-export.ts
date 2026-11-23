@@ -29,6 +29,7 @@ import { renderCitations, runFormat, type CitationResources, type Rendering, typ
 import { sameLang } from "./lang.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
+import { headingRole, NUMBERED_LEVELS, sectionNumberingOf, sectionNumbers, type SectionNumbering } from "./sections.ts";
 
 export type ExportProfile = "coauthors" | "journal";
 export interface ExportResources extends CitationResources {
@@ -100,7 +101,7 @@ export function imageSize(b: Uint8Array): { type: "png" | "jpg" | "gif" | "bmp";
 }
 
 /** The template's styles.xml with the journal's page format applied to Normal, and the ids of the styles SciDesk uses. */
-export function applyTemplate(stylesXml: string, format: { lineSpacing?: number; fontSizePt?: number; font?: string; lang?: string } = {}) {
+export function applyTemplate(stylesXml: string, format: { lineSpacing?: number; fontSizePt?: number; font?: string; lang?: string; sectionNumbering?: SectionNumbering } = {}) {
   const ids: Record<string, string> = {};
   for (const m of stylesXml.matchAll(/<w:style [^>]*w:styleId="([^"]+)"[^>]*>\s*<w:name w:val="([^"]+)"/g)) ids[m[2].toLowerCase()] = m[1];
   let xml = stylesXml;
@@ -135,7 +136,47 @@ export function applyTemplate(stylesXml: string, format: { lineSpacing?: number;
     }
     return open + b + close;
   });
+  // record 0070: headings 1 to 3 in the sections' list, as Word does with a multilevel list
+  // linked to its heading styles (a heading a co-author adds in Word is numbered too)
+  if (format.sectionNumbering && format.sectionNumbering !== "none") {
+    for (let level = 1; level <= NUMBERED_LEVELS; level++) {
+      const id = ids[`heading ${level}`];
+      if (!id) continue;
+      const numPr = `<w:numPr><w:ilvl w:val="${level - 1}"/><w:numId w:val="${SECTIONS_NUM_ID}"/></w:numPr>`;
+      const style = new RegExp(`(<w:style [^>]*w:styleId="${id}"[^>]*>)([\\s\\S]*?)(</w:style>)`);
+      xml = xml.replace(style, (_, open: string, body: string, close: string) => {
+        let b = body.replace(/<w:numPr>[\s\S]*?<\/w:numPr>/, "");
+        if (!/<w:pPr>/.test(b)) b = b.replace(/(<w:rPr>|$)/, `<w:pPr>${numPr}</w:pPr>$1`);
+        else {
+          // numPr goes after keepNext, keepLines, pageBreakBefore, framePr and widowControl (CT_PPrBase)
+          const before = /^(<w:pPr>(?:<w:(?:pStyle|keepNext|keepLines|pageBreakBefore|framePr|widowControl)\b[^>]*\/>)*)/;
+          b = b.replace(/<w:pPr>[\s\S]*?<\/w:pPr>/, (pPr) => pPr.replace(before, `$1${numPr}`));
+        }
+        return open + b + close;
+      });
+    }
+  }
   return { xml, style: (name: string) => ids[name] };
+}
+
+/** Record 0070: the numId and abstractNumId of the sections' list, far from those the docx library gives. */
+export const SECTIONS_NUM_ID = 9000;
+
+/** The sections' multilevel list: "1." / "1.1." / "1.1.1." (or without the last dot), each level linked to its heading style. */
+export function sectionsNumbering(numberingXml: string, style: SectionNumbering, headingIds: (string | undefined)[]): string {
+  const dot = style === "1." ? "." : "";
+  const levels = [0, 1, 2].map((l) => {
+    const text = Array.from({ length: l + 1 }, (_, i) => `%${i + 1}`).join(".") + dot;
+    const link = headingIds[l] ? `<w:pStyle w:val="${esc(headingIds[l]!)}"/>` : "";
+    return `<w:lvl w:ilvl="${l}"><w:start w:val="1"/><w:numFmt w:val="decimal"/>${link}<w:lvlText w:val="${text}"/><w:lvlJc w:val="left"/><w:suff w:val="space"/><w:pPr><w:ind w:left="0" w:firstLine="0"/></w:pPr></w:lvl>`;
+  }).join("");
+  const abstract = `<w:abstractNum w:abstractNumId="${SECTIONS_NUM_ID}"><w:multiLevelType w:val="multilevel"/>${levels}</w:abstractNum>`;
+  const num = `<w:num w:numId="${SECTIONS_NUM_ID}"><w:abstractNumId w:val="${SECTIONS_NUM_ID}"/></w:num>`;
+  // every abstractNum goes before the first num (CT_Numbering)
+  const firstNum = numberingXml.search(/<w:num [^>]*>|<w:num>/);
+  let xml = firstNum >= 0 ? numberingXml.slice(0, firstNum) + abstract + numberingXml.slice(firstNum) : numberingXml.replace("</w:numbering>", `${abstract}</w:numbering>`);
+  xml = xml.replace("</w:numbering>", `${num}</w:numbering>`);
+  return xml;
 }
 
 /** Body, tables and figures as one tree, in reading order (the composite document, record 0021). */
@@ -219,7 +260,15 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const tplZip = await JSZip.loadAsync(await res.template());
   const tplStyles = await tplZip.file("word/styles.xml")?.async("string");
   if (!tplStyles) throw new Error("the reference template has no styles");
-  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value, lang });
+  // record 0070: numbered sections, by Word itself from the heading styles
+  const sectionStyle = sectionNumberingOf(project, folder).value;
+  const numbered = sectionNumbers(tree, sectionStyle);
+  const tpl = applyTemplate(tplStyles, { lineSpacing: fmt?.lineSpacing?.value, fontSizePt: fmt?.fontSizePt?.value, font: fmt?.font?.value, lang, sectionNumbering: sectionStyle });
+  /** A heading style, and no number when the sections are numbered and this one is not. */
+  const headingOpts = (level: number, id?: string) => ({
+    style: headingStyle(level),
+    ...(sectionStyle !== "none" && level <= NUMBERED_LEVELS && !(id && numbered.has(id)) ? { numbering: false as const } : {}),
+  });
   const S = (name: string) => tpl.style(name) ?? (warnings.push(`style '${name}' not in the template`), undefined);
   const marginCm = fmt?.sideMarginsCm?.value ? (fmt.sideMarginsCm.value.max ?? fmt.sideMarginsCm.value.min) : 2.5;
   const margin = Math.round((marginCm / 2.54) * 1440);
@@ -387,7 +436,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
         out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: "svg", data: bytes, fallback: { type: "png", data: svg.png }, transformation: fit(svg.width, svg.height), altText }) as unknown as ParagraphChild] }));
       } else {
         warnings.push(`${part.attrs!.image}: ${typeof svg === "string" ? svg : "only PNG, JPEG, GIF, BMP and SVG images are embedded for now"}`);
-        out.push(new Paragraph({ children: [...(ps ? [ps] : []), new TextRun(`[${part.attrs!.image}]`)] }));
+        // generated text: before the block's bookmark, so that it never comes back as an edit
+        out.push(new Paragraph({ children: [new TextRun(`[${part.attrs!.image}]`), ...(ps ? [ps] : [])] }));
       }
     }
     out.push(para(cap, { style: S("caption") }, caption(part, "figure", figureNo.get(id)!), undefined, { before: !withImage && ps ? [ps] : [], after: pe && !notes.length ? [pe] : [] }));
@@ -429,9 +479,9 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       const sl = label((section.attrs!.lang as string) ?? lang);
       around = (section.attrs!.lang as string) ?? lang;
       const sectionLang = sameLang(around, lang) ? {} : { language: { value: wordLang(around) } };
-      out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun({ text: sl.abstract, ...sectionLang })] }));
+      out.push(new Paragraph({ ...headingOpts(1), children: [new TextRun({ text: sl.abstract, ...sectionLang })] }));
       for (const n of section.content ?? []) {
-        if (n.type === "heading") out.push(para(n, { style: headingStyle(2) }));
+        if (n.type === "heading") out.push(para(n, headingOpts(2)));
         else if (n.type === "paragraph") out.push(para(n));
         else if (n.type === "keywords") {
           const words = (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).filter(Boolean);
@@ -447,8 +497,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     if (n.type !== "title" && !abstractDone) writeAbstract();
     if (n.type === "title") out.push(para(n, { style: S("title") }));
     else if (n.type === "heading") {
-      out.push(para(n, { style: headingStyle((n.attrs!.level as number) ?? 1) }));
-      if (n.attrs!.role === "references") bibliography();
+      out.push(para(n, headingOpts((n.attrs!.level as number) ?? 1, n.attrs!.id as string | undefined)));
+      if (headingRole(n) === "references") bibliography();
     } else if (n.type === "paragraph") out.push(para(n));
     else if (n.type === "bulletList" || n.type === "orderedList") list(n, 0);
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
@@ -457,12 +507,12 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   }
   if (!abstractDone) writeAbstract();
   if (!bibliographyPlaced && rendering.bibliography.length) {
-    out.push(new Paragraph({ style: headingStyle(1), children: [new TextRun(L.bib)] }));
+    out.push(new Paragraph({ ...headingOpts(1), children: [new TextRun(L.bib)] }));
     bibliography();
   }
   if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => table(part, { pageBreakBefore: true }));
   if (captionsList && figures.size) {
-    out.push(new Paragraph({ style: headingStyle(1), pageBreakBefore: true, children: [new TextRun(L.captions)] }));
+    out.push(new Paragraph({ ...headingOpts(1), pageBreakBefore: true, children: [new TextRun(L.captions)] }));
     [...figures.entries()].sort((a, b) => figureNo.get(a[0])! - figureNo.get(b[0])!).forEach(([, part]) => figure(part, false));
   }
   if (markers && snapshot && out.length) {
@@ -495,7 +545,16 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       children: out,
     }],
   });
-  const bytes = new Uint8Array(await Packer.toArrayBuffer(doc));
+  let bytes: Uint8Array = new Uint8Array(await Packer.toArrayBuffer(doc));
+  if (sectionStyle !== "none") {
+    // record 0070: the sections' list in numbering.xml (the heading styles point to it)
+    const zip = await JSZip.loadAsync(bytes);
+    const file = zip.file("word/numbering.xml");
+    if (file) {
+      zip.file("word/numbering.xml", sectionsNumbering(await file.async("string"), sectionStyle, [1, 2, 3].map((l) => tpl.style(`heading ${l}`))));
+      bytes = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+    } else warnings.push("numbered sections: the document has no numbering part");
+  }
   if (!markers) {
     // pending markers should not reach the journal (R12); imported here to avoid a cycle
     const pending = (await import("./checks.ts")).pendingCount(project, folder);

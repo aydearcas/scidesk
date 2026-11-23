@@ -78,6 +78,9 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
     // until the bookmark of the text block (b- or n-) starts, text is the generated lead
     let inLead = true;
     let sawBlock = false;
+    // record 0070: where a table or figure part starts in a paragraph without a text block
+    // (the file name left in place of an image), the text before it is generated too
+    let partLead: number | null = null;
     const leadSegments: Segment[] = [];
     const pPr = kids(p).find((e) => e.localName === "pPr");
     const markRPr = pPr && kids(pPr).find((e) => e.localName === "rPr");
@@ -139,6 +142,7 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
           if (b?.marker === "block") {
             P.blocks.push(b.id);
             if (/^(b|n)-/.test(b.id)) { inLead = false; sawBlock = true; }
+            else if (/^(t|f)-/.test(b.id) && !sawBlock && partLead === null) partLead = leadSegments.length;
           }
           if (b?.marker === "snapshot") snapshotBookmark = b.id;
         } else if (ln === "hyperlink" || ln === "smartTag" || ln === "sdt" || ln === "sdtContent" || ln === "fldSimple" || ln === "customXml") walk(e, kind, rev);
@@ -147,7 +151,10 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
     const startsInBibliography = inBibliography;
     walk(p, "same", null);
     // a paragraph without SciDesk marks (new, or from another program): all of it is content
-    if (!sawBlock) P.segments.unshift(...leadSegments);
+    if (!sawBlock && partLead !== null) {
+      P.lead = leadSegments.slice(0, partLead).map((x) => x.text).join("");
+      P.segments.unshift(...leadSegments.slice(partLead));
+    } else if (!sawBlock) P.segments.unshift(...leadSegments);
     else P.lead = leadSegments.map((x) => x.text).join("");
     if (startsInBibliography || (inBibliography && !P.blocks.length)) return; // generated text
     paragraphs.push(P);

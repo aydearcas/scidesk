@@ -65,7 +65,7 @@ Un `.scidoc` es el **JSON de ProseMirror tal cual** (R34) dentro de un envoltori
 | Nodo | Atributos | Contenido | Notas |
 |---|---|---|---|
 | `title` | `id`, `lang` | texto | Uno por idioma, al principio del cuerpo; el primero es el principal. Reumatología Clínica pide también el título en inglés |
-| `heading` | `id`, `level` (1–6), `role`, `lang` | texto | **Las secciones no son nodos contenedores:** un encabezado con `role` empieza la sección (como `sec-type` de JATS) |
+| `heading` | `id`, `level` (1–6), `role`, `lang`, `numbered` | texto | **Las secciones no son nodos contenedores:** un encabezado con `role` empieza la sección (como `sec-type` de JATS). `numbered: false` (opcional) lo deja sin número, con sus subsecciones, cuando el artículo numera las secciones (ficha 0070) |
 | `paragraph` | `id`, `lang`, `indent` | texto | `indent` (opcional, 1 a 8): sangría izquierda en pasos de 1,25 cm, como «Aumentar sangría» de Word (ficha 0069) |
 | `bulletList`, `orderedList` | `id` (`start` en la numerada) | `listItem`+ | `listItem` empieza por un párrafo |
 | `equation` | `id` (`e-`), `latex` | — | Llega en la fase 4; está en el formato desde la v1 (P6) |
@@ -159,6 +159,7 @@ Mismo envoltorio que `.scidoc`, con `documentType: "table"` o `"figure"`.
 - **`citationStyle`:** `{ id, file? }`. Por defecto, el del perfil; el usuario puede elegir otro. `file` solo si el estilo no viene con SciDesk ni con el perfil.
 - **`referenceTermsLang`:** idioma de las palabras fijas de las referencias («En:», «editores»…). `null` es el idioma del manuscrito (ficha 0026).
 - **`ignoredWarnings`:** los avisos marcados como «es correcto» o «no aplica», con su nota, fecha y quién (R12). Cada aviso tiene un id estable.
+- **`sectionNumbering`** (opcional): `"1."` (1., 1.1.), `"1"` (1, 1.1) o `"none"`; `null` o ausente, como diga el perfil de revista, y sin numerar si no lo dice (ficha 0070). Los números se calculan, nunca se guardan en el texto.
 
 Los nombres de los documentos del artículo son fijos (sección 8), así que `article.json` no los lista.
 
@@ -198,7 +199,7 @@ Contenido:
 - **`languages`:** idiomas del manuscrito y en qué otros idiomas se piden el título, el resumen y las palabras clave.
 - **`abstract`:** si es estructurado, sus apartados (`role` y etiqueta por idioma) y el mínimo de palabras clave.
 - **`articleTypes`:** por tipo de artículo, su nombre en la guía, los **límites** (palabras, palabras del resumen, referencias, figuras, tablas, figuras y tablas juntas, autores, autores aconsejados, palabras clave y caracteres del título), su resumen si cambia, apartados fijos y una apertura fija («Señor editor»).
-- **`manuscriptFormat`:** interlineado, cuerpo de letra, fuente, márgenes laterales, números de línea y de página, justificado, partición de palabras, tablas en el texto o al final, lista de pies de figura y variante del inglés.
+- **`manuscriptFormat`:** interlineado, cuerpo de letra, fuente, márgenes laterales, números de línea y de página, justificado, partición de palabras, tablas en el texto o al final, lista de pies de figura, variante del inglés y numeración de las secciones (`sectionNumbering`, ficha 0070).
 - **`review`:** ciega (`double`, `single`, `open`, `none`) y portada aparte.
 - **`declarations`:** cuáles son obligatorias y dónde van; `contributionsFormat`; `optionalDocuments` (puntos destacados con sus límites, resumen gráfico); `figures` (archivos separados, formatos, resolución mínima); `submission` (sistema de envío); y `notes` para lo que la guía dice sin campo propio o lo que le falta.
 - **`extends`:** perfil base del que hereda (el de la editorial; *Supuesto* de la ficha 0014).

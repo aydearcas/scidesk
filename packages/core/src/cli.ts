@@ -7,6 +7,7 @@
 //   scidesk demo <dir>                 a new project with two paragraphs, a citation and two references
 //   scidesk check <dir>                validate the project and check each article (limits, words, pending, uncited, spelling; --all-words)
 //   scidesk table-words <dir> on|off|journal [--article main]   whether the tables' words count (record 0056)
+//   scidesk section-numbering <dir> none|1.|1|journal [--article main]   numbered sections (record 0070)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
 //   scidesk spell-ignore <dir> <word> [--undo] [--article main]   a word the checker does not underline in this article
 //   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
@@ -48,6 +49,8 @@ import { checkAuthorship, displayName } from "./authorship.ts";
 import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
 import { ignoreWord, spellingReport, unignoreWord } from "./spelling.ts";
 import { titlePageModel } from "./title-page.ts";
+import { sectionNumberingOf, sectionNumbers, setSectionNumbering, type SectionNumbering } from "./sections.ts";
+import type { PMNode } from "@scidesk/formats";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -82,7 +85,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|add-article|zotero|table-words|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
+    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -130,6 +133,19 @@ async function main() {
       await setCountTableWords(p, folder, v === "journal" ? null : v === "on");
       const r = checkArticle(p, folder);
       console.log(`${folder}: ${r.counts.main} words in the text; tables ${r.counts.tableWords}, ${r.counts.tableWordsCounted ? "counted" : "not counted"} (${r.counts.tableWordsBy})`);
+      break;
+    }
+    case "section-numbering": {
+      const p = await loadProject(fs);
+      const v = positional[0];
+      if (!["none", "1.", "1", "journal"].includes(v ?? "")) throw new Error("usage: scidesk section-numbering <dir> none|1.|1|journal [--article main]");
+      const folder = opt("article", "main")!;
+      await setSectionNumbering(p, folder, v === "journal" ? null : (v as SectionNumbering));
+      const n = sectionNumberingOf(p, folder);
+      const doc = p.articles.find((a) => a.folder === folder)!.documents.get("manuscript/article.scidoc")?.doc as PMNode | undefined;
+      const numbers = doc ? sectionNumbers(doc, n.value) : new Map<string, string>();
+      console.log(`${folder}: ${n.value === "none" ? "not numbered" : `numbered «${n.value}»`} (${n.from})`);
+      for (const h of doc?.content ?? []) if (h.type === "heading") console.log(`  ${"  ".repeat(((h.attrs!.level as number) ?? 1) - 1)}${numbers.get(h.attrs!.id as string) ?? "—"} ${(h.content ?? []).map((c) => c.text ?? "").join("")}`);
       break;
     }
     case "zotero": {

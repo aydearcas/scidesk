@@ -1558,6 +1558,39 @@
           ],
           "type": "object"
         },
+        "sectionNumbering": {
+          "additionalProperties": false,
+          "description": "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none' (record 0070).",
+          "properties": {
+            "checked": {
+              "description": "Calendar date, ISO 8601.",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            },
+            "quote": {
+              "description": "Literal quote of the source that supports the value.",
+              "minLength": 1,
+              "type": "string"
+            },
+            "source": {
+              "description": "Id of a source listed in `sources`.",
+              "pattern": "^[a-z0-9-]{1,32}$",
+              "type": "string"
+            },
+            "value": {
+              "enum": [
+                "none",
+                "1.",
+                "1"
+              ]
+            }
+          },
+          "required": [
+            "value",
+            "source"
+          ],
+          "type": "object"
+        },
         "sideMarginsCm": {
           "additionalProperties": false,
           "properties": {

@@ -111,9 +111,9 @@ export function ContextMenu({ x, y, items, label, onClose }: { x: number; y: num
   useEffect(() => { focusItem(root.current, "first"); }, []);
   // kept inside the window
   const left = Math.min(x, window.innerWidth - 260);
-  const top = Math.min(y, window.innerHeight - 40 - items.length * 30);
+  const top = Math.max(8, Math.min(y, window.innerHeight - 40 - items.length * 30));
   return (
-    <div ref={root} className="context-menu" style={{ left, top }} aria-label={label}>
+    <div ref={root} className="context-menu" style={{ left, top, maxHeight: window.innerHeight - top - 8 }} aria-label={label}>
       <span id="context-menu-label" className="sr-only">{label}</span>
       <MenuList items={items} labelledBy="context-menu-label" onClose={onClose} />
     </div>

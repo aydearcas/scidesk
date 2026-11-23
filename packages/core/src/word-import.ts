@@ -14,6 +14,7 @@ import { HIGHLIGHT_COLORS, newId, type PMNode } from "@scidesk/formats";
 import type { ProjectFs } from "./fs.ts";
 import { createProject, loadProject, saveDocument, type Project } from "./project.ts";
 import { cleanLangMarks, normalLang, verifyLangMarks, type LangCheck } from "./lang.ts";
+import { roleFromName } from "./sections.ts";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const kids = (n: Node): Element[] => {
@@ -28,21 +29,8 @@ const parse = (xml: string) => {
   return new DOMParser().parseFromString(xml, "text/xml");
 };
 
-const ROLES: [RegExp, string][] = [
-  [/^(introducci[oó]n|introduction|background)$/i, "introduction"],
-  [/^((material(es)?|pacientes|sujetos)( y | o )?(m[eé]todos?)?|m[eé]todos?|metodolog[ií]a|methods?|materials? and methods|patients and methods)$/i, "methods"],
-  [/^(resultados|results)$/i, "results"],
-  [/^(discusi[oó]n|discussion)$/i, "discussion"],
-  [/^(conclusi[oó]n(es)?|conclusions?)$/i, "conclusions"],
-  [/^(discusi[oó]n y conclusi[oó]n(es)?|discussion and conclusions?)$/i, "discussion-conclusions"],
-  [/^(bibliograf[ií]a|referencias( bibliogr[aá]ficas)?|references|bibliography)$/i, "references"],
-  [/^(agradecimientos?|acknowledge?ments?)$/i, "acknowledgements"],
-  [/^(financiaci[oó]n|fuentes? de financiaci[oó]n|funding)$/i, "funding"],
-  [/^(conflictos? de inter[eé]s(es)?|conflicts? of interests?|declaraci[oó]n de conflictos.*|competing interests)$/i, "conflicts"],
-  [/^(responsabilidades [eé]ticas|aspectos [eé]ticos|consideraciones [eé]ticas|ethics.*)$/i, "ethics"],
-  [/^(uso de (la )?(inteligencia artificial|ia)|declaration of generative ai.*|use of ai.*)$/i, "ai-use"],
-];
-const roleOf = (text: string) => ROLES.find(([re]) => re.test(text.trim().replace(/[.:]$/, "")))?.[1] ?? null;
+// the section types by name: shared with the editor (record 0071, sections.ts)
+const roleOf = roleFromName;
 const ABSTRACT = /^(resumen|abstract|summary)$/i;
 const KEYWORDS = /^\s*(palabras? clave|key ?words)\s*[:.]\s*/i;
 export const TABLE_CAPTION = /^\s*(tabla|table)\s+(\d+)\s*[.:\-–—]?\s*/i;

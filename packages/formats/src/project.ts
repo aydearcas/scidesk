@@ -59,6 +59,7 @@ export const Article = Strict({
   referenceTermsLang: Type.Union([Lang, Type.Null()], { description: "Language of the fixed words of the references (En:, editores…); null: the language of the manuscript (record 0026)." }),
   ignoredWarnings: Type.Array(IgnoredWarning, { description: "Warnings marked 'correct' or 'not applicable' (R12)." }),
   ignoredWords: Type.Optional(Type.Array(Type.String({ minLength: 1, maxLength: 100, pattern: "^\\S+$" }), { description: "Words the spell checker does not underline in this article ('Ignore', record 0061); the project dictionary is resources/dictionary.txt." })),
+  sectionNumbering: Type.Optional(Type.Union([Type.Literal("none"), Type.Literal("1."), Type.Literal("1"), Type.Null()], { description: "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none'; null or absent: as the journal profile says, and none when it does not say (record 0070)." })),
   countTableWords: Type.Optional(Type.Union([Type.Boolean(), Type.Null()], { description: "Whether the words of the tables count in the text's word count; null or absent: as the journal profile says, and not when it does not say (record 0056)." })),
 }, { title: "SciDesk article (articles/<folder>/article.json)" });
 

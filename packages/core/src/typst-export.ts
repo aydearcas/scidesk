@@ -15,6 +15,7 @@ import { composite, imageSize, label, noteLetters, numbering, styleResources } f
 import { sameLang } from "./lang.ts";
 import type { Project } from "./project.ts";
 import { pendingCount } from "./checks.ts";
+import { headingRole, sectionNumberingOf, sectionNumbers } from "./sections.ts";
 
 export interface TypstBundle {
   /** main.typ */
@@ -64,6 +65,8 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   if (art.article.journal && !journal) throw new Error(`journal profile ${art.article.journal} is not in resources/journals/`);
   const fmt = journal?.manuscriptFormat;
   const { tree, tables, figures, warnings } = composite(art);
+  // record 0070: the numbers of numbered sections, as in the editor and the Word
+  const sectionNo = sectionNumbers(tree, sectionNumberingOf(project, saved.folder).value);
   const abstract = art.documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
   const rendering = await renderCitations(project.library, [...(abstract ? [abstract] : []), tree], art.article.citationStyle.id, art.article.referenceTermsLang ?? lang, await styleResources(project, art, res));
   const tableNo = numbering(tree, [...tables.keys()]);
@@ -130,7 +133,12 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
 
   // ---------------------------------------------------------------- blocks
   const out: string[] = [];
-  const heading = (n: PMNode, level?: number) => out.push(`${marker(n)}\n${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? around)}`);
+  // record 0070: a numbered section's number before its text (escaped: "2." could start a list)
+  const heading = (n: PMNode, level?: number) => {
+    const num = level === undefined && n.attrs?.id ? sectionNo.get(n.attrs.id as string) : undefined;
+    const prefix = num ? `${num.replace(/\./g, "\\.")} ` : "";
+    out.push(`${marker(n)}\n${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${prefix}${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? around)}`);
+  };
 
   function list(n: PMNode): string {
     const items = (n.content ?? []).map((item) => `[${(item.content ?? []).map((c) => (c.type === "paragraph" ? paragraph(c) : list(c))).join("\n\n")}]`);
@@ -247,7 +255,7 @@ ${notesOf(notes)}
     if (n.type === "title") out.push(`${marker(n)}#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? lang)}])`);
     else if (n.type === "heading") {
       heading(n);
-      if (n.attrs!.role === "references") bibliography();
+      if (headingRole(n) === "references") bibliography();
     } else if (n.type === "paragraph") out.push(paragraph(n));
     else if (n.type === "bulletList" || n.type === "orderedList") out.push(`${marker(n)}${list(n)}`);
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }

@@ -118,6 +118,7 @@ input:not([type=checkbox]):not([type=radio]):not([type=file]), select, textarea 
 .menu-sep { height: 1px; background: var(--line); margin: 4px 2px; }
 .context-menu { position: fixed; z-index: 40; }
 .context-menu .menu-list { position: static; }
+.context-menu { overflow-y: auto; border-radius: 8px; }
 .popover { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; padding: 8px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
 
 .workspace { display: flex; min-height: 0; min-width: 0; position: relative; }
@@ -144,6 +145,13 @@ button.nav-item:hover { background: var(--bars); }
 .nav-item.level-2 { padding-left: 32px; }
 .nav-item.active { background: var(--accent-soft); color: var(--accent); }
 .nav-item.static { cursor: default; }
+/* record 0071: a section dragged in the navigator: the others make room, its slot is dashed, and it follows the pointer */
+.nav-item.shifting { transition: transform 150ms ease; position: relative; }
+.nav-item.dragging { transition: transform 150ms ease; position: relative; z-index: 1; background: var(--accent-soft); outline: 1px dashed var(--accent); outline-offset: -1px; }
+.nav-item.dragging * { visibility: hidden; }
+.nav-drag-ghost { position: fixed; z-index: 60; pointer-events: none; display: flex; align-items: center; gap: 8px; padding: 3px 8px 3px 32px; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--paper); color: var(--accent); font-weight: 600; font-size: 13px; box-shadow: 0 6px 16px rgb(16 24 40 / 0.18); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: rotate(-1deg) scale(1.02); }
+.nav-drag-ghost span { overflow: hidden; text-overflow: ellipsis; }
+body.dragging-section, body.dragging-section * { cursor: grabbing !important; user-select: none; }
 .nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-count { font-variant-numeric: tabular-nums; color: var(--text-3); font-weight: 400; font-size: 12px; white-space: nowrap; }
 .nav-item.level-1 .nav-count { color: var(--text-2); }
@@ -574,6 +582,8 @@ mark { color: #000; padding: 0 1px; }
 /* ---------------------------------------------------------------- the composite document (record 0021)
    the abstract, tables and figures are written in place; numbers and letters are decorations */
 .page .part { margin: calc(18px * var(--zoom)) 0; }
+/* record 0070: a section's number, drawn before its heading (never text) */
+.ProseMirror .section-number { margin-right: 0.4em; user-select: none; }
 /* record 0069: a paragraph's left indent, 1.25 cm a step as in Word */
 .ProseMirror p[data-indent] { margin-left: calc(1.25cm * var(--zoom) * var(--indent)); }
 .page .part-abstract { border-left: 3px solid var(--line); padding: calc(2px * var(--zoom)) 0 calc(2px * var(--zoom)) calc(16px * var(--zoom)); margin: calc(4px * var(--zoom)) 0 calc(26px * var(--zoom)); }
