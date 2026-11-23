@@ -2,10 +2,12 @@
 // the journal's limits (words of the text and of each abstract, references, tables,
 // figures, authors, keywords, characters of the title), the word count by section,
 // pending markers left while writing ("XX", "??", "[REF]"…), and tables, figures and
-// references that are never cited. Three levels; every warning has a stable id, so that it
+// references that are never cited, and what gives the authors away under double-blind
+// review (blinding.ts, R9). Three levels; every warning has a stable id, so that it
 // can be marked "correct" or "not applicable" in article.json and does not come back. No
 // AI and nothing sent anywhere: rules on the project's own files.
 import type { ArticleFile, PMNode } from "@scidesk/formats";
+import { blindingWarnings } from "./blinding.ts";
 import { citationsOf } from "./citations.ts";
 import { composite, numbering } from "./docx-export.ts";
 import { now, saveJson, type Project } from "./project.ts";
@@ -16,7 +18,8 @@ export type CheckCode =
   | "word-limit" | "abstract-word-limit" | "references-limit" | "tables-limit" | "figures-limit" | "figures-tables-limit"
   | "authors-limit" | "authors-advised" | "keywords-limit" | "keywords-min" | "title-characters"
   | "pending" | "uncited-table" | "uncited-figure" | "uncited-reference" | "no-limits" | "own-font"
-  | "missing-declaration" | "missing-section" | "section-order" | "extra-section";
+  | "missing-declaration" | "missing-section" | "section-order" | "extra-section"
+  | "blind-author" | "blind-institution" | "blind-city" | "blind-self-citation" | "blind-ethics" | "blind-section" | "blind-file-name";
 
 export interface CheckWarning {
   /** Stable: the same thing gives the same id after any edit elsewhere. */
@@ -282,6 +285,9 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
     add({ id: `uncited-reference:${r.id}`, code: "uncited-reference", level: "info", params: { reference: `${a?.family ?? a?.literal ?? "?"} ${year ?? ""}`.trim(), title: String(r.csl.title ?? "").slice(0, 80) } });
   }
 
+  // ---------------------------------------------------------------- blinded manuscript (R9, record 0087)
+  for (const w of blindingWarnings(project, art, documents, tree, blockText, figures, figureNo)) add(w);
+
   // ---------------------------------------------------------------- ignored
   const ignored = new Map(art.article.ignoredWarnings.map((w) => [w.warning, w]));
   for (const w of warnings) { const i = ignored.get(w.id); if (i) w.ignored = i; }
@@ -336,4 +342,18 @@ export async function restoreWarning(project: Project, folder: string, id: strin
 /** Pending markers left, for the export for the journal to say so (R12). */
 export function pendingCount(project: Project, folder: string): number {
   return checkArticle(project, folder).warnings.filter((w) => w.code === "pending" && !w.ignored).length;
+}
+
+/**
+ * What the export for the journal says before sending (R12, R9): pending markers left, and
+ * what may give the authors away under double-blind review, not marked as correct.
+ */
+export function journalExportWarnings(project: Project, folder: string): string[] {
+  const active = checkArticle(project, folder).warnings.filter((w) => !w.ignored);
+  const pending = active.filter((w) => w.code === "pending").length;
+  const blinding = active.filter((w) => w.code.startsWith("blind-")).length;
+  return [
+    ...(pending ? [`${pending} pending marker(s) left in the text (XX, ??, [REF]…)`] : []),
+    ...(blinding ? [`${blinding} thing(s) in the text may identify the authors (double-blind review)`] : []),
+  ];
 }

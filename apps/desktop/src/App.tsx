@@ -120,6 +120,8 @@ const docxUrl = (bytes: Uint8Array) => URL.createObjectURL(new Blob([bytes as Bl
 function coreWarning(w: string, t: TFunction): string {
   let m = /^(\d+) pending marker\(s\) left in the text/.exec(w);
   if (m) return t("corePending", { count: Number(m[1]) });
+  m = /^(\d+) thing\(s\) in the text may identify the authors/.exec(w);
+  if (m) return t("coreBlinding", { count: Number(m[1]) });
   if (/^the pasted table has no "Tabla N\." caption/.test(w)) return t("corePasteNoCaption");
   m = /^(\d+) table\(s\) without a "Tabla N\." caption/.exec(w);
   if (m) return t("coreUncaptioned", { count: Number(m[1]) });

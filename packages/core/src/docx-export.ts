@@ -608,9 +608,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     } else warnings.push("numbered sections: the document has no numbering part");
   }
   if (!markers) {
-    // pending markers should not reach the journal (R12); imported here to avoid a cycle
-    const pending = (await import("./checks.ts")).pendingCount(project, folder);
-    if (pending) warnings.push(`${pending} pending marker(s) left in the text (XX, ??, [REF]…)`);
+    // pending markers and what identifies the authors should not reach the journal (R12, R9); imported here to avoid a cycle
+    warnings.push(...(await import("./checks.ts")).journalExportWarnings(project, folder));
   }
   const name = profile === "coauthors" ? "coautores" : "revista";
   const path = `articles/${folder}/exports/${folder}-${name}${snapshot ? `-${snapshot.id}` : ""}.docx`;
