@@ -1,0 +1,58 @@
+# Continuous integration (record 0081): every push and pull request is type-checked, built and
+# tested on a clean Windows and a clean macOS machine. The same steps run locally with `npm run ci`.
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      # Tauri's build script needs the built window (frontendDist) to compile the Rust crate.
+      - name: Build the window
+        run: npm run build -w @scidesk/desktop
+
+      # The core's PDF and SVG tests use this binary when it is there (record 0040, 0068).
+      - name: Build scidesk-pdf
+        run: cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --bin scidesk-pdf
+
+      - name: Test (npm)
+        run: npm test
+
+      - name: Test (Rust)
+        run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml

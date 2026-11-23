@@ -29,7 +29,7 @@
 
 ## Consecuencias
 - **Corte vertical de la fase 1:** medir el camino completo de una tecla a la página nueva en pantalla, con un exportador a Typst incremental que reutilice las citas ya formateadas.
-- **Validar con veraPDF** los PDF/UA y PDF/A antes de ofrecerlos.
+- ~~**Validar con veraPDF** los PDF/UA y PDF/A antes de ofrecerlos.~~ Quitado del plan el 23/11/2026 ([0080](0080-sin-verapdf.md)).
 - **Fuentes:** probar en un equipo sin Calibri, con las fuentes libres incluidas ([0011](0011-fuentes-tipograficas.md)), y vigilar el tamaño del binario, que es de 48 MB sin optimizar.
 - **La caché de memoización** de Typst se vacía periódicamente en sesiones largas.
 - **Quedan por probar** figuras con imagen, notas al pie, ecuaciones y la portada aparte.

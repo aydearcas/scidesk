@@ -58,7 +58,7 @@
 ## Consecuencias
 - **Prueba pendiente en la ventana real de Tauri:** el comando compila y sus piezas pasan las pruebas, pero el botón solo se ha probado en el navegador.
 - **Sigue pendiente de la ficha 0024:**
-  - validar con veraPDF los PDF/UA y PDF/A antes de ofrecerlos en la interfaz;
+  - ~~validar con veraPDF los PDF/UA y PDF/A antes de ofrecerlos en la interfaz~~ (quitado del plan, [0080](0080-sin-verapdf.md));
   - probar en un equipo sin Calibri con las fuentes libres incluidas (hoy SciDesk no instala Carlito);
   - vigilar el tamaño del binario.
 - **La vista previa paginada** (ficha 0004) puede reutilizar esto: la misma fuente con sus marcas por bloque, un `World` vivo en Rust y la página como imagen.
