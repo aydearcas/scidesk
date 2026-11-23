@@ -12,7 +12,7 @@ export type NavTarget =
   | { kind: "block"; block: string }
   | { kind: "part"; id: string; part: "table" | "figure" }
   | { kind: "abstract"; lang: string }
-  /** A table or figure whose file was kept when it left the text: clicking puts it back. */
+  /** A table or figure whose file was kept when it left the text: clicking opens its menu (insert, delete…). */
   | { kind: "unplaced"; src: string }
   | { kind: "authors" }
   | { kind: "credit" }
@@ -20,7 +20,9 @@ export type NavTarget =
 
 const sameTarget = (a: NavTarget | null, b: NavTarget) => !!a && JSON.stringify(a) === JSON.stringify(b);
 
-export function Navigator({ project, folder, report, outline, active, onGo, articles, onSwitchArticle, onNewArticle, sectionNumbers, numbering, onNumbering, onAddSection, onSectionMenu, onMoveSection }: {
+export function Navigator({ project, folder, report, outline, active, onGo, articles, onSwitchArticle, onNewArticle, sectionNumbers, numbering, onNumbering, onAddSection, onSectionMenu, onMoveSection, onPartMenu }: {
+  /** A table or figure's own menu (right click; a click too on one not placed in the text), at x, y. */
+  onPartMenu: (target: Extract<NavTarget, { kind: "part" | "unplaced" }>, x: number, y: number) => void;
   /** Record 0071: "Add section" (the menu of types, at the button) and a section's own menu (right click). */
   onAddSection: (x: number, y: number) => void;
   onSectionMenu: (block: string, x: number, y: number) => void;
@@ -122,7 +124,12 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
         style={extra?.sectionIndex !== undefined && drag ? { transform: `translateY(${dragOffset(extra.sectionIndex)}px)` } : undefined}
         aria-current={sameTarget(active, target) ? "true" : undefined} title={extra?.title} data-section={extra?.section}
         onPointerDown={extra?.section ? (e) => startDrag(e, extra.section!) : undefined}
-        onClick={() => { if (!dragged.current) onGo(target); }}
+        onClick={(e) => {
+          if (dragged.current) return;
+          // one not placed in the text: its menu, never put back in the text at once (the user's request)
+          if (target.kind === "unplaced") { const r = e.currentTarget.getBoundingClientRect(); onPartMenu(target, r.left + 12, r.bottom + 2); }
+          else onGo(target);
+        }}
         onContextMenu={extra?.onMenu ? (e) => { e.preventDefault(); extra.onMenu!(e); } : undefined}>
         {extra?.icon && <Icon name={extra.icon} size={16} />}
         <span className="nav-label">{label}</span>
@@ -134,6 +141,7 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
     { kind: "part", id: p.id, part: kind },
     <>{p.number} · {p.caption || <span className="muted">{t(kind === "table" ? "ui.noTitle" : "ui.noCaption")}</span>}</>,
     p.cited ? undefined : <span className="nav-flag" title={t(kind === "table" ? "ui.uncitedTable" : "ui.uncitedFigure")}><Icon name="review" size={14} className="level-icon review" /><span className="sr-only">{t(kind === "table" ? "ui.uncitedTable" : "ui.uncitedFigure")}</span></span>,
+    { onMenu: (e) => onPartMenu({ kind: "part", id: p.id, part: kind }, e.clientX, e.clientY) },
   );
   const group = (icon: IconName, label: string, right: React.ReactNode, children: React.ReactNode, target?: NavTarget) => (
     <li className="nav-group">
@@ -231,7 +239,8 @@ export function Navigator({ project, folder, report, outline, active, onGo, arti
           {group("table", t("ui.tables"), counts && of(counts.tables, limits.tables, ` ${t("ui.of")} `), outline?.tables.length ? outline.tables.map((p) => part(p, "table")) : <li className="nav-empty">{t("ui.noTables")}</li>)}
           {group("figure", t("ui.figures"), counts && of(counts.figures, limits.figures, ` ${t("ui.of")} `), outline?.figures.length ? outline.figures.map((p) => part(p, "figure")) : <li className="nav-empty">{t("ui.noFigures")}</li>)}
           {!!outline?.unplaced.length && group("files", t("ui.unplaced"), <span className="nav-count">{n(outline.unplaced.length)}</span>,
-            outline.unplaced.map((u) => item({ kind: "unplaced", src: u.src }, <>{u.caption || <span className="muted">{u.src}</span>}</>, <Icon name={u.kind} size={14} />, { title: `${t("ui.placeAgain")} · ${u.src}` })))}
+            outline.unplaced.map((u) => item({ kind: "unplaced", src: u.src }, <>{u.caption || <span className="muted">{u.src}</span>}</>, <Icon name={u.kind} size={14} />,
+              { title: u.src, onMenu: (e) => onPartMenu({ kind: "unplaced", src: u.src }, e.clientX, e.clientY) })))}
           {group("users", t("ui.authorsGroup"), <span className="nav-count">{n(art.authors.authors.length)}</span>, null, { kind: "authors" })}
           {group("send", t("ui.submissionDocs"), null, <>
             {item({ kind: "title-page" }, t("ui.titlePage"), <span className="nav-auto">{t("ui.automatic")}</span>)}

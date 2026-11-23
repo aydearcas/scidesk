@@ -115,6 +115,38 @@ test("Ir in the warnings scrolls only the sheet and selects the pending marker (
   expect(await page.evaluate(() => [...document.querySelectorAll("*")].filter((e) => e.scrollTop > 0 && !e.classList.contains("desk")).length)).toBe(0);
 });
 
+test("a table in the navigator: its menu; out of the text, a click opens its menu, never inserts it", async ({ page }) => {
+  const { editor } = await openDemo(page);
+  const nav = page.locator("nav.navigator");
+  await nav.locator("button.nav-item", { hasText: "Características basales" }).click({ button: "right" });
+  const menu = page.getByRole("menu");
+  await expect(menu.getByRole("menuitem", { name: "Abrir en su pestaña" })).toBeVisible();
+  await menu.getByRole("menuitem", { name: "Eliminar tabla del texto" }).click();
+  await expect(editor.locator("figure.part-table")).toHaveCount(0);
+  // now "not placed in the text": a click shows its menu and the text stays as it is
+  const unplaced = nav.locator("li.nav-group", { hasText: "Sin colocar en el texto" }).locator("button.nav-item", { hasText: "Características basales" });
+  await unplaced.click();
+  await expect(page.getByRole("menuitem", { name: /Insertar en el texto/ })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: /Eliminar del proyecto/ })).toBeVisible();
+  await expect(editor.locator("figure.part-table")).toHaveCount(0);
+  await page.getByRole("menuitem", { name: /Insertar en el texto/ }).click();
+  await expect(editor.locator("figure.part-table")).toHaveCount(1);
+});
+
+test("the whole table selected: its menu acts on the table and types nothing over it", async ({ page }) => {
+  const { editor } = await openDemo(page);
+  const table = editor.locator("figure.part-table");
+  await table.hover();
+  await table.locator(".part-handle").click();
+  await table.click({ button: "right", position: { x: 200, y: 60 } });
+  const menu = page.getByRole("menu");
+  await expect(menu.getByRole("menuitem", { name: "Abrir en su pestaña" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "Eliminar tabla del texto" })).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: /Insertar cita|Marcar un pendiente/ })).toHaveCount(0);
+  await menu.getByRole("menuitem", { name: "Abrir en su pestaña" }).click();
+  await expect(page.locator(".table-tab-body")).toBeVisible();
+});
+
 test("Tab in the last cell of a table adds a row", async ({ page }) => {
   const { editor } = await openDemo(page);
   const table = editor.locator("figure.part-table table");

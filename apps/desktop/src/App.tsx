@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
-  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, deletePartFile, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, omitsAuthor, documentFontsOf, setDocumentFont, fontList, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -1511,6 +1511,40 @@ export function App() {
       { label: t("ui.sections.removeHeading"), onSelect: () => removeHeading(editor, index) },
     ];
   };
+  /**
+   * A table or figure's menu in the navigator (the user's request after the phase 1 test). In
+   * the text: go to it, open it in its tab, take it out of the text. Not placed in the text:
+   * put it back at the cursor, or delete its file (a snapshot first), never at a mere click.
+   */
+  const partMenuItems = (target: { kind: "part"; id: string; part: "table" | "figure" } | { kind: "unplaced"; src: string }, x: number, y: number): MenuEntry[] => {
+    if (target.kind === "part") {
+      const table = target.part === "table";
+      return [
+        { label: t(table ? "ui.partMenu.goToTable" : "ui.partMenu.goToFigure"), onSelect: () => onNav(target) },
+        ...(table ? [{ label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(target.id) }] : []),
+        "-",
+        { label: t(table ? "ui.removeTableFromText" : "ui.partMenu.removeFigureFromText"), onSelect: () => removePart(target.id) },
+      ];
+    }
+    const { src } = target;
+    return [
+      { label: t("ui.partMenu.insert"), strong: true, onSelect: () => { openTab(docTab); placeAgain(src); } },
+      "-",
+      { label: t("ui.partMenu.delete"), onSelect: () => setFloatMenu({ x, y, label: src, items: [
+        { heading: t("ui.partMenu.confirm", { path: src.split("/").pop() }) },
+        { label: t("ui.partMenu.deleteNow"), onSelect: () => void deleteUnplaced(src) },
+        { label: t("ui.partMenu.cancel"), onSelect: () => {} },
+      ] }) },
+    ];
+  };
+  const deleteUnplaced = run(async (src: string) => {
+    if (!project || !article) return;
+    await save();
+    const snap = await saveSnapshot(project, article.folder, t("ui.partMenu.confirm", { path: src }));
+    await deletePartFile(project, article.folder, src);
+    await recompute();
+    setMessage(t("ui.partMenu.deleted", { path: src, snapshot: snap.id }));
+  });
   // record 0076: the journal's table style, the default of tables without their own
   const journalTableStyle = (project && article?.article.journal ? project.journals.get(article.article.journal)?.manuscriptFormat?.tableStyle?.value : null) ?? null;
   useEffect(() => { if (editor && !editor.isDestroyed) setJournalTableStyle(editor.view, journalTableStyle); }, [editor, journalTableStyle]);
@@ -1558,7 +1592,10 @@ export function App() {
     const sel = view.state.selection;
     const onCitation = sel instanceof NodeSelection && sel.node.type.name === "citation";
     const exec = (cmd: "cut" | "copy") => { view.focus(); document.execCommand(cmd); };
-    const part = inTab ? null : partAround(sel.$from);
+    // a whole table or figure selected (its handle, or a click on its edge) is that part too
+    const part = inTab ? null
+      : sel instanceof NodeSelection && /^(table|figure)Part$/.test(sel.node.type.name) ? { node: sel.node, pos: sel.from }
+      : partAround(sel.$from);
     const inTable = isInTable(view.state);
     const cmd = (key: string, c: TableCommand): MenuEntry => ({ label: t(`ui.${key}`), onSelect: () => { c(view.state, view.dispatch); view.focus(); }, disabled: !c(view.state) });
     const tableItems: MenuEntry[] = inTable ? [
@@ -1616,6 +1653,16 @@ export function App() {
     // record 0079: in a table (of the text or in its tab), the items in titled groups, as the user asked
     if (inTab || part?.node.type.name === "tablePart") {
       const tableId = part ? String(part.node.attrs.id) : null;
+      // the whole table selected: only what acts on the table (a citation, a note or a pending
+      // marker would be typed over the selection and take the table away)
+      if (!inTab && tableId && sel instanceof NodeSelection) return [
+        { label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(tableId) },
+        { label: t("ui.removeTableFromText"), onSelect: () => removePart(tableId) },
+        "-",
+        { label: t("ui.insertTable"), onSelect: () => void insertTable() },
+        "-",
+        ...clipboard,
+      ];
       return [
         ...(inTab ? [] : spellItems),
         { heading: t("ui.tableMenu.edit") },
@@ -1636,6 +1683,12 @@ export function App() {
         ...clipboard,
       ];
     }
+    // the whole figure selected: as with a table, nothing that would be typed over it
+    if (!inTab && part?.node.type.name === "figurePart" && sel instanceof NodeSelection) return [
+      { label: t("ui.partMenu.removeFigureFromText"), onSelect: () => removePart(String(part.node.attrs.id)) },
+      "-",
+      ...clipboard,
+    ];
     return [
       ...(inTab ? [] : spellItems),
       ...numberItem,
@@ -1745,6 +1798,7 @@ export function App() {
               ? <Navigator project={project!} folder={article!.folder} report={report} outline={outline} active={navActive} onGo={onNav}
                   sectionNumbers={sectionNos} numbering={sectionNumbering} onNumbering={(v) => void changeNumbering(v)}
                   onAddSection={(x, y) => setFloatMenu({ x, y, items: addItems(), label: t("ui.sections.add") })}
+                  onPartMenu={(target, x, y) => setFloatMenu({ x, y, items: partMenuItems(target, x, y), label: target.kind === "unplaced" ? target.src : t(target.part === "table" ? "ui.tables" : "ui.figures") })}
                   onMoveSection={(block, target, after) => {
                     if (!editor) return;
                     const i = headingIndex(editor.state.doc, block), j = headingIndex(editor.state.doc, target);

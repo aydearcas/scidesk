@@ -118,13 +118,19 @@ export async function addTablePart(project: Project, folder: string, part: PMNod
 }
 
 /**
- * Undoing a paste (phase 1 test): the tables it created leave the project, file included, as
- * if never pasted. Only for files the paste itself created; a table taken out of the text in
- * any other way keeps its file (rule 4, record 0021).
+ * A table or figure out of the project: its .scitable or .scifigure leaves the article and
+ * the disk. For what the user asked to delete (an unplaced table, with a snapshot first: the
+ * caller keeps one) and for a paste undone. A figure's image file stays, so that the
+ * snapshot can bring the figure back. Taking a table out of the text keeps its file (rule 4,
+ * record 0021): that is not this.
  */
-export async function discardPastedPart(project: Project, folder: string, path: string): Promise<void> {
+export async function deletePartFile(project: Project, folder: string, path: string): Promise<void> {
   const art = project.articles.find((a) => a.folder === folder);
   if (!art) throw new Error(`no article ${folder}`);
+  if (!/\.(scitable|scifigure)$/.test(path)) throw new Error(`not a table or figure: ${path}`);
   art.documents.delete(path);
   await project.fs.remove(`articles/${folder}/${path}`);
 }
+
+/** Undoing a paste (phase 1 test): the tables it created leave the project, as if never pasted. */
+export const discardPastedPart = deletePartFile;
