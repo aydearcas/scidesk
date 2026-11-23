@@ -44,6 +44,18 @@ describe("title page", () => {
     expect(m.acknowledged).toEqual(["Grupo de Trabajo Ficticio de Artrosis"]);
   });
 
+  it("lists the CRediT roles only when the article asks for it (record 0085)", async () => {
+    const p = await kneeOa();
+    const art = p.articles[0];
+    art.authors.authors[0].credit = [{ role: "methodology" }, { role: "conceptualization", degree: "lead" }];
+    expect(titlePageModel(p, "main").contributions).toEqual([]);
+    expect(await textOf((await exportTitlePage(p, "main", res)).bytes)).not.toContain("CRediT");
+    art.authors.creditOnTitlePage = true;
+    expect(titlePageModel(p, "main").contributions[0]).toEqual({ name: "Lucía Herrera Gil", roles: ["Conceptualización (principal)", "Metodología"] });
+    const text = await textOf((await exportTitlePage(p, "main", res)).bytes);
+    expect(text).toContain("Contribuciones de los autores (CRediT)Lucía Herrera Gil: Conceptualización (principal), Metodología.");
+  });
+
   it("writes the DOCX, with one conflicts sentence when every author declares the same, and no metadata", async () => {
     const p = await kneeOa();
     const t = await exportTitlePage(p, "main", res);

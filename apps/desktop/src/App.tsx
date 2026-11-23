@@ -59,6 +59,7 @@ import { forgetRecent, loadRecent, PREVIEW_PLACE, rememberProject, roundOf, upda
 import { setJournalTableStyle } from "./table-lines.ts";
 import { partDrag } from "./part-drag.ts";
 import { insertPageBreak } from "./page-break.ts";
+import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
 import { revealIn } from "./reveal.ts";
 
 const BODY = "manuscript/article.scidoc";
@@ -84,6 +85,16 @@ const PAGED = typeof CSS !== "undefined" && CSS.supports("column-wrap", "wrap") 
 const SHEET_GAP = 16;
 /** The sheet's side margins, 2.5 cm (record 0046), in CSS pixels at 100 %. */
 const MARGIN_PX = (25 / 25.4) * 96;
+/**
+ * Record 0085: "fit" with little room (the right panel open on a laptop) fills the width with
+ * the text and 1 cm of each margin, as Word's "text width", up to 100 %; the rest of the
+ * margins is cut evenly on both sides. With room for the whole sheet at 100 % or more, the sheet.
+ */
+export function fitZoomFor(room: number): number {
+  const sheet = room / A4_PX;
+  const text = room / (A4_PX - 2 * (MARGIN_PX - 96 / 2.54));
+  return Math.floor(Math.min(200, Math.max(50, (sheet >= 1 ? sheet : Math.min(1, text)) * 100)));
+}
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 // file:<path>: a table not placed in the text, in an editor of its own over its file
@@ -352,6 +363,7 @@ export function App() {
   useEffect(() => {
     document.documentElement.style.setProperty("--ph-title", JSON.stringify(t("ui.titlePlaceholder")));
     document.documentElement.style.setProperty("--page-break-label", JSON.stringify(t("ui.pageBreak")));
+    landscapeText.label = t("ui.landscape.label");
   }, [t]);
   useEffect(() => {
     partContext.uncited = t("ui.notCitedFlag");
@@ -434,9 +446,16 @@ export function App() {
   // record 0074: the document font dialog, and a tick to re-read article.json after it
   const [docFontOpen, setDocFontOpen] = useState(false);
   const [fontTick, setFontTick] = useState(0);
+  // record 0085: whether the blocks of the selection are on landscape pages (null: none can be)
+  const [cursorLandscape, setCursorLandscape] = useState<boolean | null>(null);
+  useEffect(() => { if (editor) refreshLandscapeLabels(editor.view); }, [editor, t]);
   useEffect(() => {
     if (!editor) return;
-    const onSel = () => { const l = langAtCursor(editor.state); setCursorLang((old) => (old && old.lang === l.lang && old.fragment === l.fragment ? old : l)); };
+    const onSel = () => {
+      const l = langAtCursor(editor.state);
+      setCursorLang((old) => (old && old.lang === l.lang && old.fragment === l.fragment ? old : l));
+      setCursorLandscape(landscapeState(editor.state));
+    };
     onSel();
     editor.on("selectionUpdate", onSel);
     editor.on("transaction", onSel);
@@ -912,9 +931,9 @@ export function App() {
     await setCitationStyle(project, article.folder, id);
     await recompute();
   });
-  const ignore = async (w: CheckWarning, status: "correct" | "not-applicable", note: string) => {
+  const ignore = async (w: CheckWarning | CheckWarning[], status: "correct" | "not-applicable", note: string) => {
     if (!project || !article) return;
-    await ignoreWarning(project, article.folder, w.id, status, note);
+    await ignoreWarning(project, article.folder, Array.isArray(w) ? w.map((x) => x.id) : w.id, status, note);
     await recompute();
   };
   /** Record 0056: whether the tables' words count in this article (null: as the journal says). */
@@ -1166,7 +1185,7 @@ export function App() {
     const measure = () => {
       const style = getComputedStyle(desk);
       const room = desk.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 2;
-      if (room > 0) setFitZoom(Math.floor(Math.min(200, Math.max(50, (room / A4_PX) * 100))));
+      if (room > 0) setFitZoom(fitZoomFor(room));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -1186,6 +1205,9 @@ export function App() {
     ro.observe(desk);
     return () => ro.disconnect();
   }, [project]);
+  /** Record 0085: the sheet is wider than the desk ("fit" by the text): its margins are cut evenly. */
+  // (never when the text itself would be cut: then the desk scrolls sideways, as before)
+  const cropSheet = settings.zoom === "fit" && deskWidth > 0 && (A4_PX * zoom) / 100 > deskWidth && ((A4_PX - 2 * MARGIN_PX) * zoom) / 100 <= deskWidth;
   const perRow = PAGED ? Math.max(1, Math.min(6, Math.floor((deskWidth + SHEET_GAP) / ((A4_PX * zoom) / 100 + SHEET_GAP)))) : 1;
   /**
    * Zoom keeps still what is under the pointer (Ctrl + wheel) or at the centre of the desk
@@ -1368,6 +1390,8 @@ export function App() {
   ];
   const noProject = !project;
   const pageBreakHere = (blank: boolean) => { if (!editor) return; insertPageBreak(blank)(editor.state, editor.view.dispatch); editor.view.focus(); };
+  /** Record 0085: the blocks of the selection on landscape pages, or back (on: by default, the opposite). */
+  const landscapeHere = (on?: boolean) => { if (!editor) return; setLandscape(on)(editor.state, editor.view.dispatch); editor.view.focus(); };
   const menus: MenuDef[] = [
     { id: "file", label: t("ui.menu.file"), items: [
       { label: t("ui.newArticle"), shortcut: keys("newArticle"), onSelect: () => void newArticle() },
@@ -1402,6 +1426,7 @@ export function App() {
       // record 0078: as Word's Insert › Blank page and Page break
       { label: t("ui.blankPage"), onSelect: () => pageBreakHere(true), disabled: noProject || !isDoc(tab) },
       { label: t("ui.pageBreak"), shortcut: keys("pageBreak"), onSelect: () => pageBreakHere(false), disabled: noProject || !isDoc(tab) },
+      { label: t("ui.landscape.page"), title: t("ui.landscape.hint"), checked: cursorLandscape === true, onSelect: () => landscapeHere(), disabled: noProject || !isDoc(tab) || cursorLandscape === null },
       "-",
       { label: t("ui.pending"), onSelect: () => editor?.chain().focus().insertContent(t("ui.pendingMarker")).run(), disabled: noProject },
     ] },
@@ -1533,9 +1558,15 @@ export function App() {
   const partMenuItems = (target: { kind: "part"; id: string; part: "table" | "figure" } | { kind: "unplaced"; src: string }, x: number, y: number): MenuEntry[] => {
     if (target.kind === "part") {
       const table = target.part === "table";
+      // record 0085: its landscape page, from here too
+      let placed: { pos: number; on: boolean } | null = null;
+      editor?.state.doc.forEach((n, pos) => { if (!placed && n.attrs.id === target.id && /^(table|figure)(Part|Ref)$/.test(n.type.name)) placed = { pos, on: !!n.attrs.landscape }; });
+      const at = placed as { pos: number; on: boolean } | null;
       return [
         { label: t(table ? "ui.partMenu.goToTable" : "ui.partMenu.goToFigure"), onSelect: () => onNav(target) },
         ...(table ? [{ label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(target.id) }] : []),
+        ...(at && editor ? [{ label: t(table ? "ui.landscape.table" : "ui.landscape.figure"), title: t("ui.landscape.hint"), checked: at.on,
+          onSelect: () => editor.view.dispatch(editor.state.tr.setNodeAttribute(at.pos, "landscape", at.on ? null : true)) }] : []),
         "-",
         { label: t(table ? "ui.removeTableFromText" : "ui.partMenu.removeFigureFromText"), onSelect: () => removePart(target.id) },
       ];
@@ -1662,6 +1693,13 @@ export function App() {
       { label: t("ui.removeCitation"), onSelect: () => { view.dispatch(view.state.tr.deleteSelection()); view.focus(); } },
     ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }];
     const pendingItem: MenuEntry = { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } };
+    // record 0085: the page of the table, the figure or the selected text in landscape
+    const onLandscape = inTab ? null : landscapeState(view.state);
+    const landscapeItem: MenuEntry[] = onLandscape === null ? [] : [{
+      label: t(part?.node.type.name === "tablePart" ? "ui.landscape.table" : part?.node.type.name === "figurePart" ? "ui.landscape.figure" : "ui.landscape.page"),
+      title: t("ui.landscape.hint"), checked: onLandscape,
+      onSelect: () => { setLandscape()(view.state, view.dispatch); view.focus(); },
+    }];
     const clipboard: MenuEntry[] = [
       { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
       { label: t("ui.copy"), shortcut: shortcutLabel("Mod-c", i18n.language), onSelect: () => exec("copy"), disabled: sel.empty },
@@ -1674,6 +1712,7 @@ export function App() {
       // marker would be typed over the selection and take the table away)
       if (!inTab && tableId && sel instanceof NodeSelection) return [
         { label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(tableId) },
+        ...landscapeItem,
         { label: t("ui.removeTableFromText"), onSelect: () => removePart(tableId) },
         "-",
         { label: t("ui.insertTable"), onSelect: () => void insertTable() },
@@ -1694,6 +1733,7 @@ export function App() {
         "-",
         ...(tableId ? [
           { label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(tableId) },
+          ...landscapeItem,
           { label: t("ui.removeTableFromText"), onSelect: () => removePart(tableId) },
           "-" as const,
         ] : []),
@@ -1702,6 +1742,7 @@ export function App() {
     }
     // the whole figure selected: as with a table, nothing that would be typed over it
     if (!inTab && part?.node.type.name === "figurePart" && sel instanceof NodeSelection) return [
+      ...landscapeItem,
       { label: t("ui.partMenu.removeFigureFromText"), onSelect: () => removePart(String(part.node.attrs.id)) },
       "-",
       ...clipboard,
@@ -1722,6 +1763,7 @@ export function App() {
       // at the cursor, or after the table or figure the cursor is in (as Insert › Insert table)
       ...(inTab ? [] : [{ label: t("ui.insertTable"), onSelect: () => void insertTable() }]),
       { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } },
+      ...(landscapeItem.length ? ["-" as const, ...landscapeItem] : []),
       "-",
       { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
       { label: t("ui.copy"), shortcut: shortcutLabel("Mod-c", i18n.language), onSelect: () => exec("copy"), disabled: sel.empty },
@@ -1851,7 +1893,7 @@ export function App() {
 
           {/* the manuscript stays mounted: switching tabs never rebuilds the editor */}
           <div className={`tab-body manuscript-tab${settings.preview && project ? " with-preview" : ""}`} hidden={!project || !isDoc(tab)}>
-            <div className="desk" ref={deskRef}>
+            <div className={`desk${cropSheet ? " crop" : ""}`} ref={deskRef}>
               {/* record 0075: the table bar, while the cursor is in a table */}
               {editor && project && <TableContextBar editor={editor} scroller={deskRef} onOpenTab={openTableTab}
                 label={(id) => t("ui.tableN", { n: outline?.tables.find((x) => x.id === id)?.number ?? "?" })} />}
@@ -1979,6 +2021,7 @@ export function App() {
       )}
       <StatusBar project={project} article={article} report={report} saving={saving} dirty={dirty} lastSaved={lastSaved}
         cursorLang={cursorLang} onLang={(l) => editor && setLanguage(editor, l)}
+        landscape={isDoc(tab) ? cursorLandscape : null} onLandscape={(on) => landscapeHere(on)}
         onStyle={(id) => void chooseStyle(id)} onChecks={() => showRight("warnings")} onWords={() => { setShowSections(true); showRight("warnings"); }}
         zoom={{ value: zoom, fit: settings.zoom === "fit", set: setZoom, step: zoomStep }}
         fontMode={settings.fontMode} onFontMode={() => updateSettings({ fontMode: settings.fontMode === "free" ? "journal" : "free" })}

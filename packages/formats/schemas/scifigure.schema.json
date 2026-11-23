@@ -126,6 +126,17 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -236,6 +247,17 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -763,6 +785,17 @@
               "pattern": "^f-[a-z0-9]{1,24}$",
               "type": "string"
             },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "src": {
               "pattern": "^figures/[^/]+\\.scifigure$",
               "type": "string"
@@ -898,6 +931,17 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "lang": {
               "anyOf": [
@@ -1408,6 +1452,17 @@
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
             },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "start": {
               "minimum": 0,
               "type": "integer"
@@ -1454,6 +1509,17 @@
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           },
           "required": [
@@ -1510,6 +1576,17 @@
                   "maximum": 8,
                   "minimum": 1,
                   "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
                 },
                 {
                   "type": "null"
@@ -3007,6 +3084,17 @@
               "description": "Id of a table (its part and its tableRef).",
               "pattern": "^t-[a-z0-9]{1,24}$",
               "type": "string"
+            },
+            "landscape": {
+              "anyOf": [
+                {
+                  "description": "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             },
             "src": {
               "pattern": "^tables/[^/]+\\.scitable$",

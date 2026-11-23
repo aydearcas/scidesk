@@ -5,7 +5,7 @@ import type { PMNode } from "@scidesk/formats";
 import { MemoryFs } from "../src/fs.ts";
 import { createDemoProject } from "../src/demo.ts";
 import { loadProject, saveDocument } from "../src/project.ts";
-import { addTablePart, discardPastedPart, tablePartFromPaste, type PastedCell } from "../src/paste-table.ts";
+import { addTablePart, discardPastedPart, splitNotes, tablePartFromPaste, type PastedCell } from "../src/paste-table.ts";
 import { articleOutline } from "../src/outline.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { checkArticle } from "../src/checks.ts";
@@ -86,5 +86,28 @@ describe("pasted tables", () => {
     // and the next paste takes the same name again
     expect((await addTablePart(p, "main", tablePartFromPaste(pasted()).part)).path).toBe(path);
     expect((await loadProject(fs)).articles[0].documents.has(path)).toBe(true);
+  });
+  it("split the notes Word writes in one paragraph, and the calls written together (record 0085)", () => {
+    const t = pasted();
+    t.rows[2][1] = cell([{ text: "61" }, { text: "a,b,c", sup: true }]);
+    t.rows[3][1] = cell([{ text: "4,1" }, { text: "b", sup: true }]);
+    t.notes = [[{ text: "CI: intervalo de confianza; MD: diferencia media  a. Ensayo abierto sin cegamiento.  b. Población heterogénea (55,5 % con DM)  c. El IC95% cruza el umbral de no efecto." }]];
+    const { part, warnings } = tablePartFromPaste(t);
+    expect(warnings).toEqual([]);
+    const notes = part.content!.filter((n) => n.type === "tableNote");
+    expect(notes.map((n) => [n.attrs!.kind, n.content!.map((c) => c.text).join("")])).toEqual([
+      ["general", "CI: intervalo de confianza; MD: diferencia media"],
+      ["specific", "Ensayo abierto sin cegamiento."],
+      ["specific", "Población heterogénea (55,5 % con DM)"],
+      ["specific", "El IC95% cruza el umbral de no efecto."],
+    ]);
+    const cellContent = part.content![1].content![2].content![1].content![0].content!;
+    expect(cellContent.map((c) => c.type === "noteRef" ? `→${notes.findIndex((n) => n.attrs!.id === c.attrs!.target)}` : c.text)).toEqual(["61", "→1", ",", "→2", ",", "→3"]);
+  });
+  it("keep a letter inside a sentence, out of order or not called, as text", () => {
+    const calls = new Set(["a", "b"]);
+    expect(splitNotes([[{ text: "a. Uno con el grupo c. dentro.  b. Dos." }]], calls).map((n) => n.letter)).toEqual(["a", "b"]);
+    expect(splitNotes([[{ text: "Abreviaturas: DM, dermatomiositis.  b. No hay a." }]], calls).map((n) => n.letter)).toEqual([null]);
+    expect(splitNotes([[{ text: "a", sup: true }, { text: " Uno." }], [{ text: "b", sup: true }, { text: " Dos." }]], new Set()).map((n) => [n.letter, n.runs.map((r) => r.text).join("")])).toEqual([["a", "Uno."], ["b", "Dos."]]);
   });
 });

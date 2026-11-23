@@ -46,7 +46,8 @@ export function composeArticle(art: ArticleData): Composed {
       content.push(structuredClone(n));
       continue;
     }
-    content.push({ ...structuredClone(part), attrs: { ...part.attrs, src }, ...(n.marks?.length ? { marks: structuredClone(n.marks) } : {}) });
+    // record 0085: a landscape page belongs to the place in the text, not to the file
+    content.push({ ...structuredClone(part), attrs: { ...part.attrs, src, ...(n.attrs!.landscape ? { landscape: true } : {}) }, ...(n.marks?.length ? { marks: structuredClone(n.marks) } : {}) });
   }
   putAbstract();
   return { doc: { type: "doc", content }, warnings };
@@ -90,10 +91,10 @@ export function splitArticle(doc: PMNode, art: ArticleData): Map<string, Documen
     }
     const refType = REF_OF_PART[n.type];
     if (!refType) { body.push(n); continue; }
-    const { src, ...attrs } = n.attrs as Record<string, unknown> & { src: string };
+    const { src, landscape, ...attrs } = n.attrs as Record<string, unknown> & { src: string };
     const { marks, ...rest } = n;
     out.set(src, envelope(art, src, n.type === "tablePart" ? "table" : "figure", { ...rest, attrs } as PMNode, reg));
-    body.push({ type: refType, attrs: { id: attrs.id, src }, ...(marks?.length ? { marks } : {}) });
+    body.push({ type: refType, attrs: { id: attrs.id, src, ...(landscape ? { landscape: true } : {}) }, ...(marks?.length ? { marks } : {}) });
   }
   const bodyFile = art.documents.get(BODY_PATH);
   out.set(BODY_PATH, envelope(art, BODY_PATH, bodyFile?.documentType ?? "article", { type: "doc", content: body }, reg));

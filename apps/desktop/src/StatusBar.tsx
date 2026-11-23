@@ -9,7 +9,10 @@ import { LevelIcon } from "./icons.tsx";
 export interface ZoomControl { value: number; fit: boolean; set: (z: "fit" | number) => void; step: (dir: 1 | -1) => void }
 const ZOOMS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
 
-export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home, cursorLang, onLang }: {
+export function StatusBar({ project, article, report, saving, dirty, lastSaved, onStyle, onChecks, onWords, zoom, fontMode, onFontMode, home, cursorLang, onLang, landscape = null, onLandscape }: {
+  /** Record 0085: the orientation of the pages of the selection (null: none of it can change). */
+  landscape?: boolean | null;
+  onLandscape?: (on: boolean) => void;
   /** Record 0060: the language at the cursor (a fragment's own, or its paragraph's), and changing it. */
   cursorLang?: { lang: string; fragment: boolean } | null;
   onLang?: (lang: string) => void;
@@ -76,6 +79,16 @@ export function StatusBar({ project, article, report, saving, dirty, lastSaved, 
           <option value="en-GB">{langName("en-GB")}</option>
         </select>
       </label>
+      {landscape !== null && (
+        <label className="status-item status-select" title={t("ui.landscape.hint")}>
+          <span className="sr-only">{t("ui.landscape.status")}</span>
+          <span aria-hidden="true">{t(landscape ? "ui.landscape.on" : "ui.landscape.off")}</span>
+          <select value={landscape ? "landscape" : "portrait"} onChange={(e) => onLandscape?.(e.target.value === "landscape")} aria-label={t("ui.landscape.status")}>
+            <option value="portrait">{t("ui.landscape.off")}</option>
+            <option value="landscape">{t("ui.landscape.on")}</option>
+          </select>
+        </label>
+      )}
       <button className={`status-item${limit !== undefined && words > limit ? " over" : ""}`} onClick={onWords} title={t("bySection")}>
         {t("ui.wordsOf", { words: words.toLocaleString(i18n.language), limit: limit !== undefined ? ` / ${limit.toLocaleString(i18n.language)}` : "" })}
       </button>

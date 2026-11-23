@@ -26,6 +26,9 @@
   --chrome-hover: rgb(255 255 255 / 0.15);
   --chrome-active: rgb(255 255 255 / 0.24);
   --band: #DCEDF0;
+  /* record 0085: the blocks on landscape pages */
+  --landscape-tint: #F2F8F9;
+  --landscape-bar: #9CCAD3;
   --band-hover: #CBE3E8;
   --band-ink: #084F5E;
   --band-ink-2: #3D6E78;
@@ -355,13 +358,18 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 .badge.correct { background: #E4F3EA; color: var(--correct); }
 
 /* ---- new-article wizard (sheet 7, record 0048) */
-.wizard-backdrop { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-start; padding: 6vh 16px 16px; background: rgb(16 24 40 / 0.28); overflow: auto; }
-.wizard { width: min(1120px, 100%); background: var(--paper); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
-.wizard-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.wizard-backdrop { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-start; padding: min(6vh, 48px) 16px 16px; background: rgb(16 24 40 / 0.28); overflow: auto; }
+/* record 0085: it fits a laptop (1366 x 768): the head and the buttons stay in sight and
+   the middle and the plan scroll on their own when they do not fit */
+.wizard { width: min(1120px, 100%); max-height: calc(100vh - min(6vh, 48px) - 16px); background: var(--paper); border-radius: 10px; box-shadow: var(--shadow); display: flex; flex-direction: column; }
+.wizard-head, .wizard-foot { flex: none; }
+.wizard-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); }
 .wizard-head h2 { margin: 0; font-size: 18px; }
-.wizard-body { display: grid; grid-template-columns: 210px minmax(0, 1fr) 280px; min-height: 520px; }
+.wizard-body { flex: 1 1 auto; display: grid; grid-template-columns: 210px minmax(0, 1fr) 280px; min-height: min(520px, calc(100vh - 190px)); overflow: hidden; }
+.wizard-body > * { min-height: 0; overflow-y: auto; }
 @media (max-width: 900px) {
-  .wizard-body { grid-template-columns: minmax(0, 1fr); }
+  .wizard-body { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .wizard-body > * { overflow: visible; }
   .wizard-steps { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
   .wizard-plan { border-left: 0; border-top: 1px solid var(--line); }
 }
@@ -466,6 +474,9 @@ ins { color: var(--ins); text-decoration: underline; } del { color: var(--del); 
 .check-actions { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .check-actions input { flex: 1; min-width: 100px; }
 .check-actions .btn { height: 26px; font-size: 12px; }
+/* record 0085: every "not cited" of a kind at once */
+.check.bulk { background: var(--panel); border-style: dashed; }
+.credit-title-page { margin-top: 10px; }
 
 /* the status bar */
 .statusbar { display: flex; align-items: center; gap: 2px; padding: 0 6px; background: var(--bars); border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; }
@@ -735,6 +746,13 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; user-sel
 .page .page-break-label::before { content: var(--page-break-label, "Salto de página"); white-space: nowrap; }
 .page .page-break.ProseMirror-selectednode { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; color: var(--accent); }
 .paper.paged .page .page-break { break-after: column; }
+/* record 0085: landscape pages: a tinted band with a bar in the left margin, and a label that
+   opens the stretch; with pages, the stretch starts and ends on a new sheet */
+.page .landscape { background: var(--landscape-tint); box-shadow: calc(-6px * var(--zoom)) 0 0 0 var(--landscape-bar); }
+.page .landscape-label { display: flex; align-items: center; gap: calc(6px * var(--zoom)); margin: calc(4px * var(--zoom)) 0 0; padding: calc(2px * var(--zoom)) calc(6px * var(--zoom)); background: var(--landscape-tint); box-shadow: calc(-6px * var(--zoom)) 0 0 0 var(--landscape-bar); color: var(--accent); font: 600 calc(10.5px * var(--zoom))/1.4 var(--ui-font); letter-spacing: 0.02em; user-select: none; -webkit-user-select: none; cursor: default; }
+.page .landscape-label::before { content: ""; width: calc(14px * var(--zoom)); height: calc(10px * var(--zoom)); border: calc(1.5px * var(--zoom)) solid currentColor; border-radius: 2px; }
+.paper.paged .page .landscape-label { break-before: column; }
+.paper.paged .page .landscape-last { break-after: column; }
 
 /* zoom in the status bar */
 .status-zoom { display: inline-flex; align-items: center; }
@@ -766,6 +784,10 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; user-sel
   position: relative; margin: 0 auto;
   width: calc(var(--per-row) * var(--sheet-w) + (var(--per-row) - 1) * var(--gap));
 }
+/* record 0085: "fit" by the text width: the sheet, wider than the desk, centred and cut evenly */
+.desk.crop { overflow-x: hidden; }
+.desk.crop .pages-wrap { margin-left: calc((100% - var(--sheet-w)) / 2); }
+.desk.crop .paper:not(.paged) { margin-left: calc((100% - 210mm * var(--zoom)) / 2); }
 .sheets { position: absolute; inset: 0; pointer-events: none; }
 .sheet {
   position: absolute; width: var(--sheet-w); height: var(--sheet-h);

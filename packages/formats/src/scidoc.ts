@@ -49,6 +49,8 @@ export const enumOf = <const T extends readonly string[]>(values: T, description
   Type.Enum(values as unknown as T[number][], description ? { description } : {});
 /** Record 0073: a text block's alignment; left (or the journal's) when absent. */
 const BLOCK_ALIGN = enumOf(["center", "right", "justify"]);
+/** Record 0085: a block on a landscape page; the blocks in a row with it share their pages. */
+const landscape = OptAttr(Type.Boolean({ description: "On a landscape page (record 0085): consecutive landscape blocks share landscape pages, which start and end on a new page." }));
 
 // ------------------------------------------------------------------ marks
 
@@ -173,11 +175,11 @@ const CellAttrs = Strict({
 const cellContent = Type.Array(Type.Union([Type.Ref("Paragraph"), Type.Ref("BulletList"), Type.Ref("OrderedList")]), { minItems: 1 });
 
 const blockDefs = {
-  Paragraph: textblock("paragraph", { id: BlockId, lang, indent: OptAttr(Type.Integer({ minimum: 1, maximum: 8 })), align: OptAttr(BLOCK_ALIGN) }, "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069)."),
-  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang, numbered: OptAttr(Type.Boolean()), align: OptAttr(BLOCK_ALIGN) }, "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070)."),
+  Paragraph: textblock("paragraph", { id: BlockId, lang, landscape, indent: OptAttr(Type.Integer({ minimum: 1, maximum: 8 })), align: OptAttr(BLOCK_ALIGN) }, "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069)."),
+  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang, landscape, numbered: OptAttr(Type.Boolean()), align: OptAttr(BLOCK_ALIGN) }, "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070)."),
   Title: textblock("title", { id: BlockId, lang, align: OptAttr(BLOCK_ALIGN) }, "Title of the article; one per language, the first is the main one."),
-  BulletList: Strict({ type: Type.Literal("bulletList"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
-  OrderedList: Strict({ type: Type.Literal("orderedList"), attrs: Strict({ id: BlockId, start: Type.Optional(Type.Integer({ minimum: 0 })) }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
+  BulletList: Strict({ type: Type.Literal("bulletList"), attrs: Strict({ id: BlockId, landscape }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
+  OrderedList: Strict({ type: Type.Literal("orderedList"), attrs: Strict({ id: BlockId, start: Type.Optional(Type.Integer({ minimum: 0 })), landscape }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
   ListItem: Strict({
     type: Type.Literal("listItem"),
     content: ordered([Type.Ref("Paragraph")], Type.Union([Type.Ref("Paragraph"), Type.Ref("BulletList"), Type.Ref("OrderedList")]), 1),
@@ -186,18 +188,18 @@ const blockDefs = {
   Equation: Strict({ type: Type.Literal("equation"), attrs: Strict({ id: IdOf("e"), latex: Type.String() }), marks: nodeMarks }, { description: "Display equation in LaTeX (phase 4; in the format from v1)." }),
   TableRef: Strict({
     type: Type.Literal("tableRef"),
-    attrs: Strict({ id: IdOf("t"), src: Type.String({ pattern: "^tables/[^/]+\\.scitable$" }) }),
+    attrs: Strict({ id: IdOf("t"), src: Type.String({ pattern: "^tables/[^/]+\\.scitable$" }), landscape }),
     marks: nodeMarks,
   }, { description: "Where a table of tables/ goes. The table itself lives in its .scitable." }),
   FigureRef: Strict({
     type: Type.Literal("figureRef"),
-    attrs: Strict({ id: IdOf("f"), src: Type.String({ pattern: "^figures/[^/]+\\.scifigure$" }) }),
+    attrs: Strict({ id: IdOf("f"), src: Type.String({ pattern: "^figures/[^/]+\\.scifigure$" }), landscape }),
     marks: nodeMarks,
   }, { description: "Where a figure of figures/ goes. The caption and notes live in its .scifigure." }),
   // record 0073: a block quotation (JATS disp-quote), indented on both sides
-  BlockQuote: Strict({ type: Type.Literal("blockquote"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("Paragraph"), { minItems: 1 }), marks: nodeMarks }, { description: "Block quotation: one or more paragraphs set apart from the text (record 0073)." }),
+  BlockQuote: Strict({ type: Type.Literal("blockquote"), attrs: Strict({ id: BlockId, landscape }), content: Type.Array(Type.Ref("Paragraph"), { minItems: 1 }), marks: nodeMarks }, { description: "Block quotation: one or more paragraphs set apart from the text (record 0073)." }),
   // record 0078: a page break between two blocks (Word: w:br w:type="page"; Typst: pagebreak())
-  PageBreak: Strict({ type: Type.Literal("pageBreak"), attrs: Strict({ id: BlockId }), marks: nodeMarks }, { description: "Page break: what follows starts on a new page (record 0078). Two in a row with an empty paragraph between make a blank page." }),
+  PageBreak: Strict({ type: Type.Literal("pageBreak"), attrs: Strict({ id: BlockId, landscape }), marks: nodeMarks }, { description: "Page break: what follows starts on a new page (record 0078). Two in a row with an empty paragraph between make a blank page." }),
   Body: Type.Union([
     Type.Ref("Paragraph"), Type.Ref("Heading"), Type.Ref("Title"), Type.Ref("BulletList"), Type.Ref("OrderedList"), Type.Ref("BlockQuote"),
     Type.Ref("Equation"), Type.Ref("TableRef"), Type.Ref("FigureRef"), Type.Ref("PageBreak"),

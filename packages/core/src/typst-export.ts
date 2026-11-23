@@ -197,7 +197,7 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     const body = rows.slice(lastHeader + 1).map((r, i) => (r.content ?? []).map((c, j) => cell(c, i + lastHeader + 1, j)).join(", "));
     // a wide table (the GRADE one of the phase 1 test had 13 columns): smaller text, words split
     // with hyphens and less room around each cell, or the text of a column ran over the next one
-    const perColumn = textWidthPt / columns;
+    const perColumn = textWidthPt() / columns;
     const wide = perColumn < 40 ? { size: "0.7em", inset: "2pt" } : perColumn < 65 ? { size: "0.8em", inset: "3pt" } : null;
     out.push(`${pageBreak ? "#pagebreak(weak: true)\n" : ""}${marker(part)}
 #figure(kind: table, numbering: none, gap: 0.6em,
@@ -208,7 +208,15 @@ ${notesOf(notes, letters)}
 #v(0.8em, weak: true)`);
   }
 
-  const textWidthPt = ((21 - 2 * marginCm()) / 2.54) * 72;
+  // record 0085: on a landscape page the text is as wide as the A4 is tall
+  let landscapeNow = false;
+  const textWidthPt = () => (((landscapeNow ? 29.7 : 21) - 2 * marginCm()) / 2.54) * 72;
+  /** Turns the pages (Typst starts a new page when the page changes). */
+  const orient = (landscape: boolean) => {
+    if (landscape === landscapeNow) return;
+    landscapeNow = landscape;
+    out.push(`#set page(flipped: ${landscape});`);
+  };
   function marginCm() { return fmt?.sideMarginsCm?.value ? (fmt.sideMarginsCm.value.max ?? fmt.sideMarginsCm.value.min) : 2.5; }
 
   async function figure(part: PMNode, withImage: boolean) {
@@ -225,7 +233,7 @@ ${notesOf(notes, letters)}
       files[image] = bytes;
       const size = imageSize(bytes);
       // at most the text width; a bitmap at 96 dpi otherwise, as in the DOCX
-      const width = size ? `${+Math.min(textWidthPt, size.width * 0.75).toFixed(1)}pt` : "100%";
+      const width = size ? `${+Math.min(textWidthPt(), size.width * 0.75).toFixed(1)}pt` : "100%";
       body = `image(${str(image)}, width: ${width}${part.attrs!.alt ? `, alt: ${str(part.attrs!.alt as string)}` : ""})`;
       if (!part.attrs!.alt) warnings.push(`${image} has no text alternative (needed for an accessible PDF)`);
     }
@@ -270,7 +278,10 @@ ${notesOf(notes)}
   const bodyNodes = tree.content ?? [];
   for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
-    if (n.type !== "title" && !abstractDone) writeAbstract();
+    if (n.type !== "title" && !abstractDone) { orient(false); writeAbstract(); }
+    // a table or a figure that goes to the end takes its landscape page there
+    const atEnd = (n.type === "tablePart" && tablesAtEnd) || (n.type === "figurePart" && captionsList);
+    if (!atEnd) orient(n.type !== "title" && !!n.attrs?.landscape);
     if (n.type === "title") out.push(`${marker(n)}${aligned(n, `#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? lang)}])`)}`);
     else if (n.type === "heading") {
       heading(n);
@@ -285,9 +296,11 @@ ${notesOf(notes)}
     else if (n.type === "figurePart") { if (!captionsList) await figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);
   }
+  orient(false);
   if (!abstractDone) writeAbstract();
   if (!bibliographyPlaced && rendering.bibliography.length) { out.push(`= ${typstEscape(L.bib)}`); bibliography(); }
-  if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => table(part, true));
+  if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => { orient(!!part.attrs?.landscape); table(part, true); });
+  orient(false);
   if (captionsList && figures.size) {
     out.push(`#pagebreak(weak: true)\n= ${typstEscape(L.captions)}`);
     for (const [, part] of [...figures.entries()].sort((a, b) => figureNo.get(a[0])! - figureNo.get(b[0])!)) await figure(part, false);

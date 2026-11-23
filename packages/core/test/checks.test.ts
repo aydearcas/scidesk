@@ -112,6 +112,13 @@ describe("checks", () => {
     const added = await addReference(demo, { type: "book", title: "Libro que no se cita", author: [{ family: "Nadie" }] });
     const w = checkArticle(demo, "main").warnings.find((x) => x.code === "uncited-reference")!;
     expect(w).toMatchObject({ id: `uncited-reference:${added.id}`, level: "info", params: { reference: "Nadie" } });
+    // record 0085: several at once, in one write
+    const other = await addReference(demo, { type: "book", title: "Otro sin citar", author: [{ family: "Tampoco" }] });
+    const ids = checkArticle(demo, "main").warnings.filter((x) => x.code === "uncited-reference").map((x) => x.id);
+    expect(ids).toEqual(expect.arrayContaining([`uncited-reference:${added.id}`, `uncited-reference:${other.id}`]));
+    await ignoreWarning(demo, "main", ids, "not-applicable", "Para la discusión");
+    const again = checkArticle(await loadProject(fs), "main").warnings.filter((x) => x.code === "uncited-reference");
+    expect(again.every((x) => x.ignored?.status === "not-applicable" && x.ignored.note === "Para la discusión")).toBe(true);
   });
 
   it("says when an article is ready to submit, and what stands in the way", async () => {

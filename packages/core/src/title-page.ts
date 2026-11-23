@@ -1,17 +1,40 @@
 // The title page, apart from the manuscript (double-blind review, PLAN 5.3 and 5.9),
 // generated from authors.json and people.json: titles, running title, authors with their
 // affiliation numbers, affiliations, equal contribution, corresponding author, conflicts of
-// interest, acknowledgements and the members of a group author. It is generated, not
+// interest, acknowledgements, the members of a group author and, when the article asks for
+// it (record 0085, off by default), each author's CRediT roles. It is generated, not
 // edited, so it carries no SciDesk marks; nothing in it is stored.
 import JSZip from "jszip";
 import { AlignmentType, Document, Footer, Packer, PageNumber, Paragraph, TextRun } from "docx";
-import type { PMNode } from "@scidesk/formats";
+import { CREDIT_ROLES, type PMNode } from "@scidesk/formats";
 import { applyTemplate, type ExportResources } from "./docx-export.ts";
 import type { Project } from "./project.ts";
 
 const TEXT: Record<string, Record<string, string>> = {
   es: { running: "Título corto", corresponding: "Autor para correspondencia", conflicts: "Conflictos de interés", none: "Los autores declaran no tener conflictos de interés.", equal: "Estos autores contribuyeron por igual.", ack: "Agradecimientos", members: "Miembros de", email: "Correo electrónico", missing: "Faltan los autores: añádelos en el artículo", noConflicts: "ningún autor tiene declaración de conflictos de interés", noEmail: "falta el correo del autor para correspondencia" },
   en: { running: "Running title", corresponding: "Corresponding author", conflicts: "Conflicts of interest", none: "The authors declare no conflicts of interest.", equal: "These authors contributed equally.", ack: "Acknowledgements", members: "Members of", email: "E-mail", missing: "Authors are missing: add them to the article", noConflicts: "no author has a conflicts of interest declaration", noEmail: "the corresponding author has no e-mail" },
+};
+
+/** Record 0085: the CRediT roles and degrees, as the window names them. */
+const CREDIT: Record<string, { title: string; degree: Record<string, string>; roles: Record<(typeof CREDIT_ROLES)[number], string> }> = {
+  es: {
+    title: "Contribuciones de los autores (CRediT)",
+    degree: { lead: "principal", equal: "igual", supporting: "de apoyo" },
+    roles: {
+      conceptualization: "Conceptualización", "data-curation": "Curación de datos", "formal-analysis": "Análisis formal", "funding-acquisition": "Obtención de fondos",
+      investigation: "Investigación", methodology: "Metodología", "project-administration": "Administración del proyecto", resources: "Recursos", software: "Software",
+      supervision: "Supervisión", validation: "Validación", visualization: "Visualización", "writing-original-draft": "Redacción: borrador original", "writing-review-editing": "Redacción: revisión y edición",
+    },
+  },
+  en: {
+    title: "Author contributions (CRediT)",
+    degree: { lead: "lead", equal: "equal", supporting: "supporting" },
+    roles: {
+      conceptualization: "Conceptualization", "data-curation": "Data curation", "formal-analysis": "Formal analysis", "funding-acquisition": "Funding acquisition",
+      investigation: "Investigation", methodology: "Methodology", "project-administration": "Project administration", resources: "Resources", software: "Software",
+      supervision: "Supervision", validation: "Validation", visualization: "Visualization", "writing-original-draft": "Writing: original draft", "writing-review-editing": "Writing: review and editing",
+    },
+  },
 };
 
 type PersonLike = { id: string; kind: string; given?: string; family?: string; name?: string; email?: string; affiliations: string[]; members?: string[] };
@@ -56,11 +79,21 @@ export function titlePageModel(project: Project, folder: string) {
     return [a.department, a.institution, a.city, a.country ? region.of(a.country) : undefined].filter(Boolean).join(", ");
   });
   const conflicts = authors.filter((a) => a.conflicts).map((a) => ({ name: a.name, text: a.conflicts! }));
+  // record 0085: "Ana López: Conceptualización (principal), Metodología.", only when asked for
+  const C = CREDIT[lang];
+  const contributions = art.authors.creditOnTitlePage
+    ? art.authors.authors.filter((a) => a.credit.length).map((a) => ({
+      name: fullName(people.get(a.person)!),
+      roles: [...a.credit].sort((x, y) => CREDIT_ROLES.indexOf(x.role) - CREDIT_ROLES.indexOf(y.role)).map((c) => `${C.roles[c.role]}${c.degree ? ` (${C.degree[c.degree]})` : ""}`),
+    }))
+    : [];
   return {
     lang, T, titles, runningTitle: art.article.runningTitle ?? null, authors, affiliations: affiliationLines,
     equalNotes: [...equalMark.values()],
     corresponding: authors.filter((a) => a.corresponding),
     conflicts,
+    contributionsTitle: C.title,
+    contributions,
     acknowledged: (art.authors.acknowledged ?? []).map((id) => people.get(id)).filter(Boolean).map((p) => fullName(p!)),
   };
 }
@@ -102,6 +135,10 @@ export async function exportTitlePage(project: Project, folder: string, res: Exp
   if (!m.conflicts.length) warnings.push(m.T.noConflicts);
   else if (texts.size === 1 && m.conflicts.length === m.authors.length) out.push(new Paragraph({ children: [new TextRun([...texts][0])] }));
   else m.conflicts.forEach((c) => out.push(new Paragraph({ children: [new TextRun({ text: `${c.name}: `, italics: true }), new TextRun(c.text)] })));
+  if (m.contributions.length) {
+    out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.contributionsTitle)] }));
+    m.contributions.forEach((c) => out.push(new Paragraph({ children: [new TextRun({ text: `${c.name}: `, italics: true }), new TextRun(`${c.roles.join(", ")}.`)] })));
+  }
   if (m.acknowledged.length) {
     out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.T.ack)] }));
     out.push(new Paragraph({ children: [new TextRun(m.acknowledged.join(", ") + ".")] }));

@@ -78,13 +78,15 @@ export function summarize(csl: Record<string, unknown>): ReferenceSummary {
 
 // ------------------------------------------------------------------ quick search
 
-export interface SearchHit { entry: Entry; score: number }
+export interface SearchHit { entry: Entry; score: number; /** Only while sorting. */ position?: number }
 
 /**
  * The quick search when citing (PLAN 5.6): every word typed must be found in the authors,
  * the year, the title, the journal, the DOI or the PMID, ignoring accents and case. A word
- * that starts an author's surname or is the year weighs most; then the start of a title
- * word; then any other match. Ties go to the earliest first author and year.
+ * that starts the first author's surname weighs most (record 0085: "García" shows García's
+ * papers before those where García is a co-author); then another author's surname or the
+ * year; then the start of a title word; then any other match. Ties go to the earliest
+ * position of the author found, then the first author and the year.
  */
 export function searchLibrary(library: LibraryFile, query: string, limit = 50): SearchHit[] {
   const terms = words(query);
@@ -93,14 +95,20 @@ export function searchLibrary(library: LibraryFile, query: string, limit = 50): 
     const c = entry.csl as Record<string, unknown>;
     if (!terms.length) { hits.push({ entry, score: 0 }); continue; }
     const authorWords = ((c.author ?? c.editor ?? []) as Name[]).flatMap((n) => words([nameText(n), n.given].join(" ")));
-    const surnames = ((c.author ?? c.editor ?? []) as Name[]).flatMap((n) => words(nameText(n)));
+    const people = (c.author ?? c.editor ?? []) as Name[];
+    const surnames = people.flatMap((n) => words(nameText(n)));
+    const firstSurname = people[0] ? words(nameText(people[0])) : [];
     const year = String(yearOf(c) ?? "");
     const titleWords = words(`${c.title ?? ""} ${c["title-short"] ?? ""}`);
     const rest = fold([c["container-title"], c["container-title-short"], c.DOI, c.PMID, c.publisher, c.ISBN].filter(Boolean).join(" "));
     let score = 0;
     let all = true;
+    let position = Infinity; // of the first author whose surname a word starts
     for (const t of terms) {
-      const s = surnames.some((w) => w.startsWith(t)) ? 4
+      const at = people.findIndex((n) => words(nameText(n)).some((w) => w.startsWith(t)));
+      if (at >= 0) position = Math.min(position, at);
+      const s = firstSurname.some((w) => w.startsWith(t)) ? 5
+        : surnames.some((w) => w.startsWith(t)) ? 4
         : year && t === year ? 4
         : authorWords.some((w) => w.startsWith(t)) ? 3
         : titleWords.some((w) => w.startsWith(t)) ? 2
@@ -108,10 +116,13 @@ export function searchLibrary(library: LibraryFile, query: string, limit = 50): 
       if (!s) { all = false; break; }
       score += s;
     }
-    if (all) hits.push({ entry, score });
+    if (all) hits.push({ entry, score, position });
   }
   const key = (e: Entry) => `${words(summarize(e.csl).authors)[0] ?? "~"} ${yearOf(e.csl as never) ?? 9999}`;
-  return hits.sort((a, b) => b.score - a.score || key(a.entry).localeCompare(key(b.entry))).slice(0, limit);
+  return hits
+    .sort((a, b) => b.score - a.score || (a.position ?? Infinity) - (b.position ?? Infinity) || key(a.entry).localeCompare(key(b.entry)))
+    .slice(0, limit)
+    .map(({ entry, score }) => ({ entry, score }));
 }
 
 // ------------------------------------------------------------------ the edit form

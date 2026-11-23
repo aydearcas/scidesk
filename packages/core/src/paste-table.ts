@@ -32,6 +32,71 @@ export interface PastedTable {
 const text = (runs: Run[]) => runs.map((r) => r.text).join("");
 const LETTER = /^[a-z]$/;
 
+/** Where a note letter starts in a note paragraph: in the text, from `at`, `length` characters long. */
+interface NoteMark { at: number; length: number; letter: string }
+
+/**
+ * The notes of the paragraphs after a pasted table (record 0085). A note starts with its letter,
+ * in superscript ("ᵃ Con metotrexato.") or as text ("a. Con metotrexato.", "a) …"). Word often
+ * writes all of them in one paragraph, or with line breaks that arrive as spaces: a letter
+ * inside a paragraph starts a new note when it is the next one in order (a, b, c…), after the
+ * end of a sentence or a wide space, and, written as text, when a cell calls it.
+ */
+export function splitNotes(paras: Run[][], calls: Set<string>): { letter: string | null; runs: Run[] }[] {
+  const out: { letter: string | null; runs: Run[] }[] = [];
+  let last = ""; // the letter of the last note, across paragraphs
+  for (const runs of paras) {
+    const full = text(runs);
+    const marks: NoteMark[] = [];
+    // superscript letters, and letters written as text
+    let at = 0;
+    for (const r of runs) {
+      const t = r.text.trim();
+      if (r.sup && LETTER.test(t)) marks.push({ at: at + r.text.indexOf(t), length: t.length, letter: t });
+      at += r.text.length;
+    }
+    for (const m of full.matchAll(/(^|\s)([a-z])[.)]\s+/g)) {
+      const start = m.index! + m[1].length;
+      if (!marks.some((k) => k.at === start)) marks.push({ at: start, length: m[0].length - m[1].length, letter: m[2] });
+    }
+    marks.sort((a, b) => a.at - b.at);
+    const taken: NoteMark[] = [];
+    for (const k of marks) {
+      const lead = !full.slice(0, k.at).trim();
+      const next = last ? String.fromCharCode(last.charCodeAt(0) + 1) : "a";
+      const sup = runs.some((r) => r.sup && r.text.trim() === k.letter);
+      if (lead) { if (sup || calls.has(k.letter) || /^[a-z][.)]/.test(full.slice(k.at))) { taken.push(k); last = k.letter; } continue; }
+      const before = full.slice(0, k.at);
+      const boundary = /([.;:)\]]\s*|\s{2,})$/.test(before);
+      if (k.letter === next && boundary && (sup || calls.has(k.letter))) { taken.push(k); last = k.letter; }
+    }
+    // the pieces: the text before the first letter, and each note from its letter on
+    const cuts = [0, ...taken.map((k) => k.at), full.length];
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      const k = i > 0 ? taken[i - 1] : null;
+      const piece = trimRuns(sliceRuns(runs, k ? k.at + k.length : cuts[i], cuts[i + 1]));
+      if (k || piece.length) out.push({ letter: k?.letter ?? null, runs: piece });
+    }
+  }
+  return out;
+}
+const sliceRuns = (runs: Run[], from: number, to: number): Run[] => {
+  const out: Run[] = [];
+  let at = 0;
+  for (const r of runs) {
+    const a = Math.max(from, at), b = Math.min(to, at + r.text.length);
+    if (b > a) out.push({ ...r, text: r.text.slice(a - at, b - at) });
+    at += r.text.length;
+  }
+  return out;
+};
+const trimRuns = (runs: Run[]): Run[] => {
+  const out = runs.map((r) => ({ ...r }));
+  if (out[0]) out[0].text = out[0].text.replace(/^\s+/, "");
+  if (out.at(-1)) out.at(-1)!.text = out.at(-1)!.text.replace(/\s+$/, "");
+  return out.filter((r) => r.text);
+};
+
 /** The tablePart of a pasted table, with new ids everywhere (the composite document's rule 1, record 0021). */
 export function tablePartFromPaste(t: PastedTable): { part: PMNode; warnings: string[] } {
   const warnings: string[] = [];
@@ -45,25 +110,27 @@ export function tablePartFromPaste(t: PastedTable): { part: PMNode; warnings: st
   }
   if (!caption) warnings.push("the pasted table has no \"Tabla N.\" caption: its caption is empty");
 
-  // notes: a leading superscript letter makes a specific note, called from the cells
-  const notes = t.notes.map((runs) => {
-    const first = runs.find((r) => r.text.trim());
-    const letter = first?.sup && LETTER.test(first.text.trim()) ? first.text.trim() : null;
-    let rest = runs;
-    if (letter) {
-      const i = runs.indexOf(first!);
-      rest = [...runs.slice(0, i), ...runs.slice(i + 1)];
-      rest = stripLead(rest, /^\s+/);
-    }
-    return { id: newId("n"), letter, runs: rest };
-  });
+  // notes: a leading note letter makes a specific note, called from the cells; several
+  // notes written in one paragraph ("a. … b. … c. …") are split (record 0085)
+  const calls = new Set<string>();
+  for (const r of rows) for (const c of r) for (const p of c.paras) for (const run of p) {
+    if (run.sup) for (const l of run.text.split(/[\s,;]+/)) if (LETTER.test(l)) calls.add(l);
+  }
+  const notes = splitNotes(t.notes, calls).map((n) => ({ id: newId("n"), ...n }));
   const byLetter = new Map(notes.filter((n) => n.letter).map((n) => [n.letter!, n.id]));
   const content = (runs: Run[]): PMNode[] => {
     const out: PMNode[] = [];
     for (const r of runs) {
-      const target = r.sup ? byLetter.get(r.text.trim()) : undefined;
-      if (target) out.push({ type: "noteRef", attrs: { target } });
-      else out.push(...inline([r]));
+      // "a,b,c" in one superscript: one call per letter, the commas kept
+      const tokens = r.sup ? r.text.split(/([\s,;]+)/).filter(Boolean) : [];
+      const letters = tokens.filter((x) => !/^[\s,;]+$/.test(x));
+      if (letters.length && letters.every((l) => byLetter.has(l))) {
+        for (const x of tokens) {
+          const target = byLetter.get(x);
+          if (target) out.push({ type: "noteRef", attrs: { target } });
+          else out.push(...inline([{ ...r, text: x }]));
+        }
+      } else out.push(...inline([r]));
     }
     return out;
   };

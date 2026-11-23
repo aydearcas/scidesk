@@ -25,6 +25,12 @@ describe("shortcut schemes", () => {
     expect(["l", "e", "r", "j"].map((k) => actionFor("international", comboOf(key(k))))).toEqual(["alignLeft", "alignCenter", "alignRight", "justify"]);
   });
 
+  it("set headings 1 to 3 with Ctrl+1/2/3 and a paragraph with Ctrl+0, in both (record 0085)", () => {
+    for (const s of ["word-es", "international"] as const) {
+      expect(["1", "2", "3", "0"].map((k) => actionFor(s, comboOf(key(k))))).toEqual(["heading1", "heading2", "heading3", "normalParagraph"]);
+    }
+  });
+
   it("cite with Ctrl+Shift+C in both (D6)", () => {
     for (const s of ["word-es", "international"] as const) {
       expect(actionFor(s, comboOf(key("C", { shiftKey: true })))).toBe("cite");

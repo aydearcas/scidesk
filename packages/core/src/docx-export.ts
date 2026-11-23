@@ -18,7 +18,7 @@
 import JSZip from "jszip";
 import {
   AlignmentType, BorderStyle, BookmarkEnd, BookmarkStart, Document, Footer, ImageRun, ImportedXmlComponent,
-  LineNumberRestartFormat, Packer, PageBreak, PageNumber, Paragraph, Table, TableCell, TableRow, TextRun, WidthType,
+  LineNumberRestartFormat, Packer, PageBreak, PageNumber, PageOrientation, Paragraph, SectionType, Table, TableCell, TableRow, TextRun, WidthType,
   bookmarkUniqueNumericId, type ParagraphChild,
 } from "docx";
 import {
@@ -204,8 +204,10 @@ export function composite(art: ArticleData): { tree: PMNode; tables: Map<string,
     if (n.type === "tableRef" || n.type === "figureRef") {
       const part = art.documents.get(n.attrs!.src as string)?.doc as PMNode | undefined;
       if (!part) { warnings.push(`${n.attrs!.src} is missing`); continue; }
-      (n.type === "tableRef" ? tables : figures).set(n.attrs!.id as string, part);
-      content.push(part);
+      // record 0085: the landscape page of its place in the text
+      const placed = n.attrs!.landscape ? { ...part, attrs: { ...part.attrs, landscape: true } } : part;
+      (n.type === "tableRef" ? tables : figures).set(n.attrs!.id as string, placed);
+      content.push(placed);
     } else content.push(n);
   }
   return { tree: { type: "doc", content }, tables, figures, warnings };
@@ -290,7 +292,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const marginCm = fmt?.sideMarginsCm?.value ? (fmt.sideMarginsCm.value.max ?? fmt.sideMarginsCm.value.min) : 2.5;
   const margin = Math.round((marginCm / 2.54) * 1440);
   const pageWidth = 11906;
-  const textWidth = pageWidth - 2 * margin;
+  const pageHeight = 16838;
+  // record 0085: on a landscape page the text is as wide as the A4 is tall
+  let landscapeNow = false;
+  const textWidthNow = () => (landscapeNow ? pageHeight : pageWidth) - 2 * margin;
 
   // R42: every export for co-authors saves a snapshot, the base of the three-way merge
   const snapshot = markers ? await saveSnapshot(project, folder, "DOCX para coautores") : null;
@@ -378,6 +383,15 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   };
 
   const out: (Paragraph | Table)[] = [];
+  /** Record 0085: where the output changes orientation: from that index on, landscape or not. */
+  const turns: { at: number; landscape: boolean }[] = [];
+  const orient = (landscape: boolean) => {
+    if (landscape === landscapeNow) return;
+    landscapeNow = landscape;
+    const last = turns.at(-1);
+    if (last && last.at === out.length) turns.pop(); // nothing between: back as it was
+    else turns.push({ at: out.length, landscape });
+  };
   const headingStyle = (level: number) => S(`heading ${Math.min(level, 6)}`);
   const caption = (part: PMNode, kind: "table" | "figure", num: number) => {
     const lbl = L[kind];
@@ -404,8 +418,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     const total = widths?.reduce((a, b) => a + b, 0) ?? 0;
     const lines = tableNodeBorders(tbl, fmt?.tableStyle?.value);
     out.push(new Table({
-      width: { size: textWidth, type: WidthType.DXA },
-      ...(widths ? { columnWidths: widths.map((w) => Math.round((w / total) * textWidth)) } : {}),
+      width: { size: textWidthNow(), type: WidthType.DXA },
+      ...(widths ? { columnWidths: widths.map((w) => Math.round((w / total) * textWidthNow())) } : {}),
       rows: rows.map((row, i) => new TableRow({
         tableHeader: i <= lastHeader,
         children: (row.content ?? []).map((cell, j) => new TableCell({
@@ -446,7 +460,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       const bytes = imageBytes.get(part.attrs!.image as string);
       const size = bytes ? imageSize(bytes) : null;
       const svg = svgFallback.get(part.attrs!.image as string);
-      const maxPx = (textWidth / 1440) * 96;
+      const maxPx = (textWidthNow() / 1440) * 96;
       const fit = (width: number, height: number) => { const w = Math.min(maxPx, Math.max(width, 1)); return { width: Math.round(w), height: Math.round((w * height) / Math.max(width, 1)) }; };
       const altText = { name: L.figure, title: L.figure, description: (part.attrs!.alt as string) ?? "" };
       if (bytes && size) {
@@ -513,7 +527,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   };
   for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
-    if (n.type !== "title" && !abstractDone) writeAbstract();
+    if (n.type !== "title" && !abstractDone) { orient(false); writeAbstract(); }
+    // a table or a figure that goes to the end takes its landscape page there
+    const atEnd = (n.type === "tablePart" && tablesAtEnd) || (n.type === "figurePart" && captionsList);
+    if (!atEnd) orient(n.type !== "title" && !!n.attrs?.landscape);
     if (n.type === "title") out.push(para(n, { style: S("title") }));
     else if (n.type === "heading") {
       out.push(para(n, headingOpts((n.attrs!.level as number) ?? 1, n.attrs!.id as string | undefined)));
@@ -527,12 +544,19 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     else if (n.type === "figurePart") { if (!captionsList) figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);
   }
+  orient(false);
   if (!abstractDone) writeAbstract();
   if (!bibliographyPlaced && rendering.bibliography.length) {
     out.push(new Paragraph({ ...headingOpts(1), children: [new TextRun(L.bib)] }));
     bibliography();
   }
-  if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => table(part, { pageBreakBefore: true }));
+  if (tablesAtEnd) [...tables.entries()].sort((a, b) => tableNo.get(a[0])! - tableNo.get(b[0])!).forEach(([, part]) => {
+    const turn = !!part.attrs?.landscape !== landscapeNow;
+    orient(!!part.attrs?.landscape);
+    // a new section already starts on a new page
+    table(part, { pageBreakBefore: !turn });
+  });
+  orient(false);
   if (captionsList && figures.size) {
     out.push(new Paragraph({ ...headingOpts(1), pageBreakBefore: true, children: [new TextRun(L.captions)] }));
     [...figures.entries()].sort((a, b) => figureNo.get(a[0])! - figureNo.get(b[0])!).forEach(([, part]) => figure(part, false));
@@ -541,6 +565,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     // the snapshot the copy was sent from, also when the properties are lost (record 0025)
     const [s, e] = bm(snapshotBookmark(snapshot.id));
     out.unshift(new Paragraph({ children: [s, e] }));
+    for (const turn of turns) turn.at++;
   }
 
   // --- properties
@@ -554,18 +579,23 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     custom.push({ name: SCIDESK_PROPERTY, value: JSON.stringify(prop) });
   }
   const titleText = (bodyNodes.find((n) => n.type === "title")?.content ?? []).map((c) => c.text ?? "").join("");
+  // record 0085: one section per stretch of one orientation, each starting on a new page; the
+  // page numbers go on, and every section has the same footer, margins and line numbers
+  const cuts = [{ at: 0, landscape: false }, ...turns].filter((c, i, all) => i === all.length - 1 || all[i + 1].at > c.at);
+  const section = (landscape: boolean, children: (Paragraph | Table)[], first: boolean) => ({
+    properties: {
+      ...(first ? {} : { type: SectionType.NEXT_PAGE }),
+      page: { size: { width: pageWidth, height: pageHeight, ...(landscape ? { orientation: PageOrientation.LANDSCAPE } : {}) }, margin: { top: 1418, bottom: 1418, left: margin, right: margin } },
+      ...(fmt?.lineNumbers?.value ? { lineNumbers: { countBy: 1, restart: LineNumberRestartFormat.NEW_PAGE } } : {}),
+    },
+    ...(fmt?.pageNumbers?.value !== false ? { footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT] })] })] }) } } : {}),
+    children,
+  });
   const doc = new Document({
     externalStyles: tpl.xml,
     ...(markers ? { title: titleText, creator: "SciDesk", lastModifiedBy: "SciDesk" } : { title: "", creator: "", lastModifiedBy: "" }),
     customProperties: custom,
-    sections: [{
-      properties: {
-        page: { size: { width: pageWidth, height: 16838 }, margin: { top: 1418, bottom: 1418, left: margin, right: margin } },
-        ...(fmt?.lineNumbers?.value ? { lineNumbers: { countBy: 1, restart: LineNumberRestartFormat.NEW_PAGE } } : {}),
-      },
-      ...(fmt?.pageNumbers?.value !== false ? { footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ children: [PageNumber.CURRENT] })] })] }) } } : {}),
-      children: out,
-    }],
+    sections: cuts.map((c, i) => section(c.landscape, out.slice(c.at, cuts[i + 1]?.at ?? out.length), i === 0)),
   });
   let bytes: Uint8Array = new Uint8Array(await Packer.toArrayBuffer(doc));
   if (sectionStyle !== "none") {

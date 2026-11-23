@@ -304,6 +304,12 @@ export function AuthorsDialog({ project, folder, onClose, onSaved, asView = fals
           </tbody>
         </table>
         <p className="muted">{t("creditNote")}</p>
+        {/* record 0085: few journals want it there, so it is off until asked for */}
+        <label className="inline credit-title-page">
+          <input type="checkbox" checked={!!authors.creditOnTitlePage}
+            onChange={(e) => setAuthors((x) => { const { creditOnTitlePage: _, ...rest } = x; return e.target.checked ? { ...rest, creditOnTitlePage: true } : rest; })} />
+          {t("creditOnTitlePage")}
+        </label>
       </div>
     )
   );

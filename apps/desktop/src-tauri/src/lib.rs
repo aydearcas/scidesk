@@ -438,6 +438,19 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .manage(ProjectRoot::default())
         .manage(preview::PreviewState::default())
+        .setup(|app| {
+            // record 0085: on a laptop (1366 x 768) the first size (1200 x 820) is taller than
+            // the screen; the window fills the screen's free area instead
+            if let Some(w) = app.get_webview_window("main") {
+                if let (Ok(Some(m)), Ok(size)) = (w.current_monitor(), w.outer_size()) {
+                    let work = m.work_area().size;
+                    if size.width > work.width || size.height > work.height {
+                        let _ = w.maximize();
+                    }
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![open_project, open_recent, recent_exists, default_location, pick_location, folder_state, create_project_folder, forget_folder, read_file, write_file, list_files, remove_file, local_read, local_write, local_remove, local_list, compile_pdf, preview_compile, preview_page, raster_image, zotero::zotero_get])
         .run(tauri::generate_context!())
         .expect("error while running SciDesk");

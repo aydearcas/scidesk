@@ -92,6 +92,10 @@
       },
       "type": "array"
     },
+    "creditOnTitlePage": {
+      "description": "Whether the title page lists each author's CRediT roles (off when absent).",
+      "type": "boolean"
+    },
     "schemaVersion": {
       "const": 1,
       "description": "Version of the format. Files with a lower version are migrated when opened.",

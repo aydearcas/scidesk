@@ -251,7 +251,8 @@ export function UnplacedTableTab({ project, folder, src, title, onCells, onView,
       pending = false;
       const node = editor.state.doc.firstChild?.toJSON() as PMNode | undefined;
       if (!node) return;
-      const { src: _src, ...attrs } = node.attrs ?? {};
+      // the file keeps neither its path nor a landscape page (record 0085: that belongs to its place in the text)
+      const { src: _src, landscape: _landscape, ...attrs } = node.attrs ?? {};
       await saveDocument(project, art, src, { ...art.documents.get(src)!, doc: { ...node, attrs } } as never);
       saved.current();
     };

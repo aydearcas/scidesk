@@ -100,7 +100,7 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
       <button className="tool" title={tip(t("ui.undo"), "undo")} aria-label={t("ui.undo")} onMouseDown={keep} disabled={disabled || !s.canUndo} onClick={() => editor.chain().focus().undo().run()}><Icon name="undo" /></button>
       <button className="tool" title={tip(t("ui.redo"), "redo")} aria-label={t("ui.redo")} onMouseDown={keep} disabled={disabled || !s.canRedo} onClick={() => editor.chain().focus().redo().run()}><Icon name="redo" /></button>
       <span className="tool-sep" />
-      <select className="block-style" aria-label={t("ui.paragraphStyle")} title={t("ui.paragraphStyle")} value={s.block} disabled={disabled || s.block === "title" || s.block === "other"} onChange={(e) => setBlock(e.target.value)}>
+      <select className="block-style" aria-label={t("ui.paragraphStyle")} title={`${t("ui.paragraphStyle")} (${t("ui.styles.p")}: ${keys("normalParagraph")} · ${t("ui.styles.h1")}: ${keys("heading1")} · ${t("ui.styles.h2")}: ${keys("heading2")} · ${t("ui.styles.h3")}: ${keys("heading3")})`} value={s.block} disabled={disabled || s.block === "title" || s.block === "other"} onChange={(e) => setBlock(e.target.value)}>
         {s.block === "title" && <option value="title">{t("ui.styles.title")}</option>}
         {s.block === "other" && <option value="other">—</option>}
         <option value="p">{t("ui.styles.p")}</option>

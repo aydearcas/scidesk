@@ -20,7 +20,8 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
   /** Open the words by section (from the status bar). */
   showSections?: boolean;
   onGo: (w: CheckWarning) => void;
-  onIgnore: (w: CheckWarning, status: "correct" | "not-applicable", note: string) => Promise<void>;
+  /** Ignores one warning, or several at once (record 0085: every "not cited" of a kind). */
+  onIgnore: (w: CheckWarning | CheckWarning[], status: "correct" | "not-applicable", note: string) => Promise<void>;
   onRestore: (w: CheckWarning) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
@@ -68,6 +69,31 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
     </li>
   );
 
+  // record 0085: the "not cited" of one kind, all at once, when there are several
+  const BULK = ["uncited-reference", "uncited-table", "uncited-figure"] as const;
+  const bulk = (list: CheckWarning[]) => BULK.map((code) => {
+    const ws = list.filter((w) => w.code === code);
+    if (ws.length < 2) return null;
+    const key = `all:${code}`;
+    return (
+      <li key={key} className="check bulk">
+        <div className="check-text"><span>{t(`checks.bulk.${code}`, { count: ws.length })}</span></div>
+        {marking?.id === key ? (
+          <form className="check-actions" onSubmit={(e) => { e.preventDefault(); void onIgnore(ws, marking.status, marking.note).then(() => setMarking(null)); }}>
+            <input autoFocus value={marking.note} onChange={(e) => setMarking({ ...marking, note: e.target.value })} placeholder={t("ignoreNote")} aria-label={t("ignoreNote")} />
+            <button type="submit">{t(`ignoreAllAs.${marking.status}`, { count: ws.length })}</button>
+            <button type="button" onClick={() => setMarking(null)}>{t("cancel")}</button>
+          </form>
+        ) : (
+          <div className="check-actions">
+            <button className="btn quiet" onClick={() => setMarking({ id: key, status: "correct", note: "" })}>{t("ignoreAllAs.correct", { count: ws.length })}</button>
+            <button className="btn quiet" onClick={() => setMarking({ id: key, status: "not-applicable", note: "" })}>{t("ignoreAllAs.not-applicable", { count: ws.length })}</button>
+          </div>
+        )}
+      </li>
+    );
+  });
+
   return (
     <div className="checks">
       <table className="counts">
@@ -100,7 +126,7 @@ export function ChecksPanel({ report, onGo, onIgnore, onRestore, onTableWords, j
         return list.length ? (
           <section key={level} className={`check-group ${level}`}>
             <h4><LevelIcon level={level} size={14} /> {t(`levels.${level}`)} · {list.length}</h4>
-            <ul className="check-list">{list.map(item)}</ul>
+            <ul className="check-list">{bulk(list)}{list.map(item)}</ul>
           </section>
         ) : null;
       })}

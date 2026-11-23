@@ -31,6 +31,8 @@ import { PartDrag, handleElement } from "./part-drag.ts";
 import { PageBreak, insertPageBreak } from "./page-break.ts";
 import { revealIn, scrollerOf } from "./reveal.ts";
 import { ClickInside } from "./click-inside.ts";
+import { ListBackspace } from "./list-backspace.ts";
+import { Landscape } from "./landscape.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -220,6 +222,9 @@ const SchemeKeys = Extension.create({
           // record 0073: alignment, as Word's Ctrl+Q/T/D/J or Ctrl+L/E/R/J
           // record 0078: Ctrl+Enter, a page break at the cursor
           else if (action === "pageBreak") insertPageBreak()(editor.state, editor.view.dispatch);
+          // record 0085: headings by keyboard (where a heading can go: not in tables or the abstract)
+          else if (action === "heading1" || action === "heading2" || action === "heading3") editor.chain().setHeading({ level: Number(action.slice(-1)) as 1 | 2 | 3 }).run();
+          else if (action === "normalParagraph") editor.chain().setParagraph().run();
           else if (action === "alignLeft" || action === "alignCenter" || action === "alignRight" || action === "justify") setBlockAlign(editor, action === "alignLeft" ? "left" : action === "alignCenter" ? "center" : action === "alignRight" ? "right" : "justify");
           else editor.commands.toggleMark(action);
           event.preventDefault();
@@ -460,10 +465,14 @@ export const extensions = [
   } }) }),
   Indent,
   IndentBackspace,
+  ListBackspace,
+  Landscape,
   SectionNumbers,
   TableLines,
   PartDrag,
   Heading.extend({
+    // its own Ctrl+Alt+1… is AltGr on Spanish keyboards: the schemes' Ctrl+1… instead (record 0085)
+    addKeyboardShortcuts: () => ({}),
     addAttributes() {
       return {
         ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang"), align: alignAttribute,

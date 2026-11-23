@@ -180,3 +180,28 @@ test("Tab in the last cell of a table adds a row", async ({ page }) => {
   await page.keyboard.type("n = 12", { delay: 15 });
   await expect(table.locator("tr").last()).toContainText("n = 12");
 });
+
+test("a heading with Ctrl+2, and Backspace after a list adds no empty item (record 0085)", async ({ page }) => {
+  const { editor, errors } = await openDemo(page);
+  await methods(page).click();
+  await page.keyboard.type("Pacientes", { delay: 15 });
+  await page.keyboard.press(`${MOD}+2`);
+  await expect(editor.locator("h2", { hasText: /^Pacientes$/ })).toBeVisible();
+  await page.keyboard.press(`${MOD}+0`);
+  await expect(editor.locator("p", { hasText: /^Pacientes$/ })).toBeVisible();
+  // a list of two items, Enter twice to leave it, then Backspace: back at the end of the second item
+  await page.keyboard.press(END);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("- uno", { delay: 15 });
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("dos", { delay: 15 });
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  const list = editor.locator("ul", { hasText: "uno" });
+  await expect(list.locator("li")).toHaveCount(2);
+  await page.keyboard.press("Backspace");
+  await expect(list.locator("li")).toHaveCount(2);
+  await page.keyboard.type("s", { delay: 15 });
+  await expect(list.locator("li").last()).toHaveText("doss");
+  expect(errors).toEqual([]);
+});

@@ -8,18 +8,23 @@ export type Action =
   | "bold" | "italic" | "underline" | "superscript" | "subscript" | "undo" | "redo"
   | "cite" | "xref" | "save" | "find" | "replace" | "newArticle" | "openProject"
   | "alignLeft" | "alignCenter" | "alignRight" | "justify" | "pageBreak"
+  | "heading1" | "heading2" | "heading3" | "normalParagraph"
   // listed and reserved, not built yet (phase 1 V1 and phase 2)
   | "comment" | "suggestions" | "palette";
 
 /** Actions that work today; the others show "coming later" in Settings. */
-export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak"];
+export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph"];
 /** Actions that act on the text, run by the editor when it has the focus. */
-export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak"];
+export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph"];
 
 const COMMON: Partial<Record<Action, string>> = {
   superscript: "Mod-.", subscript: "Mod-,", undo: "Mod-z", redo: "Mod-y",
   // record 0078: a page break is Ctrl+Enter in Word, in Spanish and in English
   pageBreak: "Mod-Enter",
+  // record 0085: headings 1 to 3 and back to a paragraph. Word uses Ctrl+Alt+1/2/3, which is
+  // AltGr on a Spanish keyboard (| @ #); Ctrl+1/2/3 and Ctrl+0 are line spacing there, which
+  // SciDesk takes from the journal
+  heading1: "Mod-1", heading2: "Mod-2", heading3: "Mod-3", normalParagraph: "Mod-0",
   cite: "Mod-Shift-c", xref: "Mod-Shift-r", comment: "Mod-Shift-m", suggestions: "Mod-Shift-e", palette: "Mod-Shift-p",
 };
 export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
@@ -30,7 +35,7 @@ export const SCHEMES: Record<SchemeId, Record<Action, string>> = {
   international: { ...COMMON, bold: "Mod-b", italic: "Mod-i", underline: "Mod-u", save: "Mod-s", find: "Mod-f", replace: "Mod-h", newArticle: "Mod-n", openProject: "Mod-o", alignLeft: "Mod-l", alignCenter: "Mod-e", alignRight: "Mod-r", justify: "Mod-j" } as Record<Action, string>,
 };
 /** Order of the actions in the table of Settings. */
-export const ACTIONS: readonly Action[] = ["newArticle", "openProject", "bold", "italic", "underline", "superscript", "subscript", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
+export const ACTIONS: readonly Action[] = ["newArticle", "openProject", "bold", "italic", "underline", "superscript", "subscript", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "normalParagraph", "heading1", "heading2", "heading3", "undo", "redo", "save", "cite", "xref", "find", "replace", "comment", "suggestions", "palette"];
 
 /**
  * Keys that open the web view's own tools: its find bar (which searches the whole window,

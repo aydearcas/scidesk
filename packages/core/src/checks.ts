@@ -299,11 +299,14 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
 }
 
 /** Marks a warning "correct" or "not applicable" (R12): saved in article.json, so that it does not come back. */
-export async function ignoreWarning(project: Project, folder: string, id: string, status: "correct" | "not-applicable", note?: string) {
+export async function ignoreWarning(project: Project, folder: string, id: string | string[], status: "correct" | "not-applicable", note?: string) {
   const art = project.articles.find((a) => a.folder === folder);
   if (!art) throw new Error(`no article ${folder}`);
-  const entry = { warning: id, status, date: now(), ...(note?.trim() ? { note: note.trim() } : {}) };
-  const article = { ...art.article, ignoredWarnings: [...art.article.ignoredWarnings.filter((w) => w.warning !== id), entry] };
+  // record 0085: several at once ("ignore all the 'not cited'"), in one write
+  const ids = new Set(Array.isArray(id) ? id : [id]);
+  const date = now();
+  const entries = [...ids].map((warning) => ({ warning, status, date, ...(note?.trim() ? { note: note.trim() } : {}) }));
+  const article = { ...art.article, ignoredWarnings: [...art.article.ignoredWarnings.filter((w) => !ids.has(w.warning)), ...entries] };
   await saveJson(project, `articles/${folder}/article.json`, article);
   art.article = article;
 }

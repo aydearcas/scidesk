@@ -57,6 +57,17 @@ describe("library", () => {
     expect(summarize(hits[0].entry.csl).authors).toMatch(/^Castro/);
   });
 
+  it("puts the first author's papers before those where the same name is a co-author (record 0085)", () => {
+    const ref = (id: string, authors: string[], year: number) => ({ id, csl: { id, type: "article-journal", title: `T ${id}`, author: authors.map((family) => ({ family, given: "A" })), issued: { "date-parts": [[year]] } } });
+    const library = { version: 1, references: [
+      ref("r-aaaaaaaaa1", ["Abad", "Zurita"], 2020),
+      ref("r-aaaaaaaaa2", ["Zurita", "Abad"], 2021),
+      ref("r-aaaaaaaaa3", ["Benítez", "Castro", "Zurita"], 2019),
+    ] } as never;
+    expect(searchLibrary(library, "zurita").map((h) => h.entry.id)).toEqual(["r-aaaaaaaaa2", "r-aaaaaaaaa1", "r-aaaaaaaaa3"]);
+    expect(searchLibrary(library, "zurita 2020").map((h) => h.entry.id)).toEqual(["r-aaaaaaaaa1"]);
+  });
+
   it("converts the form's fields to CSL-JSON and back without losing what it does not show", async () => {
     const { p } = await demoWithImports();
     for (const r of p.library.references) expect(applyReferenceFields(r.csl, referenceFields(r.csl))).toEqual(r.csl);

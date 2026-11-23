@@ -30,6 +30,7 @@ export const Authors = Strict({
   schemaVersion: SchemaVersion,
   authors: Type.Array(ArticleAuthor, { description: "In the order they sign." }),
   acknowledged: Type.Optional(Type.Array(IdOf("p"), { description: "People thanked who do not sign." })),
+  creditOnTitlePage: Type.Optional(Type.Boolean({ description: "Whether the title page lists each author's CRediT roles (off when absent)." })),
 }, { title: "SciDesk authors of an article (articles/<article>/authors.json)" });
 
 export type AuthorsFile = Type.Static<typeof Authors>;
