@@ -15,6 +15,7 @@ import { composite, imageSize, label, noteLetters, numbering, styleResources } f
 import { sameLang } from "./lang.ts";
 import type { Project } from "./project.ts";
 import { journalExportWarnings } from "./checks.ts";
+import { blindedArticle } from "./blinding.ts";
 import { headingRole, sectionNumberingOf, sectionNumbers } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
 import { tableNodeBorders, type Line } from "./table-borders.ts";
@@ -60,7 +61,9 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   const saved = project.articles.find((a) => a.folder === folder);
   if (!saved) throw new Error(`no article ${folder}`);
   // the preview (record 0058) shows what is on screen, saved or not: `live` replaces documents by path
-  const art = opts.live ? { ...saved, documents: new Map([...saved.documents, ...Object.entries(opts.live).map(([p, doc]) => [p, { ...(saved.documents.get(p) ?? { schemaVersion: 1, documentType: "article", lang: saved.article.lang, changes: {}, comments: {} }), doc }] as const)]) } as typeof saved : saved;
+  const shown = opts.live ? { ...saved, documents: new Map([...saved.documents, ...Object.entries(opts.live).map(([p, doc]) => [p, { ...(saved.documents.get(p) ?? { schemaVersion: 1, documentType: "article", lang: saved.article.lang, changes: {}, comments: {} }), doc }] as const)]) } as typeof saved : saved;
+  // R9, record 0088: the journal gets the blinded version under double-blind review
+  const art = blindedArticle(project, shown);
   const lang = art.article.lang;
   const L = label(lang);
   const journal: JournalProfileFile | undefined = art.article.journal ? project.journals.get(art.article.journal) : undefined;

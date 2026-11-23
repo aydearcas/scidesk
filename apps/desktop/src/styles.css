@@ -473,6 +473,7 @@ ins { color: var(--ins); text-decoration: underline; } del { color: var(--del); 
 .check-text .level-icon { margin-top: 2px; }
 .check-actions { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .check-actions input { flex: 1; min-width: 100px; }
+.check-actions.blind-replace input { flex-basis: 100%; }
 .check-actions .btn { height: 26px; font-size: 12px; }
 /* record 0085: every "not cited" of a kind at once */
 .check.bulk { background: var(--panel); border-style: dashed; }

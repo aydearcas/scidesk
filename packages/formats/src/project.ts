@@ -65,6 +65,14 @@ export const Article = Strict({
   }), Type.Null()], { description: "The font and size the article is written in (the free font view, the Word for co-authors); what is absent follows the journal profile, then Calibri 12. The journal always gets its own (record 0074)." })),
   sectionNumbering: Type.Optional(Type.Union([Type.Literal("none"), Type.Literal("1."), Type.Literal("1"), Type.Null()], { description: "Numbered sections: '1.' (1., 1.1.), '1' (1, 1.1) or 'none'; null or absent: as the journal profile says, and none when it does not say (record 0070)." })),
   countTableWords: Type.Optional(Type.Union([Type.Boolean(), Type.Null()], { description: "Whether the words of the tables count in the text's word count; null or absent: as the journal profile says, and not when it does not say (record 0056)." })),
+  blinding: Type.Optional(Strict({
+    replace: Type.Array(Strict({
+      text: Type.String({ minLength: 1, maxLength: 1000, description: "The exact text, as it is written (whole words)." }),
+      replacement: Type.String({ maxLength: 1000, description: "What the blinded version says instead (may be empty)." }),
+      date: DateTime,
+    }), { description: "Text replaced in the blinded version, everywhere it is written." }),
+    omitSections: Type.Array(Type.String({ minLength: 1 }), { description: "Level-1 headings (block ids) whose sections leave the blinded version and go on the title page." }),
+  }, { description: "What the blinded version for a double-blind journal changes, without touching the manuscript (R9, record 0088)." })),
 }, { title: "SciDesk article (articles/<folder>/article.json)" });
 
 export type ManifestFile = Type.Static<typeof Manifest>;

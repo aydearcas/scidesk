@@ -10,6 +10,8 @@
 //   scidesk section-numbering <dir> none|1.|1|journal [--article main]   numbered sections (record 0070)
 //   scidesk ignore <dir> <warning id> [--as correct|not-applicable] [--note <text>] [--restore] [--article main]
 //   scidesk spell-ignore <dir> <word> [--undo] [--article main]   a word the checker does not underline in this article
+//   scidesk blind-replace <dir> <text> [<replacement>] [--undo] [--article main]   replaced in the blinded version only (record 0088)
+//   scidesk blind-omit <dir> <heading id> [--undo] [--article main]   a section out of the blinded version, on the title page
 //   scidesk export <dir> [--profile coauthors|journal|title-page|pdf] [--article main]
 //                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
@@ -48,6 +50,7 @@ import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 import { checkAuthorship, displayName } from "./authorship.ts";
 import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
 import { ignoreWord, spellingReport, unignoreWord } from "./spelling.ts";
+import { defaultBlindReplacement, setBlindOmitted, setBlindReplacement } from "./blinding.ts";
 import { titlePageModel } from "./title-page.ts";
 import { sectionNumberingOf, sectionNumbers, setSectionNumbering, type SectionNumbering } from "./sections.ts";
 import type { PMNode } from "@scidesk/formats";
@@ -190,6 +193,27 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
       const folder = opt("article", "main")!;
       if (rest.includes("--undo")) await unignoreWord(p, folder, word); else await ignoreWord(p, folder, word);
       console.log(`${word}: ${rest.includes("--undo") ? "underlined again" : "ignored"} in ${folder}`);
+      break;
+    }
+    case "blind-replace": {
+      const text = positional[0];
+      if (!text) throw new Error("usage: scidesk blind-replace <dir> <text> [<replacement>] [--undo] [--article main]");
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      const art = p.articles.find((a) => a.folder === folder);
+      if (!art) throw new Error(`no article ${folder}`);
+      const replacement = rest.includes("--undo") ? null : positional[1] ?? defaultBlindReplacement("blind-self-citation", art.article.lang);
+      await setBlindReplacement(p, folder, text, replacement);
+      console.log(replacement === null ? `${text}: as written in the blinded version` : `${text} → ${replacement} in the blinded version of ${folder}`);
+      break;
+    }
+    case "blind-omit": {
+      const heading = positional[0];
+      if (!heading) throw new Error("usage: scidesk blind-omit <dir> <heading id> [--undo] [--article main]");
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      await setBlindOmitted(p, folder, heading, !rest.includes("--undo"));
+      console.log(`${heading}: ${rest.includes("--undo") ? "back in" : "out of"} the blinded version of ${folder}${rest.includes("--undo") ? "" : ", on the title page"}`);
       break;
     }
     case "export": {

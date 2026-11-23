@@ -8,7 +8,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
-  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, deletePartFile, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
+  addArticle, addEmptyTable, readiness, setCountTableWords, linkedCollection, syncZoteroLibrary, ZoteroError, ZoteroLocal, zoteroLibraryMode, addFigure, addTablePart, discardPastedPart, deletePartFile, saveSnapshot, articleOutline, changedDocuments, checkArticle, composeArticle, liveDocuments, saveComposite, splitArticle, tablePartFromPaste, createDemoProject, ignoreWarning, restoreWarning, setBlindOmitted, setBlindReplacement, deleteReference, exportDocx, exportTitlePage, importCopy, importReferences, loadProject, projectFromWord,
   exportPdf, manuscriptTypst, omitsAuthor, documentFontsOf, setDocumentFont, fontList, sectionNumberingOf, sectionLabel, roleFromName, BODY_ORDER, CLOSING_ORDER, sectionNumbers as numbersOfSections, setSectionNumbering, type SectionNumbering, Recovery, referenceUses, renderCitations, setCitationStyle, styleResources, createProject, tableShape, ignoreWord, unignoreWord, setArticleLang,
   type ArticleData, type ArticleOutline, type CheckReport, type CheckWarning, type OutlinePart, type PendingRecovery, type Project, type ReferenceUse, type Rendering,
 } from "@scidesk/core";
@@ -946,7 +946,23 @@ export function App() {
   };
   const restore = async (w: CheckWarning) => {
     if (!project || !article) return;
-    await restoreWarning(project, article.folder, w.id);
+    // record 0088: what the blinded version changes is undone there
+    if (w.ignored?.status === "replaced") await setBlindReplacement(project, article.folder, String(w.params.match), null);
+    else if (w.ignored?.status === "omitted" && w.where) await setBlindOmitted(project, article.folder, w.where.block, false);
+    else await restoreWarning(project, article.folder, w.id);
+    await recompute();
+  };
+  /** Record 0088: replaces a warning's text in the blinded version only (null: takes its section to the title page). */
+  const blind = async (w: CheckWarning, replacement: string | null) => {
+    if (!project || !article) return;
+    if (replacement === null) {
+      if (!w.where) return;
+      await setBlindOmitted(project, article.folder, w.where.block, true);
+      setMessage(t("blinding.moved", { heading: w.params.heading }));
+    } else {
+      await setBlindReplacement(project, article.folder, String(w.params.match), replacement);
+      setMessage(t("blinding.replaced", { text: w.params.match, replacement }));
+    }
     await recompute();
   };
   pdfPasted.current = (n: number) => setMessage(t("ui.pdfPasted", { count: n }));
@@ -1989,7 +2005,7 @@ export function App() {
               <button role="tab" aria-selected={rightTab === "details"} onClick={() => setRightTab("details")}>{t("ui.details")}</button>
             </div>
             <div className="right-body">
-              {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections}
+              {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} onBlind={blind} articleLang={article?.article.lang ?? "es"}
                 onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
               {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} />}

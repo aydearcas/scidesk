@@ -8,7 +8,10 @@ import { loadProject, saveDocument } from "../src/project.ts";
 import { checkArticle, ignoreWarning } from "../src/checks.ts";
 import { exportDocx } from "../src/docx-export.ts";
 import { nodeResources } from "../src/node-fs.ts";
-import { ethicsWithCode, fold, institutionTerms, selfCitations } from "../src/blinding.ts";
+import JSZip from "jszip";
+import { blindedArticle, ethicsWithCode, fold, institutionTerms, selfCitations, setBlindOmitted, setBlindReplacement } from "../src/blinding.ts";
+import { manuscriptTypst } from "../src/typst-export.ts";
+import { exportTitlePage, titlePageModel } from "../src/title-page.ts";
 
 const EXAMPLE = fileURLToPath(new URL("../../formats/examples/knee-oa/", import.meta.url));
 async function kneeOa() {
@@ -64,6 +67,12 @@ describe("blinded manuscript (R9)", () => {
     expect(n("The study was approved by the institutional review board (protocol no. 2020-118).")).toBe(1);
     expect(n("El Comité de Ética aprobó el estudio en 2021. Se incluyeron pacientes con COVID-19.")).toBe(0);
     expect(n("Se recogieron los datos entre 2019-2021 con el código PI-2019-045.")).toBe(0); // no committee in that sentence
+    // the code, for the blinded version
+    const code = (t: string) => ethicsWithCode(t).map((m) => t.slice(m.code.index, m.code.index + m.code.length));
+    expect(code("Lo aprobó el CEIm (acta 21/045) el 3 de marzo.")).toEqual(["21/045"]);
+    expect(code("Aprobado. El Comité de Ética de la Investigación lo aprobó (código PI-2019-045).")).toEqual(["PI-2019-045"]);
+    expect(code("The study was approved by the IRB (protocol no. 2020-118).")).toEqual(["2020-118"]);
+    expect(code("Approved by the ethics committee, HUFM-22/07.")).toEqual(["HUFM-22/07"]);
   });
 
   it("warns, in the example for Reumatología Clínica (double-blind), of what gives the authors away", async () => {
@@ -86,7 +95,8 @@ describe("blinded manuscript (R9)", () => {
     expect(got).toEqual(expect.arrayContaining([
       ["blind-institution", "b-blind00001", "Hospital Ficticio del Mar"],
       ["blind-city", "b-blind00001", "Puerto Alba"],
-      ["blind-author", "b-blind00002", "Herrera"],
+      ["blind-author", "b-blind00002", "Herrera-Gil L"],
+      ["blind-author", "b-blind00002", "lucia.herrera@example.org"],
       ["blind-self-citation", "b-blind00002", ""],
       ["blind-ethics", "b-blind00003", ""],
       ["blind-section", "b-blind00005", "Agradecimientos"],
@@ -112,5 +122,82 @@ describe("blinded manuscript (R9)", () => {
     prof.review!.blind.value = "single";
     p.journals.set("reumatologia-clinica", prof);
     expect(blind(checkArticle(p, "main", { "manuscript/article.scidoc": body }))).toEqual([]);
+  });
+
+  it("replaces in the blinded version only, and takes sections to the title page (record 0088)", async () => {
+    const p = await kneeOa();
+    const art = p.articles[0];
+    const file = art.documents.get("manuscript/article.scidoc")!;
+    const body = structuredClone(file.doc) as PMNode;
+    body.content!.push(
+      para("b-blind00001", "Los pacientes se reclutaron en el Hospital Ficticio del Mar, en Puerto Alba; el Ficticio es su centro."),
+      // the name split by a mark: replaced all the same, with the first mark
+      { type: "paragraph", attrs: { id: "b-blind00002", lang: null }, content: [
+        { type: "text", text: "Como en el Hospital " }, { type: "text", text: "Ficticio del Mar", marks: [{ type: "italic" }] }, { type: "text", text: "." }] },
+      para("b-blind00003", "El estudio fue aprobado por el Comité de Ética de la Investigación (código PI-2019-045)."),
+      heading("b-blind00005", "Agradecimientos"),
+      para("b-blind00006", "A quienes participaron."),
+    );
+    await saveDocument(p, art, "manuscript/article.scidoc", { ...file, doc: body as never });
+    const before = blind(checkArticle(p, "main"));
+    // every form written is its own warning: the full name and the word alone
+    expect(before.filter((w) => w.code === "blind-institution" && w.where?.block === "b-blind00001").map((w) => w.params.match).sort()).toEqual(["Ficticio", "Hospital Ficticio del Mar"]);
+    expect(before.find((w) => w.code === "blind-ethics")!.params.match).toBe("PI-2019-045");
+
+    await setBlindReplacement(p, "main", "Hospital Ficticio del Mar", "[centro eliminado para la revisión]");
+    await setBlindReplacement(p, "main", "Ficticio", "[centro]");
+    await setBlindReplacement(p, "main", "Puerto Alba", "[ciudad eliminada para la revisión]");
+    await setBlindReplacement(p, "main", "PI-2019-045", "[código eliminado para la revisión]");
+    await setBlindOmitted(p, "main", "b-blind00005", true);
+    const after = blind(checkArticle(p, "main"));
+    const handled = (block: string, code: string) => after.filter((w) => w.where?.block === block && w.code === code).map((w) => w.ignored?.status);
+    expect(handled("b-blind00001", "blind-institution")).toEqual(["replaced", "replaced"]);
+    expect(handled("b-blind00002", "blind-institution")).toEqual(["replaced"]);
+    expect(handled("b-blind00005", "blind-section")).toEqual(["omitted"]);
+    expect(after.filter((w) => !w.ignored && ["b-blind00001", "b-blind00002", "b-blind00003", "b-blind00005"].includes(w.where?.block ?? ""))).toEqual([]);
+
+    // the blinded version; the manuscript as it was
+    const blinded = blindedArticle(p, art);
+    const block = (a: typeof art, id: string) => (a.documents.get("manuscript/article.scidoc")!.doc as PMNode).content!.find((b) => b.attrs?.id === id);
+    const text = (a: typeof art, id: string) => { const n = block(a, id); return n ? (n.content ?? []).map((c) => c.text).join("") : null; };
+    expect(text(blinded, "b-blind00001")).toBe("Los pacientes se reclutaron en el [centro eliminado para la revisión], en [ciudad eliminada para la revisión]; el [centro] es su centro.");
+    expect(block(blinded, "b-blind00002")!.content).toEqual([{ type: "text", text: "Como en el [centro eliminado para la revisión]" }, { type: "text", text: "." }]);
+    expect(text(blinded, "b-blind00003")).toBe("El estudio fue aprobado por el Comité de Ética de la Investigación (código [código eliminado para la revisión]).");
+    expect(text(blinded, "b-blind00005")).toBeNull();
+    expect(text(blinded, "b-blind00006")).toBeNull();
+    expect(text(art, "b-blind00001")).toContain("Hospital Ficticio del Mar");
+    expect(text(art, "b-blind00006")).toBe("A quienes participaron.");
+
+    // the Word and the PDF for the journal get it; the Word for the co-authors does not
+    const wordText = async (bytes: Uint8Array) => (await (await JSZip.loadAsync(bytes)).file("word/document.xml")!.async("string")).replace(/<[^>]+>/g, "");
+    const res = await nodeResources();
+    const journal = await exportDocx(p, "main", "journal", res);
+    const journalText = await wordText(journal.bytes);
+    expect(journalText).toContain("[centro eliminado para la revisión]");
+    expect(journalText).not.toContain("Ficticio del Mar");
+    expect(journalText).not.toContain("A quienes participaron");
+    const coauthors = await wordText((await exportDocx(p, "main", "coauthors", res)).bytes);
+    expect(coauthors).toContain("Hospital Ficticio del Mar");
+    expect(coauthors).toContain("A quienes participaron");
+    const typst = (await manuscriptTypst(p, "main", res)).source;
+    expect(typst).toContain("código eliminado para la revisión");
+    expect(typst).not.toContain("PI-2019-045");
+
+    // the section goes on the title page
+    expect(titlePageModel(p, "main").moved).toEqual([{ heading: "Agradecimientos", role: "acknowledgements", paragraphs: ["A quienes participaron."] }]);
+    expect(await wordText((await exportTitlePage(p, "main", res)).bytes)).toContain("A quienes participaron.");
+
+    // undone: back in the blinded version
+    await setBlindReplacement(p, "main", "PI-2019-045", null);
+    await setBlindOmitted(p, "main", "b-blind00005", false);
+    expect(text(blindedArticle(p, art), "b-blind00003")).toContain("PI-2019-045");
+    expect(text(blindedArticle(p, art), "b-blind00006")).toBe("A quienes participaron.");
+    expect(titlePageModel(p, "main").moved).toEqual([]);
+
+    // without double-blind review, the article as it is
+    const prof = structuredClone(p.journals.get("reumatologia-clinica")!);
+    prof.review!.blind.value = "single";
+    p.journals.set("reumatologia-clinica", prof);
+    expect(blindedArticle(p, art)).toBe(art);
   });
 });

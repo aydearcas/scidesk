@@ -29,6 +29,7 @@ import { renderCitations, runFormat, type CitationResources, type Rendering, typ
 import { sameLang } from "./lang.ts";
 import type { ArticleData, Project } from "./project.ts";
 import { saveSnapshot } from "./snapshot.ts";
+import { blindedArticle } from "./blinding.ts";
 import { headingRole, NUMBERED_LEVELS, sectionNumberingOf, sectionNumbers, type SectionNumbering } from "./sections.ts";
 import { documentFontsOf } from "./document-font.ts";
 import { tableNodeBorders, type Line } from "./table-borders.ts";
@@ -256,9 +257,12 @@ export async function styleResources(project: Project, art: ArticleData, res: Ci
 }
 
 export async function exportDocx(project: Project, folder: string, profile: ExportProfile, res: ExportResources): Promise<ExportResult> {
-  const art = project.articles.find((a) => a.folder === folder);
-  if (!art) throw new Error(`no article ${folder}`);
+  const saved = project.articles.find((a) => a.folder === folder);
+  if (!saved) throw new Error(`no article ${folder}`);
   const markers = profile === "coauthors";
+  // R9, record 0088: the journal gets the blinded version under double-blind review (text
+  // replaced, sections that go on the title page left out); the co-authors, the manuscript
+  const art = markers ? saved : blindedArticle(project, saved);
   const lang = art.article.lang;
   const L = label(lang);
   const journal: JournalProfileFile | undefined = art.article.journal ? project.journals.get(art.article.journal) : undefined;

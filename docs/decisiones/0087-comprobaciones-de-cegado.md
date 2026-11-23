@@ -54,5 +54,5 @@ Quitar la portada no basta para la revisión doble ciego: el propio texto puede 
 - **Buscar las iniciales de los autores** («LH y MA revisaron…»): demasiados falsos avisos con siglas.
 
 ## Qué queda
-- **Sustituir solo en la versión cegada** lo que se marque («[centro eliminado para la revisión]»), sin tocar el manuscrito. R9 lo proponía. Hoy el aviso pide cambiar el texto o marcarlo como correcto.
+- ~~**Sustituir solo en la versión cegada** lo que se marque («[centro eliminado para la revisión]»), sin tocar el manuscrito.~~ Hecho en la ficha 0088.
 - **Los metadatos de las imágenes** (EXIF, autor de un SVG).

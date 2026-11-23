@@ -19,6 +19,56 @@
         "other"
       ]
     },
+    "blinding": {
+      "additionalProperties": false,
+      "description": "What the blinded version for a double-blind journal changes, without touching the manuscript (R9, record 0088).",
+      "properties": {
+        "omitSections": {
+          "description": "Level-1 headings (block ids) whose sections leave the blinded version and go on the title page.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "replace": {
+          "description": "Text replaced in the blinded version, everywhere it is written.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "date": {
+                "description": "UTC date and time, ISO 8601 with Z.",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,3})?Z$",
+                "type": "string"
+              },
+              "replacement": {
+                "description": "What the blinded version says instead (may be empty).",
+                "maxLength": 1000,
+                "type": "string"
+              },
+              "text": {
+                "description": "The exact text, as it is written (whole words).",
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "replacement",
+              "date"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "replace",
+        "omitSections"
+      ],
+      "type": "object"
+    },
     "citationStyle": {
       "additionalProperties": false,
       "description": "The journal profile's style by default; the user may choose another.",

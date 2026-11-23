@@ -7,7 +7,7 @@
 // can be marked "correct" or "not applicable" in article.json and does not come back. No
 // AI and nothing sent anywhere: rules on the project's own files.
 import type { ArticleFile, PMNode } from "@scidesk/formats";
-import { blindingWarnings } from "./blinding.ts";
+import { blindHandling, blindingWarnings, type BlindHandling } from "./blinding.ts";
 import { citationsOf } from "./citations.ts";
 import { composite, numbering } from "./docx-export.ts";
 import { now, saveJson, type Project } from "./project.ts";
@@ -30,8 +30,11 @@ export interface CheckWarning {
   params: Record<string, string | number>;
   /** Where it is: the document (relative to the article folder) and the block. */
   where?: { path: string; block: string };
-  /** Present when the user marked it (it is still returned, to be reviewed). */
-  ignored?: ArticleFile["ignoredWarnings"][number];
+  /**
+   * Present when the user marked it (it is still returned, to be reviewed), or when the blinded
+   * version deals with it (record 0088: "replaced" or "omitted", by article.json's `blinding`).
+   */
+  ignored?: ArticleFile["ignoredWarnings"][number] | ({ warning: string; note?: string } & BlindHandling);
 }
 
 export interface SectionCount {
@@ -291,6 +294,8 @@ export function checkArticle(project: Project, folder: string, live: Record<stri
   // ---------------------------------------------------------------- ignored
   const ignored = new Map(art.article.ignoredWarnings.map((w) => [w.warning, w]));
   for (const w of warnings) { const i = ignored.get(w.id); if (i) w.ignored = i; }
+  // record 0088: what the blinded version replaces or leaves out no longer gives the authors away
+  for (const w of warnings) if (!w.ignored && w.code.startsWith("blind-")) { const h = blindHandling(art, w); if (h) w.ignored = { warning: w.id, ...h }; }
   const order: Record<CheckLevel, number> = { blocking: 0, review: 1, info: 2 };
   warnings.sort((a, b) => Number(!!a.ignored) - Number(!!b.ignored) || order[a.level] - order[b.level]);
   return {

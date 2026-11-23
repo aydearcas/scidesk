@@ -2,13 +2,16 @@
 // generated from authors.json and people.json: titles, running title, authors with their
 // affiliation numbers, affiliations, equal contribution, corresponding author, conflicts of
 // interest, acknowledgements, the members of a group author and, when the article asks for
-// it (record 0085, off by default), each author's CRediT roles. It is generated, not
+// it (record 0085, off by default), each author's CRediT roles, and the sections taken out of
+// the blinded version (record 0088: acknowledgements, conflicts…). It is generated, not
 // edited, so it carries no SciDesk marks; nothing in it is stored.
 import JSZip from "jszip";
 import { AlignmentType, Document, Footer, Packer, PageNumber, Paragraph, TextRun } from "docx";
 import { CREDIT_ROLES, type PMNode } from "@scidesk/formats";
 import { applyTemplate, type ExportResources } from "./docx-export.ts";
 import type { Project } from "./project.ts";
+import { omittedSections } from "./blinding.ts";
+import { blockText } from "./checks.ts";
 
 const TEXT: Record<string, Record<string, string>> = {
   es: { running: "Título corto", corresponding: "Autor para correspondencia", conflicts: "Conflictos de interés", none: "Los autores declaran no tener conflictos de interés.", equal: "Estos autores contribuyeron por igual.", ack: "Agradecimientos", members: "Miembros de", email: "Correo electrónico", missing: "Faltan los autores: añádelos en el artículo", noConflicts: "ningún autor tiene declaración de conflictos de interés", noEmail: "falta el correo del autor para correspondencia" },
@@ -95,6 +98,11 @@ export function titlePageModel(project: Project, folder: string) {
     contributionsTitle: C.title,
     contributions,
     acknowledged: (art.authors.acknowledged ?? []).map((id) => people.get(id)).filter(Boolean).map((p) => fullName(p!)),
+    // record 0088: what the blinded manuscript leaves for the title page, as plain paragraphs
+    moved: omittedSections(project, art).map((s) => ({
+      heading: blockText(s.heading).trim(), role: s.role,
+      paragraphs: s.blocks.filter((b) => b.type !== "tableRef" && b.type !== "figureRef" && b.type !== "pageBreak" && !(b.marks ?? []).some((m) => m.type === "deletion")).map((b) => blockText(b).trim()).filter(Boolean),
+    })),
   };
 }
 
@@ -131,18 +139,27 @@ export async function exportTitlePage(project: Project, folder: string, res: Exp
   // conflicts: one sentence when every author declares the same; none declared, no empty
   // heading (phase 1 test), only the warning
   const texts = new Set(m.conflicts.map((c) => c.text));
-  if (m.conflicts.length) out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.T.conflicts)] }));
-  if (!m.conflicts.length) warnings.push(m.T.noConflicts);
+  const heading = (text: string) => out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(text)] }));
+  const paragraphs = (list: string[]) => list.forEach((p) => out.push(new Paragraph({ children: [new TextRun(p)] })));
+  // record 0088: a section the blinded manuscript leaves here, under its own heading; the
+  // conflicts and the acknowledgements, together with what the authors' form says
+  const moved = (role: string) => m.moved.filter((s) => s.role === role);
+  for (const s of moved("conflicts")) { heading(s.heading); paragraphs(s.paragraphs); }
+  if (m.conflicts.length && !moved("conflicts").length) heading(m.T.conflicts);
+  if (!m.conflicts.length && !moved("conflicts").length) warnings.push(m.T.noConflicts);
   else if (texts.size === 1 && m.conflicts.length === m.authors.length) out.push(new Paragraph({ children: [new TextRun([...texts][0])] }));
   else m.conflicts.forEach((c) => out.push(new Paragraph({ children: [new TextRun({ text: `${c.name}: `, italics: true }), new TextRun(c.text)] })));
   if (m.contributions.length) {
     out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.contributionsTitle)] }));
     m.contributions.forEach((c) => out.push(new Paragraph({ children: [new TextRun({ text: `${c.name}: `, italics: true }), new TextRun(`${c.roles.join(", ")}.`)] })));
   }
-  if (m.acknowledged.length) {
-    out.push(new Paragraph({ style: tpl.style("heading 1"), children: [new TextRun(m.T.ack)] }));
-    out.push(new Paragraph({ children: [new TextRun(m.acknowledged.join(", ") + ".")] }));
+  const ack = moved("acknowledgements");
+  if (m.acknowledged.length || ack.length) {
+    heading(ack[0]?.heading || m.T.ack);
+    for (const s of ack) paragraphs(s.paragraphs);
+    if (m.acknowledged.length) out.push(new Paragraph({ children: [new TextRun(m.acknowledged.join(", ") + ".")] }));
   }
+  for (const s of m.moved) if (s.role !== "conflicts" && s.role !== "acknowledgements") { heading(s.heading); paragraphs(s.paragraphs); }
 
   const doc = new Document({
     externalStyles: tpl.xml,
