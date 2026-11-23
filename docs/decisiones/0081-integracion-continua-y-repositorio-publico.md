@@ -27,5 +27,5 @@
 
 ## Consecuencias
 - Cada commit enviado a GitHub es público desde ese momento, también su autor y su correo.
-- La carpeta del repositorio pasa a llamarse `scidesk`, como el repositorio.
+- La carpeta del repositorio en el equipo sigue llamándose `sciscribe`: el nombre no afecta al programa ni al repositorio, y cambiarlo obliga a cerrar las sesiones y rehacer los enlaces de `node_modules`.
 - Pendiente: las pruebas del editor con Playwright en Chromium y WebKit, y compilar el instalador en la integración continua.

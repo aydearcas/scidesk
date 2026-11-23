@@ -5,7 +5,7 @@ import { EditorState, TextSelection, type Transaction } from "@tiptap/pm/state";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import { extensions } from "./editor.ts";
 import { insertPageBreak } from "./page-break.ts";
-import { actionFor, comboOf, shortcutLabel } from "./shortcuts.ts";
+import { actionFor, comboOf, isMac, shortcutLabel } from "./shortcuts.ts";
 
 const schema = getSchema(extensions);
 const p = (id: string, text: string) => ({ type: "paragraph", attrs: { id }, ...(text ? { content: [{ type: "text", text }] } : {}) });
@@ -53,7 +53,7 @@ describe("page breaks", () => {
     expect(r.cursor).toBe("·");
   });
   it("is Ctrl+Enter in both schemes, «Ctrl+Intro» in Spanish", () => {
-    const key = { key: "Enter", ctrlKey: true, metaKey: false, shiftKey: false, altKey: false };
+    const key = { key: "Enter", ctrlKey: !isMac, metaKey: isMac, shiftKey: false, altKey: false };
     expect(actionFor("word-es", comboOf(key))).toBe("pageBreak");
     expect(actionFor("international", comboOf(key))).toBe("pageBreak");
     expect(shortcutLabel("Mod-Enter", "es")).toMatch(/Intro$/);

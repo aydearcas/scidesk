@@ -1,8 +1,9 @@
 // The two shortcut schemes (R19, D6, record 0044).
 import { describe, expect, it } from "vitest";
-import { ACTIONS, actionFor, comboOf, SCHEMES, shortcutLabel } from "./shortcuts.ts";
+import { ACTIONS, actionFor, comboOf, isMac, SCHEMES, shortcutLabel } from "./shortcuts.ts";
 
-const key = (k: string, o: Partial<KeyboardEvent> = {}) => ({ key: k, ctrlKey: true, metaKey: false, shiftKey: false, altKey: false, ...o });
+// "Mod" is Ctrl on Windows and Cmd on macOS: the key as the platform running the tests sends it
+const key = (k: string, o: Partial<KeyboardEvent> = {}) => ({ key: k, ctrlKey: !isMac, metaKey: isMac, shiftKey: false, altKey: false, ...o });
 
 describe("shortcut schemes", () => {
   it("are Word's in Spanish and the international ones", () => {
@@ -47,8 +48,8 @@ describe("shortcut schemes", () => {
   });
 
   it("are shown as the interface says them", () => {
-    expect(shortcutLabel("Mod-Shift-c", "es")).toBe("Ctrl+Mayús+C");
-    expect(shortcutLabel("Mod-Shift-c", "en")).toBe("Ctrl+Shift+C");
+    expect(shortcutLabel("Mod-Shift-c", "es")).toBe(isMac ? "⌘⇧C" : "Ctrl+Mayús+C");
+    expect(shortcutLabel("Mod-Shift-c", "en")).toBe(isMac ? "⌘⇧C" : "Ctrl+Shift+C");
   });
 });
 
