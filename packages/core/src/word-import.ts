@@ -31,6 +31,10 @@ const parse = (xml: string) => {
 
 // the section types by name: shared with the editor (record 0071, sections.ts)
 const roleOf = roleFromName;
+/** Record 0073: Word's quotation styles, by their internal names. */
+const QUOTE_STYLE = /^(quote|intense quote)$/i;
+/** A block's own alignment from Word: centred or right; justified is the whole text's (the journal's). */
+const blockAlign = (p: { align: string | null }) => (p.align === "center" ? { align: "center" } : p.align === "right" || p.align === "end" ? { align: "right" } : {});
 const ABSTRACT = /^(resumen|abstract|summary)$/i;
 const KEYWORDS = /^\s*(palabras? clave|key ?words)\s*[:.]\s*/i;
 export const TABLE_CAPTION = /^\s*(tabla|table)\s+(\d+)\s*[.:\-–—]?\s*/i;
@@ -328,7 +332,7 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
       if (abstractLevel !== null && level <= abstractLevel) abstractLevel = null;
       headings++;
       const role = roleOf(it.text);
-      (abstractLevel !== null ? abstract : body).push(block("heading", it, { level: abstractLevel !== null ? Math.max(2, level) : level, role }));
+      (abstractLevel !== null ? abstract : body).push(block("heading", it, { level: abstractLevel !== null ? Math.max(2, level) : level, role, ...blockAlign(it) }));
       return;
     }
     if (abstractLevel !== null) {
@@ -349,7 +353,15 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
       return;
     }
     currentList = null;
-    body.push(block("paragraph", it, it.indent ? { indent: it.indent } : {}));
+    // record 0073: a paragraph in Word's Quote style goes into a block quotation (consecutive ones, into the same)
+    if (QUOTE_STYLE.test(it.style)) {
+      const last = body.at(-1);
+      const p = block("paragraph", it, blockAlign(it));
+      if (last?.type === "blockquote") last.content!.push(p);
+      else body.push({ type: "blockquote", attrs: { id: newId("b") }, content: [p] });
+      return;
+    }
+    body.push(block("paragraph", it, { ...(it.indent ? { indent: it.indent } : {}), ...blockAlign(it) }));
   });
   if (!title.length) {
     const fallback = opts.fileName.replace(/\.docx$/i, "");

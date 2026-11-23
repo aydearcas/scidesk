@@ -136,6 +136,18 @@ export function applyTemplate(stylesXml: string, format: { lineSpacing?: number;
     }
     return open + b + close;
   });
+  // record 0073: Word's Quote style as a block quotation: 1.25 cm in on both sides, aligned as the text
+  const quote = ids["quote"];
+  if (quote) {
+    const style = new RegExp(`(<w:style [^>]*w:styleId="${quote}"[^>]*>)([\\s\\S]*?)(</w:style>)`);
+    xml = xml.replace(style, (_, open: string, body: string, close: string) => {
+      // in plain letters, as the text (Word's own Quote style is italic and grey)
+      let b = body.replace(/<w:jc [^>]*\/>/, "").replace(/<w:ind [^>]*\/>/, "").replace(/<w:i\/>|<w:iCs\/>|<w:color [^>]*\/>/g, "");
+      const ind = `<w:ind w:left="709" w:right="709"/>`;
+      b = /<w:pPr>/.test(b) ? b.replace(/(<w:pPr>[\s\S]*?)(<\/w:pPr>)/, `$1${ind}$2`) : b.replace(/(<w:rPr>|$)/, `<w:pPr>${ind}</w:pPr>$1`);
+      return open + b + close;
+    });
+  }
   // record 0070: headings 1 to 3 in the sections' list, as Word does with a multilevel list
   // linked to its heading styles (a heading a co-author adds in Word is numbered too)
   if (format.sectionNumbering && format.sectionNumbering !== "none") {
@@ -353,7 +365,10 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     }
     // record 0069: a paragraph's left indent, 1.25 cm (709 twips) a step, as Word's "Increase indent"
     const indent = n.type === "paragraph" ? ((n.attrs?.indent as number | null) ?? 0) : 0;
-    const o = indent ? { ...opts, indent: { ...(opts.indent ?? {}), left: (((opts.indent as { left?: number } | undefined)?.left) ?? 0) + 709 * indent } } : opts;
+    const withIndent = indent ? { ...opts, indent: { ...(opts.indent ?? {}), left: (((opts.indent as { left?: number } | undefined)?.left) ?? 0) + 709 * indent } } : opts;
+    // record 0073: a text block's own alignment (left, or the template's, when it has none)
+    const align = n.attrs?.align as string | null | undefined;
+    const o = align && !withIndent.alignment ? { ...withIndent, alignment: align === "center" ? AlignmentType.CENTER : align === "right" ? AlignmentType.RIGHT : AlignmentType.JUSTIFIED } : withIndent;
     return new Paragraph({ ...o, children: [...(wrap.before ?? []), ...lead, ...children, ...(wrap.after ?? [])] });
   };
 
@@ -501,6 +516,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       if (headingRole(n) === "references") bibliography();
     } else if (n.type === "paragraph") out.push(para(n));
     else if (n.type === "bulletList" || n.type === "orderedList") list(n, 0);
+    else if (n.type === "blockquote") for (const p of n.content ?? []) out.push(para(p, { style: S("quote") }));
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
     else if (n.type === "figurePart") { if (!captionsList) figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);

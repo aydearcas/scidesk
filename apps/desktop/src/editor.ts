@@ -25,6 +25,7 @@ import { LangMark, LangPaste } from "./lang.ts";
 import { Autocorrect } from "./autocorrect.ts";
 import { Indent, IndentBackspace, MAX_INDENT } from "./indent.ts";
 import { SectionNumbers } from "./section-numbers.ts";
+import { alignAttribute, Blockquote, setBlockAlign } from "./align.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -33,7 +34,7 @@ const Title = Node.create({
   group: "block",
   content: "inline*",
   defining: true,
-  addAttributes: () => ({ id: plain("id"), lang: plain("lang") }),
+  addAttributes: () => ({ id: plain("id"), lang: plain("lang"), align: alignAttribute }),
   parseHTML: () => [{ tag: "h1.title" }],
   renderHTML: ({ HTMLAttributes }) => ["h1", mergeAttributes(HTMLAttributes, { class: "title" }), 0],
 });
@@ -207,6 +208,8 @@ const SchemeKeys = Extension.create({
           if (!action || !EDITOR_ACTIONS.includes(action)) return false;
           if (action === "cite") hooks.quickCite();
           else if (action === "xref") hooks.xref();
+          // record 0073: alignment, as Word's Ctrl+Q/T/D/J or Ctrl+L/E/R/J
+          else if (action === "alignLeft" || action === "alignCenter" || action === "alignRight" || action === "justify") setBlockAlign(editor, action === "alignLeft" ? "left" : action === "alignCenter" ? "center" : action === "alignRight" ? "right" : "justify");
           else editor.commands.toggleMark(action);
           event.preventDefault();
           return true;
@@ -413,14 +416,15 @@ export const extensions = [
   SchemeKeys,
   FindHighlight,
   // paragraph first: it is the type ProseMirror creates on Enter (the first of the expression)
-  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | abstractPart | tablePart | figurePart | tableRef | figureRef)*" }),
+  Document.extend({ content: "(paragraph | heading | title | bulletList | orderedList | blockquote | abstractPart | tablePart | figurePart | tableRef | figureRef)*" }),
+  Blockquote,
   BulletList.extend({ addAttributes: () => ({ id: plain("id") }) }),
   OrderedList.extend({ addAttributes: () => ({ id: plain("id"), start: { default: 1, parseHTML: (el: HTMLElement) => Number(el.getAttribute("start") ?? 1) } }) }),
   ListItem,
   partRef("tableRef"),
   partRef("figureRef"),
   Text,
-  Paragraph.extend({ addAttributes: () => ({ id: plain("id"), lang: plain("lang"), indent: {
+  Paragraph.extend({ addAttributes: () => ({ id: plain("id"), lang: plain("lang"), align: alignAttribute, indent: {
     // record 0069: the left indent in steps of 1.25 cm, drawn with --indent
     default: null,
     parseHTML: (el: HTMLElement) => { const n = Number(el.getAttribute("data-indent")); return n >= 1 && n <= MAX_INDENT ? n : null; },
@@ -432,7 +436,7 @@ export const extensions = [
   Heading.extend({
     addAttributes() {
       return {
-        ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang"),
+        ...this.parent?.(), id: plain("id"), role: plain("role"), lang: plain("lang"), align: alignAttribute,
         // record 0070: false keeps the heading (and its subsections) without a number
         numbered: { default: null, parseHTML: (el: HTMLElement) => (el.getAttribute("data-numbered") === "false" ? false : null), renderHTML: (a: Record<string, unknown>) => (a.numbered === false ? { "data-numbered": "false" } : {}) },
       };

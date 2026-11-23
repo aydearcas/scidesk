@@ -128,16 +128,24 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
     const text = inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around).replace(/^(\d+)\./, "$1\\.");
     // record 0069: a paragraph's left indent, 1.25 cm a step
     const indent = (n.attrs?.indent as number | null) ?? 0;
-    return `${marker(n)}${indent ? `#pad(left: ${(1.25 * indent).toFixed(2)}cm)[${text}]` : text}`;
+    const padded = indent ? `#pad(left: ${(1.25 * indent).toFixed(2)}cm)[${text}]` : text;
+    return `${marker(n)}${aligned(n, padded)}`;
   };
 
   // ---------------------------------------------------------------- blocks
   const out: string[] = [];
   // record 0070: a numbered section's number before its text (escaped: "2." could start a list)
+  /** Record 0073: a text block's own alignment. */
+  const aligned = (n: PMNode, body: string) => {
+    const a = n.attrs?.align as string | null | undefined;
+    return a === "center" || a === "right" ? `#align(${a})[${body}]` : a === "justify" ? `#par(justify: true)[${body}]` : body;
+  };
   const heading = (n: PMNode, level?: number) => {
     const num = level === undefined && n.attrs?.id ? sectionNo.get(n.attrs.id as string) : undefined;
     const prefix = num ? `${num.replace(/\./g, "\\.")} ` : "";
-    out.push(`${marker(n)}\n${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${prefix}${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? around)}`);
+    const h = `${"=".repeat(Math.min(level ?? (n.attrs?.level as number) ?? 1, 6))} ${prefix}${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? around)}`;
+    const a = n.attrs?.align as string | null | undefined;
+    out.push(`${marker(n)}\n${a === "center" || a === "right" ? `#align(${a})[\n${h}\n]` : h}`);
   };
 
   function list(n: PMNode): string {
@@ -252,12 +260,14 @@ ${notesOf(notes)}
   for (const n of bodyNodes) {
     if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
     if (n.type !== "title" && !abstractDone) writeAbstract();
-    if (n.type === "title") out.push(`${marker(n)}#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? lang)}])`);
+    if (n.type === "title") out.push(`${marker(n)}${aligned(n, `#block(below: 1.5em, text(size: 1.4em, weight: "bold")[${inlines(n.content, undefined, (n.attrs?.lang as string | null) ?? lang)}])`)}`);
     else if (n.type === "heading") {
       heading(n);
       if (headingRole(n) === "references") bibliography();
     } else if (n.type === "paragraph") out.push(paragraph(n));
     else if (n.type === "bulletList" || n.type === "orderedList") out.push(`${marker(n)}${list(n)}`);
+    // record 0073: a block quotation, indented on both sides as in the Word
+    else if (n.type === "blockquote") out.push(`${marker(n)}#pad(x: 1.25cm)[${(n.content ?? []).map((p) => paragraph(p)).join("\n\n")}]`);
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
     else if (n.type === "figurePart") { if (!captionsList) await figure(n, true); }
     else warnings.push(`'${n.type}' is not exported yet`);

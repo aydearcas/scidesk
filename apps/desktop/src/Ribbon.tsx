@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { OutlinePart } from "@scidesk/core";
 import { Icon } from "./icons.tsx";
 import { changeIndent } from "./indent.ts";
+import { alignAt, canBlockquote, inBlockquote, setBlockAlign, toggleBlockquote, type BlockAlign } from "./align.ts";
 import { MenuButton, Popover } from "./Menus.tsx";
 import { SCHEMES, shortcutLabel, type Action, type SchemeId } from "./shortcuts.ts";
 
@@ -69,6 +70,7 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
       list: innermostList(e),
       canBullets: e.can().toggleBulletList(), canNumbers: e.can().toggleOrderedList(),
       canSink: changeIndent(1)(e.state), canLift: changeIndent(-1)(e.state),
+      align: alignAt(e.state), quote: inBlockquote(e.state), canQuote: canBlockquote(e.state),
       block: e.isActive("title") ? "title" : e.isActive("heading", { level: 1 }) ? "h1" : e.isActive("heading", { level: 2 }) ? "h2" : e.isActive("heading", { level: 3 }) ? "h3" : e.isActive("paragraph") ? "p" : "other",
     }),
   });
@@ -163,6 +165,14 @@ export function Ribbon({ editor, scheme, targets, onCite, onXref, onTable, onFig
         disabled={disabled || !s.canLift} onClick={() => { changeIndent(-1)(editor.state, editor.view.dispatch); editor.commands.focus(); }}><Icon name="indentLess" /></button>
       <button className="tool" title={`${t("ui.indentMore")} (${shortcutLabel("Tab", i18n.language)})`} aria-label={t("ui.indentMore")} onMouseDown={keep}
         disabled={disabled || !s.canSink} onClick={() => { changeIndent(1)(editor.state, editor.view.dispatch); editor.commands.focus(); }}><Icon name="indentMore" /></button>
+      <span className="tool-sep" />
+      {/* record 0073: alignment (of the cells in a table) and block quotation */}
+      {([["left", "alignLeft", "alignLeft"], ["center", "alignCenter", "alignCenter"], ["right", "alignRight", "alignRight"], ["justify", "alignJustify", "justify"]] as const).map(([a, icon, action]) => (
+        <button key={a} className={`tool${s.align === a ? " on" : ""}`} aria-pressed={s.align === a} title={tip(t(`ui.actions.${action}`), action)} aria-label={t(`ui.actions.${action}`)} onMouseDown={keep}
+          disabled={disabled || s.align === null} onClick={() => setBlockAlign(editor, a as BlockAlign)}><Icon name={icon} /></button>
+      ))}
+      <button className={`tool${s.quote ? " on" : ""}`} aria-pressed={s.quote} title={`${t("ui.blockquote")}: ${t("ui.blockquoteHint")}`} aria-label={t("ui.blockquote")} onMouseDown={keep}
+        disabled={disabled || !s.canQuote} onClick={() => toggleBlockquote(editor)}><Icon name="blockquote" /></button>
       <span className="tool-sep" />
       <button className="tool accent" title={tip(t("ui.cite"), "cite")} onMouseDown={keep} disabled={disabled} onClick={onCite}><Icon name="quote" /> {t("ui.citeShort")}</button>
       <MenuButton id="tool-xref" label={t("ui.xref")} className="tool" disabled={disabled} title={tip(t("ui.xref"), "xref")} items={[

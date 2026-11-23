@@ -147,7 +147,7 @@ const ZWSP = "​";
 
 /** Id attribute kind by node type: every node listed here must have an id. */
 export const ID_OF_NODE: Record<string, IdKind> = {
-  paragraph: "b", heading: "b", title: "b", bulletList: "b", orderedList: "b", table: "b",
+  paragraph: "b", heading: "b", title: "b", bulletList: "b", orderedList: "b", table: "b", blockquote: "b",
   tableCaption: "b", figureCaption: "b", abstractSection: "b", keywords: "b",
   tableNote: "n", figureNote: "n", equation: "e", citation: "c",
   tablePart: "t", tableRef: "t", figurePart: "f", figureRef: "f",

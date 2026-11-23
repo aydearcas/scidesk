@@ -47,6 +47,8 @@ export const BODY_DOCUMENT_TYPES = DOCUMENT_TYPES.filter((t): t is Exclude<(type
 
 export const enumOf = <const T extends readonly string[]>(values: T, description?: string) =>
   Type.Enum(values as unknown as T[number][], description ? { description } : {});
+/** Record 0073: a text block's alignment; left (or the journal's) when absent. */
+const BLOCK_ALIGN = enumOf(["center", "right", "justify"]);
 
 // ------------------------------------------------------------------ marks
 
@@ -162,9 +164,9 @@ const CellAttrs = Strict({
 const cellContent = Type.Array(Type.Union([Type.Ref("Paragraph"), Type.Ref("BulletList"), Type.Ref("OrderedList")]), { minItems: 1 });
 
 const blockDefs = {
-  Paragraph: textblock("paragraph", { id: BlockId, lang, indent: OptAttr(Type.Integer({ minimum: 1, maximum: 8 })) }, "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069)."),
-  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang, numbered: OptAttr(Type.Boolean()) }, "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070)."),
-  Title: textblock("title", { id: BlockId, lang }, "Title of the article; one per language, the first is the main one."),
+  Paragraph: textblock("paragraph", { id: BlockId, lang, indent: OptAttr(Type.Integer({ minimum: 1, maximum: 8 })), align: OptAttr(BLOCK_ALIGN) }, "Paragraph. `indent`: left indent in steps of 1.25 cm, as Word's \"Increase indent\" (record 0069)."),
+  Heading: textblock("heading", { id: BlockId, level: Type.Integer({ minimum: 1, maximum: 6 }), role: OptAttr(enumOf(SECTION_ROLES)), lang, numbered: OptAttr(Type.Boolean()), align: OptAttr(BLOCK_ALIGN) }, "Section heading; `role` says which section it starts; `numbered: false` keeps it (and its subsections) without a number when the article numbers its sections (record 0070)."),
+  Title: textblock("title", { id: BlockId, lang, align: OptAttr(BLOCK_ALIGN) }, "Title of the article; one per language, the first is the main one."),
   BulletList: Strict({ type: Type.Literal("bulletList"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
   OrderedList: Strict({ type: Type.Literal("orderedList"), attrs: Strict({ id: BlockId, start: Type.Optional(Type.Integer({ minimum: 0 })) }), content: Type.Array(Type.Ref("ListItem"), { minItems: 1 }), marks: nodeMarks }),
   ListItem: Strict({
@@ -183,8 +185,10 @@ const blockDefs = {
     attrs: Strict({ id: IdOf("f"), src: Type.String({ pattern: "^figures/[^/]+\\.scifigure$" }) }),
     marks: nodeMarks,
   }, { description: "Where a figure of figures/ goes. The caption and notes live in its .scifigure." }),
+  // record 0073: a block quotation (JATS disp-quote), indented on both sides
+  BlockQuote: Strict({ type: Type.Literal("blockquote"), attrs: Strict({ id: BlockId }), content: Type.Array(Type.Ref("Paragraph"), { minItems: 1 }), marks: nodeMarks }, { description: "Block quotation: one or more paragraphs set apart from the text (record 0073)." }),
   Body: Type.Union([
-    Type.Ref("Paragraph"), Type.Ref("Heading"), Type.Ref("Title"), Type.Ref("BulletList"), Type.Ref("OrderedList"),
+    Type.Ref("Paragraph"), Type.Ref("Heading"), Type.Ref("Title"), Type.Ref("BulletList"), Type.Ref("OrderedList"), Type.Ref("BlockQuote"),
     Type.Ref("Equation"), Type.Ref("TableRef"), Type.Ref("FigureRef"),
   ]),
 

@@ -19,6 +19,9 @@ describe("shortcut schemes", () => {
     expect(actionFor("word-es", comboOf(key("a")))).toBe("openProject");
     expect(actionFor("international", comboOf(key("n")))).toBe("newArticle");
     expect(actionFor("international", comboOf(key("o")))).toBe("openProject");
+    // alignment as Word in each language (record 0073)
+    expect(["q", "t", "d", "j"].map((k) => actionFor("word-es", comboOf(key(k))))).toEqual(["alignLeft", "alignCenter", "alignRight", "justify"]);
+    expect(["l", "e", "r", "j"].map((k) => actionFor("international", comboOf(key(k))))).toEqual(["alignLeft", "alignCenter", "alignRight", "justify"]);
   });
 
   it("cite with Ctrl+Shift+C in both (D6)", () => {

@@ -115,6 +115,49 @@
       ],
       "type": "object"
     },
+    "BlockQuote": {
+      "additionalProperties": false,
+      "description": "Block quotation: one or more paragraphs set apart from the text (record 0073).",
+      "properties": {
+        "attrs": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
+              "pattern": "^b-[a-z0-9]{1,24}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "content": {
+          "items": {
+            "$ref": "#/$defs/Paragraph"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "marks": {
+          "items": {
+            "$ref": "#/$defs/NodeMark"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "blockquote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "attrs",
+        "content"
+      ],
+      "type": "object"
+    },
     "Body": {
       "anyOf": [
         {
@@ -131,6 +174,9 @@
         },
         {
           "$ref": "#/$defs/OrderedList"
+        },
+        {
+          "$ref": "#/$defs/BlockQuote"
         },
         {
           "$ref": "#/$defs/Equation"
@@ -831,6 +877,20 @@
         "attrs": {
           "additionalProperties": false,
           "properties": {
+            "align": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "center",
+                    "right",
+                    "justify"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "id": {
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
@@ -1387,6 +1447,20 @@
         "attrs": {
           "additionalProperties": false,
           "properties": {
+            "align": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "center",
+                    "right",
+                    "justify"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "id": {
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",
@@ -2791,6 +2865,20 @@
         "attrs": {
           "additionalProperties": false,
           "properties": {
+            "align": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "center",
+                    "right",
+                    "justify"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
             "id": {
               "description": "Id of a block (paragraph, heading, title, caption, keyword list, list, table, equation).",
               "pattern": "^b-[a-z0-9]{1,24}$",

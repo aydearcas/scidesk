@@ -584,6 +584,11 @@ mark { color: #000; padding: 0 1px; }
 .page .part { margin: calc(18px * var(--zoom)) 0; }
 /* record 0070: a section's number, drawn before its heading (never text) */
 .ProseMirror .section-number { margin-right: 0.4em; user-select: none; }
+/* record 0073: a block's own alignment, and a block quotation set in on both sides */
+.ProseMirror [data-align="center"] { text-align: center; }
+.ProseMirror [data-align="right"] { text-align: right; }
+.ProseMirror [data-align="justify"] { text-align: justify; }
+.ProseMirror blockquote.block-quote { margin: calc(8px * var(--zoom)) calc(1.25cm * var(--zoom)); padding-left: calc(10px * var(--zoom)); border-left: 2px solid var(--line); color: var(--text); }
 /* record 0069: a paragraph's left indent, 1.25 cm a step as in Word */
 .ProseMirror p[data-indent] { margin-left: calc(1.25cm * var(--zoom) * var(--indent)); }
 .page .part-abstract { border-left: 3px solid var(--line); padding: calc(2px * var(--zoom)) 0 calc(2px * var(--zoom)) calc(16px * var(--zoom)); margin: calc(4px * var(--zoom)) 0 calc(26px * var(--zoom)); }

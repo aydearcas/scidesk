@@ -123,6 +123,7 @@ const es = {
     pastePlain: "Pegar solo texto", pastePlainHint: "Pulsa Ctrl+Mayús+V en el texto (el menú no puede leer el portapapeles)",
     sections: { menu: "Sección…", section: "Sección", add: "Añadir sección", addMenu: "Añadir sección…", other: "Otra sección…", otherType: "Otra sección", addSub: "Añadir subsección", up: "Subir", down: "Bajar", type: "Tipo de sección: {{type}}…", typeMenu: "Tipo de sección", byName: "Según el nombre ({{type}})", byNameNone: "Según el nombre (no se reconoce)", none: "sin tipo", removeHeading: "Quitar el título (deja el texto)", rightClick: "Arrástrala para moverla; clic derecho: añadir, mover o cambiar el tipo", present: "ya está" },
     numbering: { title: "Numeración de las secciones", none: "Sin numerar", dotted: "1. y 1.1.", plain: "1 y 1.1", asJournal: "Como la revista (no lo dice: sin numerar)", asJournalSays: "Como la revista ({{style}})", fromJournal: "como la revista", fromDefault: "la revista no lo dice", thisSection: "Numerar esta sección" },
+    blockquote: "Cita en bloque", blockquoteHint: "Sangrada a los dos lados, para citas largas",
     bulletList: "Viñetas", orderedList: "Numeración", indentLess: "Disminuir sangría", indentMore: "Aumentar sangría",
     cite: "Insertar cita", citeShort: "Cita", xref: "Referencia cruzada", insertTable: "Insertar tabla", insertFigure: "Insertar figura…", symbol: "Carácter especial", nbsp: "Espacio duro",
     pending: "Marcar un pendiente", pendingMarker: "[PENDIENTE]", openLibrary: "Abrir la biblioteca", warnings: "Avisos", review: "Revisión", details: "Detalles",
@@ -227,7 +228,7 @@ const es = {
     schemeNote: "«Word en español» es el de Word con la interfaz en español (Ctrl+N negrita, Ctrl+K cursiva, Ctrl+S subrayado, Ctrl+G guardar, Ctrl+B buscar). La cita rápida es Ctrl+Mayús+C en los dos, y Ctrl+F también busca en los dos.",
     action: "Acción", comingLater: "llega más adelante", noCtrlAlt: "Ningún atajo usa Ctrl+Alt, que en los teclados españoles de Windows es AltGr.",
     actions: {
-      bold: "Negrita", italic: "Cursiva", underline: "Subrayado", superscript: "Superíndice", subscript: "Subíndice", undo: "Deshacer", redo: "Rehacer", save: "Guardar ahora (después, versión con nombre)",
+      bold: "Negrita", italic: "Cursiva", underline: "Subrayado", superscript: "Superíndice", subscript: "Subíndice", alignLeft: "Alinear a la izquierda", alignCenter: "Centrar", alignRight: "Alinear a la derecha", justify: "Justificar", undo: "Deshacer", redo: "Rehacer", save: "Guardar ahora (después, versión con nombre)",
       newArticle: "Nuevo artículo", openProject: "Abrir una carpeta (en el texto, Ctrl+A de «Word en español» sigue seleccionando todo)",
       cite: "Insertar cita", xref: "Insertar referencia cruzada", find: "Buscar", replace: "Reemplazar", comment: "Comentario", suggestions: "Modo de sugerencias", palette: "Buscar o ejecutar una orden",
     },
@@ -451,6 +452,7 @@ const en: typeof es = {
     pastePlain: "Paste text only", pastePlainHint: "Press Ctrl+Shift+V in the text (the menu cannot read the clipboard)",
     sections: { menu: "Section…", section: "Section", add: "Add section", addMenu: "Add section…", other: "Other section…", otherType: "Other section", addSub: "Add subsection", up: "Move up", down: "Move down", type: "Section type: {{type}}…", typeMenu: "Section type", byName: "By its name ({{type}})", byNameNone: "By its name (not recognised)", none: "no type", removeHeading: "Remove the heading (keep the text)", rightClick: "Drag it to move it; right click: add, move or change the type", present: "already there" },
     numbering: { title: "Section numbering", none: "Not numbered", dotted: "1. and 1.1.", plain: "1 and 1.1", asJournal: "As the journal (it does not say: not numbered)", asJournalSays: "As the journal ({{style}})", fromJournal: "as the journal", fromDefault: "the journal does not say", thisSection: "Number this section" },
+    blockquote: "Block quotation", blockquoteHint: "Set in on both sides, for long quotations",
     bulletList: "Bullets", orderedList: "Numbering", indentLess: "Decrease indent", indentMore: "Increase indent",
     cite: "Insert citation", citeShort: "Cite", xref: "Cross-reference", insertTable: "Insert table", insertFigure: "Insert figure…", symbol: "Special character", nbsp: "Non-breaking space",
     pending: "Mark something pending", pendingMarker: "[TODO]", openLibrary: "Open the library", warnings: "Warnings", review: "Review", details: "Details",
@@ -555,7 +557,7 @@ const en: typeof es = {
     schemeNote: "“Word in Spanish” is Word's with the interface in Spanish (Ctrl+N bold, Ctrl+K italic, Ctrl+S underline, Ctrl+G save, Ctrl+B find). The quick citation is Ctrl+Shift+C in both, and Ctrl+F finds in both too.",
     action: "Action", comingLater: "coming later", noCtrlAlt: "No shortcut uses Ctrl+Alt, which is AltGr on Spanish Windows keyboards.",
     actions: {
-      bold: "Bold", italic: "Italic", underline: "Underline", superscript: "Superscript", subscript: "Subscript", undo: "Undo", redo: "Redo", save: "Save now (later, a named version)",
+      bold: "Bold", italic: "Italic", underline: "Underline", superscript: "Superscript", subscript: "Subscript", alignLeft: "Align left", alignCenter: "Center", alignRight: "Align right", justify: "Justify", undo: "Undo", redo: "Redo", save: "Save now (later, a named version)",
       newArticle: "New article", openProject: "Open a folder (in the text, “Word en español”'s Ctrl+A still selects everything)",
       cite: "Insert citation", xref: "Insert cross-reference", find: "Find", replace: "Replace", comment: "Comment", suggestions: "Suggestions mode", palette: "Search or run a command",
     },

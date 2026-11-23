@@ -91,6 +91,47 @@ describe("new article from a Word document", () => {
     expect(indented[0].attrs!.indent).toBe(2);
   });
 
+  it("keeps alignment and block quotations through the DOCX and back, and in the PDF source (record 0073)", async () => {
+    const { createDemoProject } = await import("../src/demo.ts");
+    const { saveDocument } = await import("../src/project.ts");
+    const { manuscriptTypst } = await import("../src/typst-export.ts");
+    const p = await createDemoProject(new MemoryFs());
+    const art = p.articles[0];
+    const file = structuredClone(art.documents.get("manuscript/article.scidoc")!);
+    const body = (file.doc as PMNode).content!;
+    const paras = body.filter((n) => n.type === "paragraph" && n.content?.length);
+    paras[0].attrs = { ...paras[0].attrs, align: "center" };
+    const quoted = paras[1];
+    body.splice(body.indexOf(quoted), 1, { type: "blockquote", attrs: { id: "b-quote00001" }, content: [quoted] });
+    const title = body.find((n) => n.type === "title")!;
+    title.attrs = { ...title.attrs, align: "right" };
+    await saveDocument(p, art, "manuscript/article.scidoc", file);
+    const res = await nodeResources();
+    const out = await exportDocx(p, "main", "journal", res);
+    const JSZip = (await import("jszip")).default;
+    const zip = await JSZip.loadAsync(out.bytes);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    expect(xml).toContain('<w:jc w:val="center"/>');
+    expect(xml).toContain('<w:jc w:val="right"/>');
+    // the quotation: Word's Quote style, set in on both sides and not centred
+    const styles = await zip.file("word/styles.xml")!.async("string");
+    const quote = /<w:style [^>]*><w:name w:val="Quote"\/>[\s\S]*?<\/w:style>/.exec(styles)![0];
+    expect(quote).toContain('<w:ind w:left="709" w:right="709"/>');
+    expect(quote).not.toMatch(/<w:jc |<w:i\/>|<w:color /);
+    const quoteId = /<w:style [^>]*w:styleId="([^"]+)"[^>]*><w:name w:val="Quote"\/>/.exec(styles)![1];
+    expect(xml).toContain(`<w:pStyle w:val="${quoteId}"/>`);
+    const typst = await manuscriptTypst(p, "main", res);
+    expect(typst.source).toContain("#align(center)[");
+    expect(typst.source).toContain("#pad(x: 1.25cm)[");
+    // back from Word: the centred paragraph and the quotation (justified is the journal's, so not read)
+    const back = await projectFromWord(new MemoryFs(), out.bytes, { fileName: "align.docx" });
+    const doc = back.project.articles[0].documents.get("manuscript/article.scidoc")!.doc as PMNode;
+    expect(doc.content!.filter((n) => n.type === "paragraph" && n.attrs?.align === "center")).toHaveLength(1);
+    const bq = doc.content!.filter((n) => n.type === "blockquote");
+    expect(bq).toHaveLength(1);
+    expect(bq[0].content![0].content!.map((c) => c.text ?? "").join("")).toContain(quoted.content![0].text!.slice(0, 20));
+  });
+
   it("refuses a folder that is not empty", async () => {
     const fs = new MemoryFs({ "x.txt": "hola" });
     await expect(projectFromWord(fs, new Uint8Array(readFileSync(SENT)), { fileName: "sent.docx" })).rejects.toThrow(/not empty/);
