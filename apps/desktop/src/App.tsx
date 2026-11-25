@@ -75,6 +75,8 @@ const BODY = "manuscript/article.scidoc";
 const JOURNAL_MS = 300;
 const AUTOSAVE_IDLE_MS = 2000;
 const AUTOSAVE_MAX_MS = 20000;
+/** Record 0093: the messages at the bottom go away by themselves after this long at most. */
+const MESSAGE_MS = 15000;
 /** The sheet is A4: 21 cm wide, in CSS px. Zoom goes from 20 % (several pages side by side, record 0049) to 300 %; "fit" fills the width of the desk. */
 const A4_PX = (210 / 25.4) * 96;
 export const ZOOM_STEPS = [20, 25, 33, 50, 75, 100, 125, 150, 175, 200, 250, 300];
@@ -163,7 +165,14 @@ export function App() {
   const [download, setDownload] = useState<{ url: string; name: string } | null>(null);
   // every message replaces the previous one, with its file link or none
   const [messageAction, setMessageAction] = useState<{ label: string; run: () => void } | null>(null);
-  const setMessage = (text: string, file: { url: string; name: string } | null = null, action: { label: string; run: () => void } | null = null) => { setMessageState(text); setDownload(file); setMessageAction(action); };
+  // record 0093: each message, its own 15 seconds at most (a new one starts them again)
+  const [messageTick, setMessageTick] = useState(0);
+  const setMessage = (text: string, file: { url: string; name: string } | null = null, action: { label: string; run: () => void } | null = null) => { setMessageState(text); setDownload(file); setMessageAction(action); setMessageTick((n) => n + 1); };
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => { setMessageState(""); setDownload(null); setMessageAction(null); }, MESSAGE_MS);
+    return () => clearTimeout(timer);
+  }, [message, messageTick]);
   const refsInput = useRef<HTMLInputElement>(null);
   const figureInput = useRef<HTMLInputElement>(null);
   const [libraryVersion, setLibraryVersion] = useState(0);
@@ -1687,7 +1696,12 @@ export function App() {
     // as the user asked (record 0092): on, every mark; off, the text as it will be
     setMarkup(on ? "all" : "none");
     await setTrackChanges(project, article.folder, on);
-    setMessage(t(on ? "ui.track.on" : "ui.track.off", { name: who }));
+    // record 0093: what turning it on (or off) does, only the first time on this computer
+    const hint = on ? "trackOn" : "trackOff";
+    if (!(settings.seenHints ?? []).includes(hint)) {
+      setMessage(t(on ? "ui.track.on" : "ui.track.off", { name: who }));
+      updateSettings({ seenHints: [...(settings.seenHints ?? []), hint] });
+    }
     refocus();
   });
   const changeHere = editor && project ? changeAt(editor.state) : null;

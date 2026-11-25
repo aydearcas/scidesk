@@ -39,9 +39,11 @@ export interface Settings {
   userName: string;
   /** Record 0091: the review bar under the ribbon ("Revisar" in the title bar). */
   reviewBar: boolean;
+  /** Record 0093: explanations already shown once on this computer (turning tracked changes on and off). */
+  seenHints: string[];
 }
 const KEY = "settings/interface.json";
-export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true, preview: false, autocorrect: true, userName: "", reviewBar: false };
+export const DEFAULTS: Settings = { lang: "es", scheme: null, left: true, right: true, leftWidth: 260, rightWidth: 320, zoom: "fit", fontMode: "journal", areas: [], setupDone: false, spellcheck: true, preview: false, autocorrect: true, userName: "", reviewBar: false, seenHints: [] };
 
 /** The language of the system, for a computer without settings yet. */
 const systemLang = (): Settings["lang"] => (typeof navigator !== "undefined" && !navigator.language.toLowerCase().startsWith("es") ? "en" : "es");
