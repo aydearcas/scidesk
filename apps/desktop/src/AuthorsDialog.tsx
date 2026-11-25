@@ -335,8 +335,8 @@ export function AuthorsDialog({ project, folder, onClose, onSaved, asView = fals
       )}
       <div className="dialog-actions">
         <span className="muted">{t("authorsSaveNote")}</span>
-        <button className="btn" onClick={() => { if (asView) { setPeople(structuredClone(project.people)); setAuthors(structuredClone(art.authors)); setSaveError(null); } onClose(); }} disabled={asView && !dirty}>{asView ? t("ui.discardChanges") : t("cancel")}</button>
         <button className="btn primary" onClick={() => void save()} disabled={errors.length > 0 || (asView && !dirty)}>{t("saveAuthors")}</button>
+        <button className="btn" onClick={() => { if (asView) { setPeople(structuredClone(project.people)); setAuthors(structuredClone(art.authors)); setSaveError(null); } onClose(); }} disabled={asView && !dirty}>{asView ? t("ui.discardChanges") : t("cancel")}</button>
       </div>
     </>
   );

@@ -1,14 +1,15 @@
 // What appears next to the text (design proposal 4.3, record 0044): the selection bubble,
-// with format and cite, and the cross-reference picker (Ctrl+Shift+R).
+// with format, cite and comment (record 0094), and the cross-reference picker (Ctrl+Shift+R).
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useEditorState, type Editor } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
 import { useTranslation } from "react-i18next";
 import type { OutlinePart } from "@scidesk/core";
 import { Icon } from "./icons.tsx";
+import { useDraggable } from "./draggable.ts";
 import { SCHEMES, shortcutLabel, type SchemeId } from "./shortcuts.ts";
 
-export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; scheme: SchemeId; onCite: () => void }) {
+export function SelectionBubble({ editor, scheme, onCite, onComment }: { editor: Editor; scheme: SchemeId; onCite: () => void; onComment: () => void }) {
   const { t, i18n } = useTranslation();
   const [pointerDown, setPointerDown] = useState(false);
   const [, setTick] = useState(0);
@@ -39,7 +40,7 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
   try { at = editor.view.coordsAtPos(s.from); } catch { return null; }
   const letters = scheme === "word-es" ? ["N", "K", "S"] : ["B", "I", "U"];
   const keep = (e: React.MouseEvent) => e.preventDefault();
-  const tip = (label: string, a: "bold" | "italic" | "underline" | "superscript" | "subscript" | "cite") => `${label} (${shortcutLabel(SCHEMES[scheme][a], i18n.language)})`;
+  const tip = (label: string, a: "bold" | "italic" | "underline" | "superscript" | "subscript" | "cite" | "comment") => `${label} (${shortcutLabel(SCHEMES[scheme][a], i18n.language)})`;
   return (
     <div className="bubble" role="toolbar" aria-label={t("ui.bubble")} style={{ left: Math.max(8, at.left - 8), top: Math.max(8, at.top - 42) }} onMouseDown={keep}>
       <button className={`tool${s.bold ? " on" : ""}`} aria-pressed={s.bold} title={tip(t("ui.bold"), "bold")} onClick={() => editor.chain().focus().toggleMark("bold").run()}><b>{letters[0]}</b></button>
@@ -49,6 +50,7 @@ export function SelectionBubble({ editor, scheme, onCite }: { editor: Editor; sc
       <button className={`tool${s.sub ? " on" : ""}`} aria-pressed={s.sub} title={tip(t("ui.subscript"), "subscript")} aria-label={t("ui.subscript")} onClick={() => editor.chain().focus().toggleMark("subscript").run()}><span>x<sub>2</sub></span></button>
       <span className="tool-sep" />
       <button className="tool accent" title={tip(t("ui.cite"), "cite")} onClick={onCite}><Icon name="quote" size={16} /> {t("ui.citeShort")}</button>
+      <button className="tool comment-tool" title={tip(t("ui.comments.new"), "comment")} aria-label={t("ui.comments.new")} onClick={onComment}><Icon name="comment" size={21} /></button>
     </div>
   );
 }
@@ -65,11 +67,14 @@ export function XrefPicker({ targets, onPick, onClose }: { targets: { tables: Ou
     ...targets.figures.map((p) => ({ p, kind: "figure" as const, label: t("ui.figureN", { n: p.number }) })),
   ], [targets, t]);
   const norm = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  // record 0094: it can be dragged, as the quick citation
+  const drag = useDraggable("xref");
   const hits = all.filter((x) => norm(`${x.label} ${x.p.caption}`).includes(norm(query.trim())));
   useEffect(() => setActive(0), [query]);
   return (
     <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="quick-cite" role="dialog" aria-modal="true" aria-label={t("ui.xref")}>
+      <div className="quick-cite" role="dialog" aria-modal="true" aria-label={t("ui.xref")} ref={drag.ref} onPointerDown={drag.onPointerDown}>
+        <div className="drag-grip" title={t("ui.dragDialog")} aria-hidden="true" />
         <div className="chips">
           <input ref={input} value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("ui.xrefPlaceholder")} aria-label={t("ui.xrefPlaceholder")}
             role="combobox" aria-expanded={hits.length > 0} aria-controls="xref-results" aria-activedescendant={hits[active] ? `xr-${hits[active].p.id}` : undefined}

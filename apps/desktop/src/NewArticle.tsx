@@ -391,8 +391,9 @@ export function NewArticle({ onCancel, onCreate, uiLang, areas = [], openProject
           </aside>
         </div>
         <footer className="wizard-foot">
-          <button className="btn quiet" onClick={onCancel} disabled={creating}>{t("cancel")}</button>
           <span className="spacer" />
+          {/* the user's request (25/11): Cancel next to the buttons that go on, with a darker border */}
+          <button className="btn wizard-cancel" onClick={onCancel} disabled={creating}>{t("cancel")}</button>
           {step > 0 && <button className="btn" onClick={() => setStep(step - 1)} disabled={creating}>{t("ui.wizard.back")}</button>}
           <button className="btn primary" onClick={() => void next()} disabled={!stepOk[step] || creating}>
             {step < 2 ? t("ui.wizard.next") : creating ? t("ui.wizard.creating") : t("ui.wizard.create")}

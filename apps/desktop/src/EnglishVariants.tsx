@@ -69,8 +69,8 @@ export function EnglishVariants({ editor, initial, onApplied, onClose }: {
         <label><input type="checkbox" checked={tag} onChange={(e) => setTag(e.target.checked)} /> {t(`ui.variants.tag${to}`)}</label>
         <div className="dialog-actions">
           <span className="muted">{rows ? t("ui.variants.count", { count }) : ""}</span>
-          <button className="btn" onClick={onClose}>{t("ui.variants.cancel")}</button>
           <button className="btn primary" onClick={apply} disabled={!rows || (!count && !tag)} autoFocus>{t("ui.variants.apply")}</button>
+          <button className="btn" onClick={onClose}>{t("ui.variants.cancel")}</button>
         </div>
       </div>
     </div>

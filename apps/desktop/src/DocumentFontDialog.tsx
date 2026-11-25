@@ -41,8 +41,8 @@ export function DocumentFontDialog({ fonts, onSave, onClose }: {
         <p className="doc-font-sample" style={{ fontFamily: `"${family || asJournal.family}", sans-serif`, fontSize: `${size || asJournal.size}pt` }}>{t("ui.docFont.sample")}</p>
         <p className="muted small">{t("ui.docFont.journalGets", { family: fonts.journal.family, size: n(fonts.journal.size) })}</p>
         <div className="dialog-actions">
-          <button type="button" className="btn" onClick={onClose}>{t("cancel")}</button>
           <button type="submit" className="btn primary">{t("ui.docFont.save")}</button>
+          <button type="button" className="btn" onClick={onClose}>{t("cancel")}</button>
         </div>
       </form>
     </div>

@@ -16,8 +16,8 @@ import {
 
 export type ChangeRecord = DocumentFile["changes"][string];
 export const SUGGESTION_MARKS = "insertion deletion modification";
-/** Marks a block or an inline atom can carry: tracked changes (and, with comments, their anchors). */
-export const NODE_MARKS = SUGGESTION_MARKS;
+/** Marks a block or an inline atom can carry: tracked changes and comment anchors (record 0094). */
+export const NODE_MARKS = `${SUGGESTION_MARKS} comment`;
 const SUGGESTION_RE = /^(?:insertion|deletion|modification)$/;
 
 /**

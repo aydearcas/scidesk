@@ -205,3 +205,36 @@ test("a heading with Ctrl+2, and Backspace after a list adds no empty item (reco
   await expect(list.locator("li").last()).toHaveText("doss");
   expect(errors).toEqual([]);
 });
+
+test("a comment on a word: the name the first time, the thread in Review, a reply and resolving it (record 0094)", async ({ page }) => {
+  const { editor, errors } = await openDemo(page);
+  await methods(page).click();
+  await page.keyboard.type("Cohorte retrospectiva", { delay: 15 });
+  await methods(page).getByText("Cohorte retrospectiva").dblclick();
+  await page.keyboard.press(`${MOD}+Shift+m`);
+  // the first time, the name the comments carry
+  await page.getByPlaceholder("Nombre y apellidos").fill("Ana Prueba");
+  await page.getByRole("button", { name: "Guardar y comentar" }).click();
+  const box = page.getByPlaceholder("Escribe el comentario");
+  await expect(box).toBeFocused();
+  await page.keyboard.type("¿Cuántos centros?", { delay: 10 });
+  await page.keyboard.press(`${MOD}+Enter`);
+  const span = editor.locator("span.comment");
+  await expect(span).toHaveCount(1);
+  const thread = page.locator(".thread");
+  await expect(thread).toContainText("¿Cuántos centros?");
+  await expect(thread).toContainText("Ana Prueba");
+  // a click on the commented text makes its thread the active one, with a reply box
+  await span.click();
+  await page.getByPlaceholder("Responder…").fill("Tres.");
+  await page.getByRole("button", { name: "Responder", exact: true }).click();
+  await expect(thread.locator(".replies")).toContainText("Tres.");
+  // resolved: out of the list (and of the count) until "Show resolved"
+  await thread.getByRole("button", { name: "Resolver" }).click();
+  await expect(page.locator(".thread")).toHaveCount(0);
+  await page.getByText("Mostrar 1 resuelto").click();
+  await expect(page.locator(".thread.resolved")).toHaveCount(1);
+  // saved with the file
+  await expect(page.locator("footer.statusbar").getByText("Guardado")).toBeVisible({ timeout: 10_000 });
+  expect(errors).toEqual([]);
+});

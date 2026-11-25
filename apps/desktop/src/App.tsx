@@ -4,7 +4,7 @@
 // bar. All the work (open, write, cite, save, export, import a copy, paste from Word,
 // autosave and recovery) is the vertical slice's and later records', unchanged.
 import { EditorContent, useEditor } from "@tiptap/react";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
@@ -37,7 +37,7 @@ import { LibraryFilters, LibraryPanel, type LibraryFilter } from "./LibraryPanel
 import { ContextMenu, MenuBar, MenuButton, type MenuDef, type MenuEntry } from "./Menus.tsx";
 import { Navigator, type NavTarget } from "./Navigator.tsx";
 import { QuickCite, type CiteItem } from "./QuickCite.tsx";
-import { ReviewPanel } from "./ReviewPanel.tsx";
+import { ReviewPanel, type CommentActions, type CommentThread } from "./ReviewPanel.tsx";
 import { Ribbon } from "./Ribbon.tsx";
 import { SettingsView } from "./SettingsView.tsx";
 import { StatusBar } from "./StatusBar.tsx";
@@ -65,6 +65,11 @@ import { revealIn } from "./reveal.ts";
 import { changeAt, changeInfo, decide, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
 import { ReviewBar } from "./ReviewBar.tsx";
+import { CommentHover } from "./CommentHover.tsx";
+import {
+  addComment, commentAt, comments, goToComment, listComments, paintComments, removeComment, removeReply, replyToComment,
+  resolveComment, setCommentText, stepComment, type CommentAnchor, type CommentRecord,
+} from "./comments.ts";
 
 const BODY = "manuscript/article.scidoc";
 /**
@@ -107,6 +112,8 @@ export function fitZoomFor(room: number): number {
 type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings";
 type View = "article" | "library";
 type RightTab = "warnings" | "review" | "details";
+/** Record 0094: the blocks with a tracked change of their own, which carry the line in the margin. */
+const CHANGED_BLOCKS = ":is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification)";
 const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings" };
 const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
 const isTableTab = (k: string): k is `table:${string}` => k.startsWith("table:");
@@ -190,6 +197,15 @@ export function App() {
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const editorStates = useRef(new Map<string, EditorState>());
   const [rightTab, setRightTab] = useState<RightTab>("warnings");
+  // record 0094: the comment the cursor is in, and the comments anchored in the text (redrawn after a pause)
+  const [activeComment, setActiveComment] = useState<string | null>(null);
+  const [commentAnchors, setCommentAnchors] = useState<CommentAnchor[]>([]);
+  const [commentTick, setCommentTick] = useState(0);
+  const openReview = useRef(() => {});
+  // the review bar asks for the returned copy: its part of the Review tab opens
+  const [copyRequest, setCopyRequest] = useState(0);
+  // what to do once the name is given, when it was asked for a reply (record 0094)
+  const afterName = useRef<((name: string) => void) | null>(null);
   const [selected, setSelected] = useState<Selected | null>(null);
   const [navActive, setNavActive] = useState<NavTarget | null>(null);
   const [libraryFilter, setLibraryFilter] = useState<LibraryFilter>("all");
@@ -340,6 +356,10 @@ export function App() {
         setSelected((s) => (JSON.stringify(s) === JSON.stringify(n) ? s : n));
         if (pointerInEditor.current && atom) setRightTab("details");
       } else setSelected((s) => (s && (s.kind === "citation" || s.kind === "part" || s.kind === "xref" || s.kind === "abstract") ? null : s));
+      // record 0094: the comment the cursor is in; a click on commented text opens its thread (design 3.3)
+      const c = commentAt(editor.state);
+      setActiveComment(c);
+      if (c && pointerInEditor.current && !atom) openReview.current();
       pointerInEditor.current = false;
     };
     dom.addEventListener("mousedown", down);
@@ -373,7 +393,10 @@ export function App() {
     const c = composeArticle(a);
     if (c.warnings.length) setError(c.warnings.join("; "));
     // record 0090: who made each tracked change of this article
-    track.registry = registries(a).changes as Record<string, ChangeRecord>;
+    const reg = registries(a);
+    track.registry = reg.changes as Record<string, ChangeRecord>;
+    // record 0094: and its comments
+    comments.registry = reg.comments as Record<string, CommentRecord>;
     return c.doc;
   }, []);
   // the texts of the parts follow the interface language
@@ -466,7 +489,8 @@ export function App() {
   // record 0092: how the changes are shown (Word's "Display for review"); it follows tracking on or off
   const [markup, setMarkup] = useState<MarkupView>("none");
   useEffect(() => { setMarkupView(markup); }, [markup]);
-  const [askName, setAskName] = useState(false);
+  // what the name is asked for (record 0090; record 0094: a comment)
+  const [askName, setAskName] = useState<null | "track" | "comment">(null);
   // record 0074: the document font dialog, and a tick to re-read article.json after it
   const [docFontOpen, setDocFontOpen] = useState(false);
   const [fontTick, setFontTick] = useState(0);
@@ -513,7 +537,7 @@ export function App() {
     setSaving(true);
     const version = editVersion.current;
     try {
-      await saveComposite(project, article, editor.getJSON() as PMNode, { changes: track.registry });
+      await saveComposite(project, article, editor.getJSON() as PMNode, { changes: track.registry, comments: comments.registry });
       if (version === editVersion.current) {
         // everything on screen is on disk: nothing left to recover
         for (const path of journaled.current) await recovery.current?.clear(article.folder, path);
@@ -539,7 +563,7 @@ export function App() {
       clearTimeout(journal);
       // each file whose content differs from the disk, as it would be saved
       journal = setTimeout(() => {
-        for (const [path, file] of changedDocuments(splitArticle(editor.getJSON() as PMNode, article, { changes: track.registry }), article)) {
+        for (const [path, file] of changedDocuments(splitArticle(editor.getJSON() as PMNode, article, { changes: track.registry, comments: comments.registry }), article)) {
           journaled.current.add(path);
           void recovery.current?.record(article.folder, path, file).catch(() => {});
         }
@@ -768,6 +792,7 @@ export function App() {
     openTab(v === "library" ? "library" : docTab);
   };
   const showRight = (r: RightTab) => { setRightTab(r); if (!settings.right) updateSettings({ right: true }); };
+  openReview.current = () => showRight("review");
 
   // ---------------------------------------------------------------- going to things in the text
 
@@ -855,6 +880,33 @@ export function App() {
   useEffect(() => { hooks.quickCite = openQuickCite; hooks.xref = openXref; });
   useEffect(() => { hooks.find = (replace) => openFind(replace); });
   useEffect(() => { hooks.tracking = () => void toggleTracking(); });
+  useEffect(() => { hooks.comment = () => newComment(); });
+  // record 0094: a comment's text, replies or state are saved with the files, but are not in the
+  // document: the article has changed all the same (the save and the journal follow "update")
+  useEffect(() => {
+    if (!editor) return;
+    const onChange = () => {
+      setCommentTick((n) => n + 1);
+      editor.emit("update", { editor, transaction: editor.state.tr, appendedTransactions: [] });
+    };
+    comments.listeners.add(onChange);
+    return () => { comments.listeners.delete(onChange); };
+  }, [editor]);
+  // the threads follow the text after a pause
+  useEffect(() => {
+    if (!editor) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const onUpdate = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const next = listComments(editor.state.doc);
+        setCommentAnchors((old) => (JSON.stringify(old) === JSON.stringify(next) ? old : next));
+      }, 150);
+    };
+    editor.on("update", onUpdate);
+    return () => { editor.off("update", onUpdate); clearTimeout(timer); };
+  }, [editor]);
+  useEffect(() => { paintComments(activeComment); }, [activeComment, commentTick, article]);
   useEffect(() => { track.author = { name: settings.userName.trim() }; }, [settings.userName]);
   const finishCitation = (items: CiteItem[]) => {
     if (!editor || !citing) return;
@@ -1403,6 +1455,30 @@ export function App() {
     window.addEventListener("mouseup", up);
     return true;
   };
+  /**
+   * Record 0094: the line in the margin of a paragraph with tracked changes (red with simple
+   * markup, grey with all the marks). As in Word, a click on it goes from one view to the other.
+   */
+  const onChangeBar = (x: number, y: number): boolean => {
+    if (!editor || (markup !== "simple" && markup !== "all")) return false;
+    for (const el of editor.view.dom.querySelectorAll(CHANGED_BLOCKS)) {
+      for (const r of el.getClientRects()) if (y >= r.top && y <= r.bottom && x >= r.left - 17 && x <= r.left - 5) return true;
+    }
+    return false;
+  };
+  const onPaperDownCapture = (e: React.MouseEvent) => {
+    if (e.button !== 0 || !onChangeBar(e.clientX, e.clientY)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setMarkup(markup === "simple" ? "all" : "simple");
+  };
+  const onPaperMove = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    const over = onChangeBar(e.clientX, e.clientY);
+    if (over !== (el.style.cursor === "pointer")) el.style.cursor = over ? "pointer" : "";
+    const title = over ? t(markup === "simple" ? "ui.reviewBar.barToAll" : "ui.reviewBar.barToSimple") : "";
+    if (el.title !== title) el.title = title;
+  };
   // a click on the empty part of the sheet, below the text, puts the cursor at the end
   const onPaperDown = (e: React.MouseEvent) => {
     if (!editor || e.button !== 0) return;
@@ -1475,6 +1551,8 @@ export function App() {
       { label: t("ui.landscape.page"), title: t("ui.landscape.hint"), checked: cursorLandscape === true, onSelect: () => landscapeHere(), disabled: noProject || !isDoc(tab) || cursorLandscape === null },
       "-",
       { label: t("ui.pending"), onSelect: () => editor?.chain().focus().insertContent(t("ui.pendingMarker")).run(), disabled: noProject },
+      // record 0094: as Word's Insert › Comment
+      { label: t("ui.comments.new"), shortcut: keys("comment"), onSelect: () => newComment(), disabled: noProject },
     ] },
     { id: "references", label: t("ui.menu.references"), items: [
       { label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite, disabled: noProject },
@@ -1689,7 +1767,7 @@ export function App() {
     if (!editor || !project || !article) return;
     const on = !isTracking(editor.state);
     const who = (name ?? settings.userName).trim();
-    if (on && !who) { setAskName(true); return; }
+    if (on && !who) { setAskName("track"); return; }
     if (name) { updateSettings({ userName: who }); track.author = { name: who }; }
     setTracking(editor, on);
     setTrackingOn(on);
@@ -1721,6 +1799,63 @@ export function App() {
     refocus();
   };
 
+  // ---------------------------------------------------------------- comments (record 0094)
+
+  /** A comment on the selection (or the word at the cursor) of `view`; the first time, the name it carries is asked for. */
+  const newComment = (name?: string, view?: EditorView) => {
+    if (!editor || !project || !article) return;
+    const who = (name ?? settings.userName).trim();
+    if (!who) { afterName.current = null; setAskName("comment"); return; }
+    if (name) { updateSettings({ userName: who }); track.author = { name: who }; }
+    const v = view && !view.isDestroyed ? view : editor.view;
+    const id = addComment(v, { name: who });
+    if (!id) { setMessage(t("ui.comments.noText")); v.focus(); return; }
+    setActiveComment(id);
+    showRight("review");
+  };
+  const deleteComment = (id: string) => {
+    if (!editor) return;
+    removeComment(editor.view, id);
+    if (activeComment === id) setActiveComment(null);
+    setMessage(t("ui.comments.deleted"));
+  };
+  const moveToComment = (dir: 1 | -1) => {
+    if (!editor) return;
+    const id = stepComment(editor, dir);
+    if (!id) setMessage(t("ui.comments.none"));
+    else { setActiveComment(id); showRight("review"); }
+    refocus();
+  };
+  const commentActions: CommentActions = {
+    onGo: (id) => {
+      if (!editor) return;
+      if (!isDoc(tab)) openTab(docTab);
+      goToComment(editor.view, id);
+      setActiveComment(id);
+    },
+    onNew: () => newComment(),
+    onSave: setCommentText,
+    onDiscard: (id) => { if (editor) removeComment(editor.view, id); setActiveComment(null); },
+    // resolved, it leaves the list at once (it comes back while the cursor is in its text)
+    onResolve: (id, resolved) => { resolveComment(id, resolved); if (resolved) { setActiveComment(null); refocus(); } },
+    onDelete: deleteComment,
+    onReply: (id, text) => {
+      const who = settings.userName.trim();
+      if (who) { replyToComment(id, { name: who }, text); return; }
+      afterName.current = (name) => replyToComment(id, { name }, text);
+      setAskName("comment");
+    },
+    onDeleteReply: removeReply,
+    onDone: refocus,
+  };
+  // the comments in the text, in its order (with the document the editor has now)
+  const commentDoc = editor && !editor.isDestroyed ? editor.state.doc : null;
+  const commentThreads: CommentThread[] = useMemo(() => {
+    if (!commentDoc) return [];
+    return listComments(commentDoc).flatMap((anchor) => (comments.registry[anchor.id] ? [{ anchor, record: comments.registry[anchor.id] }] : []));
+  }, [commentDoc, commentTick, commentAnchors]);
+  const openComments = commentThreads.filter((x) => !x.record.resolved).length;
+
   /** Record 0090: on a tracked change, accepting or rejecting it comes first. */
   const contextItems = (): MenuEntry[] => {
     if (!editor) return [];
@@ -1733,7 +1868,17 @@ export function App() {
       { label: t("ui.track.reject"), onSelect: () => decideHere(false, here.id) },
       "-",
     ] : [];
-    return [...changeItems, ...baseContextItems()];
+    // record 0094: on commented text, its comment
+    const cId = commentAt((inTab ?? editor.view).state);
+    const cRec = cId ? comments.registry[cId] : null;
+    const commentItems: MenuEntry[] = cId && cRec ? [
+      { heading: t("ui.comments.by", { name: cRec.author.name, date: new Date(cRec.date).toLocaleString(i18n.language, { dateStyle: "short", timeStyle: "short" }) }) },
+      { label: t("ui.comments.open"), onSelect: () => { setActiveComment(cId); showRight("review"); } },
+      { label: t(cRec.resolved ? "ui.comments.reopen" : "ui.comments.resolve"), onSelect: () => commentActions.onResolve(cId, !cRec.resolved) },
+      { label: t("ui.comments.delete"), onSelect: () => deleteComment(cId) },
+      "-",
+    ] : [];
+    return [...changeItems, ...commentItems, ...baseContextItems()];
   };
   const baseContextItems = (): MenuEntry[] => {
     if (!editor) return [];
@@ -1796,6 +1941,7 @@ export function App() {
       { label: t("ui.removeCitation"), onSelect: () => { view.dispatch(view.state.tr.deleteSelection()); view.focus(); } },
     ] : [{ label: t("ui.cite"), shortcut: keys("cite"), onSelect: openQuickCite }];
     const pendingItem: MenuEntry = { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } };
+    const commentItem: MenuEntry = { label: t("ui.comments.new"), shortcut: keys("comment"), onSelect: () => newComment(undefined, view) };
     // record 0085: the page of the table, the figure or the selected text in landscape
     const onLandscape = inTab ? null : landscapeState(view.state);
     const landscapeItem: MenuEntry[] = onLandscape === null ? [] : [{
@@ -1833,6 +1979,7 @@ export function App() {
         ...citeEntries,
         ...(inTab ? [] : [{ label: t("ui.xref"), shortcut: keys("xref"), onSelect: openXref }]),
         pendingItem,
+        commentItem,
         "-",
         ...(tableId ? [
           { label: t("ui.openInTab"), strong: true, onSelect: () => openTableTab(tableId) },
@@ -1866,6 +2013,7 @@ export function App() {
       // at the cursor, or after the table or figure the cursor is in (as Insert › Insert table)
       ...(inTab ? [] : [{ label: t("ui.insertTable"), onSelect: () => void insertTable() }]),
       { label: t("ui.pending"), onSelect: () => { view.dispatch(view.state.tr.insertText(t("ui.pendingMarker"))); view.focus(); } },
+      commentItem,
       ...(landscapeItem.length ? ["-" as const, ...landscapeItem] : []),
       "-",
       { label: t("ui.cut"), shortcut: shortcutLabel("Mod-x", i18n.language), onSelect: () => exec("cut"), disabled: sel.empty },
@@ -1950,7 +2098,8 @@ export function App() {
           {settings.reviewBar && (
             <ReviewBar editor={editor} disabled={!isDoc(tab)} tracking={tracking} onTracking={() => void toggleTracking()} markup={markup} onMarkup={setMarkup}
               onDecide={(accept, all) => (all ? decideAll(accept) : decideHere(accept, changeAt(editor.state)?.id))} onStep={moveToChange}
-              onWarnings={() => showRight("warnings")} onImportCopy={() => showRight("review")} onAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }}
+              onComment={() => newComment()} onCommentStep={moveToComment} onCommentDelete={deleteComment}
+              onWarnings={() => showRight("warnings")} onImportCopy={() => { setCopyRequest((n) => n + 1); showRight("review"); }} onAuthors={() => { setAuthorsTab("authors"); openTab("authors"); }}
               spellcheck={settings.spellcheck} onSpellcheck={() => updateSettings({ spellcheck: !settings.spellcheck })}
               autocorrect={settings.autocorrect} onAutocorrect={() => updateSettings({ autocorrect: !settings.autocorrect })}
               lang={cursorLang?.lang ?? article?.article.lang ?? null} onLang={(l) => setLanguage(editor, l)}
@@ -2017,7 +2166,7 @@ export function App() {
                   ))}
                 </div>
               )}
-              <div className={`paper${PAGED ? " paged" : ""}`} onContextMenu={onContextMenu} onMouseDown={onPaperDown}>
+              <div className={`paper${PAGED ? " paged" : ""}`} onContextMenu={onContextMenu} onMouseDown={onPaperDown} onMouseDownCapture={onPaperDownCapture} onMouseMove={onPaperMove}>
                 <EditorContent editor={editor} className="page" />
                 {rendering && rendering.bibliography.length > 0 && (
                   <section className="bibliography" aria-label={t("ui.bibliography")}>
@@ -2037,7 +2186,8 @@ export function App() {
               </div>
             </div>
             {project && settings.preview && <PreviewPane available={inTauri} tick={previewTick} bundle={previewBundle} cursorBlocks={cursorBlocks} onGoToBlock={(id) => { goToBlock(id); }} />}
-            {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} />}
+            {editor && project && <SelectionBubble editor={editor} scheme={scheme} onCite={openQuickCite} onComment={() => newComment()} />}
+            {editor && project && <CommentHover />}
             {editor && project && finding && (
               <FindBar editor={editor} replace={finding.replace} focus={finding.focus} onClose={() => { setFinding(null); editor.commands.focus(); }}
                 onReplaced={(count) => setMessage(t("ui.find.replaced", { count }))} />
@@ -2095,14 +2245,15 @@ export function App() {
           <aside className="right-panel" aria-label={t("ui.rightPanel")}>
             <div className="tabs right-tabs" role="tablist">
               <button role="tab" aria-selected={rightTab === "warnings"} onClick={() => setRightTab("warnings")}>{t("ui.warnings")}{activeWarnings ? <span className="count">{activeWarnings}</span> : null}</button>
-              <button role="tab" aria-selected={rightTab === "review"} onClick={() => setRightTab("review")}>{t("ui.review")}{shownProposals ? <span className="count">{shownProposals}</span> : null}</button>
+              <button role="tab" aria-selected={rightTab === "review"} onClick={() => setRightTab("review")}>{t("ui.review")}{shownProposals + openComments ? <span className="count">{shownProposals + openComments}</span> : null}</button>
               <button role="tab" aria-selected={rightTab === "details"} onClick={() => setRightTab("details")}>{t("ui.details")}</button>
             </div>
             <div className="right-body">
               {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} onBlind={blind} articleLang={article?.article.lang ?? "es"}
                 onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
-              {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} />}
+              {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
+                editor={editor && isDoc(tab) ? editor : null} copyRequest={copyRequest} />}
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}
                   onEditCitation={() => { if (selected?.kind === "citation") goToCitation(selected.id, false); openQuickCite(); }}
@@ -2155,8 +2306,8 @@ export function App() {
             {recoveries[0].state === "disk-changed" && <p className="field-error">{t("recoveryDiskChanged")}</p>}
             <div className="dialog-actions">
               <span className="spacer" />
-              <button className="btn" onClick={() => void recover(recoveries[0], false)}>{t("recoveryDiscard")}</button>
               <button className="btn primary" onClick={() => void recover(recoveries[0], true)} autoFocus>{t("recoveryApply")}</button>
+              <button className="btn" onClick={() => void recover(recoveries[0], false)}>{t("recoveryDiscard")}</button>
             </div>
           </div>
         </div>
@@ -2173,8 +2324,16 @@ export function App() {
           })()} />
       )}
       {askName && (
-        <TrackNameDialog suggested={firstAuthorName()} onClose={() => { setAskName(false); editor?.commands.focus(); }}
-          onSave={(name) => { setAskName(false); void toggleTracking(name); }} />
+        <TrackNameDialog suggested={firstAuthorName()} purpose={askName} onClose={() => { setAskName(null); editor?.commands.focus(); }}
+          onSave={(name) => {
+            const what = askName;
+            setAskName(null);
+            const then = afterName.current;
+            afterName.current = null;
+            if (what === "track") void toggleTracking(name);
+            else if (then) { updateSettings({ userName: name }); track.author = { name }; then(name); }
+            else newComment(name);
+          }} />
       )}
       {variantsOpen && editor && (
         <EnglishVariants editor={editor} initial={variantsOpen} onClose={() => { setVariantsOpen(null); editor.commands.focus(); }}

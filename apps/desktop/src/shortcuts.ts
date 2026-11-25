@@ -9,15 +9,15 @@ export type Action =
   | "cite" | "xref" | "save" | "find" | "replace" | "newArticle" | "openProject"
   | "alignLeft" | "alignCenter" | "alignRight" | "justify" | "pageBreak"
   | "heading1" | "heading2" | "heading3" | "normalParagraph"
-  // record 0090: tracked changes on or off (Word's Ctrl+Shift+E)
-  | "suggestions"
-  // listed and reserved, not built yet (phase 2)
-  | "comment" | "palette";
+  // record 0090: tracked changes on or off (Word's Ctrl+Shift+E); record 0094: a new comment
+  | "suggestions" | "comment"
+  // listed and reserved, not built yet
+  | "palette";
 
 /** Actions that work today; the others show "coming later" in Settings. */
-export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph", "suggestions"];
+export const BUILT: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "undo", "redo", "cite", "xref", "save", "find", "replace", "newArticle", "openProject", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph", "suggestions", "comment"];
 /** Actions that act on the text, run by the editor when it has the focus. */
-export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph", "suggestions"];
+export const EDITOR_ACTIONS: readonly Action[] = ["bold", "italic", "underline", "superscript", "subscript", "cite", "xref", "alignLeft", "alignCenter", "alignRight", "justify", "pageBreak", "heading1", "heading2", "heading3", "normalParagraph", "suggestions", "comment"];
 
 const COMMON: Partial<Record<Action, string>> = {
   superscript: "Mod-.", subscript: "Mod-,", undo: "Mod-z", redo: "Mod-y",

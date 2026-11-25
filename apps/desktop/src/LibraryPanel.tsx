@@ -160,8 +160,8 @@ export function LibraryPanel({ project, version, uses, onChanged, onDelete, filt
         <div className="dialog-actions">
           {editing.id && <button type="button" onClick={remove} disabled={n > 0} title={n ? t("cantDeleteCited") : undefined}>{editing.confirmDelete ? t("confirmDelete") : t("deleteRef")}</button>}
           <span className="spacer" />
-          <button type="button" onClick={() => setEditing(null)}>{t("cancel")}</button>
           <button type="submit">{t("saveRef")}</button>
+          <button type="button" onClick={() => setEditing(null)}>{t("cancel")}</button>
         </div>
       </form>
     );

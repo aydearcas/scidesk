@@ -5,6 +5,7 @@
 // citation. "Omit author" (record 0067) shows with the styles that print the author.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useDraggable } from "./draggable.ts";
 import { searchLibrary, summarize } from "@scidesk/core";
 import type { LibraryFile } from "@scidesk/formats";
 
@@ -53,9 +54,12 @@ export function QuickCite({ library, initial, uses, omitAuthor, onDone, onClose 
     return `${s.authors || "—"} ${s.year ?? ""}`.trim();
   };
 
+  // record 0094: it can be dragged, and opens again where it was left
+  const drag = useDraggable("quick-cite");
   return (
     <div className="overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="quick-cite" role="dialog" aria-modal="true" aria-label={t("quickCite")}>
+      <div className="quick-cite" role="dialog" aria-modal="true" aria-label={t("quickCite")} ref={drag.ref} onPointerDown={drag.onPointerDown}>
+        <div className="drag-grip" title={t("ui.dragDialog")} aria-hidden="true" />
         <div className="chips">
           {chosen.map((c, i) => (
             <span key={c.ref} className="chip">
@@ -103,8 +107,8 @@ export function QuickCite({ library, initial, uses, omitAuthor, onDone, onClose 
         )}
         <div className="dialog-actions">
           <span className="muted">{t("quickCiteHelp")}</span>
-          <button onClick={onClose}>{t("cancel")}</button>
           <button onClick={() => onDone(chosen)} disabled={!chosen.length}>{initial.length ? t("updateCitation") : t("insertCitation")}</button>
+          <button onClick={onClose}>{t("cancel")}</button>
         </div>
       </div>
     </div>

@@ -47,6 +47,7 @@ const PATHS: Record<string, string> = {
   chevronRight: "M9 6l6 6-6 6",
   chevronLeft: "M15 6l-6 6 6 6",
   // record 0091: tracked changes, a pencil over lines of text
+  comment: "M4 5h16v11H9l-4 4v-4H4z M8 9h8 M8 12.5h5",
   trackChanges: "M4 6h11 M4 10h8 M4 14h5 M11.5 20.5l.9-3.6 6.8-6.8 2.7 2.7-6.8 6.8z",
   close: "M6 6l12 12 M18 6L6 18",
   panelLeft: "M4 5h16v14H4z M9 5v14",

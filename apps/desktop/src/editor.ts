@@ -34,6 +34,7 @@ import { ClickInside } from "./click-inside.ts";
 import { ListBackspace } from "./list-backspace.ts";
 import { Landscape } from "./landscape.ts";
 import { Deletion, Insertion, Modification, TrackChanges, withNodeMarks } from "./track-changes.ts";
+import { CommentMark } from "./comments.ts";
 
 const plain = (name: string) => ({ default: null, parseHTML: (el: HTMLElement) => el.getAttribute(`data-${name}`), renderHTML: (a: Record<string, unknown>) => (a[name] == null ? {} : { [`data-${name}`]: a[name] }) });
 
@@ -71,7 +72,7 @@ export function refreshCitationLabels() {
 }
 
 /** What the shortcuts that open a dialog do (set by the window). */
-export const hooks = { quickCite: () => {}, xref: () => {}, find: (_replace: boolean) => {}, tracking: () => {} };
+export const hooks = { quickCite: () => {}, xref: () => {}, find: (_replace: boolean) => {}, tracking: () => {}, comment: () => {} };
 
 /** Numbers of tables and figures by first cross-reference, then position (as the export). */
 export const xrefLabels = new Map<string, string>();
@@ -221,6 +222,8 @@ const SchemeKeys = Extension.create({
           if (action === "cite") hooks.quickCite();
           // record 0090: tracked changes on or off
           else if (action === "suggestions") hooks.tracking();
+          // record 0094: a comment on the selection, or on the word at the cursor
+          else if (action === "comment") hooks.comment();
           else if (action === "xref") hooks.xref();
           // record 0073: alignment, as Word's Ctrl+Q/T/D/J or Ctrl+L/E/R/J
           // record 0078: Ctrl+Enter, a page break at the cursor
@@ -504,6 +507,7 @@ export const extensions = withNodeMarks([
   Insertion,
   Deletion,
   Modification,
+  CommentMark,
   UndoRedo,
   Spellcheck,
 ]);

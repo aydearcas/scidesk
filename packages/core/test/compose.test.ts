@@ -133,3 +133,39 @@ describe("sameJson (record 0055)", () => {
     for (const [a, b] of pairs) expect(sameJson(a, b)).toBe(stableStringify(a) === stableStringify(b));
   });
 });
+
+describe("comments of the composite document (record 0094)", () => {
+  it("keeps each comment in the file its text is in, and drops the ones no longer anchored", async () => {
+    const { fs, p, art, tablePath } = await withParts();
+    const { doc } = composeArticle(art);
+    const mark = (id: string) => ({ type: "comment", attrs: { id } });
+    /** Anchors a comment to the first text under the node the predicate finds (a cell gets one). */
+    const anchor = (pred: (x: PMNode) => boolean, id: string) => {
+      const where = find(doc, pred)!;
+      let text = find(where, (x) => x.type === "text");
+      if (!text) {
+        const para = find(where, (x) => x.type === "paragraph")!;
+        para.content = [{ type: "text", text: "celda" }];
+        text = para.content[0];
+      }
+      text.marks = [...(text.marks ?? []), mark(id)];
+    };
+    anchor((x) => x.type === "abstractPart", "cm-abstract1");
+    anchor((x) => x.type === "paragraph" && !!x.content?.length, "cm-body00001");
+    anchor((x) => x.type === "tablePart", "cm-table0001");
+    const rec = (text: string) => ({ author: { name: "Ana" }, date: "2026-11-25T10:00:00Z", origin: "local", text, resolved: false, replies: [] });
+    const comments = { "cm-abstract1": rec("a"), "cm-body00001": rec("b"), "cm-table0001": rec("c"), "cm-orphan001": rec("x") };
+    const files = splitArticle(doc, art, { comments });
+    expect(Object.keys(files.get(ABSTRACT_PATH)!.comments)).toEqual(["cm-abstract1"]);
+    expect(Object.keys(files.get(BODY_PATH)!.comments)).toEqual(["cm-body00001"]);
+    expect(Object.keys(files.get(tablePath)!.comments)).toEqual(["cm-table0001"]);
+    // saved and loaded again: the editor gets them back as one registry
+    await saveComposite(p, art, doc, { comments });
+    const again = (await loadProject(fs)).articles[0];
+    const back = composeArticle(again);
+    expect(back.warnings).toEqual([]);
+    const all = Object.assign({}, ...[...again.documents.values()].map((f) => f.comments));
+    expect(Object.keys(all).sort()).toEqual(["cm-abstract1", "cm-body00001", "cm-table0001"]);
+    expect(all["cm-table0001"].text).toBe("c");
+  });
+});

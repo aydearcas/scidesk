@@ -278,6 +278,9 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 .find-current { background: #FFB020; outline: 1px solid #B76E00; }
 .bubble { position: fixed; z-index: 25; display: flex; align-items: center; gap: 1px; padding: 3px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
 .bubble .tool { height: 28px; min-width: 28px; }
+/* record 0094: "Insert comment", solid teal, lighter on hover (the user's request) */
+.bubble .tool.comment-tool { margin-left: 4px; width: 30px; padding: 0; justify-content: center; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.bubble .tool.comment-tool:hover { background: color-mix(in srgb, var(--accent) 78%, white); border-color: color-mix(in srgb, var(--accent) 78%, white); }
 
 /* the start */
 /* ---- start screen (sheet 6, record 0048) */
@@ -557,6 +560,10 @@ label.inline { display: inline-flex; align-items: center; gap: 6px; }
 .results li.active { background: var(--accent-soft); }
 .authors-dialog { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); width: min(980px, calc(100vw - 32px)); max-height: 84vh; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
 .overlay:has(.authors-dialog) { padding-top: 6vh; }
+/* the quick citation and the cross-reference picker: lower, nearer the middle (the user's request, 25/11) */
+.overlay:has(> .quick-cite) { padding-top: 40vh; }
+/* so low, a long list of results scrolls inside the dialog instead of going past the bottom of the window */
+.overlay:has(> .quick-cite) .results { max-height: calc(60vh - 150px); }
 .authors-dialog h2 { margin: 0; font-size: 16px; }
 .authors-body { overflow-y: auto; flex: 1; min-height: 240px; display: flex; flex-direction: column; gap: 8px; }
 .authors-view .authors-body { overflow: visible; }
@@ -881,7 +888,11 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 .titlebar .menu-button.menu-toggle.on { background: var(--chrome-hover); box-shadow: inset 0 -2px 0 var(--chrome-ink); }
 .ribbon-row .review-bar { border-top: 1px solid var(--line); border-bottom: 0; padding: 4px 12px; gap: 6px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
 /* narrow windows: one row still, without the group titles and with the icons alone where there is one */
-@container (max-width: 1320px) { .review-bar .tool-label { display: none; } .review-bar .tool.both .tool-text { display: none; } .review-bar .tool.both { padding: 0 6px; } }
+/* record 0094: with the comments group the bar is wider; first the group titles go, then the button texts */
+@container (max-width: 1960px) { .review-bar .tool-label { display: none; } }
+@container (max-width: 1700px) { .review-bar .tool.both .tool-text { display: none; } .review-bar .tool.both { padding: 0 6px; } }
+/* what is only for screen readers stays inside the bar when it scrolls (it widened the page) */
+.review-bar { position: relative; }
 .review-bar .tool-group { display: flex; align-items: center; gap: 2px; padding-right: 8px; margin-right: 4px; border-right: 1px solid var(--line); }
 .review-bar .tool-group:last-child { border-right: 0; }
 .review-bar .tool-label { font-size: 11px; color: var(--text-3); margin-right: 4px; white-space: nowrap; }
@@ -902,7 +913,66 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 /* the text before the changes: insertions hidden */
 :root[data-markup="original"] .ProseMirror ins.change, :root[data-markup="original"] .ProseMirror [data-node-insertion] { display: none; }
 /* simple markup: a red line in the margin of each block with a change, as Word */
-:root[data-markup="simple"] .ProseMirror :is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification) { box-shadow: -10px 0 0 0 var(--paper), -12px 0 0 0 #C62828; }
+/* the line in the margin (record 0094: wider, and a click on it changes the view, as in Word):
+   red with simple markup, grey with all the marks */
+:root[data-markup="simple"] .ProseMirror :is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification) { box-shadow: -9px 0 0 0 var(--paper), -12px 0 0 0 #C62828; }
+:root[data-markup="all"] .ProseMirror :is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification) { box-shadow: -9px 0 0 0 var(--paper), -12px 0 0 0 #9AA1AB; }
 .review-bar .tool.icon-only { width: 32px; justify-content: center; padding: 0; }
 .review-bar .tool-select select { height: 28px; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); font: inherit; font-size: 12.5px; color: inherit; cursor: pointer; }
 .review-bar .tool-select { display: inline-flex; margin: 0 4px; }
+
+/* record 0094: comments, soft amber in the text (design 4.2) and threads in the Review tab */
+:root { --comment-bg: rgb(255 193 7 / 0.22); --comment-line: rgb(214 140 0 / 0.65); --comment-active: rgb(255 179 0 / 0.42); --comment-line-active: #B26A00; }
+.ProseMirror span.comment { background: var(--comment-bg); border-bottom: 2px solid var(--comment-line); border-radius: 1px; }
+/* the comments stay in sight without marks (the view SciDesk opens with when tracking is off), not in the original */
+:root[data-markup="original"] .ProseMirror span.comment { background: none; border-bottom-color: transparent; }
+.btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
+.review section { display: flex; flex-direction: column; gap: 8px; }
+.review .returned-copy { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 4px; }
+.comments-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.comments-head h4 { display: flex; align-items: center; gap: 6px; }
+.threads { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.thread { display: flex; flex-direction: column; gap: 4px; cursor: pointer; border-left: 3px solid var(--comment-line); }
+.thread.active { border-color: var(--comment-line-active); border-left-width: 3px; box-shadow: 0 1px 4px rgb(16 24 40 / 0.12); cursor: default; }
+.thread.resolved { opacity: 0.7; border-left-color: var(--line-strong); }
+.thread-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.thread-head .who { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+.thread-head .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.thread-head button.link { margin-left: auto; font-size: 14px; color: var(--text-3); }
+.thread .quote { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 0 0 0 6px; border-left: 2px solid var(--line-strong); color: var(--text-2); font-size: 12px; font-style: italic; cursor: pointer; overflow-wrap: anywhere; }
+.thread .quote:hover { color: var(--accent); }
+.thread-text { margin: 0; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.thread-write { display: flex; flex-direction: column; gap: 4px; }
+.thread-write textarea { width: 100%; box-sizing: border-box; resize: vertical; font: inherit; font-size: 13px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--paper); color: inherit; }
+.thread-actions { display: flex; gap: 10px; align-items: center; }
+.replies { list-style: none; margin: 2px 0 0 8px; padding: 0 0 0 8px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.show-resolved { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+/* record 0094: the threads at the height of their text (the Review tab does not scroll then) */
+.right-body:has(> .review.aligned) { overflow: hidden; display: flex; flex-direction: column; }
+.review.aligned { flex: 1; min-height: 0; }
+.review.aligned .comments { flex: 1; min-height: 0; }
+.thread-track { position: relative; flex: 1; min-height: 120px; overflow: hidden; margin: 0 -6px; }
+.thread-track .threads { display: block; position: absolute; inset: 0 6px; }
+.thread-track .thread { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+.track-more { position: absolute; left: 50%; transform: translateX(-50%); z-index: 2; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--paper); color: var(--text-2); font-size: 11.5px; padding: 2px 10px; cursor: pointer; box-shadow: 0 1px 3px rgb(16 24 40 / 0.12); white-space: nowrap; }
+.track-more:hover { color: var(--accent); border-color: var(--accent); }
+.track-more.top { top: 2px; }
+.track-more.bottom { bottom: 2px; }
+.review .returned-copy { flex: none; }
+.review.aligned .returned-copy[open] { max-height: 45%; overflow-y: auto; }
+.returned-copy summary { cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.returned-copy[open] summary { margin-bottom: 6px; }
+.returned-copy > :not(summary) { margin-top: 0; margin-bottom: 8px; }
+.comment-tip { position: fixed; z-index: 60; max-width: 320px; background: var(--paper); border: 1px solid var(--line-strong); border-left: 3px solid var(--comment-line-active); border-radius: 6px; padding: 6px 9px; font-size: 12.5px; box-shadow: 0 4px 14px rgb(16 24 40 / 0.16); pointer-events: none; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.comment-tip-head { display: flex; align-items: center; gap: 5px; }
+.comment-tip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+/* record 0094: dialogs that can be dragged, by their grip or any part that is not a control */
+.quick-cite { position: relative; padding-top: 16px; cursor: grab; }
+.quick-cite.dragging { cursor: grabbing; user-select: none; }
+.quick-cite :is(input, button, li, select, label) { cursor: auto; }
+.quick-cite :is(button, li) { cursor: pointer; }
+.drag-grip { position: absolute; top: 5px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; border-radius: 2px; background: var(--line-strong); }
+.quick-cite:hover .drag-grip { background: var(--text-3); }
+.btn.wizard-cancel { border-color: #8A93A0; }
+.btn.wizard-cancel:hover:not(:disabled) { border-color: var(--text-3); }
