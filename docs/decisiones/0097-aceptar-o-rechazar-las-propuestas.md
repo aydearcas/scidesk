@@ -63,4 +63,4 @@
 - **Siguiente paso de la fase 2a:** el historial con nombre. Atajos para la propuesta siguiente y anterior y para aceptar y rechazar (F8, Ctrl+Intro y Ctrl+Retroceso en la propuesta de interfaz), cuando llegue la vista de fusión.
 - Un cambio de formato, un párrafo partido o unido y un movimiento todavía no llegan como propuestas (ficha 0096). Cuando lleguen, habrá que colocarlos igual.
 - Si se deshace un comentario aceptado, su propuesta vuelve a «por decidir» solo en la misma sesión.
-- Varias copias de una ronda, con conflictos entre coautores y con tu copia, son la fase 2b.
+- Varias copias a la vez, con sus coincidencias y conflictos, en la ficha [0098](0098-varias-copias-devueltas-a-la-vez.md). Los conflictos con lo que el autor ha escrito desde el envío siguen para la fase 2b.

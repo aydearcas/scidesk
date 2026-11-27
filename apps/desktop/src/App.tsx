@@ -64,7 +64,7 @@ import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } f
 import { revealIn, scrollerOf } from "./reveal.ts";
 import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
 import { baseBlocksOf, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
-import { acceptCommentProposal, bringIntoText, proposalStates, type ProposalState } from "./proposals-text.ts";
+import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, type Copy, type ProposalState } from "./proposals-text.ts";
 import type { ProposalActions } from "./ReviewPanel.tsx";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
 import { ReviewBar } from "./ReviewBar.tsx";
@@ -158,9 +158,8 @@ export function App() {
   // record 0070: the sections' numbers (for the navigator) and the article's numbering
   const [sectionNos, setSectionNos] = useState<Map<string, string>>(new Map());
   const [numberingTick, setNumberingTick] = useState(0);
-  // record 0097: the returned copy of the article on screen, its file and the blocks of the version sent
-  const [proposals, setProposals] = useState<{ set: ProposalSetFile; name: string; file: string; folder: string } | null>(null);
-  const [proposalBase, setProposalBase] = useState<Map<string, PMNode> | null>(null);
+  // record 0097: the returned copies of the article on screen, in the order they go into the text, and the ones hidden
+  const [copies, setCopies] = useState<{ folder: string; list: Copy[]; order: string[]; hidden: string[] } | null>(null);
   const [report, setReport] = useState<CheckReport | null>(null);
   const [outline, setOutline] = useState<ArticleOutline | null>(null);
   const [uses, setUses] = useState<Map<string, number>>(new Map());
@@ -422,7 +421,7 @@ export function App() {
   const show = useCallback(async (p: Project, where: string | null = null, focus: string | null = null) => {
     place.current = where;
     setProject(p);
-    setProposals(null);
+    setCopies(null);
     setError("");
     setSelected(null);
     setNavActive(null);
@@ -673,7 +672,7 @@ export function App() {
     setReport(null);
     setOutline(null);
     setRendering(null);
-    setProposals(null);
+    setCopies(null);
     setRecoveries([]);
     setSelected(null);
   });
@@ -773,7 +772,7 @@ export function App() {
     setLastSaved(null);
     setSelected(null);
     setNavActive(null);
-    setProposals(null);
+    setCopies(null);
     setActiveFolder(folder);
     openTab(`doc:${folder}`);
   });
@@ -1225,18 +1224,16 @@ export function App() {
   const importReturnedCopy = async (file: File, returnedBy: string) => {
     if (!project || !article) return;
     const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
-    const loaded = { set: r.set, name: returnedBy, file: r.proposalsFile, folder: article.folder };
-    proposalsRef.current = loaded;
-    setProposals(loaded);
-    const base = await baseBlocksOf(project, article.folder, r.set);
-    setProposalBase(base);
-    // record 0097: what can go into the text goes there, as tracked changes of their authors
+    const copy: Copy = { file: r.proposalsFile, name: returnedBy, set: r.set, base: await baseBlocksOf(project, article.folder, r.set) };
+    const cur = copiesRef.current?.folder === article.folder ? copiesRef.current : { folder: article.folder, list: [], order: [], hidden: [] };
+    const next = { ...cur, list: [...cur.list.filter((c) => c.file !== copy.file), copy], order: [...cur.order.filter((x) => x !== copy.file), copy.file], hidden: cur.hidden.filter((x) => x !== copy.file) };
+    setCopiesNow(next);
+    // record 0097: what can go into the text goes there, after the copies already shown, as tracked changes of their authors
     if (!editor) return;
     if (!isDoc(tab)) openTab(docTab);
-    const states = proposalStates(editor.state.doc, r.set, base);
-    const placed = bringIntoText(editor, r.set, states);
+    const placed = bringIntoText(editor, copy, next.list);
     if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
-    const rest = [...states.values()].filter((s) => s.kind !== "decided").length - placed.length;
+    const rest = copy.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length - placed.length;
     if (placed.length || rest) setMessage((placed.length ? t("ui.proposals.imported", { name: returnedBy, count: placed.length }) : `${returnedBy}:`) + (rest ? t("ui.proposals.importedRest", { count: rest }) : ""));
   };
 
@@ -1873,57 +1870,85 @@ export function App() {
   }, [commentDoc, commentTick, commentAnchors]);
   const openComments = commentThreads.filter((x) => !x.record.resolved).length;
 
-  // ---------------------------------------------------------------- the returned copy's proposals (record 0097)
+  // ---------------------------------------------------------------- the returned copies' proposals (record 0097)
 
-  const proposalsRef = useRef(proposals);
-  proposalsRef.current = proposals;
-  // the article's latest copy (the latest with something left to decide), when it is shown
+  const copiesRef = useRef(copies);
+  copiesRef.current = copies;
+  /** Where this computer keeps the order of an article's copies and the ones hidden (a convenience, not project data). */
+  const copiesKey = (folder: string) => `scidesk.copies:${project?.manifest.id ?? ""}:${folder}`;
+  const setCopiesNow = (next: NonNullable<typeof copies>) => {
+    copiesRef.current = next;
+    setCopies(next);
+    try { localStorage.setItem(copiesKey(next.folder), JSON.stringify({ order: next.order, hidden: next.hidden })); } catch { /* no storage: the default next time */ }
+  };
+  // the article's copies, when it is shown (none goes into the text by itself: they are as they were saved)
   useEffect(() => {
-    if (!project || !article || proposals?.folder === article.folder) return;
+    if (!project || !article || copies?.folder === article.folder) return;
     let gone = false;
-    setProposalBase(null);
     void (async () => {
       const sets = await loadProposalSets(project, article.folder);
-      const pick = [...sets].reverse().find((s) => s.set.proposals.some((p) => p.decision === "pending" && p.status !== "noise-hidden")) ?? sets.at(-1);
-      if (gone || !pick) return;
-      const loaded = { ...pick, folder: article.folder };
-      proposalsRef.current = loaded;
-      setProposals(loaded);
-      const base = await baseBlocksOf(project, article.folder, pick.set).catch(() => null);
-      if (!gone) setProposalBase(base);
+      const bases = new Map<string, Map<string, PMNode> | null>();
+      const list: Copy[] = [];
+      for (const s of sets) {
+        const snap = s.set.base.snapshot;
+        if (!bases.has(snap)) bases.set(snap, await baseBlocksOf(project, article.folder, s.set).catch(() => null));
+        list.push({ ...s, base: bases.get(snap)! });
+      }
+      if (gone) return;
+      let saved: { order?: string[]; hidden?: string[] } = {};
+      try { saved = JSON.parse(localStorage.getItem(copiesKey(article.folder)) ?? "{}"); } catch { /* none */ }
+      const files = list.map((c) => c.file);
+      const order = [...(saved.order ?? []).filter((x) => files.includes(x)), ...files.filter((x) => !(saved.order ?? []).includes(x))];
+      setCopiesNow({ folder: article.folder, list, order, hidden: (saved.hidden ?? []).filter((x) => files.includes(x)) });
     })();
     return () => { gone = true; };
   }, [project, article?.folder]); // eslint-disable-line react-hooks/exhaustive-deps
-  /** Records what the user did with some proposals, in the set's file. */
-  const recordProposals = (ids: string[], decision: "pending" | "accepted" | "rejected" | "edited") => {
-    const cur = proposalsRef.current;
-    if (!cur || !project || !ids.length) return;
-    const set = decideProposals(cur.set, ids, decision, { name: settings.userName.trim() || "?" }, new Date().toISOString().replace(/\.\d{3}Z$/, "Z"));
-    if (set.proposals.every((p, i) => p === cur.set.proposals[i])) return;
-    const next = { ...cur, set };
-    proposalsRef.current = next;
-    setProposals(next);
-    void saveProposalSet(project, cur.file, set).catch((e) => setError(String(e)));
+  const copyList = copies && copies.folder === article?.folder ? copies : null;
+  const orderedCopies = copyList ? copyList.order.map((x) => copyList.list.find((c) => c.file === x)!).filter(Boolean) : [];
+  const shownCopies = orderedCopies.filter((c) => !copyList!.hidden.includes(c.file));
+  const proposalById = (id: string) => {
+    for (const c of copyList?.list ?? []) { const p = c.set.proposals.find((x) => x.id === id); if (p) return { p, copy: c }; }
+    return null;
   };
-  // a change that comes from a proposal decides it, wherever it is accepted or rejected
+  /** Records what the user did with some proposals, in the files of their copies. */
+  const recordProposals = (ids: string[], decision: "pending" | "accepted" | "rejected" | "edited") => {
+    const cur = copiesRef.current;
+    if (!cur || !project || !ids.length) return;
+    const by = { name: settings.userName.trim() || "?" }, date = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+    let changed = false;
+    const list = cur.list.map((c) => {
+      const set = decideProposals(c.set, ids, decision, by, date);
+      if (set.proposals.every((p, i) => p === c.set.proposals[i])) return c;
+      changed = true;
+      void saveProposalSet(project, c.file, set).catch((e) => setError(String(e)));
+      return { ...c, set };
+    });
+    if (changed) setCopiesNow({ ...cur, list });
+  };
+  const proposalView: Map<string, ProposalState> | null = useMemo(() => {
+    if (!copyList || !commentDoc || rightTab !== "review") return null;
+    return proposalStates(commentDoc, copyList.list);
+  }, [commentDoc, copyList, rightTab, commentTick]); // eslint-disable-line react-hooks/exhaustive-deps
+  const proposalViewRef = useRef(proposalView);
+  proposalViewRef.current = proposalView;
+  // a change that comes from a proposal decides it, wherever it is accepted or rejected, and with it
+  // the proposals of other copies that agree with it
   useEffect(() => {
     track.onDecided = (list) => {
-      const ids = new Set(proposalsRef.current?.set.proposals.map((p) => p.id) ?? []);
+      const ids = new Set(copiesRef.current?.list.flatMap((c) => c.set.proposals.map((p) => p.id)) ?? []);
       for (const accept of [true, false]) {
-        const which = list.filter((x) => x.accept === accept).map((x) => track.registry[x.id]?.source).filter((s): s is string => !!s && ids.has(s));
+        const decided = new Set(list.filter((x) => x.accept === accept).map((x) => x.id));
+        const which = [...decided].map((c) => track.registry[c]?.source).filter((x): x is string => !!x && ids.has(x));
+        for (const [pr, st] of proposalViewRef.current ?? []) if (st.kind === "agrees" && st.changes.some((c) => decided.has(c))) which.push(pr);
         recordProposals([...new Set(which)], accept ? "accepted" : "rejected");
       }
     };
     return () => { track.onDecided = null; };
   });
-  const proposalView: Map<string, ProposalState> | null = useMemo(() => {
-    if (!proposals || !proposalBase || !commentDoc || proposals.folder !== article?.folder || rightTab !== "review") return null;
-    return proposalStates(commentDoc, proposals.set, proposalBase);
-  }, [commentDoc, proposals, proposalBase, rightTab, commentTick, article?.folder]); // eslint-disable-line react-hooks/exhaustive-deps
   // a change brought back by undoing its accept or reject: its proposal is pending again
   useEffect(() => {
-    if (!proposalView || !proposals) return;
-    const back = proposals.set.proposals.filter((p) => p.decision !== "pending" && proposalView.get(p.id)?.kind === "in-text").map((p) => p.id);
+    if (!proposalView || !copyList) return;
+    const back = copyList.list.flatMap((c) => c.set.proposals).filter((p) => p.decision !== "pending" && proposalView.get(p.id)?.kind === "in-text").map((p) => p.id);
     if (back.length) recordProposals(back, "pending");
   }, [proposalView]); // eslint-disable-line react-hooks/exhaustive-deps
   // the comments accepted in this session from new comment proposals: undone, pending again
@@ -1941,7 +1966,6 @@ export function App() {
     if (typeof done === "string") acceptedComments.current.set(p.id, done);
     return !!done;
   };
-  const proposalById = (id: string) => proposals?.set.proposals.find((p) => p.id === id);
   const revealRange = (from: number, to: number) => {
     if (!editor) return;
     if (!isDoc(tab)) openTab(docTab);
@@ -1954,50 +1978,78 @@ export function App() {
   };
   /** Accepts or rejects one proposal, as it is now. */
   const decideProposal = (id: string, accept: boolean) => {
-    const p = proposalById(id), s = proposalView?.get(id);
-    if (!editor || !p || !s) return;
-    if (s.kind === "in-text") decideMany(editor, s.changes.map((c) => ({ id: c, accept })));
+    const found = proposalById(id), s = proposalView?.get(id);
+    if (!editor || !found || !s) return;
+    const { p } = found;
+    // in the text, or the same as another copy's change there: that change is decided (and this proposal with it)
+    if (s.kind === "in-text" || s.kind === "agrees") decideMany(editor, s.changes.map((c) => ({ id: c, accept })));
     else if (s.kind === "reverts") { if (accept) decide(editor, false, s.change); recordProposals([id], accept ? "accepted" : "rejected"); }
-    else if (s.kind === "comment" && accept) {
+    else if (s.kind === "conflict" && accept) {
+      const rejected = chooseInstead(editor, found.copy, copyList!.list, id, s.changes);
+      recordProposals(rejected, "rejected");
+    } else if (s.kind === "comment" && accept) {
       if (acceptComment(p, s.at)) recordProposals([id], "accepted");
       else setMessage(t("ui.proposals.noPlace"));
     } else recordProposals([id], accept ? "accepted" : "rejected");
+  };
+  /** Lays the copies out again in the text, after showing, hiding or moving one. */
+  const relayCopies = (next: NonNullable<typeof copies>) => {
+    setCopiesNow(next);
+    if (!editor) return;
+    const shown = next.order.filter((x) => !next.hidden.includes(x)).map((x) => next.list.find((c) => c.file === x)!).filter(Boolean);
+    const placed = layOut(editor, next.list, shown);
+    if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
   };
   const proposalActions: ProposalActions = {
     onAccept: (id) => decideProposal(id, true),
     onReject: (id) => decideProposal(id, false),
     onGo: (id) => {
-      const p = proposalById(id), s = proposalView?.get(id);
-      if (!editor || !p || !s) return;
-      const change = s.kind === "in-text" ? s.changes[0] : s.kind === "reverts" ? s.change : null;
+      const found = proposalById(id), s = proposalView?.get(id);
+      if (!editor || !found || !s) return;
+      const change = s.kind === "in-text" || s.kind === "agrees" || s.kind === "conflict" ? s.changes[0] : s.kind === "reverts" ? s.change : null;
       const r = change ? changeRange(editor.state.doc, change) : null;
       if (r) { revealRange(r.from, r.to); return; }
-      const a = p.anchor as { block?: string; after?: string | null };
+      const a = found.p.anchor as { block?: string; after?: string | null };
       const block = a.block ?? a.after;
       if (block) { if (!isDoc(tab)) openTab(docTab); goToBlock(block); }
     },
-    onBring: (ids) => {
-      if (!editor || !proposals || !proposalView) return;
-      const placed = bringIntoText(editor, proposals.set, proposalView, ids ? new Set(ids) : undefined);
+    onBring: (file, ids) => {
+      const copy = copyList?.list.find((c) => c.file === file);
+      if (!editor || !copy || !copyList) return;
+      const placed = bringIntoText(editor, copy, copyList.list, ids ? new Set(ids) : undefined);
       if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
     },
     onCopy: (id) => {
-      const text = proposalById(id)?.after ?? "";
+      const text = proposalById(id)?.p.after ?? "";
       void navigator.clipboard?.writeText(text).then(() => setMessage(t("ui.proposals.copied", { text: text.length > 60 ? `${text.slice(0, 58)}…` : text })));
     },
     onDone: (id) => recordProposals([id], "edited"),
-    onAll: (accept) => {
-      if (!editor || !proposals || !proposalView) return;
+    onAll: (file, accept) => {
+      const copy = copyList?.list.find((c) => c.file === file);
+      if (!editor || !copy || !proposalView) return;
       const changes: { id: string; accept: boolean }[] = [];
       const others: string[] = [];
-      for (const p of proposals.set.proposals) {
+      for (const p of copy.set.proposals) {
         const s = proposalView.get(p.id);
-        if (s?.kind === "in-text") changes.push(...s.changes.map((c) => ({ id: c, accept })));
+        if (s?.kind === "in-text" || (s?.kind === "agrees" && accept)) changes.push(...s.changes.map((c) => ({ id: c, accept })));
+        else if (s?.kind === "agrees" || (s?.kind === "conflict" && !accept)) others.push(p.id);
         else if (s?.kind === "reverts") { if (accept) changes.push({ id: s.change, accept: false }); others.push(p.id); }
         else if (s?.kind === "comment" && !s.problem) { if (!accept || acceptComment(p, s.at)) others.push(p.id); }
       }
       if (changes.length) decideMany(editor, changes);
       recordProposals(others, accept ? "accepted" : "rejected");
+    },
+    onShow: (file, on) => {
+      if (!copyList) return;
+      relayCopies({ ...copyList, hidden: on ? copyList.hidden.filter((x) => x !== file) : [...copyList.hidden, file] });
+    },
+    onMove: (file, dir) => {
+      if (!copyList) return;
+      const order = [...copyList.order];
+      const i = order.indexOf(file), j = i + dir;
+      if (i < 0 || j < 0 || j >= order.length) return;
+      [order[i], order[j]] = [order[j], order[i]];
+      relayCopies({ ...copyList, order });
     },
   };
 
@@ -2195,7 +2247,7 @@ export function App() {
   // ---------------------------------------------------------------- the window
 
   const activeWarnings = report?.warnings.filter((w) => !w.ignored && w.level !== "info").length ?? 0;
-  const shownProposals = proposals && proposals.folder === article?.folder ? proposals.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length : 0;
+  const shownProposals = shownCopies.reduce((n, c) => n + c.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length, 0);
   const titleText = outline?.title?.text || t("ui.untitled");
   const left = !!project && settings.left;
   const right = !!project && settings.right;
@@ -2397,7 +2449,7 @@ export function App() {
               {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} onBlind={blind} articleLang={article?.article.lang ?? "es"}
                 onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
-              {rightTab === "review" && <ReviewPanel proposals={proposals?.folder === article?.folder ? proposals : null} states={proposalView} proposalActions={proposalActions} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
+              {rightTab === "review" && <ReviewPanel copies={orderedCopies.map((c) => ({ file: c.file, name: c.name, set: c.set, shown: !copyList!.hidden.includes(c.file) }))} states={proposalView} proposalActions={proposalActions} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
                 editor={editor && isDoc(tab) ? editor : null} copyRequest={copyRequest} />}
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}

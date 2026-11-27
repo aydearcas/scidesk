@@ -12,18 +12,23 @@ import type { ProposalState } from "./proposals-text.ts";
 import { authorColor } from "./track-changes.ts";
 
 export interface CommentThread { anchor: CommentAnchor; record: CommentRecord }
-/** Record 0097: what the cards of the returned copy do. */
+/** Record 0097: what the list of returned copies and their cards do. */
 export interface ProposalActions {
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
   onGo: (id: string) => void;
-  /** Brings these proposals (or every one that can be) into the text as tracked changes. */
-  onBring: (ids?: string[]) => void;
+  /** Brings proposals of a copy (these, or every one that can be) into the text as tracked changes. */
+  onBring: (file: string, ids?: string[]) => void;
   onCopy: (id: string) => void;
   /** The user made it by hand. */
   onDone: (id: string) => void;
-  onAll: (accept: boolean) => void;
+  onAll: (file: string, accept: boolean) => void;
+  /** Shows a copy (its proposals in the text and its cards) or hides it. */
+  onShow: (file: string, on: boolean) => void;
+  /** Moves a copy up (-1) or down (1): an earlier copy goes into the text first. */
+  onMove: (file: string, dir: -1 | 1) => void;
 }
+export interface PanelCopy { file: string; name: string; set: ProposalSetFile; shown: boolean }
 export interface CommentActions {
   /** Goes to the comment's text (and makes it the active one). */
   onGo: (id: string) => void;
@@ -39,8 +44,9 @@ export interface CommentActions {
   onDone: () => void;
 }
 
-export function ReviewPanel({ proposals: got, states, proposalActions, onImport, threads, active, comment, editor, copyRequest }: {
-  proposals: { set: ProposalSetFile; name: string } | null;
+export function ReviewPanel({ copies, states, proposalActions, onImport, threads, active, comment, editor, copyRequest }: {
+  /** The returned copies of the article, in the order they go into the text. */
+  copies: PanelCopy[];
   /** What each proposal is now (in the text, can go there, cannot…); null while it is worked out. */
   states: Map<string, ProposalState> | null;
   proposalActions: ProposalActions;
@@ -58,18 +64,12 @@ export function ReviewPanel({ proposals: got, states, proposalActions, onImport,
   const [problem, setProblem] = useState("");
   const [showResolved, setShowResolved] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
-  const [showDecided, setShowDecided] = useState(false);
   const input = useRef<HTMLInputElement>(null);
-  const proposals = got?.set ?? null;
-  useEffect(() => { if (copyRequest || proposals) setCopyOpen(true); }, [copyRequest, proposals]);
-  const shown = proposals?.proposals.filter((p) => p.status !== "noise-hidden") ?? [];
-  const stateOf = (id: string) => states?.get(id);
-  const decided = shown.filter((p) => stateOf(p.id)?.kind === "decided").length;
-  const bringable = shown.filter((p) => stateOf(p.id)?.kind === "can-place").map((p) => p.id);
-  const decidable = shown.filter((p) => { const s = stateOf(p.id); return s && (s.kind === "in-text" || s.kind === "reverts" || (s.kind === "comment" && !s.problem)); }).length;
-  const listed = shown.filter((p) => showDecided || stateOf(p.id)?.kind !== "decided");
+  useEffect(() => { if (copyRequest || copies.length) setCopyOpen(true); }, [copyRequest, copies.length]);
+  const pendingOf = (c: PanelCopy) => c.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length;
+  const pending = copies.filter((c) => c.shown).reduce((n, c) => n + pendingOf(c), 0);
   const keep = (e: React.MouseEvent) => e.preventDefault();
-  const act = (f: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); f(); };
+  const when = (d: string) => new Date(d).toLocaleDateString(undefined, { day: "numeric", month: "short" });
   const resolved = threads.filter((x) => x.record.resolved).length;
   const visible = threads.filter((x) => showResolved || !x.record.resolved || x.anchor.id === active);
   const onFile = async () => {
@@ -100,91 +100,141 @@ export function ReviewPanel({ proposals: got, states, proposalActions, onImport,
           )}
       </section>
       <details className="returned-copy" open={copyOpen} onToggle={(e) => setCopyOpen((e.currentTarget as HTMLDetailsElement).open)}>
-        <summary>{t("ui.comments.returnedCopy")}{shown.length - decided ? <span className="count">{shown.length - decided}</span> : null}</summary>
+        <summary>{t("ui.proposals.copies")}{pending ? <span className="count">{pending}</span> : null}</summary>
         <p className="muted small">{t("ui.reviewIntro")}</p>
         <label className="field">{t("returnedBy")}<input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
         <label className={`file-button btn${returnedBy.trim() ? "" : " disabled"}`}>{t("importCopy")}<input ref={input} type="file" accept=".docx" onChange={() => void onFile()} aria-label={t("importCopy")} /></label>
         {problem && <p className="field-error" role="alert">{problem}</p>}
-        {proposals && (
+        {copies.length === 0 && <p className="muted small">{t("ui.reviewEmpty")}</p>}
+        {copies.length > 0 && (
+          // record 0097: every copy of the article; the ones shown go into the text in this order
           <>
-            <h4>{t("ui.proposalsOf", { name: got!.name, count: shown.length })}</h4>
-            {shown.length > 0 && states && (
-              <>
-                <p className="muted small">{t("ui.proposals.left", { count: shown.length - decided })}</p>
-                {(bringable.length > 0 || decidable > 0) && (
-                  <div className="proposal-bulk">
-                    {bringable.length > 0 && <button className="btn small primary" onMouseDown={keep} onClick={() => proposalActions.onBring()}>{t("ui.proposals.bring", { count: bringable.length })}</button>}
-                    {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => proposalActions.onAll(true)}>{t("ui.proposals.acceptAll")}</button>}
-                    {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => proposalActions.onAll(false)}>{t("ui.proposals.rejectAll")}</button>}
-                  </div>
-                )}
-                {decided > 0 && (
-                  <label className="show-resolved small muted"><input type="checkbox" checked={showDecided} onChange={(e) => setShowDecided(e.target.checked)} /> {t("ui.proposals.showDecided", { count: decided })}</label>
-                )}
-              </>
-            )}
-            {shown.length === 0 ? <p className="muted">{t("noProposals")}</p> : (
-              <ul className="proposals">
-                {listed.map((p) => {
-                  const s = stateOf(p.id);
-                  const problem = s?.kind === "problem" ? s.problem : s?.kind === "comment" ? s.problem : undefined;
-                  const body = p.kind === "comment" && p.comment ? (
-                    // record 0096: a new comment, or what the copy did with one sent
-                    <>
-                      <div><b>{p.author.name}</b> {[
-                        p.comment.removed ? t("proposalComment.removed") : !p.comment.thread ? t("proposalComment.new") : p.comment.replies.length ? t("proposalComment.replies") : "",
-                        p.comment.thread && p.comment.resolved === true ? t("proposalComment.resolves") : p.comment.thread && p.comment.resolved === false ? t("proposalComment.reopens") : "",
-                      ].filter(Boolean).join(", ")} {p.before && <span className="muted">{t("proposalComment.on")} «{p.before}»</span>}</div>
-                      {p.comment.text && <div className="comment-text">{p.comment.text}</div>}
-                      {p.comment.replies.map((r, i) => <div key={i} className="comment-reply"><b>{r.author.name}</b>: {r.text}</div>)}
-                    </>
-                  ) : (
-                    <>
-                      <div><span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <span className="who"><span className="dot" style={{ background: authorColor(p.author.name) }} aria-hidden="true" /><b>{p.author.name}</b></span> {t(`kinds.${p.kind}`)}</div>
-                      <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>
-                    </>
-                  );
-                  // record 0097: what can be done with it now
-                  return (
-                    <li key={p.id} className={`card proposal${p.kind === "comment" ? " proposal-comment" : ""}${s ? ` state-${s.kind}` : ""}`} onClick={() => proposalActions.onGo(p.id)}>
-                      {body}
-                      {s?.kind === "reverts" && <p className="proposal-note small muted">{t("ui.proposals.reverts")}</p>}
-                      {problem && <p className="proposal-note small warn">{t(`ui.proposals.problem.${problem}`)}</p>}
-                      {s?.kind === "decided" && <p className="proposal-note small muted"><span className="tag">{t(`ui.proposals.decision.${p.decision}`)}</span></p>}
-                      {s && s.kind !== "decided" && (
-                        <div className="thread-actions">
-                          {(s.kind === "in-text" || s.kind === "reverts" || (s.kind === "comment" && !s.problem)) && (
-                            <>
-                              <button className="btn small primary" onMouseDown={keep} onClick={act(() => proposalActions.onAccept(p.id))}>{t("ui.proposals.accept")}</button>
-                              <button className="btn small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
-                            </>
-                          )}
-                          {s.kind === "can-place" && (
-                            <>
-                              <button className="btn small primary" onMouseDown={keep} onClick={act(() => proposalActions.onBring([p.id]))}>{t("ui.proposals.bringOne")}</button>
-                              <button className="btn small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
-                            </>
-                          )}
-                          {problem && (
-                            <>
-                              {p.after && <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onCopy(p.id))}>{t("ui.proposals.copy")}</button>}
-                              <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onDone(p.id))}>{t("ui.proposals.done")}</button>
-                              <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            <p className="integrity muted small">{proposals.integrity === "ok" ? t("integrityOk") : t("integrityBad")}</p>
+            {copies.length > 1 && <p className="muted small">{t("ui.proposals.orderHint")}</p>}
+            <ul className="copy-list">
+              {copies.map((c, i) => (
+                <li key={c.file} className={c.shown ? "" : "hidden-copy"}>
+                  <label className="copy-show">
+                    <input type="checkbox" checked={c.shown} onChange={(e) => proposalActions.onShow(c.file, e.target.checked)} />
+                    <span className="who"><span className="dot" style={{ background: authorColor(c.name) }} aria-hidden="true" /><b>{c.name}</b></span>
+                    <span className="muted small">{when(c.set.created)} · {t("ui.proposals.left", { count: pendingOf(c) })}</span>
+                  </label>
+                  {copies.length > 1 && (
+                    <span className="copy-move">
+                      <button className="icon-button" disabled={i === 0} title={t("ui.proposals.up")} aria-label={t("ui.proposals.up")} onMouseDown={keep} onClick={() => proposalActions.onMove(c.file, -1)}>▲</button>
+                      <button className="icon-button" disabled={i === copies.length - 1} title={t("ui.proposals.down")} aria-label={t("ui.proposals.down")} onMouseDown={keep} onClick={() => proposalActions.onMove(c.file, 1)}>▼</button>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {copies.filter((c) => c.shown).map((c) => <CopyCards key={c.file} copy={c} states={states} actions={proposalActions} />)}
           </>
         )}
-        {!proposals && <p className="muted small">{t("ui.reviewEmpty")}</p>}
       </details>
     </div>
+  );
+}
+
+/** Record 0097: the proposals of one copy shown, with what can be done with each one now. */
+function CopyCards({ copy, states, actions }: { copy: PanelCopy; states: Map<string, ProposalState> | null; actions: ProposalActions }) {
+  const { t } = useTranslation();
+  const [showDecided, setShowDecided] = useState(false);
+  const shown = copy.set.proposals.filter((p) => p.status !== "noise-hidden");
+  const stateOf = (id: string) => states?.get(id);
+  const decided = shown.filter((p) => stateOf(p.id)?.kind === "decided").length;
+  const bringable = shown.filter((p) => stateOf(p.id)?.kind === "can-place").map((p) => p.id);
+  const decidable = shown.filter((p) => { const s = stateOf(p.id); return s && (s.kind === "in-text" || s.kind === "reverts" || s.kind === "agrees" || (s.kind === "comment" && !s.problem)); }).length;
+  const listed = shown.filter((p) => showDecided || stateOf(p.id)?.kind !== "decided");
+  const keep = (e: React.MouseEvent) => e.preventDefault();
+  const act = (f: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); f(); };
+  const names = (list: string[]) => list.join(", ");
+  return (
+    <section className="copy-cards">
+      <h4>{t("ui.proposalsOf", { name: copy.name, count: shown.length })}</h4>
+      {shown.length > 0 && states && (
+        <>
+          {(bringable.length > 0 || decidable > 0) && (
+            <div className="proposal-bulk">
+              {bringable.length > 0 && <button className="btn small primary" onMouseDown={keep} onClick={() => actions.onBring(copy.file)}>{t("ui.proposals.bring", { count: bringable.length })}</button>}
+              {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => actions.onAll(copy.file, true)}>{t("ui.proposals.acceptAll")}</button>}
+              {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => actions.onAll(copy.file, false)}>{t("ui.proposals.rejectAll")}</button>}
+            </div>
+          )}
+          {decided > 0 && (
+            <label className="show-resolved small muted"><input type="checkbox" checked={showDecided} onChange={(e) => setShowDecided(e.target.checked)} /> {t("ui.proposals.showDecided", { count: decided })}</label>
+          )}
+        </>
+      )}
+      {shown.length === 0 ? <p className="muted">{t("noProposals")}</p> : listed.length === 0 ? <p className="muted small">{t("ui.proposals.allDecided")}</p> : (
+        <ul className="proposals">
+          {listed.map((p) => {
+            const s = stateOf(p.id);
+            const problem = s?.kind === "problem" ? s.problem : s?.kind === "comment" ? s.problem : undefined;
+            const body = p.kind === "comment" && p.comment ? (
+              // record 0096: a new comment, or what the copy did with one sent
+              <>
+                <div><b>{p.author.name}</b> {[
+                  p.comment.removed ? t("proposalComment.removed") : !p.comment.thread ? t("proposalComment.new") : p.comment.replies.length ? t("proposalComment.replies") : "",
+                  p.comment.thread && p.comment.resolved === true ? t("proposalComment.resolves") : p.comment.thread && p.comment.resolved === false ? t("proposalComment.reopens") : "",
+                ].filter(Boolean).join(", ")} {p.before && <span className="muted">{t("proposalComment.on")} «{p.before}»</span>}</div>
+                {p.comment.text && <div className="comment-text">{p.comment.text}</div>}
+                {p.comment.replies.map((r, i) => <div key={i} className="comment-reply"><b>{r.author.name}</b>: {r.text}</div>)}
+              </>
+            ) : (
+              <>
+                <div><span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <span className="who"><span className="dot" style={{ background: authorColor(p.author.name) }} aria-hidden="true" /><b>{p.author.name}</b></span> {t(`kinds.${p.kind}`)}</div>
+                <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>
+              </>
+            );
+            const agreed = s?.kind === "in-text" ? (s.others ?? []).filter((o) => o.agrees).map((o) => o.name) : [];
+            const clashing = s?.kind === "in-text" ? (s.others ?? []).filter((o) => !o.agrees).map((o) => o.name) : [];
+            // record 0097: what can be done with it now
+            return (
+              <li key={p.id} className={`card proposal${p.kind === "comment" ? " proposal-comment" : ""}${s ? ` state-${s.kind}` : ""}`} onClick={() => actions.onGo(p.id)}>
+                {body}
+                {s?.kind === "reverts" && <p className="proposal-note small muted">{t("ui.proposals.reverts")}</p>}
+                {s?.kind === "agrees" && <p className="proposal-note small agree">{t("ui.proposals.agrees", { names: names(s.with) })}</p>}
+                {s?.kind === "conflict" && <p className="proposal-note small warn">{t("ui.proposals.conflict", { names: names(s.with) })}</p>}
+                {agreed.length > 0 && <p className="proposal-note small agree">{t("ui.proposals.agreedBy", { names: names(agreed), count: agreed.length })}</p>}
+                {clashing.length > 0 && <p className="proposal-note small warn">{t("ui.proposals.clashedBy", { names: names(clashing), count: clashing.length })}</p>}
+                {problem && <p className="proposal-note small warn">{t(`ui.proposals.problem.${problem}`)}</p>}
+                {s?.kind === "decided" && <p className="proposal-note small muted"><span className="tag">{t(`ui.proposals.decision.${p.decision}`)}</span></p>}
+                {s && s.kind !== "decided" && (
+                  <div className="thread-actions">
+                    {(s.kind === "in-text" || s.kind === "reverts" || s.kind === "agrees" || (s.kind === "comment" && !s.problem)) && (
+                      <>
+                        <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onAccept(p.id))}>{t("ui.proposals.accept")}</button>
+                        <button className="btn small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                      </>
+                    )}
+                    {s.kind === "conflict" && (
+                      <>
+                        <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onAccept(p.id))}>{t("ui.proposals.useThis")}</button>
+                        <button className="btn small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.keepOther", { names: names(s.with) })}</button>
+                      </>
+                    )}
+                    {s.kind === "can-place" && (
+                      <>
+                        <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onBring(copy.file, [p.id]))}>{t("ui.proposals.bringOne")}</button>
+                        <button className="btn small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                      </>
+                    )}
+                    {problem && (
+                      <>
+                        {p.after && <button className="link small" onMouseDown={keep} onClick={act(() => actions.onCopy(p.id))}>{t("ui.proposals.copy")}</button>}
+                        <button className="link small" onMouseDown={keep} onClick={act(() => actions.onDone(p.id))}>{t("ui.proposals.done")}</button>
+                        <button className="link small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <p className="integrity muted small">{copy.set.integrity === "ok" ? t("integrityOk") : t("integrityBad")}</p>
+    </section>
   );
 }
 

@@ -5,7 +5,7 @@ import type { PMNode } from "@scidesk/formats";
 import { exportDocx } from "../src/docx-export.ts";
 import { nodeResources } from "../src/node-fs.ts";
 import { importCopy } from "../src/round.ts";
-import { baseBlocksOf, blockMapping, blockUnits, blocksById, decideProposals, loadProposalSets, placeProposal } from "../src/proposal-place.ts";
+import { baseBlocksOf, blockMapping, blockUnits, blocksById, decideProposals, loadProposalSets, placeProposal, type Proposal } from "../src/proposal-place.ts";
 import { trackedProject } from "./tracked-fixture.ts";
 
 const MARTA = { name: "Marta Ríos Navarro" };
@@ -73,6 +73,31 @@ describe("proposals in the text as it is now (record 0097)", () => {
     split.content![0].text = split.content![0].text!.replace("Primera mitad.", "Primera parte.");
     const close = { ...added, anchor: { ...(added.anchor as { file: "manuscript/article.scidoc"; block: string; from: number; to: number }), from: 3, to: 14 }, kind: "delete" as const, before: "mera mitad.", after: "" };
     expect(place(close)).toEqual({ problem: "changed" });
+  });
+
+  it("meet the proposals of another copy already in the text: the same, a conflict, or side by side", () => {
+    const tx = (text: string, marks?: PMNode["marks"]) => ({ type: "text", text, ...(marks ? { marks } : {}) }) as PMNode;
+    const base = { type: "paragraph", attrs: { id: "b-1" }, content: [tx("La artritis reumatoide afecta al 1 % de la población.")] } as PMNode;
+    // Marta's copy is in the text: " crónica" inserted after "reumatoide", "al " deleted
+    const now = { type: "paragraph", attrs: { id: "b-1" }, content: [
+      tx("La artritis reumatoide"), tx(" crónica", [{ type: "insertion", attrs: { id: "ch-m1" } }]), tx(" afecta "),
+      tx("al ", [{ type: "deletion", attrs: { id: "ch-m2" } }]), tx("1 % de la población."),
+    ] } as PMNode;
+    const at = (x: string) => text(base).indexOf(x);
+    const juan = (kind: Proposal["kind"], from: number, to: number, before: string, after: string): Proposal => ({
+      id: "pr-juan000001", author: { name: "Juan" }, tracked: true, kind, anchor: { file: "manuscript/article.scidoc", block: "b-1", from, to }, before, after, status: "applicable", decision: "pending",
+    });
+    const place = (p: Proposal) => placeProposal(p, () => base, () => now, { foreign: (id) => id.startsWith("ch-m") });
+    expect(place(juan("delete", at("al 1"), at("al 1") + 3, "al ", ""))).toEqual({ agrees: ["ch-m2"] });
+    expect(place(juan("insert", at(" afecta"), at(" afecta"), "", " crónica"))).toEqual({ agrees: ["ch-m1"] });
+    expect(place(juan("replace", at("al 1"), at("al 1") + 6, "al 1 %", "al 2 %"))).toEqual({ conflict: ["ch-m2"] });
+    expect(place(juan("replace", at("artritis"), at(" afecta") + 7, "artritis reumatoide afecta", "AR afecta"))).toEqual({ conflict: ["ch-m1"] });
+    // another insertion at the same point goes before Marta's; the rest of the sentence is free
+    expect(place(juan("insert", at(" afecta"), at(" afecta"), "", " grave"))).toEqual({ block: "b-1", from: at(" afecta"), to: at(" afecta") });
+    expect(place(juan("replace", at("reumatoide"), at("reumatoide") + 10, "reumatoide", "reumatoidea"))).toEqual({ block: "b-1", from: at("reumatoide"), to: at("reumatoide") + 10 });
+    expect(place(juan("replace", at("población"), at("población") + 9, "población", "población adulta"))).toMatchObject({ from: at("población") + " crónica".length });
+    // without knowing they come from a copy, Marta's changes look like the author's
+    expect(placeProposal(juan("delete", at("al 1"), at("al 1") + 3, "al ", ""), () => base, () => now)).toEqual({ problem: "tracked" });
   });
 
   it("keep what the user decided, and are found again with the round's copy", async () => {

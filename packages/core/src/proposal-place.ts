@@ -102,6 +102,20 @@ export type PlaceProblem = "changed" | "tracked" | "missing" | "unsupported";
 export type Placement =
   | { block: string; from: number; to: number; end?: { block: string; to: number }; reverts?: string }
   | { after: string };
+/**
+ * Where it meets the proposals of another copy already in the text (their tracked changes):
+ * the same result (`agrees`), or another one on the same text (`conflict`).
+ */
+export type Meeting = { agrees: string[] } | { conflict: string[] };
+export type PlaceResult = Placement | Meeting | { problem: PlaceProblem };
+
+export interface PlaceOptions {
+  /**
+   * Whether a tracked change of the text comes from a proposal of a copy (record 0097): those
+   * are not the author's edits since sending, and where a proposal falls on one, two copies meet.
+   */
+  foreign?: (changeId: string) => boolean;
+}
 
 /**
  * The tracked change that `p` takes back, if it does exactly that (Word gives it when the
@@ -145,7 +159,7 @@ export function blocksById(docs: Iterable<PMNode>): Map<string, PMNode> {
  * (`base`). A comment always goes somewhere while its block is there: on text changed since,
  * it goes where that text is now.
  */
-export function placeProposal(p: Proposal, base: (id: string) => PMNode | null | undefined, current: (id: string) => PMNode | null | undefined): Placement | { problem: PlaceProblem } {
+export function placeProposal(p: Proposal, base: (id: string) => PMNode | null | undefined, current: (id: string) => PMNode | null | undefined, opts: PlaceOptions = {}): PlaceResult {
   const a = p.anchor as { block?: string; from?: number; to?: number; after?: string | null };
   if (p.kind === "insert-paragraph") {
     if (!a.after || !current(a.after)) return { problem: "missing" };
@@ -154,21 +168,26 @@ export function placeProposal(p: Proposal, base: (id: string) => PMNode | null |
   if (!a.block || a.from === undefined || a.to === undefined) return { problem: "unsupported" };
   if (p.kind === "format" || p.kind === "move" || p.kind === "split-paragraph" || p.kind === "join-paragraphs") return { problem: "unsupported" };
   const isComment = p.kind === "comment";
-  const one = (block: string, from: number, to: number): { from: number; to: number; reverts?: string } | { problem: PlaceProblem } => {
+  const one = (block: string, from: number, to: number): { from: number; to: number; reverts?: string } | Meeting | { problem: PlaceProblem } => {
     const cur = current(block), was = base(block);
     if (!cur || !was) return { problem: "missing" };
     const now = blockUnits(cur);
     const then = was.type === "keywords" ? keywordsText(was) : blockUnits(was)?.text;
     if (!now || then === undefined) return { problem: "unsupported" };
-    const m = blockMapping(then, now.text);
+    const view = authorsView(now, opts);
+    const m = blockMapping(then, view.text);
     if (!isComment && m.changed(from, to)) return { problem: "changed" };
-    const f = m.map(from), t = Math.max(f, m.map(to));
+    const uf = m.map(from), ut = Math.max(uf, m.map(to));
+    const point = uf === ut;
+    // in the text as it is (with the other copies' insertions): a point before them, a range inside them
+    const f = point ? view.left(uf) : view.right(uf), t = point ? f : view.left(ut);
     if (!isComment) {
-      const point = f === t;
+      const met = meeting(now, view, p, f, t, point ? view.right(uf) : t);
+      if (met) return met;
       // undoing a tracked change that went with the copy (the co-author rejected it): rejecting it
       const reverts = revertsChange(now, p, f, t);
       if (reverts) return { from: f, to: t, reverts };
-      if (point ? now.marked[f - 1] && now.marked[f] : now.marked.slice(f, t).some(Boolean)) return { problem: "tracked" };
+      if (point ? now.marked[f - 1] && now.marked[f] && !view.foreign(f) : now.marked.slice(f, t).some(Boolean)) return { problem: "tracked" };
       if (now.keywords && (p.before.includes(";") || p.after.includes(";"))) return { problem: "unsupported" };
     }
     const pf = now.pm[f], pt = now.pm[t];
@@ -181,20 +200,68 @@ export function placeProposal(p: Proposal, base: (id: string) => PMNode | null |
     if (!cur || !was) return { problem: "missing" };
     const now = blockUnits(cur);
     if (!now || now.keywords) return { problem: "unsupported" };
-    if (now.text !== blockUnits(was)?.text) return { problem: "changed" };
+    const view = authorsView(now, opts);
+    if (view.text !== blockUnits(was)?.text) return { problem: "changed" };
+    const ids = [...new Set((now.changes ?? []).flatMap((c, i) => (c && view.foreign(i) ? [c.id] : [])))];
+    if (ids.length) {
+      // another copy deleted the whole paragraph too: the same
+      const all = now.text.length > 0 && (now.changes ?? []).every((c, i) => c?.type === "deletion" && view.foreign(i));
+      return all ? { agrees: ids } : { conflict: ids };
+    }
     if (now.marked.some(Boolean)) return { problem: "tracked" };
     return { block: a.block, from: 0, to: now.text.length };
   }
   const end = p.comment?.end;
+  const placed = (r: ReturnType<typeof one>): r is { from: number; to: number; reverts?: string } => "from" in r;
   if (end && end.block !== a.block) {
     const start = one(a.block, a.from, a.to);
     const last = one(end.block, 0, end.to);
-    if ("problem" in start) return start;
-    if ("problem" in last) return { block: a.block, from: start.from, to: start.to };
+    if (!placed(start)) return start;
+    if (!placed(last)) return { block: a.block, from: start.from, to: start.to };
     return { block: a.block, from: start.from, to: start.to, end: { block: end.block, to: last.to } };
   }
   const r = one(a.block, a.from, a.to);
-  return "problem" in r ? r : { block: a.block, ...r };
+  return placed(r) ? { block: a.block, ...r } : r;
+}
+
+/**
+ * The block as its author has it: without the insertions of the copies brought into the text
+ * (their deletions are still the author's text). `left(k)` and `right(k)` give where the
+ * boundary k of that text is in the block, before or after any of those insertions there.
+ */
+function authorsView(now: BlockUnits, opts: PlaceOptions) {
+  const ch = now.changes ?? [];
+  const foreign = (i: number) => !!ch[i] && !!opts.foreign?.(ch[i]!.id);
+  const keep: number[] = [];
+  let text = "";
+  for (let i = 0; i < now.text.length; i++) if (!(foreign(i) && ch[i]!.type === "insertion")) { keep.push(i); text += now.text[i]; }
+  return {
+    text, foreign,
+    left: (k: number) => (k === 0 ? 0 : keep[k - 1] + 1),
+    right: (k: number) => (k < keep.length ? keep[k] : now.text.length),
+  };
+}
+
+/**
+ * Where `p` (the range f–t of the block, or a point with the insertions of other copies up to
+ * `edge`) meets the tracked changes of other copies: the same result when those changes are
+ * accepted, or a conflict when they touch the same text with another one. Insertions of two
+ * copies at one point are not a conflict: they go side by side, as in Word.
+ */
+function meeting(now: BlockUnits, view: ReturnType<typeof authorsView>, p: Proposal, f: number, t: number, edge: number): Meeting | undefined {
+  const ch = now.changes ?? [];
+  const ids = new Set<string>();
+  for (let i = f; i < Math.max(t, edge); i++) if (view.foreign(i)) ids.add(ch[i]!.id);
+  if (!ids.size) return undefined;
+  let lo = f, hi = Math.max(t, edge);
+  ch.forEach((c, i) => { if (c && ids.has(c.id)) { lo = Math.min(lo, i); hi = Math.max(hi, i + 1); } });
+  const pick = (from: number, to: number, keepUnit: (i: number) => boolean) => [...now.text.slice(from, to)].filter((_, k) => keepUnit(from + k)).join("");
+  // the other copies' insertions are not the author's text; their deletions are
+  const authors = (i: number) => !(view.foreign(i) && ch[i]!.type === "insertion");
+  const theirs = pick(lo, hi, (i) => !(ch[i] && ids.has(ch[i]!.id) && ch[i]!.type === "deletion") && (authors(i) || ids.has(ch[i]!.id)));
+  const ours = pick(lo, f, authors) + p.after.replace(/[\r\n]+/g, " ") + pick(t, hi, authors);
+  if (theirs === ours) return { agrees: [...ids] };
+  return f === t ? undefined : { conflict: [...ids] };
 }
 
 // ---------------------------------------------------------------- the sets on disk
