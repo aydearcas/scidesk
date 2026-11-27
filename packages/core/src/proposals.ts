@@ -12,9 +12,9 @@
 // tracked paragraph splits come in phase 2a.
 import { diffWordsWithSpace } from "diff";
 import { newId, validate, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { ATOM, rejectedText, type DocxParagraph, type DocxRead } from "./docx-read.ts";
+import { ATOM, rejectedText, type DocxComment, type DocxParagraph, type DocxRead } from "./docx-read.ts";
 import { now } from "./project.ts";
-import { LABELS, keywordsText } from "./docx-export.ts";
+import { LABELS, commentDurableId, keywordsText, revisionDate } from "./docx-export.ts";
 
 /** Headings the export writes itself ("Resumen", "Pies de figura"…): not content. */
 const GENERATED = new Set(Object.values(LABELS).flatMap((l) => [l.abstract, l.bib, l.captions]));
@@ -27,6 +27,8 @@ export interface BaseBlock {
    * through them to the block's own offsets.
    */
   skips?: [number, number][];
+  /** Record 0096: the comments anchored in the block, with their range of `text`. */
+  comments?: { id: string; from: number; to: number }[];
 }
 
 /**
@@ -54,19 +56,29 @@ export function baseBlocks(file: string, doc: PMNode): BaseBlock[] {
       let text = "";
       const citations: string[] = [];
       const skips: [number, number][] = [];
+      const comments = new Map<string, { from: number; to: number }>();
       let pm = 0;
       for (const c of n.content ?? []) {
         const size = c.type === "text" ? c.text!.length : 1;
         if ((c.marks ?? []).some((m) => m.type === "deletion")) { skips.push([pm, size]); pm += size; continue; }
+        const from = text.length;
+        for (const m of c.marks ?? []) if (m.type === "comment") {
+          const id = String(m.attrs!.id);
+          comments.set(id, { from: comments.get(id)?.from ?? from, to: from });
+        }
         if (c.type === "text") {
           // the U+200B of a tracked split is the paragraph mark's revision in the Word
           if (c.text!.includes("\u200b") && (c.marks ?? []).some((m) => m.type === "insertion")) {
             [...c.text!].forEach((ch, k) => { if (ch === "\u200b") skips.push([pm + k, 1]); else text += ch; });
           } else text += c.text;
         } else { text += ATOM; if (c.type === "citation") citations.push(c.attrs!.id as string); }
+        for (const m of c.marks ?? []) if (m.type === "comment") comments.get(String(m.attrs!.id))!.to = text.length;
         pm += size;
       }
-      out.push({ file, id: n.attrs.id as string, text, citations, ...(skips.length ? { skips } : {}) });
+      out.push({
+        file, id: n.attrs.id as string, text, citations, ...(skips.length ? { skips } : {}),
+        ...(comments.size ? { comments: [...comments].map(([id, r]) => ({ id, ...r })) } : {}),
+      });
       return;
     }
     n.content?.forEach(visit);
@@ -141,7 +153,128 @@ export function apply(text: string, ps: { anchor: unknown; after: string; tracke
   return text;
 }
 
-export interface CopyInfo { round?: string; copy?: string; file?: string; returnedBy: { name: string; person?: string }; snapshot: string }
+export interface SentComment { author: { name: string }; date: string; text: string; resolved: boolean; replies: { author: { name: string }; date: string; text: string }[] }
+export interface CopyInfo {
+  round?: string; copy?: string; file?: string; returnedBy: { name: string; person?: string }; snapshot: string;
+  /** Record 0096: the comments of the version sent, by id (the registries of the snapshot). */
+  sentComments?: Record<string, SentComment>;
+}
+
+type Draft = Omit<ProposalSetFile["proposals"][number], "id" | "status" | "decision">;
+type Anchored = Pick<Draft, "anchor" | "before" | "after"> & { end?: NonNullable<Draft["comment"]>["end"] };
+
+/**
+ * Record 0096: the comments of the copy as proposals. A comment that was sent (known by its
+ * w16cid:durableId, which the export derives from its id, or else by author, date and text)
+ * gives one only if the copy adds replies to it, resolves or reopens it, or no longer has
+ * it; any other is a new comment, with its replies. Offsets are in the sent text, as the
+ * other proposals'.
+ */
+function commentProposals(base: BaseBlock[], copy: DocxRead, match: Map<number, number>, info: CopyInfo, date: string): Draft[] {
+  const sent = info.sentComments ?? {};
+  if (!copy.comments.length && !Object.keys(sent).length) return [];
+  type Known = { thread: string; reply?: number };
+  const byDurable = new Map<string, Known>();
+  const byKey = new Map<string, Known>();
+  const key = (author: string, when: string | null, text: string) => `${author}\u0000${revisionDate(when) ?? ""}\u0000${norm(text)}`;
+  for (const [thread, c] of Object.entries(sent)) {
+    byDurable.set(commentDurableId(thread), { thread });
+    byKey.set(key(c.author.name, c.date, c.text), { thread });
+    c.replies.forEach((r, reply) => {
+      byDurable.set(commentDurableId(thread, reply), { thread, reply });
+      byKey.set(key(r.author.name, r.date, r.text), { thread, reply });
+    });
+  }
+  const known = (c: DocxComment): Known | null => (c.durableId ? byDurable.get(c.durableId.toUpperCase()) : undefined) ?? byKey.get(key(c.author, c.date, c.text)) ?? null;
+  const when = (d: string | null) => revisionDate(d) ?? date;
+  const reply = (r: DocxComment) => ({ author: { name: r.author || info.returnedBy.name }, date: when(r.date), text: r.text });
+
+  // where each comment of the copy is: its range's start and end, or its reference
+  type Pos = { p: number; off: number };
+  const edges = new Map<string, { start?: Pos; end?: Pos; ref?: Pos }>();
+  for (const p of copy.paragraphs) {
+    let off = 0;
+    for (const s of p.segments) {
+      if (s.edge) {
+        const e = edges.get(s.edge.comment) ?? {};
+        if (s.edge.side === "start") e.start ??= { p: p.index, off };
+        else e[s.edge.side] = { p: p.index, off };
+        edges.set(s.edge.comment, e);
+      } else if (s.kind !== "ins") off += s.text.length;
+    }
+  }
+  const mappers = new Map<number, (offset: number) => number>();
+  const toBase = (pos: Pos) => {
+    const b = base[match.get(pos.p)!];
+    if (!mappers.has(pos.p)) mappers.set(pos.p, mapper(b.text, rejectedText(copy.paragraphs[pos.p])));
+    return mappers.get(pos.p)!(pos.off);
+  };
+  /** The commented text in the copy, in the sent text's coordinates. */
+  const inCopy = (c: DocxComment): Anchored => {
+    const e = edges.get(c.word);
+    const start = e?.start ?? e?.ref;
+    const stop = e?.end ?? e?.ref ?? start;
+    if (!start || match.get(start.p) === undefined) {
+      // on a paragraph the co-author added (or nowhere): after the sent block before it
+      let after: string | null = null;
+      for (let k = (start?.p ?? 0) - 1; k >= 0 && after === null; k--) { const i = match.get(k); if (i !== undefined) after = base[i].id; }
+      const text = start ? copy.paragraphs[start.p].segments.filter((s) => s.kind !== "del").map((s) => s.text).join("") : "";
+      return { anchor: { file: (after ? base.find((b) => b.id === after)! : base[0]).file, after }, before: "", after: text };
+    }
+    const b = base[match.get(start.p)!];
+    const from = toBase(start);
+    const same = !stop || stop.p === start.p;
+    const to = same ? Math.max(from, toBase(stop ?? start)) : b.text.length;
+    const last = !same && match.get(stop!.p) !== undefined ? base[match.get(stop!.p)!] : null;
+    return {
+      anchor: { file: b.file, block: b.id, from, to }, before: b.text.slice(from, to), after: b.text.slice(from, to),
+      ...(last && last.id !== b.id ? { end: { file: last.file, block: last.id, to: toBase(stop!) } } : {}),
+    };
+  };
+  /** Where a comment sent was anchored, from the sent blocks. */
+  const inBase = (thread: string): Anchored | null => {
+    const blocks = base.flatMap((b) => (b.comments ?? []).filter((c) => c.id === thread).map((c) => ({ b, ...c })));
+    if (!blocks.length) return null;
+    const [first, last] = [blocks[0], blocks.at(-1)!];
+    const text = first.b.text.slice(first.from, first.to);
+    return {
+      anchor: { file: first.b.file, block: first.b.id, from: first.from, to: first.to }, before: text, after: text,
+      ...(last.b.id !== first.b.id ? { end: { file: last.b.file, block: last.b.id, to: last.to } } : {}),
+    };
+  };
+  const draft = (where: Anchored, author: { name: string }, when: string, comment: NonNullable<Draft["comment"]>): Draft => {
+    const { end, ...at } = where;
+    return { author, tracked: true, kind: "comment", ...at, comment: { ...comment, ...(end ? { end } : {}) }, date: when };
+  };
+
+  const out: Draft[] = [];
+  const ids = new Set(copy.comments.map((c) => c.word));
+  const tops = copy.comments.filter((c) => !c.parent || !ids.has(c.parent));
+  const seen = new Set<string>();
+  for (const top of tops) {
+    const replies = copy.comments.filter((c) => c.parent === top.word);
+    const k = known(top);
+    if (k && k.reply === undefined && sent[k.thread] && !seen.has(k.thread)) {
+      seen.add(k.thread);
+      const fresh = replies.filter((r) => { const m = known(r); return !(m && m.thread === k.thread && m.reply !== undefined); });
+      const resolved = top.done !== sent[k.thread].resolved;
+      if (!fresh.length && !resolved) continue;
+      const where = inBase(k.thread) ?? inCopy(top);
+      out.push(draft(where, fresh.length ? { name: fresh[0].author || info.returnedBy.name } : info.returnedBy, fresh.length ? when(fresh[0].date) : date, {
+        thread: k.thread, text: "", replies: fresh.map(reply), ...(resolved ? { resolved: top.done } : {}),
+      }));
+    } else {
+      out.push(draft(inCopy(top), { name: top.author || info.returnedBy.name }, when(top.date), { text: top.text, replies: replies.map(reply), ...(top.done ? { resolved: true } : {}) }));
+    }
+  }
+  // the comments sent that the copy no longer has: the co-author removed them
+  for (const thread of Object.keys(sent)) {
+    if (seen.has(thread)) continue;
+    const where = inBase(thread);
+    if (where) out.push(draft(where, info.returnedBy, date, { thread, text: "", replies: [], removed: true }));
+  }
+  return out;
+}
 
 export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyInfo): ProposalSetFile {
   const proposals: ProposalSetFile["proposals"] = [];
@@ -220,6 +353,8 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
     if (used.has(i)) continue;
     push({ author: info.returnedBy, tracked: false, kind: "delete-paragraph", anchor: { file: b.file, block: b.id, from: 0, to: b.text.length }, before: b.text, after: "", date });
   }
+  // record 0096: the comments, never noise and never text
+  for (const c of commentProposals(base, copy, match, info, date)) proposals.push({ id: newId("pr"), ...c, status: "applicable", decision: "pending" });
 
   // integrity: applying the proposals of each block to the sent text gives the copy accepted
   let integrity: "ok" | "mismatch" = "ok";
@@ -227,7 +362,7 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
     const i = match.get(p.index);
     if (i === undefined) continue;
     const b = base[i];
-    const mine = proposals.filter((x) => "block" in x.anchor && x.anchor.block === b.id && x.kind !== "delete-paragraph");
+    const mine = proposals.filter((x) => "block" in x.anchor && x.anchor.block === b.id && x.kind !== "delete-paragraph" && x.kind !== "comment");
     // untracked proposals alone give the copy with its tracked changes rejected; all of them,
     // the copy with everything accepted (Word's accepted view)
     if (apply(b.text, mine.filter((x) => !x.tracked)) !== rejectedText(p)) integrity = "mismatch";
@@ -237,6 +372,8 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
   // record 0095: offsets in the sent block's own coordinates (with its deleted text)
   const blockOf = new Map(base.map((b) => [b.id, b]));
   for (const x of proposals) {
+    const end = x.comment?.end;
+    if (end) { const b = blockOf.get(end.block); if (b) end.to = pmOffset(b, end.to); }
     const a = x.anchor as { block?: string; from?: number; to?: number };
     const b = a.block ? blockOf.get(a.block) : undefined;
     if (!b?.skips || a.from === undefined || a.to === undefined) continue;

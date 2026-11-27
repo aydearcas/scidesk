@@ -6,7 +6,7 @@ import { newId, stableStringify, validate, type PMNode, type ProposalSetFile, ty
 import { readDocx, settleSentChanges } from "./docx-read.ts";
 import { revisionKey, sentRevisionKeys } from "./docx-export.ts";
 import { now, type Project } from "./project.ts";
-import { baseBlocks, proposalsFromCopy, type BaseBlock } from "./proposals.ts";
+import { baseBlocks, proposalsFromCopy, type BaseBlock, type SentComment } from "./proposals.ts";
 import { loadSnapshot } from "./snapshot.ts";
 
 async function sha256(bytes: Uint8Array) {
@@ -56,8 +56,10 @@ export async function importCopy(project: Project, folder: string, bytes: Uint8A
   const base = sentBlocks(snapshot.files, folder);
   // record 0095: the tracked changes that went in the copy are part of what was sent
   const prefix = `articles/${folder}/`;
-  const sentDocs = Object.entries(snapshot.files).filter(([f]) => f.startsWith(prefix) && /\.(scidoc|scitable|scifigure)$/.test(f)).map(([, t]) => JSON.parse(t) as { changes?: Record<string, { author: { name: string }; date: string }> });
+  const sentDocs = Object.entries(snapshot.files).filter(([f]) => f.startsWith(prefix) && /\.(scidoc|scitable|scifigure)$/.test(f)).map(([, t]) => JSON.parse(t) as { changes?: Record<string, { author: { name: string }; date: string }>; comments?: Record<string, SentComment> });
   const read = settleSentChanges(raw, sentRevisionKeys(sentDocs, snapshot.created), revisionKey);
+  // record 0096: and so did its comments
+  const sentComments = Object.assign({}, ...sentDocs.map((d) => d.comments ?? {})) as Record<string, SentComment>;
 
   // the round of that snapshot, or a new one
   const roundsDir = `articles/${folder}/rounds/`;
@@ -79,7 +81,7 @@ export async function importCopy(project: Project, folder: string, bytes: Uint8A
   const copyFile = `copies/${name}.docx`;
   round.copies.push({ id: copyId, file: copyFile, returnedBy: opts.returnedBy, received: now(), sha256: await sha256(bytes) });
 
-  const set = proposalsFromCopy(base, read, { round: round.id, copy: copyId, file: `${roundFolder.slice(`articles/${folder}/`.length)}${copyFile}`, returnedBy: opts.returnedBy, snapshot: snapshotId });
+  const set = proposalsFromCopy(base, read, { round: round.id, copy: copyId, file: `${roundFolder.slice(`articles/${folder}/`.length)}${copyFile}`, returnedBy: opts.returnedBy, snapshot: snapshotId, sentComments });
   const issues = validate("round", round);
   if (issues.length) throw new Error(`invalid round: ${issues[0].message}`);
   await project.fs.write(roundFolder + copyFile, bytes);

@@ -117,6 +117,16 @@ export const keywordText = (k: PMNode): string =>
   isDeleted(k) ? "" : (k.content ?? []).filter((c) => !isDeleted(c)).map((c) => (c.text ?? "").replaceAll(ZW, "")).join("");
 /** The keywords as the Word writes them, accepted: "a; b; c" (the "Palabras clave: " before them is generated). */
 export const keywordsText = (n: PMNode): string => (n.content ?? []).map(keywordText).filter(Boolean).join("; ");
+/**
+ * Record 0096: the w16cid:durableId of a comment sent (or of its reply number `reply`), from
+ * its SciDesk id: Word keeps it when it saves, so the import knows the comment was sent.
+ * 8 hex digits below 0x7FFFFFFF, never 0 (FNV-1a).
+ */
+export function commentDurableId(id: string, reply?: number): string {
+  let h = 0x811c9dc5;
+  for (const ch of reply === undefined ? id : `${id}#${reply}`) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
+  return ((h & 0x7ffffffe) | 1).toString(16).toUpperCase().padStart(8, "0");
+}
 const initials = (name: string) => name.split(/[\s-]+/).filter(Boolean).slice(0, 3).map((w) => w[0]!.toUpperCase()).join("") || "?";
 const raw = (xml: string) => ImportedXmlComponent.fromXmlString(xml) as unknown as ParagraphChild;
 /** A complex field with its result already formatted: Word shows it as it is (record 0025). */
@@ -845,8 +855,8 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
           const paragraphs = (text: string) => text.split(/\r?\n/).map((line) => new Paragraph({ children: [new TextRun(line)] }));
           const when = (d: string) => { const ms = Date.parse(d); return Number.isNaN(ms) ? new Date(exported) : new Date(Math.floor(ms / 1000) * 1000); };
           return [
-            { id: t.word, author: c.author.name || UNKNOWN_AUTHOR, initials: initials(c.author.name || UNKNOWN_AUTHOR), date: when(c.date), children: paragraphs(c.text), ...(c.resolved ? { resolved: true } : {}) },
-            ...c.replies.map((r, i) => ({ id: t.replies[i], parentId: t.word, author: r.author.name || UNKNOWN_AUTHOR, initials: initials(r.author.name || UNKNOWN_AUTHOR), date: when(r.date), children: paragraphs(r.text), ...(c.resolved ? { resolved: true } : {}) })),
+            { id: t.word, durableId: commentDurableId(t.id), author: c.author.name || UNKNOWN_AUTHOR, initials: initials(c.author.name || UNKNOWN_AUTHOR), date: when(c.date), children: paragraphs(c.text), ...(c.resolved ? { resolved: true } : {}) },
+            ...c.replies.map((r, i) => ({ id: t.replies[i], durableId: commentDurableId(t.id, i), parentId: t.word, author: r.author.name || UNKNOWN_AUTHOR, initials: initials(r.author.name || UNKNOWN_AUTHOR), date: when(r.date), children: paragraphs(r.text), ...(c.resolved ? { resolved: true } : {}) })),
           ];
         }),
       },

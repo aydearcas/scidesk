@@ -225,6 +225,7 @@ El modelo único de propuestas (fichas 0019 y 0029) tiene un solo formato, el **
 | `anchor` | Dónde, **en la versión base:** `{ file, block, from, to }`, con desplazamientos de ProseMirror dentro del bloque (cada unidad UTF-16 de texto y cada nodo en línea cuentan 1); o `{ file, after }` para un párrafo nuevo |
 | `before`, `after` | El texto de la base y el propuesto. Sirven para mostrarla y para volver a encontrar el sitio en tu copia actual |
 | `content`, `format`, `comment`, `moveOf` | Contenido con formato o citas, marcas añadidas o quitadas, el comentario con sus respuestas y la otra mitad de un movimiento |
+| `comment` (ficha 0096) | `text` y `replies`; `thread` si trata de un comentario enviado con la copia (respuestas nuevas, `resolved` si lo resuelve o lo reabre, `removed` si ya no está); `resolved` en uno nuevo resuelto; `end` (`{ file, block, to }`) si el texto comentado sigue en otro bloque. `before` y `after` son el texto comentado |
 | `zone`, `sameSentence` | La zona de la fusión a tres bandas y el grupo «misma frase» |
 | `status` | Resultado de la fusión: `applicable`, `agreement`, `duplicate` (un acuerdo ya aplicado por otra), `conflict-coauthors`, `conflict-mine` o `noise-hidden` |
 | `decision` | Lo que hiciste: `pending`, `accepted`, `rejected` o `edited`, con `decided` (quién y cuándo) |

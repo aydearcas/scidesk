@@ -172,6 +172,36 @@
           "comment": {
             "additionalProperties": false,
             "properties": {
+              "end": {
+                "additionalProperties": false,
+                "description": "Where the commented text ends when it goes on past the anchor's block.",
+                "properties": {
+                  "block": {
+                    "description": "Block of the base version (a note has its own n- id).",
+                    "pattern": "^(b|n)-[a-z0-9]{1,24}$",
+                    "type": "string"
+                  },
+                  "file": {
+                    "description": "File of the article the block is in, relative to the article folder.",
+                    "pattern": "^(manuscript|tables|figures|documents|supplementary)/[^\\\\]+\\.(scidoc|scitable|scifigure)$",
+                    "type": "string"
+                  },
+                  "to": {
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "file",
+                  "block",
+                  "to"
+                ],
+                "type": "object"
+              },
+              "removed": {
+                "description": "The comment sent is not in the copy any more.",
+                "type": "boolean"
+              },
               "replies": {
                 "items": {
                   "additionalProperties": false,
@@ -213,7 +243,17 @@
                 },
                 "type": "array"
               },
+              "resolved": {
+                "description": "Resolved in the copy (a new comment), or resolved or reopened there (a comment sent).",
+                "type": "boolean"
+              },
               "text": {
+                "description": "The comment's text; empty when the proposal only adds replies to, resolves or removes a comment that was sent (`thread`).",
+                "type": "string"
+              },
+              "thread": {
+                "description": "Record 0096: the comment sent with the copy that this proposal is about (new replies, resolved or not, removed); absent for a new comment.",
+                "pattern": "^cm-[a-z0-9]{1,24}$",
                 "type": "string"
               }
             },

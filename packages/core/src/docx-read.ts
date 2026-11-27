@@ -10,7 +10,8 @@ import JSZip from "jszip";
 import { parseBookmark } from "@scidesk/formats";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-export const ATOM = "\ufffc";
+const NEWLINE = String.fromCharCode(10);
+export const ATOM ="\ufffc";
 
 export interface Segment {
   text: string;
@@ -19,6 +20,22 @@ export interface Segment {
   date: string | null;
   /** citationID of a citation atom. */
   citation?: string;
+  /** Record 0096: where a comment's range starts or ends, or its reference is (an empty segment). */
+  edge?: { comment: string; side: "start" | "end" | "ref" };
+}
+/** Record 0096: a comment of the copy (comments.xml), threaded by commentsExtended.xml. */
+export interface DocxComment {
+  /** Its w:id, which the ranges in the text point to. */
+  word: string;
+  author: string;
+  date: string | null;
+  text: string;
+  /** The w:id of the comment it answers; null for a comment that starts a thread. */
+  parent: string | null;
+  /** Resolved (w15:done). */
+  done: boolean;
+  /** w16cid:durableId, which Word keeps when it saves. */
+  durableId: string | null;
 }
 export interface DocxParagraph {
   index: number;
@@ -38,6 +55,8 @@ export interface DocxRead {
   /** The snapshot bookmark (_SDs_), the fallback when properties were lost. */
   snapshotBookmark: string | null;
   lastModifiedBy: string;
+  /** Record 0096: the comments, in the order of comments.xml. */
+  comments: DocxComment[];
 }
 
 const kids = (n: Node): Element[] => {
@@ -94,7 +113,7 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
       if (!text) return;
       const into = inLead ? leadSegments : P.segments;
       const last = into.at(-1);
-      if (!citation && last && !last.citation && last.kind === kind && last.author === (rev?.author ?? null) && last.date === (rev?.date || null)) last.text += text;
+      if (!citation && last && !last.citation && !last.edge && last.kind === kind && last.author === (rev?.author ?? null) && last.date === (rev?.date || null)) last.text += text;
       else into.push({ text, kind, author: rev?.author ?? null, date: rev?.date || null, ...(citation ? { citation } : {}) });
     };
     const run = (r: Element, kind: Segment["kind"], rev: { author: string; date: string } | null) => {
@@ -129,6 +148,7 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
         else if (ln === "tab") push("\t", kind, rev);
         // record 0078: a page or column break is layout, not text (a page break block exports as one)
         else if (ln === "br") { if (!["page", "column"].includes(attr(e, "type"))) push("\n", kind, rev); }
+        else if (ln === "commentReference") (inLead ? leadSegments : P.segments).push({ text: "", kind: "same", author: null, date: null, edge: { comment: attr(e, "id"), side: "ref" } });
         else if (ln === "noBreakHyphen") push("\u2011", kind, rev);
       }
     };
@@ -146,6 +166,8 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
             else if (/^(t|f)-/.test(b.id) && !sawBlock && partLead === null) partLead = leadSegments.length;
           }
           if (b?.marker === "snapshot") snapshotBookmark = b.id;
+        } else if (ln === "commentRangeStart" || ln === "commentRangeEnd") {
+          (inLead ? leadSegments : P.segments).push({ text: "", kind: "same", author: null, date: null, edge: { comment: attr(e, "id"), side: ln === "commentRangeStart" ? "start" : "end" } });
         } else if (ln === "hyperlink" || ln === "smartTag" || ln === "sdt" || ln === "sdtContent" || ln === "fldSimple" || ln === "customXml") walk(e, kind, rev);
       }
     };
@@ -156,7 +178,11 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
       P.lead = leadSegments.slice(0, partLead).map((x) => x.text).join("");
       P.segments.unshift(...leadSegments.slice(partLead));
     } else if (!sawBlock) P.segments.unshift(...leadSegments);
-    else P.lead = leadSegments.map((x) => x.text).join("");
+    else {
+      P.lead = leadSegments.map((x) => x.text).join("");
+      // a comment that starts in the generated text starts where the content does
+      P.segments.unshift(...leadSegments.filter((x) => x.edge));
+    }
     if (startsInBibliography || (inBibliography && !P.blocks.length)) return; // generated text
     paragraphs.push(P);
   }
@@ -171,8 +197,32 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
   if (!body) throw new Error("document.xml has no body");
   blocks(body as unknown as Element);
   // a paragraph with the snapshot bookmark only is not content
-  const content = paragraphs.filter((p) => p.blocks.length || p.segments.some((s) => s.text.trim()));
-  return { paragraphs: content.map((p, i) => ({ ...p, index: i })), scidesk, snapshotBookmark, lastModifiedBy };
+  const content = paragraphs.filter((p) => p.blocks.length || p.segments.some((s) => s.text.trim() || s.edge));
+  return { paragraphs: content.map((p, i) => ({ ...p, index: i })), scidesk, snapshotBookmark, lastModifiedBy, comments: await readComments(zip) };
+}
+
+/** Record 0096: comments.xml, with the threads and the resolved state of commentsExtended.xml and the durable ids of commentsIds.xml. */
+async function readComments(zip: JSZip): Promise<DocxComment[]> {
+  const xml = await zip.file("word/comments.xml")?.async("string");
+  if (!xml) return [];
+  const all = (n: { getElementsByTagName(name: string): unknown }, name: string) => [...(n.getElementsByTagName(name) as Iterable<Element>)];
+  // the last paragraph of each comment carries the w14:paraId the other two parts point to
+  const ext = new Map<string, { parent: string | null; done: boolean }>();
+  const extXml = await zip.file("word/commentsExtended.xml")?.async("string");
+  if (extXml) for (const e of all(parseXml(extXml), "w15:commentEx")) ext.set(e.getAttribute("w15:paraId") ?? "", { parent: e.getAttribute("w15:paraIdParent") || null, done: e.getAttribute("w15:done") === "1" });
+  const durable = new Map<string, string>();
+  const idsXml = await zip.file("word/commentsIds.xml")?.async("string");
+  if (idsXml) for (const e of all(parseXml(idsXml), "w16cid:commentId")) durable.set(e.getAttribute("w16cid:paraId") ?? "", e.getAttribute("w16cid:durableId") ?? "");
+  const comments: (DocxComment & { paraId: string; parentPara: string | null })[] = [];
+  for (const c of all(parseXml(xml), "w:comment")) {
+    const paras = all(c, "w:p");
+    const lines = paras.map((p) => all(p, "w:t").map((t) => t.textContent ?? "").join(""));
+    const paraId = paras.at(-1)?.getAttribute("w14:paraId") ?? "";
+    const x = ext.get(paraId);
+    comments.push({ word: attr(c, "id"), author: attr(c, "author"), date: attr(c, "date") || null, text: lines.join(NEWLINE), parent: null, done: x?.done ?? false, durableId: durable.get(paraId) || null, paraId, parentPara: x?.parent ?? null });
+  }
+  const byPara = new Map(comments.filter((c) => c.paraId).map((c) => [c.paraId, c.word]));
+  return comments.map(({ paraId: _, parentPara, ...c }) => ({ ...c, parent: parentPara ? (byPara.get(parentPara) ?? null) : null }));
 }
 
 /**
@@ -196,7 +246,7 @@ export function settleSentChanges(read: DocxRead, sent: Set<string>, key: (autho
     const joined: Segment[] = [];
     for (const s of segments) {
       const last = joined.at(-1);
-      if (last && s.kind === "same" && last.kind === "same" && !s.citation && !last.citation) last.text += s.text;
+      if (last && s.kind === "same" && last.kind === "same" && !s.citation && !last.citation && !s.edge && !last.edge) last.text += s.text;
       else joined.push(s);
     }
     const mark = p.mark && isSent(p.mark) ? null : p.mark;

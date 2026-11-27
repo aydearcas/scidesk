@@ -95,6 +95,40 @@ describe("tracked changes and comments in the Word for co-authors", () => {
     expect(added).toMatchObject({ block: "b-split00001", from: "Primera mitad.".length });
   });
 
+  it("come back as proposals only for what the co-author did with the comments (record 0096)", async () => {
+    const p = await trackedProject();
+    const out = await exportDocx(p, "main", "coauthors", await nodeResources());
+    const zip = await JSZip.loadAsync(out.bytes);
+    let doc = await zip.file("word/document.xml")!.async("string");
+    let comments = await zip.file("word/comments.xml")!.async("string");
+    let ext = await zip.file("word/commentsExtended.xml")!.async("string");
+    // a new comment on "Primera mitad.", a reply to the first comment, and the resolved one removed
+    doc = doc.replace(/<w:r><w:t xml:space="preserve">Primera mitad\.<\/w:t><\/w:r>/, '<w:commentRangeStart w:id="50"/>$&<w:commentRangeEnd w:id="50"/><w:r><w:commentReference w:id="50"/></w:r>');
+    doc = doc.replace(/<w:commentRangeStart w:id="2"\/>|<w:commentRangeEnd w:id="2"\/>(<w:r>(?:(?!<\/w:r>).)*<w:commentReference w:id="2"\/><\/w:r>)?/g, "");
+    const parentPara = /<w:comment w:id="0"[^>]*>(?:(?!<\/w:comment>).)*w14:paraId="([0-9A-F]+)"/.exec(comments)![1];
+    comments = comments.replace(/<w:comment w:id="2"(?:(?!<\/w:comment>).)*<\/w:comment>/, "").replace("</w:comments>",
+      '<w:comment w:id="50" w:author="Marta Ríos Navarro" w:date="2026-11-26T09:00:00Z" w:initials="MRN"><w:p w14:paraId="0000AAAA"><w:r><w:t>¿Y la fuente?</w:t></w:r></w:p></w:comment>' +
+      '<w:comment w:id="51" w:author="Marta Ríos Navarro" w:date="2026-11-26T09:05:00Z" w:initials="MRN"><w:p w14:paraId="0000BBBB"><w:r><w:t>Lo miro.</w:t></w:r></w:p></w:comment></w:comments>');
+    ext = ext.replace("</w15:commentsEx>", `<w15:commentEx w15:paraId="0000AAAA" w15:done="0"/><w15:commentEx w15:paraId="0000BBBB" w15:paraIdParent="${parentPara}" w15:done="0"/></w15:commentsEx>`);
+    zip.file("word/document.xml", doc).file("word/comments.xml", comments).file("word/commentsExtended.xml", ext);
+    const back = await importCopy(p, "main", await zip.generateAsync({ type: "uint8array" }), { fileName: "rios.docx", returnedBy: { name: "Marta Ríos Navarro" } });
+    expect(back.set.integrity).toBe("ok");
+    const shown = back.set.proposals.filter((x) => x.status !== "noise-hidden");
+    expect(shown.every((x) => x.kind === "comment")).toBe(true);
+    const lines = shown.map((x) => `${x.comment!.thread ?? "new"} «${x.before}» «${x.comment!.text}» [${x.comment!.replies.map((r) => r.text).join(", ")}]${x.comment!.removed ? " removed" : ""} ${x.author.name}`);
+    expect(lines.sort()).toEqual([
+      // where it was sent (in Word a comment is one range; this one skips a piece in SciDesk)
+      "cm-c1 «afecta al 0,5–1 % de la población  y su actividad » «» [Lo miro.] Marta Ríos Navarro",
+      "cm-c2 «Segunda mitad.» «» [] removed Marta Ríos Navarro",
+      "new «Primera mitad.» «¿Y la fuente?» [] Marta Ríos Navarro",
+    ]);
+    // a comment over two paragraphs says where it ends; offsets are the blocks' own
+    const c1 = shown.find((x) => x.comment!.thread === "cm-c1")!;
+    expect(c1.comment!.end).toMatchObject({ to: "El objetivo".length });
+    expect(c1.anchor).toMatchObject({ from: "La artritis reumatoide crónica ".length });
+    expect(shown.find((x) => x.comment!.text === "¿Y la fuente?")!.anchor).toEqual({ file: "manuscript/article.scidoc", block: "b-split00001", from: 0, to: 14 });
+  });
+
   it("are listed in reading order with the text they are anchored to (scidesk comments)", async () => {
     const p = await trackedProject();
     const list = articleComments(p, "main");

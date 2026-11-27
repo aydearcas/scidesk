@@ -85,7 +85,17 @@ export function ReviewPanel({ proposals: got, onImport, threads, active, comment
             <h4>{t("ui.proposalsOf", { name: got!.name, count: shown.length })}</h4>
             {shown.length === 0 ? <p className="muted">{t("noProposals")}</p> : (
               <ul className="proposals">
-                {shown.map((p) => (
+                {shown.map((p) => p.kind === "comment" && p.comment ? (
+                  // record 0096: a new comment, or what the copy did with one sent
+                  <li key={p.id} className="card proposal-comment">
+                    <div><b>{p.author.name}</b> {[
+                      p.comment.removed ? t("proposalComment.removed") : !p.comment.thread ? t("proposalComment.new") : p.comment.replies.length ? t("proposalComment.replies") : "",
+                      p.comment.thread && p.comment.resolved === true ? t("proposalComment.resolves") : p.comment.thread && p.comment.resolved === false ? t("proposalComment.reopens") : "",
+                    ].filter(Boolean).join(", ")} {p.before && <span className="muted">{t("proposalComment.on")} «{p.before}»</span>}</div>
+                    {p.comment.text && <div className="comment-text">{p.comment.text}</div>}
+                    {p.comment.replies.map((r, i) => <div key={i} className="comment-reply"><b>{r.author.name}</b>: {r.text}</div>)}
+                  </li>
+                ) : (
                   <li key={p.id} className="card">
                     <div><span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <b>{p.author.name}</b> {t(`kinds.${p.kind}`)}</div>
                     <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>

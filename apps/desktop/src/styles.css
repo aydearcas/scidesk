@@ -447,6 +447,9 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 .review h4 { margin: 6px 0 0; font-size: 13px; }
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .proposals { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+/* record 0096: a comment of the returned copy, with its replies under it */
+.proposal-comment .comment-text { margin-top: 4px; white-space: pre-wrap; }
+.proposal-comment .comment-reply { margin: 4px 0 0 10px; padding-left: 8px; border-left: 2px solid var(--line-strong); white-space: pre-wrap; }
 .tag { font-size: 11px; border: 1px solid var(--line-strong); border-radius: 3px; padding: 0 4px; color: var(--text-3); }
 .tag.tracked { color: var(--accent); border-color: var(--accent); }
 ins { color: var(--ins); text-decoration: underline; } del { color: var(--del); }

@@ -342,6 +342,13 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
       const set = JSON.parse(await readFile(positional[0] ?? "", "utf8"));
       for (const x of set.proposals) {
         if (x.status === "noise-hidden") continue;
+        if (x.kind === "comment") {
+          // record 0096: a new comment, or what the copy did with one sent
+          const c = x.comment;
+          const what = c.removed ? "quita el comentario" : c.thread ? [c.replies.length ? `responde «${c.replies.map((r: { text: string }) => r.text).join(" / ")}»` : "", c.resolved === true ? "lo resuelve" : c.resolved === false ? "lo reabre" : ""].filter(Boolean).join(" y ") : `comenta «${c.text}»${c.replies.length ? ` (${c.replies.length} respuestas)` : ""}`;
+          console.log(`comentario ${x.author.name}: ${what} sobre «${x.before}»${c.thread ? ` (${c.thread})` : ""}`);
+          continue;
+        }
         console.log(`${x.tracked ? "marcada   " : "sin marcar"} ${x.author.name}: ${x.kind} «${x.before}» → «${x.after}»  (${x.anchor.block ?? "tras " + x.anchor.after} ${x.anchor.from ?? ""}–${x.anchor.to ?? ""})`);
       }
       console.log(`integridad: ${set.integrity}; ruido oculto: ${set.hiddenNoise}`);
