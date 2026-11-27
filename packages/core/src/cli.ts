@@ -16,6 +16,7 @@
 //                [--standard tagged|ua-1|a-2a|a-4] [--typst]   (pdf: needs the scidesk-pdf binary)
 //   scidesk import <dir> <copy.docx> --by <name> [--article main]
 //   scidesk show <dir> <proposals.json>
+//   scidesk comments <dir> [--all] [--article main]   the comments with their replies (--all: the resolved too)
 //   scidesk refs <dir> <file.ris|.nbib|.bib|.json>   import references into the own library
 //   scidesk from-word <dir> <file.docx>              a new project from a Word document
 //   scidesk library <dir> [--search <words>]         the library, with how often each is cited
@@ -50,6 +51,7 @@ import { BUNDLED_STYLES, findStyle } from "./resources.ts";
 import { checkAuthorship, displayName } from "./authorship.ts";
 import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
 import { ignoreWord, spellingReport, unignoreWord } from "./spelling.ts";
+import { articleComments } from "./comments.ts";
 import { defaultBlindReplacement, setBlindOmitted, setBlindReplacement } from "./blinding.ts";
 import { titlePageModel } from "./title-page.ts";
 import { sectionNumberingOf, sectionNumbers, setSectionNumbering, type SectionNumbering } from "./sections.ts";
@@ -88,7 +90,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
+    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show|comments> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -343,6 +345,20 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
         console.log(`${x.tracked ? "marcada   " : "sin marcar"} ${x.author.name}: ${x.kind} «${x.before}» → «${x.after}»  (${x.anchor.block ?? "tras " + x.anchor.after} ${x.anchor.from ?? ""}–${x.anchor.to ?? ""})`);
       }
       console.log(`integridad: ${set.integrity}; ruido oculto: ${set.hiddenNoise}`);
+      break;
+    }
+    case "comments": {
+      const p = await loadProject(fs);
+      const all = articleComments(p, opt("article", "main")!);
+      const shown = rest.includes("--all") ? all : all.filter((c) => !c.record.resolved);
+      const short = (s: string) => (s.length > 60 ? `${s.slice(0, 40)}…${s.slice(-15)}` : s);
+      for (const c of shown) {
+        console.log(`${c.record.resolved ? "resuelto " : ""}«${short(c.quote)}» (${c.file})`);
+        console.log(`  ${c.record.author.name}, ${c.record.date.slice(0, 16).replace("T", " ")}: ${c.record.text.replace(/\n/g, " / ")}`);
+        for (const r of c.record.replies) console.log(`    ${r.author.name}, ${r.date.slice(0, 16).replace("T", " ")}: ${r.text.replace(/\n/g, " / ")}`);
+      }
+      const resolved = all.length - all.filter((c) => !c.record.resolved).length;
+      console.log(`${all.length} ${all.length === 1 ? "comentario" : "comentarios"}${resolved ? `, ${resolved} ${resolved === 1 ? "resuelto" : "resueltos"}${rest.includes("--all") ? "" : " (--all para verlos)"}` : ""}`);
       break;
     }
     default:

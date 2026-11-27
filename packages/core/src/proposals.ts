@@ -14,12 +14,31 @@ import { diffWordsWithSpace } from "diff";
 import { newId, validate, type PMNode, type ProposalSetFile } from "@scidesk/formats";
 import { ATOM, rejectedText, type DocxParagraph, type DocxRead } from "./docx-read.ts";
 import { now } from "./project.ts";
-import { LABELS } from "./docx-export.ts";
+import { LABELS, keywordsText } from "./docx-export.ts";
 
 /** Headings the export writes itself ("Resumen", "Pies de figura"…): not content. */
 const GENERATED = new Set(Object.values(LABELS).flatMap((l) => [l.abstract, l.bib, l.captions]));
 
-export interface BaseBlock { file: string; id: string; text: string; citations: string[] }
+export interface BaseBlock {
+  file: string; id: string; text: string; citations: string[];
+  /**
+   * Record 0095: what of the block is not in `text` (deleted text, the U+200B of a tracked
+   * split), as [ProseMirror offset, length] in order: the proposals' offsets are mapped
+   * through them to the block's own offsets.
+   */
+  skips?: [number, number][];
+}
+
+/**
+ * A text offset of a sent block as the block's own ProseMirror offset (record 0095). Where
+ * something skipped is right at the offset, `after` puts it past it (the start of a range),
+ * else before it (the end of a range, or a point where text is inserted).
+ */
+export function pmOffset(b: BaseBlock, offset: number, after = false): number {
+  let pm = offset;
+  for (const [at, length] of b.skips ?? []) { if (at < pm || (after && at === pm)) pm += length; else break; }
+  return pm;
+}
 
 /** The text blocks of a document as the merge compares them (deleted text left out). */
 export function baseBlocks(file: string, doc: PMNode): BaseBlock[] {
@@ -27,19 +46,27 @@ export function baseBlocks(file: string, doc: PMNode): BaseBlock[] {
   const visit = (n: PMNode) => {
     if (n.type === "keywords" && n.attrs?.id) {
       // exported as one paragraph: "a; b; c" (the "Palabras clave: " before it is generated)
-      out.push({ file, id: n.attrs.id as string, text: (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).join("; "), citations: [] });
+      out.push({ file, id: n.attrs.id as string, text: keywordsText(n), citations: [] });
       return;
     }
     const isTextblock = /^(paragraph|heading|title|tableCaption|tableNote|figureCaption|figureNote)$/.test(n.type);
     if (isTextblock && n.attrs?.id && !(n.marks ?? []).some((m) => m.type === "deletion")) {
       let text = "";
       const citations: string[] = [];
+      const skips: [number, number][] = [];
+      let pm = 0;
       for (const c of n.content ?? []) {
-        if ((c.marks ?? []).some((m) => m.type === "deletion")) continue;
-        if (c.type === "text") text += c.text;
-        else { text += ATOM; if (c.type === "citation") citations.push(c.attrs!.id as string); }
+        const size = c.type === "text" ? c.text!.length : 1;
+        if ((c.marks ?? []).some((m) => m.type === "deletion")) { skips.push([pm, size]); pm += size; continue; }
+        if (c.type === "text") {
+          // the U+200B of a tracked split is the paragraph mark's revision in the Word
+          if (c.text!.includes("\u200b") && (c.marks ?? []).some((m) => m.type === "insertion")) {
+            [...c.text!].forEach((ch, k) => { if (ch === "\u200b") skips.push([pm + k, 1]); else text += ch; });
+          } else text += c.text;
+        } else { text += ATOM; if (c.type === "citation") citations.push(c.attrs!.id as string); }
+        pm += size;
       }
-      out.push({ file, id: n.attrs.id as string, text, citations });
+      out.push({ file, id: n.attrs.id as string, text, citations, ...(skips.length ? { skips } : {}) });
       return;
     }
     n.content?.forEach(visit);
@@ -205,6 +232,17 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
     // the copy with everything accepted (Word's accepted view)
     if (apply(b.text, mine.filter((x) => !x.tracked)) !== rejectedText(p)) integrity = "mismatch";
     if (apply(b.text, mine) !== p.segments.filter((s) => s.kind !== "del").map((s) => s.text).join("")) integrity = "mismatch";
+  }
+
+  // record 0095: offsets in the sent block's own coordinates (with its deleted text)
+  const blockOf = new Map(base.map((b) => [b.id, b]));
+  for (const x of proposals) {
+    const a = x.anchor as { block?: string; from?: number; to?: number };
+    const b = a.block ? blockOf.get(a.block) : undefined;
+    if (!b?.skips || a.from === undefined || a.to === undefined) continue;
+    const point = a.from === a.to;
+    a.from = pmOffset(b, a.from, !point);
+    a.to = point ? a.from : pmOffset(b, a.to);
   }
 
   const set: ProposalSetFile = {

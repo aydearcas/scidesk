@@ -11,7 +11,7 @@
 // the scidesk-pdf binary on the command line).
 import type { JournalProfileFile, PMNode } from "@scidesk/formats";
 import { renderCitations, runFormat, type CitationResources, type Run } from "./citations.ts";
-import { composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
+import { acceptedView, composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
 import { sameLang } from "./lang.ts";
 import type { Project } from "./project.ts";
 import { journalExportWarnings } from "./checks.ts";
@@ -71,10 +71,13 @@ export async function manuscriptTypst(project: Project, folder: string, res: Cit
   if (art.article.journal && !journal) throw new Error(`journal profile ${art.article.journal} is not in resources/journals/`);
   const fmt = journal?.manuscriptFormat;
   const { tree, tables, figures, warnings } = composite(art);
+  // record 0095: no deleted table or figure, neither in the text nor at the end
+  for (const parts of [tables, figures]) for (const [id, part] of parts) if ((part.marks ?? []).some((m) => m.type === "deletion")) parts.delete(id);
   // record 0070: the numbers of numbered sections, as in the editor and the Word
   const sectionNo = sectionNumbers(tree, sectionNumberingOf(project, saved.folder).value);
   const abstract = art.documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
-  const rendering = await renderCitations(project.library, [...(abstract ? [abstract] : []), tree], art.article.citationStyle.id, art.article.referenceTermsLang ?? lang, await styleResources(project, art, res));
+  // record 0095: citations numbered with the tracked changes accepted, as in the Word for the journal
+  const rendering = await renderCitations(project.library, [...(abstract ? [abstract] : []), tree].map(acceptedView), art.article.citationStyle.id, art.article.referenceTermsLang ?? lang, await styleResources(project, art, res));
   const tableNo = numbering(tree, [...tables.keys()]);
   const figureNo = numbering(tree, [...figures.keys()]);
   const files: Record<string, Uint8Array> = {};

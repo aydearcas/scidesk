@@ -3,7 +3,8 @@
 // rounds/<round>/proposals/<copy>.json. The round is the one whose sent snapshot the copy
 // names (SciDesk property, or the _SDs_ bookmark if Word lost the properties).
 import { newId, stableStringify, validate, type PMNode, type ProposalSetFile, type RoundFile } from "@scidesk/formats";
-import { readDocx } from "./docx-read.ts";
+import { readDocx, settleSentChanges } from "./docx-read.ts";
+import { revisionKey, sentRevisionKeys } from "./docx-export.ts";
 import { now, type Project } from "./project.ts";
 import { baseBlocks, proposalsFromCopy, type BaseBlock } from "./proposals.ts";
 import { loadSnapshot } from "./snapshot.ts";
@@ -30,6 +31,8 @@ export function sentBlocks(files: Record<string, string>, folder: string): BaseB
   if (abstract) out.push(...baseBlocks("manuscript/abstract.scidoc", abstract));
   for (const n of nodes) {
     if (n.type === "title") continue;
+    // a table or figure deleted with tracking went as deleted text (record 0095): not in the sent blocks
+    if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
     if (n.type === "tableRef" || n.type === "figureRef") {
       const part = doc(n.attrs!.src as string);
       if (part) out.push(...baseBlocks(n.attrs!.src as string, part));
@@ -43,14 +46,18 @@ export interface ImportResult { round: string; roundFolder: string; copyFile: st
 export async function importCopy(project: Project, folder: string, bytes: Uint8Array, opts: { fileName: string; returnedBy: { name: string; person?: string } }): Promise<ImportResult> {
   const art = project.articles.find((a) => a.folder === folder);
   if (!art) throw new Error(`no article ${folder}`);
-  const read = await readDocx(bytes);
-  const prop = read.scidesk as { project?: string; article?: string; snapshot?: string } | null;
+  const raw = await readDocx(bytes);
+  const prop = raw.scidesk as { project?: string; article?: string; snapshot?: string } | null;
   if (prop?.project && prop.project !== project.manifest.id) throw new Error("the copy comes from another project");
   if (prop?.article && prop.article !== art.article.id) throw new Error("the copy comes from another article");
-  const snapshotId = prop?.snapshot ?? read.snapshotBookmark;
+  const snapshotId = prop?.snapshot ?? raw.snapshotBookmark;
   if (!snapshotId) throw new Error("the copy does not say which version it was sent from (no SciDesk property or _SDs_ bookmark); the alignment by content without a base (plan B) comes in phase 2");
   const snapshot = await loadSnapshot(project.fs, snapshotId);
   const base = sentBlocks(snapshot.files, folder);
+  // record 0095: the tracked changes that went in the copy are part of what was sent
+  const prefix = `articles/${folder}/`;
+  const sentDocs = Object.entries(snapshot.files).filter(([f]) => f.startsWith(prefix) && /\.(scidoc|scitable|scifigure)$/.test(f)).map(([, t]) => JSON.parse(t) as { changes?: Record<string, { author: { name: string }; date: string }> });
+  const read = settleSentChanges(raw, sentRevisionKeys(sentDocs, snapshot.created), revisionKey);
 
   // the round of that snapshot, or a new one
   const roundsDir = `articles/${folder}/rounds/`;

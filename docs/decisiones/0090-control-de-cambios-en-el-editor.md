@@ -67,7 +67,7 @@
 
 ## Qué queda de la fase 2a
 1. Comentarios en el editor y en el panel derecho.
-2. El Word para coautores con los cambios (`w:ins`, `w:del`, `w:rPrChange`) y los comentarios. Hoy sale con los cambios aceptados.
+2. El Word para coautores con los cambios (`w:ins`, `w:del`, `w:rPrChange`) y los comentarios. Hecho el 27/11 en la ficha [0095](0095-word-para-coautores-con-cambios-y-comentarios.md).
 3. Importar la copia devuelta y aceptar o rechazar sus propuestas en el texto.
 4. Historial con nombre.
 

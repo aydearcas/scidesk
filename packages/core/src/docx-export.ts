@@ -68,11 +68,56 @@ export function wordLang(tag: string): string {
   return r ? `${lang}-${r.toUpperCase()}` : ({ es: "es-ES", en: "en-US", fr: "fr-FR", pt: "pt-PT", de: "de-DE", it: "it-IT" } as Record<string, string>)[lang] ?? lang;
 }
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/** The properties of a run, in the order CT_RPr wants them. */
+const rPrInner = (r: Omit<Run, "text">) =>
+  (r.font ? `<w:rFonts w:ascii="${esc(r.font)}" w:hAnsi="${esc(r.font)}" w:cs="${esc(r.font)}"/>` : "") + (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.size ? `<w:sz w:val="${Math.round(r.size * 2)}"/><w:szCs w:val="${Math.round(r.size * 2)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "") + (r.lang ? `<w:lang w:val="${esc(wordLang(r.lang))}"/>` : "");
 const rPr = (r: Omit<Run, "text">) => {
-  const p = (r.font ? `<w:rFonts w:ascii="${esc(r.font)}" w:hAnsi="${esc(r.font)}" w:cs="${esc(r.font)}"/>` : "") + (r.bold ? "<w:b/>" : "") + (r.italic ? "<w:i/>" : "") + (r.color ? `<w:color w:val="${r.color.slice(1)}"/>` : "") + (r.highlight ? `<w:highlight w:val="${r.highlight}"/>` : "") + (r.underline ? '<w:u w:val="single"/>' : "") + (r.size ? `<w:sz w:val="${Math.round(r.size * 2)}"/><w:szCs w:val="${Math.round(r.size * 2)}"/>` : "") + (r.sup ? '<w:vertAlign w:val="superscript"/>' : r.sub ? '<w:vertAlign w:val="subscript"/>' : "") + (r.lang ? `<w:lang w:val="${esc(wordLang(r.lang))}"/>` : "");
+  const p = rPrInner(r);
   return p ? `<w:rPr>${p}</w:rPr>` : "";
 };
 const runXml = (r: Run) => `<w:r>${rPr(r)}<w:t xml:space="preserve">${esc(r.text)}</w:t></w:r>`;
+
+// --- record 0095: tracked changes and comments in the Word for co-authors
+const ZW = "\u200b";
+/** Who a tracked change is written under when the registry does not say. */
+export const UNKNOWN_AUTHOR = "SciDesk";
+/** A date as Word writes w:date: UTC, to the second. */
+export function revisionDate(date: string | null | undefined): string | null {
+  if (!date) return null;
+  const t = Date.parse(date);
+  return Number.isNaN(t) ? null : new Date(t).toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+/** What identifies a revision of the Word when it comes back: its author and date (Word renumbers w:id). */
+export const revisionKey = (author: string, date: string | null | undefined) => `${author}\u0000${revisionDate(date) ?? ""}`;
+type ChangeRec = { author: { name: string }; date: string };
+/**
+ * The keys of the tracked changes the Word for co-authors carries for these documents: the
+ * import recognises them in the returned copy as part of what was sent, not as proposals.
+ */
+export function sentRevisionKeys(docs: Iterable<{ changes?: Record<string, ChangeRec> }>, exported: string): Set<string> {
+  const keys = new Set([revisionKey(UNKNOWN_AUTHOR, exported)]);
+  for (const d of docs) for (const r of Object.values(d.changes ?? {})) keys.add(revisionKey(r.author.name || UNKNOWN_AUTHOR, revisionDate(r.date) ?? exported));
+  return keys;
+}
+/** The text of a run as deleted text (w:delText, w:delInstrText). */
+const asDeleted = (xml: string) => xml.replace(/<w:t( |>)/g, "<w:delText$1").replace(/<\/w:t>/g, "</w:delText>").replace(/<w:instrText( |>)/g, "<w:delInstrText$1").replace(/<\/w:instrText>/g, "</w:delInstrText>");
+type Sugg = { type: "insertion" | "deletion"; id: string };
+const suggOf = (n: PMNode | undefined): Sugg | null => {
+  const m = (n?.marks ?? []).find((x) => x.type === "insertion" || x.type === "deletion");
+  return m ? { type: m.type as Sugg["type"], id: String(m.attrs!.id) } : null;
+};
+const isDeleted = (n: PMNode) => (n.marks ?? []).some((m) => m.type === "deletion");
+/** The document with its tracked changes accepted: what the journal gets, and what citations are numbered by. */
+export function acceptedView(n: PMNode): PMNode {
+  if (!n.content) return n;
+  return { ...n, content: n.content.filter((c) => !isDeleted(c)).map(acceptedView) };
+}
+/** A keyword's text with its tracked changes accepted. */
+export const keywordText = (k: PMNode): string =>
+  isDeleted(k) ? "" : (k.content ?? []).filter((c) => !isDeleted(c)).map((c) => (c.text ?? "").replaceAll(ZW, "")).join("");
+/** The keywords as the Word writes them, accepted: "a; b; c" (the "Palabras clave: " before them is generated). */
+export const keywordsText = (n: PMNode): string => (n.content ?? []).map(keywordText).filter(Boolean).join("; ");
+const initials = (name: string) => name.split(/[\s-]+/).filter(Boolean).slice(0, 3).map((w) => w[0]!.toUpperCase()).join("") || "?";
 const raw = (xml: string) => ImportedXmlComponent.fromXmlString(xml) as unknown as ParagraphChild;
 /** A complex field with its result already formatted: Word shows it as it is (record 0025). */
 const fieldXml = (instr: string, result: string) =>
@@ -175,6 +220,25 @@ export function applyTemplate(stylesXml: string, format: { lineSpacing?: number;
   return { xml, style: (name: string) => ids[name] };
 }
 
+/**
+ * Record 0095: the export writes a comment's range start where its text starts and an end
+ * after every piece of its text; this keeps the last end only, adds the comment's reference
+ * after it, and gives each reply the same range.
+ */
+export function placeComments(xml: string, threads: { word: number; replies: number[] }[], referenceStyle?: string): string {
+  const ref = (id: number) => `<w:r>${referenceStyle ? `<w:rPr><w:rStyle w:val="${esc(referenceStyle)}"/></w:rPr>` : ""}<w:commentReference w:id="${id}"/></w:r>`;
+  for (const t of threads) {
+    const ids = [t.word, ...t.replies];
+    const start = `<w:commentRangeStart w:id="${t.word}"/>`;
+    const end = `<w:commentRangeEnd w:id="${t.word}"/>`;
+    const parts = xml.split(end);
+    if (parts.length < 2 || !xml.includes(start)) continue;
+    xml = parts.slice(0, -1).join("") + ids.map((id) => `<w:commentRangeEnd w:id="${id}"/>${ref(id)}`).join("") + parts.at(-1);
+    xml = xml.replace(start, ids.map((id) => `<w:commentRangeStart w:id="${id}"/>`).join(""));
+  }
+  return xml;
+}
+
 /** Record 0070: the numId and abstractNumId of the sections' list, far from those the docx library gives. */
 export const SECTIONS_NUM_ID = 9000;
 
@@ -207,7 +271,9 @@ export function composite(art: ArticleData): { tree: PMNode; tables: Map<string,
       const part = art.documents.get(n.attrs!.src as string)?.doc as PMNode | undefined;
       if (!part) { warnings.push(`${n.attrs!.src} is missing`); continue; }
       // record 0085: the landscape page of its place in the text
-      const placed = n.attrs!.landscape ? { ...part, attrs: { ...part.attrs, landscape: true } } : part;
+      let placed = n.attrs!.landscape ? { ...part, attrs: { ...part.attrs, landscape: true } } : part;
+      // record 0095: a table or figure inserted or deleted with tracking is so where it is placed
+      if (n.marks?.length) placed = { ...placed, marks: [...(placed.marks ?? []), ...n.marks] };
       (n.type === "tableRef" ? tables : figures).set(n.attrs!.id as string, placed);
       content.push(placed);
     } else content.push(n);
@@ -270,9 +336,26 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   if (art.article.journal && !journal) throw new Error(`journal profile ${art.article.journal} is not in resources/journals/`);
   const fmt = journal?.manuscriptFormat;
   const { tree, tables, figures, warnings } = composite(art);
+  // record 0095: the journal gets no deleted table or figure, neither in the text nor at the end
+  if (!markers) for (const parts of [tables, figures]) for (const [id, part] of parts) if (isDeleted(part)) parts.delete(id);
   const abstract = art.documents.get("manuscript/abstract.scidoc")?.doc as PMNode | undefined;
   const style = art.article.citationStyle.id;
-  const rendering: Rendering = await renderCitations(project.library, [...(abstract ? [abstract] : []), tree], style, art.article.referenceTermsLang ?? lang, await styleResources(project, art, res));
+  // citations are numbered with the tracked changes accepted (a deleted citation is not cited);
+  // a deleted citation shown to the co-authors takes its text from a rendering with everything
+  const trees = [...(abstract ? [abstract] : []), tree];
+  const styleRes = await styleResources(project, art, res);
+  const rendering: Rendering = await renderCitations(project.library, trees.map(acceptedView), style, art.article.referenceTermsLang ?? lang, styleRes);
+  const citationCount = (n: PMNode): number => (n.type === "citation" ? 1 : 0) + (n.content ?? []).reduce((a, c) => a + citationCount(c), 0);
+  const withDeleted = markers && trees.some((t) => citationCount(t) !== citationCount(acceptedView(t)))
+    ? await renderCitations(project.library, trees, style, art.article.referenceTermsLang ?? lang, styleRes) : null;
+  // the registries of every document of the article: who made each change and each comment
+  const changeRecords = new Map<string, ChangeRec>();
+  const commentRecords = new Map<string, { author: { name: string }; date: string; text: string; resolved: boolean; replies: { author: { name: string }; date: string; text: string }[] }>();
+  for (const d of art.documents.values()) {
+    const f = d as unknown as { changes?: Record<string, ChangeRec>; comments?: Record<string, typeof commentRecords extends Map<string, infer V> ? V : never> };
+    for (const [k, v] of Object.entries(f.changes ?? {})) changeRecords.set(k, v);
+    for (const [k, v] of Object.entries(f.comments ?? {})) commentRecords.set(k, v);
+  }
   const refById = new Map(project.library.references.map((r) => [r.id, r]));
   const tableNo = numbering(tree, [...tables.keys()]);
   const figureNo = numbering(tree, [...figures.keys()]);
@@ -305,6 +388,39 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   // R42: every export for co-authors saves a snapshot, the base of the three-way merge
   const snapshot = markers ? await saveSnapshot(project, folder, "DOCX para coautores") : null;
 
+  // record 0095: each tracked change as a Word revision, with the author and date of its
+  // registry (a change without one, under "SciDesk" and the date of the export); w:id is
+  // unique for each revision element, as Word wants
+  const exported = revisionDate(snapshot?.created ?? new Date().toISOString())!;
+  let revisionNo = 0;
+  const rev = (id: string) => {
+    const r = changeRecords.get(id);
+    return { id: ++revisionNo, author: r?.author.name || UNKNOWN_AUTHOR, date: revisionDate(r?.date) ?? exported };
+  };
+  const revAttrs = (r: { id: number; author: string; date: string }) => `w:id="${r.id}" w:author="${esc(r.author)}" w:date="${r.date}"`;
+  const wrapChange = (s: Sugg, xml: string) => !xml ? "" : s.type === "insertion" ? `<w:ins ${revAttrs(rev(s.id))}>${xml}</w:ins>` : `<w:del ${revAttrs(rev(s.id))}>${asDeleted(xml)}</w:del>`;
+  /** The change a whole block is in (a paragraph, list, table, figure or row inserted or deleted), for what is inside it. */
+  let inherited: Sugg | null = null;
+  const within = <T>(s: Sugg | null, f: () => T): T => {
+    const prev = inherited;
+    if (markers && s) inherited = s;
+    try { return f(); } finally { inherited = prev; }
+  };
+  // comments: the start of each where its text starts; an end after every piece of its text,
+  // of which only the last is kept when the Word is written (a comment can span paragraphs)
+  const commentNo = new Map<string, number>();
+  const threads: { id: string; word: number; replies: number[] }[] = [];
+  let commentSeq = 0;
+  const commentsOf = (n: PMNode) => (markers ? (n.marks ?? []).filter((m) => m.type === "comment" && commentRecords.has(String(m.attrs!.id))).map((m) => String(m.attrs!.id)) : []);
+  const commentStart = (id: string): ParagraphChild[] => {
+    if (commentNo.has(id)) return [];
+    const word = commentSeq++;
+    commentNo.set(id, word);
+    threads.push({ id, word, replies: commentRecords.get(id)!.replies.map(() => commentSeq++) });
+    return [raw(`<w:commentRangeStart w:id="${word}"/>`)];
+  };
+  const commentEnd = (id: string) => raw(`<w:commentRangeEnd w:id="${commentNo.get(id)}"/>`);
+
   // BookmarkStart/End work as paragraph children (prototype 3) but are not typed as such
   const bm = (name: string): [ParagraphChild, ParagraphChild] => {
     const id = bookmarkUniqueNumericId();
@@ -312,8 +428,11 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   };
 
   function citation(n: PMNode): ParagraphChild[] {
-    const r = rendering.citations.get(n.attrs!.id as string)!;
-    if (!markers) return r.runs.map(textRun);
+    if (!markers) return rendering.citations.get(n.attrs!.id as string)!.runs.map(textRun);
+    return [raw(citationXml(n))];
+  }
+  function citationXml(n: PMNode): string {
+    const r = rendering.citations.get(n.attrs!.id as string) ?? withDeleted!.citations.get(n.attrs!.id as string)!;
     const items = n.attrs!.items as { ref: string; locator?: string; label?: string; prefix?: string; suffix?: string; suppressAuthor?: boolean }[];
     const code = {
       citationID: n.attrs!.id,
@@ -333,22 +452,89 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     };
     const issues = validate("docx-citation", code);
     if (issues.length) throw new Error(`invalid citation field: ${issues[0].message}`);
-    return [raw(fieldXml(`${FIELDS.citation} ${JSON.stringify(code)}`, r.runs.map(runXml).join("")))];
+    return fieldXml(`${FIELDS.citation} ${JSON.stringify(code)}`, r.runs.map(runXml).join(""));
   }
 
   // record 0060: the language around the block being written (the abstract of each language)
   let around = lang;
+  /** The run of a text node: a fragment's own font and size go to the coauthors, never to the journal (record 0047). */
+  const runOf = (n: PMNode, text: string, blockLang: string): Run => {
+    const { font, size, lang: own, ...format } = runFormat(n.marks);
+    // only what differs from the document's language is written (its default is the article's)
+    const runLang = own ?? blockLang;
+    return { text, ...format, ...(markers ? { font, size } : {}), ...(sameLang(runLang, lang) ? {} : { lang: runLang }) };
+  };
+  /** An inline node as WordprocessingML runs, to go inside a w:ins or w:del (co-authors only). */
+  function inlineXml(n: PMNode, notes: Map<string, string> | undefined, blockLang: string): string {
+    if (n.type === "text") {
+      // the U+200B of a tracked split or join is the paragraph mark's revision in Word
+      const text = n.text!.replaceAll(ZW, "");
+      return text ? runXml(runOf(n, text, blockLang)) : "";
+    }
+    if (n.type === "hardBreak") return "<w:r><w:br/></w:r>";
+    if (n.type === "citation") return citationXml(n);
+    if (n.type === "xref") {
+      const target = n.attrs!.target as string;
+      const num = tableNo.get(target) ?? figureNo.get(target);
+      if (num === undefined) { warnings.push(`cross-reference to ${target} is not exported yet`); return runXml({ text: "?" }); }
+      return fieldXml(FIELDS.ref(target), runXml({ text: String(num) }));
+    }
+    if (n.type === "noteRef") return fieldXml(FIELDS.ref(n.attrs!.target as string), runXml({ text: notes?.get(n.attrs!.target as string) ?? "?", sup: true }));
+    warnings.push(`'${n.type}' is not exported yet`);
+    return "";
+  }
+  /**
+   * A change of format (suggest-changes: the old text deleted and the same text inserted with
+   * the new format, one id) as Word's w:rPrChange, piece by piece where the formats differ.
+   */
+  function formatChange(list: PMNode[], i: number, id: string, blockLang: string): { xml: string; next: number } | null {
+    const take = (from: number, type: string) => {
+      const nodes: PMNode[] = [];
+      let j = from;
+      while (j < list.length && list[j].type === "text" && suggOf(list[j])?.type === type && suggOf(list[j])!.id === id) nodes.push(list[j++]);
+      return { nodes, next: j };
+    };
+    const dels = take(i, "deletion");
+    const ins = take(dels.next, "insertion");
+    const text = (ns: PMNode[]) => ns.map((x) => x.text).join("");
+    if (!ins.nodes.length || text(dels.nodes) !== text(ins.nodes) || text(ins.nodes).includes(ZW)) return null;
+    let xml = "", a = 0, b = 0, oa = 0, ob = 0;
+    while (a < dels.nodes.length && b < ins.nodes.length) {
+      const da = dels.nodes[a].text!.slice(oa), ib = ins.nodes[b].text!.slice(ob);
+      const len = Math.min(da.length, ib.length);
+      const piece = ib.slice(0, len);
+      const now = runOf(ins.nodes[b], piece, blockLang), before = runOf(dels.nodes[a], piece, blockLang);
+      xml += `<w:r><w:rPr>${rPrInner(now)}<w:rPrChange ${revAttrs(rev(id))}><w:rPr>${rPrInner(before)}</w:rPr></w:rPrChange></w:rPr><w:t xml:space="preserve">${esc(piece)}</w:t></w:r>`;
+      oa += len; ob += len;
+      if (oa === dels.nodes[a].text!.length) { a++; oa = 0; }
+      if (ob === ins.nodes[b].text!.length) { b++; ob = 0; }
+    }
+    return { xml, next: ins.next };
+  }
   function inlines(content: PMNode[] = [], notes?: Map<string, string>, blockLang = around): ParagraphChild[] {
     const out: ParagraphChild[] = [];
-    for (const n of content) {
-      const marks = new Set((n.marks ?? []).map((m) => m.type));
-      if (marks.has("deletion")) continue; // tracked changes go out accepted (w:ins/w:del: V1)
-      if (n.type === "text") {
-        // a fragment's own font and size go to the coauthors, never to the journal (record 0047)
-        const { font, size, lang: own, ...format } = runFormat(n.marks);
-        // only what differs from the document's language is written (its default is the article's)
-        const runLang = own ?? blockLang;
-        out.push(textRun({ text: n.text!, ...format, ...(markers ? { font, size } : {}), ...(sameLang(runLang, lang) ? {} : { lang: runLang }) }));
+    for (let i = 0; i < content.length; i++) {
+      const n = content[i];
+      const own = suggOf(n);
+      // the journal gets the tracked changes accepted
+      if (!markers && own?.type === "deletion") continue;
+      const change = markers ? (own ?? inherited) : null;
+      const comments = commentsOf(n);
+      for (const c of comments) out.push(...commentStart(c));
+      if (change) {
+        const fc = own?.type === "deletion" ? formatChange(content, i, own.id, blockLang) : null;
+        if (fc) {
+          out.push(raw(fc.xml));
+          // the comments of every piece of the changed text end after it
+          for (let j = i + 1; j < fc.next; j++) for (const c of commentsOf(content[j])) { out.push(...commentStart(c)); comments.push(c); }
+          i = fc.next - 1;
+        } else {
+          const xml = wrapChange(change, inlineXml(n, notes, blockLang));
+          if (xml) out.push(raw(xml));
+        }
+      } else if (n.type === "text") {
+        const text = n.text!.replaceAll(ZW, "");
+        if (text) out.push(textRun(runOf(n, text, blockLang)));
       }
       else if (n.type === "hardBreak") out.push(new TextRun({ break: 1 }));
       else if (n.type === "citation") out.push(...citation(n));
@@ -364,6 +550,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
         out.push(markers ? raw(fieldXml(FIELDS.ref(target), runXml({ text: letter, sup: true }))) : new TextRun({ text: letter, superScript: true }));
       }
       else warnings.push(`'${n.type}' is not exported yet`);
+      for (const c of new Set(comments)) out.push(commentEnd(c));
     }
     return out;
   }
@@ -372,7 +559,13 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const para = (n: PMNode, opts: Opts = {}, lead: ParagraphChild[] = [], notes?: Map<string, string>, wrap: { before?: ParagraphChild[]; after?: ParagraphChild[] } = {}, own?: ParagraphChild[]) => {
     // generated text ("Tabla 1. ", a note's letter, "Palabras clave: ") goes before the
     // block's bookmark: the reader leaves it out, so it never comes back as an edit
-    const children = own ?? inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around);
+    // record 0095: a block inserted or deleted whole has its paragraph mark so (rejecting the
+    // insertion takes the paragraph away); a tracked split or join is the U+200B at its end
+    const whole = markers ? (suggOf(n) ?? inherited) : null;
+    const last = n.content?.at(-1);
+    const mark = whole ?? (markers && last?.type === "text" && /^\u200b+$/.test(last.text ?? "") ? suggOf(last) : null);
+    if (mark) opts = { ...opts, run: { ...((opts.run as object | undefined) ?? {}), [mark.type]: rev(mark.id) } };
+    const children = own ?? within(whole, () => inlines(n.content, notes, (n.attrs?.lang as string | null) ?? around));
     if (markers && n.attrs?.id) {
       const [s, e] = bm(blockBookmark(n.attrs.id as string));
       children.unshift(s);
@@ -425,16 +618,21 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     out.push(new Table({
       width: { size: textWidthNow(), type: WidthType.DXA },
       ...(widths ? { columnWidths: widths.map((w) => Math.round((w / total) * textWidthNow())) } : {}),
-      rows: rows.map((row, i) => new TableRow({
-        tableHeader: i <= lastHeader,
-        children: (row.content ?? []).map((cell, j) => new TableCell({
-          columnSpan: cell.attrs!.colspan as number, rowSpan: cell.attrs!.rowspan as number,
-          borders: { top: wordLine(lines[i][j].top), bottom: wordLine(lines[i][j].bottom), left: wordLine(lines[i][j].left), right: wordLine(lines[i][j].right) },
-          children: (cell.content ?? []).map((p) => p.type === "paragraph"
-            ? para(p, { alignment: cell.attrs!.align ? ALIGN[cell.attrs!.align as keyof typeof ALIGN] : undefined, spacing: { line: 240 } }, [], letters)
-            : (warnings.push("lists inside table cells are exported as paragraphs"), para({ type: "paragraph", attrs: {}, content: [] }))),
-        })),
-      })),
+      rows: rows.map((row, i) => {
+        // record 0095: a row inserted or deleted with tracking, as Word's (w:trPr/w:ins, w:del)
+        const rowChange = markers ? (suggOf(row) ?? inherited) : null;
+        return new TableRow({
+          tableHeader: i <= lastHeader,
+          ...(rowChange ? { [rowChange.type]: rev(rowChange.id) } : {}),
+          children: (row.content ?? []).map((cell, j) => new TableCell({
+            columnSpan: cell.attrs!.colspan as number, rowSpan: cell.attrs!.rowspan as number,
+            borders: { top: wordLine(lines[i][j].top), bottom: wordLine(lines[i][j].bottom), left: wordLine(lines[i][j].left), right: wordLine(lines[i][j].right) },
+            children: within(rowChange ?? suggOf(cell), () => (cell.content ?? []).map((p) => p.type === "paragraph"
+              ? para(p, { alignment: cell.attrs!.align ? ALIGN[cell.attrs!.align as keyof typeof ALIGN] : undefined, spacing: { line: 240 } }, [], letters)
+              : (warnings.push("lists inside table cells are exported as paragraphs"), para({ type: "paragraph", attrs: {}, content: [] })))),
+          })),
+        });
+      }),
     }));
     notes.forEach((n, i) => {
       const letter = new TextRun({ text: letters.get(n.attrs!.id as string) ?? "?", superScript: true });
@@ -470,10 +668,13 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       const maxPx = (textWidthNow() / 1440) * 96;
       const fit = (width: number, height: number) => { const w = Math.min(maxPx, Math.max(width, 1)); return { width: Math.round(w), height: Math.round((w * height) / Math.max(width, 1)) }; };
       const altText = { name: L.figure, title: L.figure, description: (part.attrs!.alt as string) ?? "" };
+      // record 0095: the image of a figure inserted or deleted with tracking, and its paragraph
+      const change = inherited ? { [inherited.type]: rev(inherited.id) } : {};
+      const mark = inherited ? { run: { [inherited.type]: rev(inherited.id) } } : {};
       if (bytes && size) {
-        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: size.type, data: bytes, transformation: fit(size.width, size.height), altText }) as unknown as ParagraphChild] }));
+        out.push(new Paragraph({ keepNext: true, ...mark, children: [...(ps ? [ps] : []), new ImageRun({ type: size.type, data: bytes, transformation: fit(size.width, size.height), altText, ...change }) as unknown as ParagraphChild] }));
       } else if (bytes && svg && typeof svg !== "string") {
-        out.push(new Paragraph({ keepNext: true, children: [...(ps ? [ps] : []), new ImageRun({ type: "svg", data: bytes, fallback: { type: "png", data: svg.png }, transformation: fit(svg.width, svg.height), altText }) as unknown as ParagraphChild] }));
+        out.push(new Paragraph({ keepNext: true, ...mark, children: [...(ps ? [ps] : []), new ImageRun({ type: "svg", data: bytes, fallback: { type: "png", data: svg.png }, transformation: fit(svg.width, svg.height), altText, ...change }) as unknown as ParagraphChild] }));
       } else {
         warnings.push(`${part.attrs!.image}: ${typeof svg === "string" ? svg : "only PNG, JPEG, GIF, BMP and SVG images are embedded for now"}`);
         // generated text: before the block's bookmark, so that it never comes back as an edit
@@ -508,33 +709,65 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const bodyNodes = tree.content ?? [];
   const tablesAtEnd = !markers && fmt?.tables?.value === "end";
   const captionsList = !markers && fmt?.figureCaptionsList?.value === true;
-  const list = (n: PMNode, depth: number) => n.content?.forEach((item, k) => item.content?.forEach((child, j) => {
-    if (child.type === "paragraph") out.push(para(child, { indent: { left: 360 * (depth + 1) } }, j === 0 ? [new TextRun(n.type === "orderedList" ? `${((n.attrs?.start as number) ?? 1) + k}. ` : "• ")] : []));
-    else list(child, depth + 1);
-  }));
+  const list = (n: PMNode, depth: number) => {
+    // the journal gets the items with the tracked changes accepted, numbered so
+    const items = (n.content ?? []).filter((item) => markers || !isDeleted(item));
+    items.forEach((item, k) => within(suggOf(item), () => item.content?.forEach((child, j) => {
+      if (!markers && isDeleted(child)) return;
+      if (child.type === "paragraph") out.push(para(child, { indent: { left: 360 * (depth + 1) } }, j === 0 ? [new TextRun(n.type === "orderedList" ? `${((n.attrs?.start as number) ?? 1) + k}. ` : "• ")] : []));
+      else within(suggOf(child), () => list(child, depth + 1));
+    })));
+  };
+  /**
+   * The keywords, "a; b; c", each with its own marks (record 0095: also its tracked changes
+   * and comments). A separator goes with the keyword after it when that one is inserted or
+   * deleted, or with the one before when all before it are: accepted, the list reads right.
+   */
+  function keywords(n: PMNode, sl: (typeof LABELS)[string], sectionLang: object): Paragraph {
+    const words = (n.content ?? []).filter((k) => (markers ? (k.content ?? []).length > 0 : keywordText(k) !== ""));
+    const changeOf = (k: PMNode): Sugg | null => {
+      const own = suggOf(k);
+      if (own || !markers) return own;
+      const first = suggOf(k.content?.[0]);
+      return first && (k.content ?? []).every((c) => suggOf(c)?.type === first.type) ? first : null;
+    };
+    const children: ParagraphChild[] = [];
+    words.forEach((k, i) => {
+      if (i) {
+        const sep = changeOf(k) ?? (words.slice(0, i).every((w) => changeOf(w)) ? changeOf(words[i - 1]) : null);
+        children.push(...within(sep, () => inlines([{ type: "text", text: "; " }])));
+      }
+      children.push(...within(suggOf(k), () => inlines(k.content)));
+    });
+    return para(n, {}, [new TextRun({ text: `${sl.keywords}: `, bold: true, ...sectionLang })], undefined, {}, children);
+  }
   let abstractDone = !abstract;
   const writeAbstract = () => {
     abstractDone = true;
     for (const section of abstract?.content ?? []) {
+      if (!markers && isDeleted(section)) continue;
       const sl = label((section.attrs!.lang as string) ?? lang);
       around = (section.attrs!.lang as string) ?? lang;
       const sectionLang = sameLang(around, lang) ? {} : { language: { value: wordLang(around) } };
       out.push(new Paragraph({ ...headingOpts(1), children: [new TextRun({ text: sl.abstract, ...sectionLang })] }));
-      for (const n of section.content ?? []) {
-        if (n.type === "heading") out.push(para(n, headingOpts(2)));
-        else if (n.type === "paragraph") out.push(para(n));
-        else if (n.type === "keywords") {
-          const words = (n.content ?? []).map((k) => (k.content ?? []).map((c) => c.text ?? "").join("")).filter(Boolean);
-          const kw = { type: "paragraph", attrs: n.attrs, content: [{ type: "text", text: words.join("; ") }] } as PMNode;
-          out.push(para(kw, {}, [new TextRun({ text: `${sl.keywords}: `, bold: true, ...sectionLang })]));
+      within(suggOf(section), () => {
+        for (const n of section.content ?? []) {
+          if (!markers && isDeleted(n)) continue;
+          if (n.type === "heading") out.push(para(n, headingOpts(2)));
+          else if (n.type === "paragraph") out.push(para(n));
+          else if (n.type === "keywords") out.push(within(suggOf(n), () => keywords(n, sl, sectionLang)));
         }
-      }
+      });
     }
     around = lang;
   };
   for (const n of bodyNodes) {
-    if ((n.marks ?? []).some((m) => m.type === "deletion")) continue;
+    // the journal gets the tracked changes accepted; the co-authors, each block as it is
+    if (!markers && isDeleted(n)) continue;
     if (n.type !== "title" && !abstractDone) { orient(false); writeAbstract(); }
+    within(suggOf(n), () => body(n));
+  }
+  function body(n: PMNode) {
     // a table or a figure that goes to the end takes its landscape page there
     const atEnd = (n.type === "tablePart" && tablesAtEnd) || (n.type === "figurePart" && captionsList);
     if (!atEnd) orient(n.type !== "title" && !!n.attrs?.landscape);
@@ -544,7 +777,7 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
       if (headingRole(n) === "references") bibliography();
     } else if (n.type === "paragraph") out.push(para(n));
     else if (n.type === "bulletList" || n.type === "orderedList") list(n, 0);
-    else if (n.type === "blockquote") for (const p of n.content ?? []) out.push(para(p, { style: S("quote") }));
+    else if (n.type === "blockquote") for (const p of n.content ?? []) { if (markers || !isDeleted(p)) out.push(para(p, { style: S("quote") })); }
     // record 0078: a page break, in a paragraph of its own as Word writes Ctrl+Enter (its bookmark around it)
     else if (n.type === "pageBreak") out.push(para(n, {}, [], undefined, {}, [new PageBreak()]));
     else if (n.type === "tablePart") { if (!tablesAtEnd) table(n); }
@@ -602,17 +835,40 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
     externalStyles: tpl.xml,
     ...(markers ? { title: titleText, creator: "SciDesk", lastModifiedBy: "SciDesk" } : { title: "", creator: "", lastModifiedBy: "" }),
     customProperties: custom,
+    // record 0095: the co-authors' Word tracks their changes when the article does (record 0090)
+    ...(markers && art.article.trackChanges ? { features: { trackRevisions: true } } : {}),
+    // record 0095: each comment with its replies, threaded and resolved as in Word 2013 and later
+    ...(threads.length ? {
+      comments: {
+        children: threads.flatMap((t) => {
+          const c = commentRecords.get(t.id)!;
+          const paragraphs = (text: string) => text.split(/\r?\n/).map((line) => new Paragraph({ children: [new TextRun(line)] }));
+          const when = (d: string) => { const ms = Date.parse(d); return Number.isNaN(ms) ? new Date(exported) : new Date(Math.floor(ms / 1000) * 1000); };
+          return [
+            { id: t.word, author: c.author.name || UNKNOWN_AUTHOR, initials: initials(c.author.name || UNKNOWN_AUTHOR), date: when(c.date), children: paragraphs(c.text), ...(c.resolved ? { resolved: true } : {}) },
+            ...c.replies.map((r, i) => ({ id: t.replies[i], parentId: t.word, author: r.author.name || UNKNOWN_AUTHOR, initials: initials(r.author.name || UNKNOWN_AUTHOR), date: when(r.date), children: paragraphs(r.text), ...(c.resolved ? { resolved: true } : {}) })),
+          ];
+        }),
+      },
+    } : {}),
     sections: cuts.map((c, i) => section(c.landscape, out.slice(c.at, cuts[i + 1]?.at ?? out.length), i === 0)),
   });
   let bytes: Uint8Array = new Uint8Array(await Packer.toArrayBuffer(doc));
-  if (sectionStyle !== "none") {
-    // record 0070: the sections' list in numbering.xml (the heading styles point to it)
+  if (sectionStyle !== "none" || threads.length) {
     const zip = await JSZip.loadAsync(bytes);
-    const file = zip.file("word/numbering.xml");
-    if (file) {
-      zip.file("word/numbering.xml", sectionsNumbering(await file.async("string"), sectionStyle, [1, 2, 3].map((l) => tpl.style(`heading ${l}`))));
-      bytes = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
-    } else warnings.push("numbered sections: the document has no numbering part");
+    if (sectionStyle !== "none") {
+      // record 0070: the sections' list in numbering.xml (the heading styles point to it)
+      const file = zip.file("word/numbering.xml");
+      if (file) zip.file("word/numbering.xml", sectionsNumbering(await file.async("string"), sectionStyle, [1, 2, 3].map((l) => tpl.style(`heading ${l}`))));
+      else warnings.push("numbered sections: the document has no numbering part");
+    }
+    if (threads.length) {
+      // record 0095: where each comment ends (the last piece of its text) and its reference;
+      // a reply covers the same text as the comment it answers, as Word writes it
+      const file = zip.file("word/document.xml")!;
+      zip.file("word/document.xml", placeComments(await file.async("string"), threads, tpl.style("annotation reference")));
+    }
+    bytes = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
   }
   if (!markers) {
     // pending markers and what identifies the authors should not reach the journal (R12, R9); imported here to avoid a cycle

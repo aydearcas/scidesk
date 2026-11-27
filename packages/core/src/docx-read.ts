@@ -94,7 +94,7 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
       if (!text) return;
       const into = inLead ? leadSegments : P.segments;
       const last = into.at(-1);
-      if (!citation && last && !last.citation && last.kind === kind && last.author === (rev?.author ?? null)) last.text += text;
+      if (!citation && last && !last.citation && last.kind === kind && last.author === (rev?.author ?? null) && last.date === (rev?.date || null)) last.text += text;
       else into.push({ text, kind, author: rev?.author ?? null, date: rev?.date || null, ...(citation ? { citation } : {}) });
     };
     const run = (r: Element, kind: Segment["kind"], rev: { author: string; date: string } | null) => {
@@ -173,6 +173,36 @@ export async function readDocx(bytes: Uint8Array): Promise<DocxRead> {
   // a paragraph with the snapshot bookmark only is not content
   const content = paragraphs.filter((p) => p.blocks.length || p.segments.some((s) => s.text.trim()));
   return { paragraphs: content.map((p, i) => ({ ...p, index: i })), scidesk, snapshotBookmark, lastModifiedBy };
+}
+
+/**
+ * Record 0095: the tracked changes the Word for co-authors carried from the version sent
+ * (recognised by author and date, which Word keeps; it renumbers w:id) are part of that
+ * version, not the co-author's: an insertion is plain text and a deletion is not there, as in
+ * the sent blocks, which have them accepted. The co-author's own changes stay as they are.
+ */
+export function settleSentChanges(read: DocxRead, sent: Set<string>, key: (author: string, date: string | null) => string): DocxRead {
+  const isSent = (s: { author: string | null; date: string | null }) => s.author !== null && sent.has(key(s.author, s.date));
+  const paragraphs = read.paragraphs.map((p) => {
+    const segments: Segment[] = [];
+    for (const s of p.segments) {
+      if (s.kind !== "same" && isSent(s)) {
+        if (s.kind === "ins") segments.push({ ...s, kind: "same", author: null, date: null });
+        continue;
+      }
+      segments.push({ ...s });
+    }
+    // plain text next to plain text is one segment, as the reader gives it
+    const joined: Segment[] = [];
+    for (const s of segments) {
+      const last = joined.at(-1);
+      if (last && s.kind === "same" && last.kind === "same" && !s.citation && !last.citation) last.text += s.text;
+      else joined.push(s);
+    }
+    const mark = p.mark && isSent(p.mark) ? null : p.mark;
+    return { ...p, segments: joined, mark };
+  });
+  return { ...read, paragraphs };
 }
 
 /** Text of a paragraph with every tracked change rejected (as it was sent, plus untracked edits). */

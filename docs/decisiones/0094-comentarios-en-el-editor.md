@@ -46,6 +46,6 @@
 ## Qué se descartó o queda
 - **Globos sobre la hoja:** D5 los pone en el panel, a la altura de su texto.
 - **Comentar una tabla o figura entera** como objeto: se comenta su texto (título, celdas, notas).
-- **El Word para coautores todavía sale sin comentarios** (y con los cambios aceptados): es el paso siguiente de la fase 2a, con `w:comment` y `w:ins`/`w:del`.
+- **El Word para coautores todavía sale sin comentarios** (y con los cambios aceptados): es el paso siguiente de la fase 2a, con `w:comment` y `w:ins`/`w:del`. Hecho el 27/11 en la ficha [0095](0095-word-para-coautores-con-cambios-y-comentarios.md), con `scidesk comments`.
 - **Línea de órdenes:** sin `scidesk comments` todavía.
 - Sin probar en la ventana de Tauri ni en WebKit a mano (la prueba de Playwright sí corre en WebKit en la integración continua).
