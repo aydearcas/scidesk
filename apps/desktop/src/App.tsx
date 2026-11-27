@@ -61,8 +61,11 @@ import { setJournalTableStyle } from "./table-lines.ts";
 import { partDrag } from "./part-drag.ts";
 import { insertPageBreak } from "./page-break.ts";
 import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
-import { revealIn } from "./reveal.ts";
-import { changeAt, changeInfo, decide, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
+import { revealIn, scrollerOf } from "./reveal.ts";
+import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
+import { baseBlocksOf, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
+import { acceptCommentProposal, bringIntoText, proposalStates, type ProposalState } from "./proposals-text.ts";
+import type { ProposalActions } from "./ReviewPanel.tsx";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
 import { ReviewBar } from "./ReviewBar.tsx";
 import { CommentHover } from "./CommentHover.tsx";
@@ -155,7 +158,9 @@ export function App() {
   // record 0070: the sections' numbers (for the navigator) and the article's numbering
   const [sectionNos, setSectionNos] = useState<Map<string, string>>(new Map());
   const [numberingTick, setNumberingTick] = useState(0);
-  const [proposals, setProposals] = useState<{ set: ProposalSetFile; name: string } | null>(null);
+  // record 0097: the returned copy of the article on screen, its file and the blocks of the version sent
+  const [proposals, setProposals] = useState<{ set: ProposalSetFile; name: string; file: string; folder: string } | null>(null);
+  const [proposalBase, setProposalBase] = useState<Map<string, PMNode> | null>(null);
   const [report, setReport] = useState<CheckReport | null>(null);
   const [outline, setOutline] = useState<ArticleOutline | null>(null);
   const [uses, setUses] = useState<Map<string, number>>(new Map());
@@ -1220,7 +1225,19 @@ export function App() {
   const importReturnedCopy = async (file: File, returnedBy: string) => {
     if (!project || !article) return;
     const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
-    setProposals({ set: r.set, name: returnedBy });
+    const loaded = { set: r.set, name: returnedBy, file: r.proposalsFile, folder: article.folder };
+    proposalsRef.current = loaded;
+    setProposals(loaded);
+    const base = await baseBlocksOf(project, article.folder, r.set);
+    setProposalBase(base);
+    // record 0097: what can go into the text goes there, as tracked changes of their authors
+    if (!editor) return;
+    if (!isDoc(tab)) openTab(docTab);
+    const states = proposalStates(editor.state.doc, r.set, base);
+    const placed = bringIntoText(editor, r.set, states);
+    if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
+    const rest = [...states.values()].filter((s) => s.kind !== "decided").length - placed.length;
+    if (placed.length || rest) setMessage((placed.length ? t("ui.proposals.imported", { name: returnedBy, count: placed.length }) : `${returnedBy}:`) + (rest ? t("ui.proposals.importedRest", { count: rest }) : ""));
   };
 
   const onRefs = run(async () => {
@@ -1856,6 +1873,134 @@ export function App() {
   }, [commentDoc, commentTick, commentAnchors]);
   const openComments = commentThreads.filter((x) => !x.record.resolved).length;
 
+  // ---------------------------------------------------------------- the returned copy's proposals (record 0097)
+
+  const proposalsRef = useRef(proposals);
+  proposalsRef.current = proposals;
+  // the article's latest copy (the latest with something left to decide), when it is shown
+  useEffect(() => {
+    if (!project || !article || proposals?.folder === article.folder) return;
+    let gone = false;
+    setProposalBase(null);
+    void (async () => {
+      const sets = await loadProposalSets(project, article.folder);
+      const pick = [...sets].reverse().find((s) => s.set.proposals.some((p) => p.decision === "pending" && p.status !== "noise-hidden")) ?? sets.at(-1);
+      if (gone || !pick) return;
+      const loaded = { ...pick, folder: article.folder };
+      proposalsRef.current = loaded;
+      setProposals(loaded);
+      const base = await baseBlocksOf(project, article.folder, pick.set).catch(() => null);
+      if (!gone) setProposalBase(base);
+    })();
+    return () => { gone = true; };
+  }, [project, article?.folder]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Records what the user did with some proposals, in the set's file. */
+  const recordProposals = (ids: string[], decision: "pending" | "accepted" | "rejected" | "edited") => {
+    const cur = proposalsRef.current;
+    if (!cur || !project || !ids.length) return;
+    const set = decideProposals(cur.set, ids, decision, { name: settings.userName.trim() || "?" }, new Date().toISOString().replace(/\.\d{3}Z$/, "Z"));
+    if (set.proposals.every((p, i) => p === cur.set.proposals[i])) return;
+    const next = { ...cur, set };
+    proposalsRef.current = next;
+    setProposals(next);
+    void saveProposalSet(project, cur.file, set).catch((e) => setError(String(e)));
+  };
+  // a change that comes from a proposal decides it, wherever it is accepted or rejected
+  useEffect(() => {
+    track.onDecided = (list) => {
+      const ids = new Set(proposalsRef.current?.set.proposals.map((p) => p.id) ?? []);
+      for (const accept of [true, false]) {
+        const which = list.filter((x) => x.accept === accept).map((x) => track.registry[x.id]?.source).filter((s): s is string => !!s && ids.has(s));
+        recordProposals([...new Set(which)], accept ? "accepted" : "rejected");
+      }
+    };
+    return () => { track.onDecided = null; };
+  });
+  const proposalView: Map<string, ProposalState> | null = useMemo(() => {
+    if (!proposals || !proposalBase || !commentDoc || proposals.folder !== article?.folder || rightTab !== "review") return null;
+    return proposalStates(commentDoc, proposals.set, proposalBase);
+  }, [commentDoc, proposals, proposalBase, rightTab, commentTick, article?.folder]); // eslint-disable-line react-hooks/exhaustive-deps
+  // a change brought back by undoing its accept or reject: its proposal is pending again
+  useEffect(() => {
+    if (!proposalView || !proposals) return;
+    const back = proposals.set.proposals.filter((p) => p.decision !== "pending" && proposalView.get(p.id)?.kind === "in-text").map((p) => p.id);
+    if (back.length) recordProposals(back, "pending");
+  }, [proposalView]); // eslint-disable-line react-hooks/exhaustive-deps
+  // the comments accepted in this session from new comment proposals: undone, pending again
+  const acceptedComments = useRef(new Map<string, string>());
+  useEffect(() => {
+    if (!commentDoc || !acceptedComments.current.size) return;
+    const anchored = new Set(listComments(commentDoc).map((c) => c.id));
+    const back = [...acceptedComments.current].filter(([, c]) => !anchored.has(c)).map(([p]) => p);
+    for (const p of back) acceptedComments.current.delete(p);
+    if (back.length) recordProposals(back, "pending");
+  }, [commentAnchors]); // eslint-disable-line react-hooks/exhaustive-deps
+  const acceptComment = (p: ProposalSetFile["proposals"][number], at: Parameters<typeof acceptCommentProposal>[2]) => {
+    if (!editor) return false;
+    const done = acceptCommentProposal(editor.view, p, at);
+    if (typeof done === "string") acceptedComments.current.set(p.id, done);
+    return !!done;
+  };
+  const proposalById = (id: string) => proposals?.set.proposals.find((p) => p.id === id);
+  const revealRange = (from: number, to: number) => {
+    if (!editor) return;
+    if (!isDoc(tab)) openTab(docTab);
+    editor.view.dispatch(editor.state.tr.setSelection(TextSelection.create(editor.state.doc, from, to)));
+    try {
+      const a = editor.view.coordsAtPos(from);
+      const scroller = scrollerOf(editor.view.dom);
+      if (scroller) revealIn(scroller, new DOMRect(a.left, a.top, 1, Math.max(1, a.bottom - a.top)), "center");
+    } catch { /* hidden: leave it */ }
+  };
+  /** Accepts or rejects one proposal, as it is now. */
+  const decideProposal = (id: string, accept: boolean) => {
+    const p = proposalById(id), s = proposalView?.get(id);
+    if (!editor || !p || !s) return;
+    if (s.kind === "in-text") decideMany(editor, s.changes.map((c) => ({ id: c, accept })));
+    else if (s.kind === "reverts") { if (accept) decide(editor, false, s.change); recordProposals([id], accept ? "accepted" : "rejected"); }
+    else if (s.kind === "comment" && accept) {
+      if (acceptComment(p, s.at)) recordProposals([id], "accepted");
+      else setMessage(t("ui.proposals.noPlace"));
+    } else recordProposals([id], accept ? "accepted" : "rejected");
+  };
+  const proposalActions: ProposalActions = {
+    onAccept: (id) => decideProposal(id, true),
+    onReject: (id) => decideProposal(id, false),
+    onGo: (id) => {
+      const p = proposalById(id), s = proposalView?.get(id);
+      if (!editor || !p || !s) return;
+      const change = s.kind === "in-text" ? s.changes[0] : s.kind === "reverts" ? s.change : null;
+      const r = change ? changeRange(editor.state.doc, change) : null;
+      if (r) { revealRange(r.from, r.to); return; }
+      const a = p.anchor as { block?: string; after?: string | null };
+      const block = a.block ?? a.after;
+      if (block) { if (!isDoc(tab)) openTab(docTab); goToBlock(block); }
+    },
+    onBring: (ids) => {
+      if (!editor || !proposals || !proposalView) return;
+      const placed = bringIntoText(editor, proposals.set, proposalView, ids ? new Set(ids) : undefined);
+      if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
+    },
+    onCopy: (id) => {
+      const text = proposalById(id)?.after ?? "";
+      void navigator.clipboard?.writeText(text).then(() => setMessage(t("ui.proposals.copied", { text: text.length > 60 ? `${text.slice(0, 58)}…` : text })));
+    },
+    onDone: (id) => recordProposals([id], "edited"),
+    onAll: (accept) => {
+      if (!editor || !proposals || !proposalView) return;
+      const changes: { id: string; accept: boolean }[] = [];
+      const others: string[] = [];
+      for (const p of proposals.set.proposals) {
+        const s = proposalView.get(p.id);
+        if (s?.kind === "in-text") changes.push(...s.changes.map((c) => ({ id: c, accept })));
+        else if (s?.kind === "reverts") { if (accept) changes.push({ id: s.change, accept: false }); others.push(p.id); }
+        else if (s?.kind === "comment" && !s.problem) { if (!accept || acceptComment(p, s.at)) others.push(p.id); }
+      }
+      if (changes.length) decideMany(editor, changes);
+      recordProposals(others, accept ? "accepted" : "rejected");
+    },
+  };
+
   /** Record 0090: on a tracked change, accepting or rejecting it comes first. */
   const contextItems = (): MenuEntry[] => {
     if (!editor) return [];
@@ -2050,7 +2195,7 @@ export function App() {
   // ---------------------------------------------------------------- the window
 
   const activeWarnings = report?.warnings.filter((w) => !w.ignored && w.level !== "info").length ?? 0;
-  const shownProposals = proposals?.set.proposals.filter((p) => p.status !== "noise-hidden").length ?? 0;
+  const shownProposals = proposals && proposals.folder === article?.folder ? proposals.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length : 0;
   const titleText = outline?.title?.text || t("ui.untitled");
   const left = !!project && settings.left;
   const right = !!project && settings.right;
@@ -2252,7 +2397,7 @@ export function App() {
               {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} onBlind={blind} articleLang={article?.article.lang ?? "es"}
                 onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
-              {rightTab === "review" && <ReviewPanel proposals={proposals} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
+              {rightTab === "review" && <ReviewPanel proposals={proposals?.folder === article?.folder ? proposals : null} states={proposalView} proposalActions={proposalActions} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
                 editor={editor && isDoc(tab) ? editor : null} copyRequest={copyRequest} />}
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}

@@ -42,7 +42,7 @@
 - **Proponer cambios del texto de un comentario enviado**: es raro, y se ignora por ahora.
 
 ## Consecuencias
-- **Siguiente paso de la fase 2a:** aceptar o rechazar las propuestas en el editor, también las de comentario. Al aceptar una:
+- **Siguiente paso de la fase 2a** (hecho en la ficha [0097](0097-aceptar-o-rechazar-las-propuestas.md)): aceptar o rechazar las propuestas en el editor, también las de comentario. Al aceptar una:
   - un comentario nuevo se ancla con su marca y entra en el registro con origen `docx`;
   - las respuestas se añaden al hilo;
   - `resolved` lo resuelve o lo reabre;

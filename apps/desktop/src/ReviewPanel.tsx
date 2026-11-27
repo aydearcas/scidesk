@@ -1,15 +1,29 @@
 // "Review" in the right panel (design proposal 3.3, records 0044 and 0094): the comments of
 // the article as threads, each one at the height of its text, as the margin of Word (D5: in
 // the panel, not as balloons over the page), and the proposals of a copy returned by a
-// co-author (record 0032); the merge of a whole round comes in phase 2b, in this same tab.
+// co-author (records 0032 and 0097: each one with what can be done with it now); the merge
+// of a whole round comes in phase 2b, in this same tab.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Editor } from "@tiptap/core";
 import type { ProposalSetFile } from "@scidesk/formats";
 import type { CommentAnchor, CommentRecord } from "./comments.ts";
+import type { ProposalState } from "./proposals-text.ts";
 import { authorColor } from "./track-changes.ts";
 
 export interface CommentThread { anchor: CommentAnchor; record: CommentRecord }
+/** Record 0097: what the cards of the returned copy do. */
+export interface ProposalActions {
+  onAccept: (id: string) => void;
+  onReject: (id: string) => void;
+  onGo: (id: string) => void;
+  /** Brings these proposals (or every one that can be) into the text as tracked changes. */
+  onBring: (ids?: string[]) => void;
+  onCopy: (id: string) => void;
+  /** The user made it by hand. */
+  onDone: (id: string) => void;
+  onAll: (accept: boolean) => void;
+}
 export interface CommentActions {
   /** Goes to the comment's text (and makes it the active one). */
   onGo: (id: string) => void;
@@ -25,8 +39,11 @@ export interface CommentActions {
   onDone: () => void;
 }
 
-export function ReviewPanel({ proposals: got, onImport, threads, active, comment, editor, copyRequest }: {
+export function ReviewPanel({ proposals: got, states, proposalActions, onImport, threads, active, comment, editor, copyRequest }: {
   proposals: { set: ProposalSetFile; name: string } | null;
+  /** What each proposal is now (in the text, can go there, cannot…); null while it is worked out. */
+  states: Map<string, ProposalState> | null;
+  proposalActions: ProposalActions;
   onImport: (file: File, returnedBy: string) => Promise<void>;
   threads: CommentThread[];
   active: string | null;
@@ -41,10 +58,18 @@ export function ReviewPanel({ proposals: got, onImport, threads, active, comment
   const [problem, setProblem] = useState("");
   const [showResolved, setShowResolved] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [showDecided, setShowDecided] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const proposals = got?.set ?? null;
   useEffect(() => { if (copyRequest || proposals) setCopyOpen(true); }, [copyRequest, proposals]);
   const shown = proposals?.proposals.filter((p) => p.status !== "noise-hidden") ?? [];
+  const stateOf = (id: string) => states?.get(id);
+  const decided = shown.filter((p) => stateOf(p.id)?.kind === "decided").length;
+  const bringable = shown.filter((p) => stateOf(p.id)?.kind === "can-place").map((p) => p.id);
+  const decidable = shown.filter((p) => { const s = stateOf(p.id); return s && (s.kind === "in-text" || s.kind === "reverts" || (s.kind === "comment" && !s.problem)); }).length;
+  const listed = shown.filter((p) => showDecided || stateOf(p.id)?.kind !== "decided");
+  const keep = (e: React.MouseEvent) => e.preventDefault();
+  const act = (f: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); f(); };
   const resolved = threads.filter((x) => x.record.resolved).length;
   const visible = threads.filter((x) => showResolved || !x.record.resolved || x.anchor.id === active);
   const onFile = async () => {
@@ -75,7 +100,7 @@ export function ReviewPanel({ proposals: got, onImport, threads, active, comment
           )}
       </section>
       <details className="returned-copy" open={copyOpen} onToggle={(e) => setCopyOpen((e.currentTarget as HTMLDetailsElement).open)}>
-        <summary>{t("ui.comments.returnedCopy")}{shown.length ? <span className="count">{shown.length}</span> : null}</summary>
+        <summary>{t("ui.comments.returnedCopy")}{shown.length - decided ? <span className="count">{shown.length - decided}</span> : null}</summary>
         <p className="muted small">{t("ui.reviewIntro")}</p>
         <label className="field">{t("returnedBy")}<input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
         <label className={`file-button btn${returnedBy.trim() ? "" : " disabled"}`}>{t("importCopy")}<input ref={input} type="file" accept=".docx" onChange={() => void onFile()} aria-label={t("importCopy")} /></label>
@@ -83,24 +108,75 @@ export function ReviewPanel({ proposals: got, onImport, threads, active, comment
         {proposals && (
           <>
             <h4>{t("ui.proposalsOf", { name: got!.name, count: shown.length })}</h4>
+            {shown.length > 0 && states && (
+              <>
+                <p className="muted small">{t("ui.proposals.left", { count: shown.length - decided })}</p>
+                {(bringable.length > 0 || decidable > 0) && (
+                  <div className="proposal-bulk">
+                    {bringable.length > 0 && <button className="btn small primary" onMouseDown={keep} onClick={() => proposalActions.onBring()}>{t("ui.proposals.bring", { count: bringable.length })}</button>}
+                    {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => proposalActions.onAll(true)}>{t("ui.proposals.acceptAll")}</button>}
+                    {decidable > 0 && <button className="btn small" onMouseDown={keep} onClick={() => proposalActions.onAll(false)}>{t("ui.proposals.rejectAll")}</button>}
+                  </div>
+                )}
+                {decided > 0 && (
+                  <label className="show-resolved small muted"><input type="checkbox" checked={showDecided} onChange={(e) => setShowDecided(e.target.checked)} /> {t("ui.proposals.showDecided", { count: decided })}</label>
+                )}
+              </>
+            )}
             {shown.length === 0 ? <p className="muted">{t("noProposals")}</p> : (
               <ul className="proposals">
-                {shown.map((p) => p.kind === "comment" && p.comment ? (
-                  // record 0096: a new comment, or what the copy did with one sent
-                  <li key={p.id} className="card proposal-comment">
-                    <div><b>{p.author.name}</b> {[
-                      p.comment.removed ? t("proposalComment.removed") : !p.comment.thread ? t("proposalComment.new") : p.comment.replies.length ? t("proposalComment.replies") : "",
-                      p.comment.thread && p.comment.resolved === true ? t("proposalComment.resolves") : p.comment.thread && p.comment.resolved === false ? t("proposalComment.reopens") : "",
-                    ].filter(Boolean).join(", ")} {p.before && <span className="muted">{t("proposalComment.on")} «{p.before}»</span>}</div>
-                    {p.comment.text && <div className="comment-text">{p.comment.text}</div>}
-                    {p.comment.replies.map((r, i) => <div key={i} className="comment-reply"><b>{r.author.name}</b>: {r.text}</div>)}
-                  </li>
-                ) : (
-                  <li key={p.id} className="card">
-                    <div><span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <b>{p.author.name}</b> {t(`kinds.${p.kind}`)}</div>
-                    <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>
-                  </li>
-                ))}
+                {listed.map((p) => {
+                  const s = stateOf(p.id);
+                  const problem = s?.kind === "problem" ? s.problem : s?.kind === "comment" ? s.problem : undefined;
+                  const body = p.kind === "comment" && p.comment ? (
+                    // record 0096: a new comment, or what the copy did with one sent
+                    <>
+                      <div><b>{p.author.name}</b> {[
+                        p.comment.removed ? t("proposalComment.removed") : !p.comment.thread ? t("proposalComment.new") : p.comment.replies.length ? t("proposalComment.replies") : "",
+                        p.comment.thread && p.comment.resolved === true ? t("proposalComment.resolves") : p.comment.thread && p.comment.resolved === false ? t("proposalComment.reopens") : "",
+                      ].filter(Boolean).join(", ")} {p.before && <span className="muted">{t("proposalComment.on")} «{p.before}»</span>}</div>
+                      {p.comment.text && <div className="comment-text">{p.comment.text}</div>}
+                      {p.comment.replies.map((r, i) => <div key={i} className="comment-reply"><b>{r.author.name}</b>: {r.text}</div>)}
+                    </>
+                  ) : (
+                    <>
+                      <div><span className={p.tracked ? "tag tracked" : "tag"}>{p.tracked ? t("tracked") : t("untracked")}</span> <span className="who"><span className="dot" style={{ background: authorColor(p.author.name) }} aria-hidden="true" /><b>{p.author.name}</b></span> {t(`kinds.${p.kind}`)}</div>
+                      <div>{p.before && <del>{p.before}</del>} {p.after && <ins>{p.after}</ins>}</div>
+                    </>
+                  );
+                  // record 0097: what can be done with it now
+                  return (
+                    <li key={p.id} className={`card proposal${p.kind === "comment" ? " proposal-comment" : ""}${s ? ` state-${s.kind}` : ""}`} onClick={() => proposalActions.onGo(p.id)}>
+                      {body}
+                      {s?.kind === "reverts" && <p className="proposal-note small muted">{t("ui.proposals.reverts")}</p>}
+                      {problem && <p className="proposal-note small warn">{t(`ui.proposals.problem.${problem}`)}</p>}
+                      {s?.kind === "decided" && <p className="proposal-note small muted"><span className="tag">{t(`ui.proposals.decision.${p.decision}`)}</span></p>}
+                      {s && s.kind !== "decided" && (
+                        <div className="thread-actions">
+                          {(s.kind === "in-text" || s.kind === "reverts" || (s.kind === "comment" && !s.problem)) && (
+                            <>
+                              <button className="btn small primary" onMouseDown={keep} onClick={act(() => proposalActions.onAccept(p.id))}>{t("ui.proposals.accept")}</button>
+                              <button className="btn small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                            </>
+                          )}
+                          {s.kind === "can-place" && (
+                            <>
+                              <button className="btn small primary" onMouseDown={keep} onClick={act(() => proposalActions.onBring([p.id]))}>{t("ui.proposals.bringOne")}</button>
+                              <button className="btn small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                            </>
+                          )}
+                          {problem && (
+                            <>
+                              {p.after && <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onCopy(p.id))}>{t("ui.proposals.copy")}</button>}
+                              <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onDone(p.id))}>{t("ui.proposals.done")}</button>
+                              <button className="link small" onMouseDown={keep} onClick={act(() => proposalActions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             <p className="integrity muted small">{proposals.integrity === "ok" ? t("integrityOk") : t("integrityBad")}</p>

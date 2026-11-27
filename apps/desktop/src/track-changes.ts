@@ -24,9 +24,15 @@ const SUGGESTION_RE = /^(?:insertion|deletion|modification)$/;
  * Who is writing, and the article's registry of changes (filled from its files when it is
  * shown, and by every tracked edit). The window sets the author from the settings.
  */
-export const track: { author: { name: string; person?: string }; registry: Record<string, ChangeRecord> } = {
+export const track: {
+  author: { name: string; person?: string };
+  registry: Record<string, ChangeRecord>;
+  /** Record 0097: told which changes were accepted or rejected (the proposals they come from are decided). */
+  onDecided: ((list: { id: string; accept: boolean }[]) => void) | null;
+} = {
   author: { name: "" },
   registry: {},
+  onDecided: null,
 };
 
 /** A pastel colour per author, the same every time (by name). */
@@ -292,9 +298,30 @@ export function listChanges(doc: PMNodeType): { id: string; kind: "insertion" | 
 
 /** Accepts or rejects one change, or all of them; never tracked, one undo step. */
 export function decide(editor: Editor, accept: boolean, id?: string) {
+  const ids = id ? [id] : [...changeIds(editor.state.doc)];
   const dispatch = (tr: Transaction) => editor.view.dispatch(tr.setMeta(untracked, true));
   if (id) (accept ? applySuggestion : revertSuggestion)(id)(editor.state, dispatch);
   else (accept ? applySuggestions : revertSuggestions)(editor.state, dispatch);
+  track.onDecided?.(ids.map((i) => ({ id: i, accept })));
+}
+
+/**
+ * Accepts or rejects several changes, each its way, in one undo step (record 0097: all the
+ * proposals of a copy at once). Each command runs on the state the previous one left, and
+ * their steps go in one transaction.
+ */
+export function decideMany(editor: Editor, list: { id: string; accept: boolean }[]) {
+  let state = editor.state;
+  const steps: Transaction["steps"][number][] = [];
+  for (const { id, accept } of list) {
+    (accept ? applySuggestion : revertSuggestion)(id)(state, (tr: Transaction) => { steps.push(...tr.steps); state = state.apply(tr); });
+  }
+  if (steps.length) {
+    const tr = editor.state.tr;
+    for (const step of steps) tr.step(step);
+    editor.view.dispatch(tr.setMeta(suggestChangesKey, { skip: true }).setMeta(untracked, true));
+  }
+  track.onDecided?.(list);
 }
 
 /** Goes to the next (1) or previous (-1) change after or before the cursor; false when there is none. */

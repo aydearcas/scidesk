@@ -111,7 +111,7 @@ Esto corrige el ejemplo de PLAN.md 3.2, que guardaba `refs` como cadenas y envol
 
 ### 3.4 Registros `changes` y `comments`
 
-- **`changes`:** por cada `id` de cambio, `author`, `date`, `origin` y, opcionalmente, `source`. `origin` es `local` (escrito aquí), `docx` (copia de Word), `llm` (paquete para LLM), `conflict-copy` (copia en conflicto de OneDrive o Dropbox), `history` (versión antigua) o `scidesk` (coautor con SciDesk, más adelante). `source` dice de qué conjunto de propuestas, copia o instantánea viene (`ps-…`, `cp-…`, `s-…`).
+- **`changes`:** por cada `id` de cambio, `author`, `date`, `origin` y, opcionalmente, `source`. `origin` es `local` (escrito aquí), `docx` (copia de Word), `llm` (paquete para LLM), `conflict-copy` (copia en conflicto de OneDrive o Dropbox), `history` (versión antigua) o `scidesk` (coautor con SciDesk, más adelante). `source` dice de qué propuesta, conjunto de propuestas, copia o instantánea viene (`pr-…`, `ps-…`, `cp-…`, `s-…`); una propuesta de una copia devuelta llevada al texto lleva su `pr-…` (ficha 0097).
 - **`comments`:** por cada comentario, `author`, `date`, `origin`, `text`, `resolved` y `replies` (texto sin formato en la v1).
 - **Al guardar se eliminan las entradas cuyo `id` ya no está en el documento.** Al cargar, una marca sin entrada en el registro es un error; una entrada sin marca, un aviso.
 - **Cada archivo del documento compuesto lleva su propio registro**, solo con los cambios de su contenido; al cargar se juntan (ficha 0021). El ejemplo `examples/standalone/` lo muestra con el documento editado en Word del prototipo 7: 7 cambios en el cuerpo y 1 en la tabla.
@@ -228,7 +228,7 @@ El modelo único de propuestas (fichas 0019 y 0029) tiene un solo formato, el **
 | `comment` (ficha 0096) | `text` y `replies`; `thread` si trata de un comentario enviado con la copia (respuestas nuevas, `resolved` si lo resuelve o lo reabre, `removed` si ya no está); `resolved` en uno nuevo resuelto; `end` (`{ file, block, to }`) si el texto comentado sigue en otro bloque. `before` y `after` son el texto comentado |
 | `zone`, `sameSentence` | La zona de la fusión a tres bandas y el grupo «misma frase» |
 | `status` | Resultado de la fusión: `applicable`, `agreement`, `duplicate` (un acuerdo ya aplicado por otra), `conflict-coauthors`, `conflict-mine` o `noise-hidden` |
-| `decision` | Lo que hiciste: `pending`, `accepted`, `rejected` o `edited`, con `decided` (quién y cuándo) |
+| `decision` | Lo que hiciste: `pending`, `accepted`, `rejected` o `edited` (hecha a mano), con `decided` (quién y cuándo). Se escribe en el archivo del conjunto en cuanto decides, también al aceptar o rechazar en el texto el cambio que viene de ella (ficha 0097) |
 
 `status` y `decision` van separados: el primero lo calcula la fusión y el segundo es tuyo.
 

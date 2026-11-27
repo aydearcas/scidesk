@@ -450,6 +450,13 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 /* record 0096: a comment of the returned copy, with its replies under it */
 .proposal-comment .comment-text { margin-top: 4px; white-space: pre-wrap; }
 .proposal-comment .comment-reply { margin: 4px 0 0 10px; padding-left: 8px; border-left: 2px solid var(--line-strong); white-space: pre-wrap; }
+/* record 0097: what can be done with each proposal now */
+.proposal { cursor: pointer; }
+.proposal .thread-actions { margin-top: 6px; }
+.proposal-note { margin: 4px 0 0; }
+.proposal-note.warn { color: var(--review); background: var(--review-soft); border-radius: 4px; padding: 3px 6px; }
+.proposal.state-decided { opacity: 0.65; }
+.proposal-bulk { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag { font-size: 11px; border: 1px solid var(--line-strong); border-radius: 3px; padding: 0 4px; color: var(--text-3); }
 .tag.tracked { color: var(--accent); border-color: var(--accent); }
 ins { color: var(--ins); text-decoration: underline; } del { color: var(--del); }

@@ -267,7 +267,7 @@ const ChangeRecord = Strict({
   author: AuthorRef,
   date: DateTime,
   origin: enumOf(ORIGINS),
-  source: Type.Optional(Type.String({ description: "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…)." })),
+  source: Type.Optional(Type.String({ description: "What it came from: a proposal (pr-…, record 0097: a returned copy's proposal brought into the text), a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…)." })),
 });
 
 const CommentReply = Strict({ author: AuthorRef, date: DateTime, text: Type.String() });

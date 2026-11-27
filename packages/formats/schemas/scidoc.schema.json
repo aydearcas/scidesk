@@ -1680,7 +1680,7 @@
                       ]
                     },
                     "source": {
-                      "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                      "description": "What it came from: a proposal (pr-…, record 0097: a returned copy's proposal brought into the text), a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
                       "type": "string"
                     }
                   },
@@ -1867,7 +1867,7 @@
                       ]
                     },
                     "source": {
-                      "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                      "description": "What it came from: a proposal (pr-…, record 0097: a returned copy's proposal brought into the text), a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
                       "type": "string"
                     }
                   },
@@ -2063,7 +2063,7 @@
                   ]
                 },
                 "source": {
-                  "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                  "description": "What it came from: a proposal (pr-…, record 0097: a returned copy's proposal brought into the text), a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
                   "type": "string"
                 }
               },
@@ -2250,7 +2250,7 @@
                   ]
                 },
                 "source": {
-                  "description": "What it came from: a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
+                  "description": "What it came from: a proposal (pr-…, record 0097: a returned copy's proposal brought into the text), a proposal set (ps-…), a returned copy (cp-…) or a snapshot (s-…).",
                   "type": "string"
                 }
               },
