@@ -66,7 +66,7 @@ import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setM
 import { baseBlocksOf, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
 import { blocksById, compareVersions, currentFiles, ensureDailySnapshot, listSnapshots, loadSnapshot, proposalsFromVersion, restoreSnapshot, saveVersionProposals, type SnapshotInfo, type VersionBlock } from "@scidesk/core";
 import { HistoryTimeline, HistoryView, useVersionName } from "./History.tsx";
-import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, type Copy, type ProposalState } from "./proposals-text.ts";
+import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, useTheirs, type Copy, type ProposalState } from "./proposals-text.ts";
 import type { ProposalActions } from "./ReviewPanel.tsx";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
 import { ReviewBar } from "./ReviewBar.tsx";
@@ -2005,7 +2005,11 @@ export function App() {
     // in the text, or the same as another copy's change there: that change is decided (and this proposal with it)
     if (s.kind === "in-text" || s.kind === "agrees") decideMany(editor, s.changes.map((c) => ({ id: c, accept })));
     else if (s.kind === "reverts") { if (accept) decide(editor, false, s.change); recordProposals([id], accept ? "accepted" : "rejected"); }
-    else if (s.kind === "conflict" && accept) {
+    else if (s.kind === "already") recordProposals([id], accept ? "accepted" : "rejected");
+    // record 0100: on text the author changed since, accepting puts the co-author's version there, tracked
+    else if (s.kind === "problem" && s.zone?.free && accept) {
+      if (useTheirs(editor, found.copy, p, s.zone)) { if (markup === "none" || markup === "original") setMarkup("all"); }
+    } else if (s.kind === "conflict" && accept) {
       const rejected = chooseInstead(editor, found.copy, copyList!.list, id, s.changes);
       recordProposals(rejected, "rejected");
     } else if (s.kind === "comment" && accept) {
@@ -2053,7 +2057,7 @@ export function App() {
       for (const p of copy.set.proposals) {
         const s = proposalView.get(p.id);
         if (s?.kind === "in-text" || (s?.kind === "agrees" && accept)) changes.push(...s.changes.map((c) => ({ id: c, accept })));
-        else if (s?.kind === "agrees" || (s?.kind === "conflict" && !accept)) others.push(p.id);
+        else if (s?.kind === "agrees" || s?.kind === "already" || (s?.kind === "conflict" && !accept)) others.push(p.id);
         else if (s?.kind === "reverts") { if (accept) changes.push({ id: s.change, accept: false }); others.push(p.id); }
         else if (s?.kind === "comment" && !s.problem) { if (!accept || acceptComment(p, s.at)) others.push(p.id); }
       }

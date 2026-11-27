@@ -5,7 +5,7 @@ import type { PMNode } from "@scidesk/formats";
 import { exportDocx } from "../src/docx-export.ts";
 import { nodeResources } from "../src/node-fs.ts";
 import { importCopy } from "../src/round.ts";
-import { baseBlocksOf, blockMapping, blockUnits, blocksById, decideProposals, loadProposalSets, placeProposal, type Proposal } from "../src/proposal-place.ts";
+import { baseBlocksOf, blockMapping, blockUnits, blocksById, decideProposals, loadProposalSets, placeProposal, zoneOf, type Proposal } from "../src/proposal-place.ts";
 import { trackedProject } from "./tracked-fixture.ts";
 
 const MARTA = { name: "Marta Ríos Navarro" };
@@ -72,7 +72,7 @@ describe("proposals in the text as it is now (record 0097)", () => {
     // and where the author changed the very text a proposal is about, it stays out of the text
     split.content![0].text = split.content![0].text!.replace("Primera mitad.", "Primera parte.");
     const close = { ...added, anchor: { ...(added.anchor as { file: "manuscript/article.scidoc"; block: string; from: number; to: number }), from: 3, to: 14 }, kind: "delete" as const, before: "mera mitad.", after: "" };
-    expect(place(close)).toEqual({ problem: "changed" });
+    expect(place(close)).toMatchObject({ problem: "changed", zone: { base: "Primera mitad.", mine: "Ya Primera parte." } });
   });
 
   it("meet the proposals of another copy already in the text: the same, a conflict, or side by side", () => {
@@ -98,6 +98,30 @@ describe("proposals in the text as it is now (record 0097)", () => {
     expect(place(juan("replace", at("población"), at("población") + 9, "población", "población adulta"))).toMatchObject({ from: at("población") + " crónica".length });
     // without knowing they come from a copy, Marta's changes look like the author's
     expect(placeProposal(juan("delete", at("al 1"), at("al 1") + 3, "al ", ""), () => base, () => now)).toEqual({ problem: "tracked" });
+  });
+
+  it("on text the author changed since, give the three versions of the stretch they share (record 0100)", () => {
+    const tx = (text: string) => ({ type: "text", text }) as PMNode;
+    const para = (text: string) => ({ type: "paragraph", attrs: { id: "b-1" }, content: [tx(text)] }) as PMNode;
+    const sent = "El objetivo fue describir la actividad durante el primer año de tratamiento.";
+    const base = para(sent), now = para("El objetivo fue describir la actividad durante el primer semestre de tratamiento.");
+    const at = sent.indexOf("el primer año");
+    const marta = { id: "pr-marta00001", author: { name: "Marta" }, tracked: false, kind: "replace" as const, anchor: { file: "manuscript/article.scidoc", block: "b-1", from: at, to: at + "el primer año".length }, before: "el primer año", after: "los primeros doce meses", status: "applicable" as const, decision: "pending" as const };
+    const r = placeProposal(marta, () => base, () => now) as { problem: string; zone: { base: string; mine: string; theirs: string; from: number; to: number; free: boolean } };
+    expect(r.problem).toBe("changed");
+    expect(r.zone).toMatchObject({ base: "el primer año", mine: "el primer semestre", theirs: "los primeros doce meses", free: true });
+    expect(text(now).slice(r.zone.from, r.zone.to)).toBe("el primer semestre");
+    // the same edit the author already made: the same text
+    const same = placeProposal({ ...marta, after: "el primer semestre" }, () => base, () => now) as typeof r;
+    expect(same.zone.mine).toBe(same.zone.theirs);
+    // an insertion where the author inserted the same: the same text, never twice
+    const sentence = "La artritis afecta al 1 %.";
+    const ins = { ...marta, kind: "insert" as const, anchor: { ...marta.anchor, from: "La artritis afecta".length, to: "La artritis afecta".length }, before: "", after: " sobre todo" };
+    const twice = placeProposal(ins, () => para(sentence), () => para("La artritis afecta sobre todo al 1 %.")) as typeof r;
+    expect(twice.problem).toBe("changed");
+    expect(twice.zone.mine.replace(/s+/g, " ").trim()).toBe(twice.zone.theirs.replace(/s+/g, " ").trim());
+    // a change inside a word widens to the whole word
+    expect(zoneOf("la actividad inflamatoria", "la actividad inflamatorias", 13, 25)).toMatchObject({ from: 13, to: 25, bFrom: 13, bTo: 26 });
   });
 
   it("keep what the user decided, and are found again with the round's copy", async () => {

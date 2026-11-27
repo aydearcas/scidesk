@@ -4,7 +4,7 @@
 // proposal whose text the author has not touched since goes where that text is now, one
 // that falls on text changed since, or on a tracked change, is left in the panel. The window
 // brings the ones that can be placed into the text as tracked changes of their author.
-import { diffChars } from "diff";
+import { diffChars, diffWordsWithSpace } from "diff";
 import { stableStringify, type PMNode, type ProposalSetFile, type RoundFile } from "@scidesk/formats";
 import { ATOM } from "./docx-read.ts";
 import { keywordsText } from "./docx-export.ts";
@@ -94,6 +94,8 @@ export function blockMapping(a: string, b: string) {
       if (removed.some(([x, y]) => (from === to ? x < from && from < y : x < to && from < y))) return true;
       return inserted.some((x) => from < x && x < to);
     },
+    /** Whether something was inserted at `off`, or with only spaces in between (two insertions at one point meet). */
+    insertedAt: (off: number) => inserted.some((x) => a.slice(Math.min(x, off), Math.max(x, off)).trim() === ""),
   };
 }
 
@@ -107,7 +109,14 @@ export type Placement =
  * the same result (`agrees`), or another one on the same text (`conflict`).
  */
 export type Meeting = { agrees: string[] } | { conflict: string[] };
-export type PlaceResult = Placement | Meeting | { problem: PlaceProblem };
+/**
+ * Record 0100: where a proposal falls on text the author changed after sending the copy, the
+ * stretch both touch, in three versions: as it was sent, as the author has it now and as the
+ * co-author left it. `from`–`to` is that stretch in the block now (ProseMirror offsets);
+ * `free` says nothing in it is a tracked change, so the co-author's version can go in its place.
+ */
+export interface Zone { base: string; mine: string; theirs: string; from: number; to: number; free: boolean }
+export type PlaceResult = Placement | Meeting | { problem: PlaceProblem; zone?: Zone };
 
 export interface PlaceOptions {
   /**
@@ -168,7 +177,7 @@ export function placeProposal(p: Proposal, base: (id: string) => PMNode | null |
   if (!a.block || a.from === undefined || a.to === undefined) return { problem: "unsupported" };
   if (p.kind === "format" || p.kind === "move" || p.kind === "split-paragraph" || p.kind === "join-paragraphs") return { problem: "unsupported" };
   const isComment = p.kind === "comment";
-  const one = (block: string, from: number, to: number): { from: number; to: number; reverts?: string } | Meeting | { problem: PlaceProblem } => {
+  const one = (block: string, from: number, to: number): { from: number; to: number; reverts?: string } | Meeting | { problem: PlaceProblem; zone?: Zone } => {
     const cur = current(block), was = base(block);
     if (!cur || !was) return { problem: "missing" };
     const now = blockUnits(cur);
@@ -176,7 +185,16 @@ export function placeProposal(p: Proposal, base: (id: string) => PMNode | null |
     if (!now || then === undefined) return { problem: "unsupported" };
     const view = authorsView(now, opts);
     const m = blockMapping(then, view.text);
-    if (!isComment && m.changed(from, to)) return { problem: "changed" };
+    // record 0100: an insertion where the author inserted too meets the author's text
+    if (!isComment && (m.changed(from, to) || (from === to && p.kind === "insert" && m.insertedAt(from)))) {
+      // the three versions of the stretch the author's edits and the proposal share
+      const z = zoneOf(then, view.text, from, to);
+      const rf = view.right(z.bFrom), rt = Math.max(rf, view.left(z.bTo));
+      const pf = now.pm[rf], pt = now.pm[rt];
+      if (now.keywords || pf == null || pt == null) return { problem: "changed" };
+      const theirs = then.slice(z.from, from) + p.after.replace(/[\r\n]+/g, " ") + then.slice(to, z.to);
+      return { problem: "changed", zone: { base: then.slice(z.from, z.to), mine: view.text.slice(z.bFrom, z.bTo), theirs, from: pf, to: pt, free: !now.marked.slice(rf, rt).some(Boolean) } };
+    }
     const uf = m.map(from), ut = Math.max(uf, m.map(to));
     const point = uf === ut;
     // in the text as it is (with the other copies' insertions): a point before them, a range inside them
@@ -222,6 +240,45 @@ export function placeProposal(p: Proposal, base: (id: string) => PMNode | null |
   }
   const r = one(a.block, a.from, a.to);
   return placed(r) ? { block: a.block, ...r } : r;
+}
+
+/**
+ * The stretch of `a` (a block as sent) that the edits between `a` and `b` (the block as the
+ * author has it) share with the range from–to, widened to whole words, and the same stretch
+ * in `b`: an edit that touches the stretch joins it, until none is left at its edges.
+ */
+export function zoneOf(a: string, b: string, from: number, to: number): { from: number; to: number; bFrom: number; bTo: number } {
+  type Part = { a0: number; a1: number; b0: number; b1: number; same: boolean };
+  const parts: Part[] = [];
+  let i = 0, j = 0;
+  for (const part of diffWordsWithSpace(a, b)) {
+    const n = part.value.length;
+    if (part.added) { parts.push({ a0: i, a1: i, b0: j, b1: j + n, same: false }); j += n; }
+    else if (part.removed) { parts.push({ a0: i, a1: i + n, b0: j, b1: j, same: false }); i += n; }
+    else { parts.push({ a0: i, a1: i + n, b0: j, b1: j + n, same: true }); i += n; j += n; }
+  }
+  let zf = from, zt = to;
+  const word = /[\p{L}\p{N}]/u;
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const p of parts) {
+      // an edit with only spaces between it and the stretch touches it too
+      if (p.same || (p.a0 > zt && a.slice(zt, p.a0).trim() !== "") || (p.a1 < zf && a.slice(p.a1, zf).trim() !== "")) continue;
+      if (p.a0 < zf || p.a1 > zt) { zf = Math.min(zf, p.a0); zt = Math.max(zt, p.a1); grew = true; }
+    }
+    // whole words at the edges
+    while (zf > 0 && word.test(a[zf - 1]) && word.test(a[zf] ?? "")) { zf--; grew = true; }
+    while (zt < a.length && word.test(a[zt]) && word.test(a[zt - 1] ?? "")) { zt++; grew = true; }
+  }
+  const touching = parts.filter((p) => !p.same && p.a0 <= zt && p.a1 >= zf);
+  const inSame = (off: number, end: boolean) => {
+    const p = parts.find((x) => x.same && (end ? x.a0 < off && off <= x.a1 : x.a0 <= off && off < x.a1)) ?? parts.find((x) => x.same && x.a0 <= off && off <= x.a1);
+    return p ? p.b0 + off - p.a0 : end ? b.length : 0;
+  };
+  const starts = touching.filter((p) => p.a0 === zf).map((p) => p.b0), ends = touching.filter((p) => p.a1 === zt).map((p) => p.b1);
+  const bFrom = Math.min(starts.length ? Math.min(...starts) : Infinity, inSame(zf, false));
+  const bTo = Math.max(ends.length ? Math.max(...ends) : -Infinity, inSame(zt, true));
+  return { from: zf, to: zt, bFrom, bTo: Math.max(bFrom, bTo) };
 }
 
 /**

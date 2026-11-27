@@ -14,7 +14,7 @@ import { Fragment } from "@tiptap/pm/model";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import { newId, type PMNode, type ProposalSetFile } from "@scidesk/formats";
-import { placeProposal, type PlaceProblem, type Placement, type Proposal } from "@scidesk/core";
+import { hunks, placeProposal, type PlaceProblem, type Placement, type Proposal, type Zone } from "@scidesk/core";
 import { revertSuggestion, suggestChangesKey } from "@scidesk/suggest-changes";
 import { changeIds, track, untracked } from "./track-changes.ts";
 import { comments, removeComment, updateComment, type CommentRecord } from "./comments.ts";
@@ -63,7 +63,10 @@ export type ProposalState =
   | { kind: "conflict"; changes: string[]; with: string[] }
   | { kind: "comment"; at: Placement | null; problem?: PlaceProblem }
   | { kind: "can-place"; at: Placement }
-  | { kind: "problem"; problem: PlaceProblem };
+  /** Record 0100: on text the author changed since sending, with the three versions of the stretch both touch. */
+  | { kind: "problem"; problem: PlaceProblem; zone?: Zone }
+  /** The author's text there already says what the proposal says. */
+  | { kind: "already"; zone: Zone };
 
 /** What each proposal of the copies is now, in the document `doc`. */
 export function proposalStates(doc: PMNodeType, copies: Copy[]): Map<string, ProposalState> {
@@ -89,7 +92,11 @@ export function proposalStates(doc: PMNodeType, copies: Copy[]): Map<string, Pro
       if (p.kind === "comment") {
         const missing = p.comment?.thread && !comments.registry[p.comment.thread] ? "missing" : undefined;
         out.set(p.id, "problem" in at ? { kind: "comment", at: null, problem: at.problem } : "agrees" in at || "conflict" in at ? { kind: "comment", at: null } : { kind: "comment", at, ...(missing ? { problem: missing } : {}) });
-      } else if ("problem" in at) out.set(p.id, { kind: "problem", problem: at.problem });
+      } else if ("problem" in at) {
+        const z = "zone" in at ? at.zone : undefined;
+        const same = (x: string) => x.replaceAll(ATOM, "").replace(/\s+/g, " ").trim();
+        out.set(p.id, z && same(z.mine) === same(z.theirs) ? { kind: "already", zone: z } : { kind: "problem", problem: at.problem, ...(z ? { zone: z } : {}) });
+      }
       else if ("agrees" in at) out.set(p.id, { kind: "agrees", changes: at.agrees, with: authorsOf(at.agrees) });
       else if ("conflict" in at) out.set(p.id, { kind: "conflict", changes: at.conflict, with: authorsOf(at.conflict) });
       else if ("reverts" in at && at.reverts) out.set(p.id, { kind: "reverts", change: at.reverts });
@@ -251,6 +258,34 @@ export function chooseInstead(editor: Editor, copy: Copy, all: Copy[], id: strin
   placeInto(tr, copy.set, proposalStates(tr.doc, all), new Set([id]));
   if (tr.docChanged) editor.view.dispatch(tr.setMeta(suggestChangesKey, { skip: true }).setMeta(untracked, true));
   return [...new Set(clashing.map((c) => track.registry[c]?.source).filter((s): s is string => !!s))];
+}
+
+/**
+ * Record 0100: "use theirs" on a proposal that falls on text the author changed since sending:
+ * the co-author's version of the stretch goes into the text as their tracked change, over the
+ * author's (only the words that differ, so what both keep, such as a citation, stays). One
+ * step; the proposal is then in the text, to accept or reject.
+ */
+export function useTheirs(editor: Editor, copy: Copy, p: Proposal, zone: Zone): boolean {
+  const block = (p.anchor as { block?: string }).block;
+  const b = block ? blockIndex(editor.state.doc).get(block) : undefined;
+  if (!b || !zone.free) return false;
+  const tr = editor.state.tr;
+  const schema = tr.doc.type.schema;
+  const start = b.pos + 1 + zone.from;
+  const id = newId("ch");
+  track.registry[id] = { author: p.author, date: p.date ?? copy.set.created, origin: ORIGIN[copy.set.origin.kind] ?? "docx", source: p.id };
+  const ins = schema.marks.insertion.create({ id }), del = schema.marks.deletion.create({ id });
+  // later first, so the earlier offsets hold
+  for (const h of [...hunks(zone.mine, zone.theirs)].reverse()) {
+    const from = start + h.from, to = start + h.to;
+    const text = h.after.replaceAll(ATOM, "");
+    if (text) tr.insert(to, schema.text(text, [...tr.doc.resolve(to).marks().filter((m) => !SUGGESTION.test(m.type.name)), ins]));
+    if (to > from) tr.addMark(from, to, del);
+  }
+  if (!tr.docChanged) return false;
+  editor.view.dispatch(tr.setMeta(untracked, true));
+  return true;
 }
 
 /**

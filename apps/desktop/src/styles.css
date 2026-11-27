@@ -458,6 +458,10 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 .proposal.state-decided { opacity: 0.65; }
 .proposal-bulk { display: flex; flex-wrap: wrap; gap: 6px; }
 .proposal-note.agree { color: var(--accent); }
+/* record 0100: the three versions of a stretch */
+.three-way { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 6px 0 0; }
+.three-way dt { color: var(--text-3); }
+.three-way dd { margin: 0; font-family: var(--doc-font); }
 .copy-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
 .copy-list li { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-radius: 6px; }
 .copy-list li.hidden-copy { opacity: 0.6; }

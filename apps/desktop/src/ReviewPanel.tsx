@@ -143,7 +143,7 @@ function CopyCards({ copy, states, actions }: { copy: PanelCopy; states: Map<str
   const stateOf = (id: string) => states?.get(id);
   const decided = shown.filter((p) => stateOf(p.id)?.kind === "decided").length;
   const bringable = shown.filter((p) => stateOf(p.id)?.kind === "can-place").map((p) => p.id);
-  const decidable = shown.filter((p) => { const s = stateOf(p.id); return s && (s.kind === "in-text" || s.kind === "reverts" || s.kind === "agrees" || (s.kind === "comment" && !s.problem)); }).length;
+  const decidable = shown.filter((p) => { const s = stateOf(p.id); return s && (s.kind === "in-text" || s.kind === "reverts" || s.kind === "agrees" || s.kind === "already" || (s.kind === "comment" && !s.problem)); }).length;
   const listed = shown.filter((p) => showDecided || stateOf(p.id)?.kind !== "decided");
   const keep = (e: React.MouseEvent) => e.preventDefault();
   const act = (f: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); f(); };
@@ -169,7 +169,9 @@ function CopyCards({ copy, states, actions }: { copy: PanelCopy; states: Map<str
         <ul className="proposals">
           {listed.map((p) => {
             const s = stateOf(p.id);
+            const zone = s?.kind === "problem" || s?.kind === "already" ? s.zone : undefined;
             const problem = s?.kind === "problem" ? s.problem : s?.kind === "comment" ? s.problem : undefined;
+            const shownText = (x: string) => x.replaceAll("\ufffc", "▪") || "—";
             const body = p.kind === "comment" && p.comment ? (
               // record 0096: a new comment, or what the copy did with one sent
               <>
@@ -197,10 +199,31 @@ function CopyCards({ copy, states, actions }: { copy: PanelCopy; states: Map<str
                 {s?.kind === "conflict" && <p className="proposal-note small warn">{t("ui.proposals.conflict", { names: names(s.with) })}</p>}
                 {agreed.length > 0 && <p className="proposal-note small agree">{t("ui.proposals.agreedBy", { names: names(agreed), count: agreed.length })}</p>}
                 {clashing.length > 0 && <p className="proposal-note small warn">{t("ui.proposals.clashedBy", { names: names(clashing), count: clashing.length })}</p>}
-                {problem && <p className="proposal-note small warn">{t(`ui.proposals.problem.${problem}`)}</p>}
+                {s?.kind === "already" && <p className="proposal-note small agree">{t("ui.proposals.already")}</p>}
+                {problem && <p className="proposal-note small warn">{t(zone ? (zone.free ? "ui.proposals.problem.changedZone" : "ui.proposals.problem.changedTracked") : `ui.proposals.problem.${problem}`)}</p>}
+                {zone && s?.kind === "problem" && (
+                  // record 0100: the stretch as it was sent, as you have it, and as the co-author left it
+                  <dl className="three-way small">
+                    <dt>{t("ui.proposals.zone.base")}</dt><dd>{shownText(zone.base)}</dd>
+                    <dt>{t("ui.proposals.zone.mine")}</dt><dd>{shownText(zone.mine)}</dd>
+                    <dt>{t("ui.proposals.zone.theirs", { name: p.author.name })}</dt><dd>{shownText(zone.theirs)}</dd>
+                  </dl>
+                )}
                 {s?.kind === "decided" && <p className="proposal-note small muted"><span className="tag">{t(`ui.proposals.decision.${p.decision}`)}</span></p>}
                 {s && s.kind !== "decided" && (
                   <div className="thread-actions">
+                    {s.kind === "already" && (
+                      <>
+                        <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onAccept(p.id))}>{t("ui.proposals.markDone")}</button>
+                        <button className="btn small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                      </>
+                    )}
+                    {s.kind === "problem" && zone?.free && (
+                      <>
+                        <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onAccept(p.id))}>{t("ui.proposals.useTheirs")}</button>
+                        <button className="btn small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.keepMine")}</button>
+                      </>
+                    )}
                     {(s.kind === "in-text" || s.kind === "reverts" || s.kind === "agrees" || (s.kind === "comment" && !s.problem)) && (
                       <>
                         <button className="btn small primary" onMouseDown={keep} onClick={act(() => actions.onAccept(p.id))}>{t("ui.proposals.accept")}</button>
@@ -223,7 +246,7 @@ function CopyCards({ copy, states, actions }: { copy: PanelCopy; states: Map<str
                       <>
                         {p.after && <button className="link small" onMouseDown={keep} onClick={act(() => actions.onCopy(p.id))}>{t("ui.proposals.copy")}</button>}
                         <button className="link small" onMouseDown={keep} onClick={act(() => actions.onDone(p.id))}>{t("ui.proposals.done")}</button>
-                        <button className="link small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>
+                        {!zone?.free && <button className="link small" onMouseDown={keep} onClick={act(() => actions.onReject(p.id))}>{t("ui.proposals.reject")}</button>}
                       </>
                     )}
                   </div>
