@@ -64,6 +64,8 @@ import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } f
 import { revealIn, scrollerOf } from "./reveal.ts";
 import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
 import { baseBlocksOf, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
+import { blocksById, compareVersions, currentFiles, ensureDailySnapshot, listSnapshots, loadSnapshot, proposalsFromVersion, restoreSnapshot, saveVersionProposals, type SnapshotInfo, type VersionBlock } from "@scidesk/core";
+import { HistoryTimeline, HistoryView, useVersionName } from "./History.tsx";
 import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, type Copy, type ProposalState } from "./proposals-text.ts";
 import type { ProposalActions } from "./ReviewPanel.tsx";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
@@ -112,12 +114,12 @@ export function fitZoomFor(room: number): number {
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 // file:<path>: a table not placed in the text, in an editor of its own over its file
-type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings";
-type View = "article" | "library";
+type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings" | "history";
+type View = "article" | "library" | "history";
 type RightTab = "warnings" | "review" | "details";
 /** Record 0094: the blocks with a tracked change of their own, which carry the line in the margin. */
 const CHANGED_BLOCKS = ":is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification)";
-const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings" };
+const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings", history: "history" };
 const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
 const isTableTab = (k: string): k is `table:${string}` => k.startsWith("table:");
 const isFileTab = (k: string): k is `file:${string}` => k.startsWith("file:");
@@ -160,6 +162,13 @@ export function App() {
   const [numberingTick, setNumberingTick] = useState(0);
   // record 0097: the returned copies of the article on screen, in the order they go into the text, and the ones hidden
   const [copies, setCopies] = useState<{ folder: string; list: Copy[]; order: string[]; hidden: string[] } | null>(null);
+  // record 0099: the article's versions, the one chosen, what it is compared with and the comparison
+  const [versions, setVersions] = useState<SnapshotInfo[] | null>(null);
+  const [versionSel, setVersionSel] = useState<string | null>(null);
+  const [versionAgainst, setVersionAgainst] = useState("current");
+  const [versionBlocks, setVersionBlocks] = useState<VersionBlock[] | null>(null);
+  const [namingTick, setNamingTick] = useState(0);
+  const dailyDone = useRef("");
   const [report, setReport] = useState<CheckReport | null>(null);
   const [outline, setOutline] = useState<ArticleOutline | null>(null);
   const [uses, setUses] = useState<Map<string, number>>(new Map());
@@ -541,6 +550,9 @@ export function App() {
     setSaving(true);
     const version = editVersion.current;
     try {
+      // record 0099: the article as it was before the day's first save
+      const day = `${project.manifest.id}:${article.folder}:${new Date().toDateString()}`;
+      if (dailyDone.current !== day) { dailyDone.current = day; await ensureDailySnapshot(project, article.folder).catch(() => null); }
       await saveComposite(project, article, editor.getJSON() as PMNode, { changes: track.registry, comments: comments.registry });
       if (version === editVersion.current) {
         // everything on screen is on disk: nothing left to recover
@@ -789,11 +801,13 @@ export function App() {
       if (k === docTab) void switchArticle(docs.find((d) => d !== k)!.slice(4));
     } else if (tab === k) setTab(docTab);
     if (k === "library" && view === "library") setView("article");
+    if (k === "history" && view === "history") setView("article");
   };
   const chooseView = (v: View) => {
     setView(v);
     if (!settings.left) updateSettings({ left: true });
-    openTab(v === "library" ? "library" : docTab);
+    openTab(v === "library" ? "library" : v === "history" ? "history" : docTab);
+    if (v === "history") void loadVersions();
   };
   const showRight = (r: RightTab) => { setRightTab(r); if (!settings.right) updateSettings({ right: true }); };
   openReview.current = () => showRight("review");
@@ -985,7 +999,7 @@ export function App() {
     editor.state.doc.descendants((n) => { if (n.isText && n.marks.some((m) => types.includes(m.type))) count++; });
     if (!count) { setMessage(t("ui.adaptNothing")); return; }
     await save();
-    const snap = await saveSnapshot(project, article.folder, t("ui.adaptSnapshot"));
+    const snap = await saveSnapshot(project, article.folder, t("ui.adaptSnapshot"), { reason: "before-adapting" });
     const tr = editor.state.tr;
     for (const type of types) tr.removeMark(0, tr.doc.content.size, type);
     editor.view.dispatch(tr);
@@ -1224,6 +1238,9 @@ export function App() {
   const importReturnedCopy = async (file: File, returnedBy: string) => {
     if (!project || !article) return;
     const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
+    // record 0099: the text as it was before the copy's proposals go into it
+    await save();
+    await saveSnapshot(project, article.folder, t("ui.history.reason.before-import"), { reason: "before-import" });
     const copy: Copy = { file: r.proposalsFile, name: returnedBy, set: r.set, base: await baseBlocksOf(project, article.folder, r.set) };
     const cur = copiesRef.current?.folder === article.folder ? copiesRef.current : { folder: article.folder, list: [], order: [], hidden: [] };
     const next = { ...cur, list: [...cur.list.filter((c) => c.file !== copy.file), copy], order: [...cur.order.filter((x) => x !== copy.file), copy.file], hidden: cur.hidden.filter((x) => x !== copy.file) };
@@ -1539,6 +1556,8 @@ export function App() {
       { label: t("ui.closeProject"), onSelect: () => void closeProject(), disabled: noProject },
       "-",
       { label: t("ui.saveNow"), shortcut: keys("save"), onSelect: () => void run(save)(), disabled: noProject },
+      { label: t("ui.history.nameMenu"), onSelect: () => { chooseView("history"); setTimeout(() => setNamingTick((n) => n + 1), 0); }, disabled: noProject },
+      { label: t("ui.history.open"), onSelect: () => chooseView("history"), disabled: noProject },
       "-",
       ...exportItems.map((e) => (e === "-" || "heading" in e ? e : { ...e, hint: undefined, label: `${t("ui.exportPrefix")} ${e.label}` })),
     ] },
@@ -1578,6 +1597,7 @@ export function App() {
     { id: "view", label: t("ui.menu.view"), items: [
       { label: t("ui.views.article"), checked: view === "article", onSelect: () => chooseView("article"), disabled: noProject },
       { label: t("ui.views.library"), checked: view === "library", onSelect: () => chooseView("library"), disabled: noProject },
+      { label: t("ui.views.history"), checked: view === "history", onSelect: () => chooseView("history"), disabled: noProject },
       "-",
       { label: t("ui.preview.toggle"), checked: settings.preview, onSelect: () => updateSettings({ preview: !settings.preview }) },
       { label: t("ui.leftPanel"), checked: settings.left, onSelect: () => updateSettings({ left: !settings.left }) },
@@ -1715,7 +1735,7 @@ export function App() {
     if (!project || !article) return;
     await closeFileTab(src);
     await save();
-    const snap = await saveSnapshot(project, article.folder, t("ui.partMenu.confirm", { path: src }));
+    const snap = await saveSnapshot(project, article.folder, t("ui.partMenu.confirm", { path: src }), { reason: "before-deleting" });
     await deletePartFile(project, article.folder, src);
     await recompute();
     setMessage(t("ui.partMenu.deleted", { path: src, snapshot: snap.id }));
@@ -1906,6 +1926,7 @@ export function App() {
   const copyList = copies && copies.folder === article?.folder ? copies : null;
   const orderedCopies = copyList ? copyList.order.map((x) => copyList.list.find((c) => c.file === x)!).filter(Boolean) : [];
   const shownCopies = orderedCopies.filter((c) => !copyList!.hidden.includes(c.file));
+  const blockIndexHas = (id: string) => { let found = false; editor?.state.doc.descendants((n) => { if (found) return false; if (n.attrs.id === id) found = true; return !found; }); return found; };
   const proposalById = (id: string) => {
     for (const c of copyList?.list ?? []) { const p = c.set.proposals.find((x) => x.id === id); if (p) return { p, copy: c }; }
     return null;
@@ -2052,6 +2073,84 @@ export function App() {
       relayCopies({ ...copyList, order });
     },
   };
+
+  // ---------------------------------------------------------------- the history of versions (record 0099)
+
+  const versionName = useVersionName();
+  /** The article's versions (what is on screen saved first, so "the text as it is now" is on disk). */
+  const loadVersions = async (select?: string) => {
+    if (!project || !article) return;
+    await save();
+    const list = await listSnapshots(project.fs, article.folder);
+    setVersions(list);
+    setVersionSel((cur) => select ?? (cur && list.some((x) => x.id === cur) ? cur : list[0]?.id ?? null));
+  };
+  useEffect(() => { setVersions(null); setVersionSel(null); setVersionAgainst("current"); }, [project, article?.folder]);
+  // the comparison, worked out again when the version or what it is compared with changes
+  useEffect(() => {
+    if (!project || !article || !versionSel || view !== "history") { setVersionBlocks(null); return; }
+    let gone = false;
+    setVersionBlocks(null);
+    void (async () => {
+      const sel = versions?.find((x) => x.id === versionSel);
+      const other = versionAgainst === "current" ? null : versions?.find((x) => x.id === versionAgainst);
+      const a = (await loadSnapshot(project.fs, versionSel)).files;
+      const b = other ? (await loadSnapshot(project.fs, other.id)).files : currentFiles(project, article.folder);
+      // the older one first
+      const swap = !!(other && sel && new Date(other.created) < new Date(sel.created));
+      const blocks = swap ? compareVersions(b, a, article.folder) : compareVersions(a, b, article.folder);
+      if (!gone) setVersionBlocks(blocks);
+    })().catch((e) => { if (!gone) setError(String(e)); });
+    return () => { gone = true; };
+  }, [project, article?.folder, versionSel, versionAgainst, versions, view, lastSaved]); // eslint-disable-line react-hooks/exhaustive-deps
+  const nameVersion = async (name: string) => {
+    if (!project || !article) return;
+    await save();
+    const s = await saveSnapshot(project, article.folder, name, { kind: "named", ...(settings.userName.trim() ? { author: { name: settings.userName.trim() } } : {}) });
+    await loadVersions(s.id);
+    setMessage(t("ui.history.saved", { name }));
+  };
+  /** Restores the whole version chosen; the text as it was goes to the history first, and the message can undo it. */
+  const restoreVersion = run(async (id: string) => {
+    if (!project || !article) return;
+    const v = versions?.find((x) => x.id === id);
+    await save();
+    const folder = article.folder;
+    const author = settings.userName.trim() ? { name: settings.userName.trim() } : undefined;
+    const r = await restoreSnapshot(project, folder, id, { label: t("ui.history.reason.before-restore"), ...(author ? { author } : {}) });
+    await show(await loadProject(project.fs), place.current, folder);
+    setMessage(t("ui.history.restored", { name: v ? versionName(v) : id }), null, {
+      label: t("ui.undo"),
+      run: () => void (async () => {
+        const p = await loadProject(project.fs);
+        await restoreSnapshot(p, folder, r.before, { label: t("ui.history.reason.before-restore"), ...(author ? { author } : {}) });
+        await show(await loadProject(project.fs), place.current, folder);
+        setMessage(t("ui.history.unrestored"));
+      })(),
+    });
+  });
+  /** Brings blocks of the version chosen back into the text as proposals, as a returned copy's. */
+  const bringFromVersion = run(async (ids: string[], what: string) => {
+    const v = versions?.find((x) => x.id === versionSel);
+    if (!project || !article || !editor || !v || !ids.length) return;
+    await save();
+    const folder = article.folder;
+    const now = await saveSnapshot(project, folder, t("ui.history.reason.before-bringing"), { reason: "before-bringing" });
+    const old = (await loadSnapshot(project.fs, v.id)).files;
+    const name = t("ui.history.versionAuthor", { name: versionName(v), date: new Date(v.created).toLocaleDateString(i18n.language) });
+    const set = proposalsFromVersion(now.files, old, folder, ids, { snapshot: now.id, name, version: v.id });
+    if (!set.proposals.length) { setMessage(t("ui.history.nothingToBring")); return; }
+    const file = await saveVersionProposals(project, folder, set, v.id);
+    const base = blocksById(Object.entries(now.files).filter(([p]) => p.startsWith(`articles/${folder}/`) && /\.(scidoc|scitable|scifigure)$/.test(p)).map(([, x]) => JSON.parse(x).doc as PMNode));
+    const copy: Copy = { file, name, set, base };
+    const cur = copiesRef.current?.folder === folder ? copiesRef.current : { folder, list: [], order: [], hidden: [] };
+    setCopiesNow({ ...cur, list: [...cur.list, copy], order: [...cur.order, file], hidden: cur.hidden });
+    chooseView("article");
+    const placed = bringIntoText(editor, copy, [...cur.list, copy]);
+    if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
+    showRight("review");
+    setMessage(t("ui.history.brought", { what, count: placed.length, name: versionName(v) }));
+  });
 
   /** Record 0090: on a tracked change, accepting or rejecting it comes first. */
   const contextItems = (): MenuEntry[] => {
@@ -2261,7 +2360,7 @@ export function App() {
       const u = outline?.unplaced.find((x) => x.src === k.slice(5));
       return `${u?.caption || k.slice(5)} · ${t("ui.unplacedShort")}`;
     }
-    if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : t("ui.settings");
+    if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : k === "history" ? t("ui.history.title") : t("ui.settings");
     const a = project?.articles.find((x) => x.folder === k.slice(4));
     const title = a === article ? outline?.title?.text : a ? savedTitle(a) : "";
     return title || t("ui.manuscript");
@@ -2306,9 +2405,9 @@ export function App() {
       )}
       <div className="workspace">
         <nav className="viewbar" aria-label={t("ui.views.label")}>
-          {(["article", "library"] as View[]).map((v) => (
+          {(["article", "library", "history"] as View[]).map((v) => (
             <button key={v} className={`view-button${view === v && project ? " active" : ""}`} aria-pressed={view === v && !!project} disabled={!project} onClick={() => chooseView(v)}>
-              <Icon name={v === "article" ? "article" : "library"} size={20} /><span>{t(`ui.views.${v}`)}</span>
+              <Icon name={v === "article" ? "article" : v === "library" ? "library" : "history"} size={20} /><span>{t(`ui.views.${v}`)}</span>
             </button>
           ))}
         </nav>
@@ -2327,6 +2426,8 @@ export function App() {
                   }}
                   onSectionMenu={(block, x, y) => { if (!editor) return; const i = headingIndex(editor.state.doc, block); if (i >= 0) setFloatMenu({ x, y, items: sectionItems(i, x, y), label: t("ui.sections.section") }); }}
                   articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} onNewArticle={() => void newArticle()} />
+              : view === "history"
+              ? <HistoryTimeline versions={versions} selected={versionSel} onSelect={(id) => { setVersionSel(id); openTab("history"); }} onName={nameVersion} naming={namingTick} />
               : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} onSyncZotero={() => void syncZotero(false)} />}
           </aside>
         )}
@@ -2408,6 +2509,13 @@ export function App() {
                 register={(src, flush) => { if (flush) unplacedFlush.current.set(src, flush); else unplacedFlush.current.delete(src); }} />
             </div>
           ))}
+          {project && tab === "history" && (
+            <div className="tab-body history-tab">
+              <HistoryView versions={versions} selected={versionSel} against={versionAgainst} onAgainst={setVersionAgainst} blocks={versionBlocks}
+                onRestore={() => { if (versionSel) void restoreVersion(versionSel); }} onBring={(ids, what) => void bringFromVersion(ids, what)}
+                onGo={(b) => { if (editor && blockIndexHas(b)) { chooseView("article"); goToBlock(b); } }} />
+            </div>
+          )}
           {project && tab === "library" && (
             <div className="tab-body library-tab">
               <LibraryPanel project={project} version={libraryVersion} uses={uses} onChanged={libraryChanged} onDelete={removeReference} filter={libraryFilter}

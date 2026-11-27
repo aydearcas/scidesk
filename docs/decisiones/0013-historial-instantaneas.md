@@ -30,4 +30,4 @@ La v0.4 guardaba cada archivo por separado, una vez por contenido distinto (`.sc
 - Recuperar un párrafo o una sección de una versión antigua llega como propuesta ([0019](0019-modelo-unico-de-propuestas.md)).
 - [Después] "Exportar el historial a un repositorio git".
 - El usuario puede usar git por su cuenta sobre la carpeta del proyecto; solo tiene que ignorar `.scidesk/`.
-- Detalle en PLAN.md, 6.4.
+- Detalle en PLAN.md, 6.4. Formato definitivo, vista «Historial», restaurar y traer un párrafo: ficha [0099](0099-historial-de-versiones-con-nombre.md).

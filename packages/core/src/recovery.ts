@@ -135,7 +135,7 @@ export class Recovery {
   async apply(p: PendingRecovery): Promise<{ snapshot: string | null }> {
     const art = this.project.articles.find((a) => a.folder === p.entry.article);
     if (!art) throw new Error(`no article ${p.entry.article}`);
-    const snapshot = p.state === "disk-changed" ? (await saveSnapshot(this.project, art.folder, "Antes de recuperar cambios sin guardar")).id : null;
+    const snapshot = p.state === "disk-changed" ? (await saveSnapshot(this.project, art.folder, "Antes de recuperar cambios sin guardar", { reason: "before-recovery" })).id : null;
     await saveDocument(this.project, art, p.entry.path, p.entry.file);
     await this.store.remove(p.key);
     return { snapshot };

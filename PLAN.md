@@ -869,7 +869,7 @@ Cada parte termina con algo usable, y la 2a prueba el modelo de propuestas antes
 - **[Hecho, fichas 0095 a 0097]** Importar una copia devuelta con control de cambios y comentarios, verla en la vista de propuestas (6.5), y aceptar y rechazar.
 - ~~Citas de Zotero, Mendeley y EndNote de un Word importado convertidas en citas vivas (R1).~~ Pasan al final de la fase 2, después de la 2b (decisión del usuario del 23/11, ficha 0090).
 - **[Hecho, fichas 0090 y 0094]** Control de cambios y comentarios en el editor.
-- Historial de versiones con nombre (P15).
+- **[Hecho, ficha 0099]** Historial de versiones con nombre (P15).
 - **Terminado cuando:** un coautor o un revisor lingüístico te devuelve una copia con control de cambios y comentarios, y la integras sin perder citas ni formato.
 
 **Fase 2b: la ronda completa.**

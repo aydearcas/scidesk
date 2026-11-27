@@ -10,6 +10,7 @@
 // preview, later). Compiling is not done here: a TypstCompiler is given (Rust in the app,
 // the scidesk-pdf binary on the command line).
 import type { JournalProfileFile, PMNode } from "@scidesk/formats";
+import { saveSnapshot } from "./snapshot.ts";
 import { renderCitations, runFormat, type CitationResources, type Run } from "./citations.ts";
 import { acceptedView, composite, imageSize, label, noteLetters, numbering, styleResources } from "./docx-export.ts";
 import { sameLang } from "./lang.ts";
@@ -351,6 +352,8 @@ export interface PdfResult { bytes: Uint8Array; path: string; pages: number; war
 export async function exportPdf(project: Project, folder: string, res: CitationResources, compile: TypstCompiler, opts: { standard?: PdfStandard; date?: Date } = {}): Promise<PdfResult> {
   const bundle = await manuscriptTypst(project, folder, res, opts);
   const r = await compile(bundle, opts.standard ?? "tagged");
+  // record 0099: what went to the journal stays in the history too
+  await saveSnapshot(project, folder, "PDF para la revista", { kind: "sent", reason: "journal-pdf" });
   // Typst warns about every family of the font list it does not find: only the journal's
   // font (and its free equivalents) all missing is worth saying
   const wanted = fontList(documentFontsOf(project, folder).journal.family);

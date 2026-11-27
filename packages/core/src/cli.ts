@@ -52,6 +52,8 @@ import { checkAuthorship, displayName } from "./authorship.ts";
 import { checkArticle, ignoreWarning, restoreWarning, setCountTableWords } from "./checks.ts";
 import { ignoreWord, spellingReport, unignoreWord } from "./spelling.ts";
 import { articleComments } from "./comments.ts";
+import { listSnapshots, loadSnapshot, saveSnapshot } from "./snapshot.ts";
+import { compareVersions, currentFiles, restoreSnapshot } from "./history.ts";
 import { defaultBlindReplacement, setBlindOmitted, setBlindReplacement } from "./blinding.ts";
 import { titlePageModel } from "./title-page.ts";
 import { sectionNumberingOf, sectionNumbers, setSectionNumbering, type SectionNumbering } from "./sections.ts";
@@ -90,7 +92,7 @@ async function main() {
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show|comments> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
+    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show|comments|history|snapshot|compare|restore> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -366,6 +368,48 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
       }
       const resolved = all.length - all.filter((c) => !c.record.resolved).length;
       console.log(`${all.length} ${all.length === 1 ? "comentario" : "comentarios"}${resolved ? `, ${resolved} ${resolved === 1 ? "resuelto" : "resueltos"}${rest.includes("--all") ? "" : " (--all para verlos)"}` : ""}`);
+      break;
+    }
+    // record 0099: the history of versions
+    case "history": {
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      const KIND = { named: "con nombre", sent: "enviada", auto: "automática" } as const;
+      for (const s of await listSnapshots(p.fs, folder)) console.log(`${s.id}  ${s.created.slice(0, 16).replace("T", " ")}  ${KIND[s.kind].padEnd(10)}  ${s.label}${s.author ? ` (${s.author.name})` : ""}`);
+      break;
+    }
+    case "snapshot": {
+      const name = positional[0];
+      if (!name) throw new Error("usage: scidesk snapshot <dir> <name> [--author <name>] [--article main]");
+      const p = await loadProject(fs);
+      const author = opt("author", "");
+      const s = await saveSnapshot(p, opt("article", "main")!, name, { kind: "named", ...(author ? { author: { name: author } } : {}) });
+      console.log(`versión «${name}» guardada: ${s.id}`);
+      break;
+    }
+    case "compare": {
+      const [a, b] = rest.filter((x) => /^s-/.test(x));
+      if (!a) throw new Error("usage: scidesk compare <dir> <snapshot> [<newer snapshot>] [--article main]");
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      const older = (await loadSnapshot(p.fs, a)).files;
+      const newer = b ? (await loadSnapshot(p.fs, b)).files : currentFiles(p, folder);
+      const blocks = compareVersions(older, newer, folder).filter((x) => x.status !== "same");
+      const STATUS = { changed: "cambia", added: "nuevo", removed: "quitado" } as const;
+      for (const x of blocks) {
+        console.log(`${STATUS[x.status as keyof typeof STATUS]}  ${x.section ?? ""}  (${x.id})`);
+        if (x.status === "changed") for (const h of x.hunks) console.log(`  ${h.before ? `−«${h.before}» ` : ""}${h.after ? `+«${h.after}»` : ""}`);
+        else console.log(`  «${(x.before || x.after).slice(0, 100)}»`);
+      }
+      console.log(`${blocks.length} ${blocks.length === 1 ? "bloque distinto" : "bloques distintos"}`);
+      break;
+    }
+    case "restore": {
+      const id = rest.find((x) => /^s-/.test(x));
+      if (!id) throw new Error("usage: scidesk restore <dir> <snapshot> [--article main]");
+      const p = await loadProject(fs);
+      const r = await restoreSnapshot(p, opt("article", "main")!, id);
+      console.log(`restaurada ${id}: ${r.written} archivos escritos; para deshacerlo, scidesk restore ${dir} ${r.before}`);
       break;
     }
     default:

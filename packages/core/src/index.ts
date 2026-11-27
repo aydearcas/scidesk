@@ -9,6 +9,7 @@ export * from "./docx-read.ts";
 export * from "./proposals.ts";
 export * from "./round.ts";
 export * from "./proposal-place.ts";
+export * from "./history.ts";
 export * from "./resources.ts";
 export * from "./demo.ts";
 export * from "./title-page.ts";

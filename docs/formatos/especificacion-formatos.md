@@ -271,7 +271,7 @@ El ejemplo `examples/knee-oa/articles/main/rounds/ronda-1/` usa la ronda sintét
 
 El estado local de un proyecto (`projects/<id>/state.json` en `%APPDATA%\SciDesk\` o en `~/Library/Application Support/SciDesk/`) tiene esquema propio (`local-state`): dónde ha visto el equipo el proyecto, el estado de Zotero (`serverId`, versión de la biblioteca y de cada elemento) y el estado libre de la interfaz. Perderlo cuesta recalcular, nunca trabajo.
 
-**Queda para la fase 1:** el formato interno de cada instantánea de `.scidesk/history/` (va detrás de una interfaz propia, ficha 0013). Este documento fija su id (`s-…`), que usan el DOCX y las propuestas.
+**Instantáneas de `.scidesk/history/`** (ficha 0099; detrás de una interfaz propia, ficha 0013): un archivo `<id>.snapshot` por versión, escrito una vez, con el gzip de un JSON: `format: "scidesk-snapshot"`, `version: 1`, `id` (`s-…`, el que usan el DOCX y las propuestas), `created`, `at` (milisegundos), `article`, `label`, `kind` (`named`, `sent` o `auto`), `reason` opcional (`coauthors-docx`, `journal-docx`, `journal-pdf`, `daily`, `before-import`, `before-restore`, `before-bringing`, `before-recovery`, `before-adapting`, `before-deleting`), `author` opcional, `prev` (la instantánea anterior del artículo), `files` (por ruta desde la raíz del proyecto, `{ sha, in? }`: SHA-256 del contenido y, si no cambió desde la anterior, la instantánea que lo guarda) y `contents` (por SHA-256, solo el contenido nuevo). Se leen también las del formato provisional del corte vertical (`scidesk-snapshot-provisional`, con cada archivo entero).
 
 ## 9. Marcas del DOCX para coautores (fichas 0025 y 0027)
 

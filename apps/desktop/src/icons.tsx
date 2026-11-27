@@ -3,6 +3,7 @@
 const PATHS: Record<string, string> = {
   article: "M7 3h7l5 5v13H7z M14 3v5h5 M10 12h6 M10 16h6",
   library: "M5 4h4v16H5z M10 4h4v16h-4z M15.5 4.5l3.8-1 3.2 15.5-3.8 1z",
+  history: "M4 12a8 8 0 1 0 2.3-5.6 M4 4v3.5h3.5 M12 8v4.5l3 2",
   // a cog: a closed outline with eight teeth and its hole (rays around a ring read as a sun, "light mode")
   settings: "M10.21 5.34 L10.58 2.51 L13.42 2.51 L13.79 5.34 L15.45 6.02 L17.71 4.28 L19.72 6.29 L17.98 8.55 L18.66 10.21 L21.49 10.58 L21.49 13.42 L18.66 13.79 L17.98 15.45 L19.72 17.71 L17.71 19.72 L15.45 17.98 L13.79 18.66 L13.42 21.49 L10.58 21.49 L10.21 18.66 L8.55 17.98 L6.29 19.72 L4.28 17.71 L6.02 15.45 L5.34 13.79 L2.51 13.42 L2.51 10.58 L5.34 10.21 L6.02 8.55 L4.28 6.29 L6.29 4.28 L8.55 6.02z M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z",
   folder: "M3 6h6l2 2h10v11H3z",

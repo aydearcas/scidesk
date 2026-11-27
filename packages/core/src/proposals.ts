@@ -100,9 +100,9 @@ function similarity(a: string, b: string) {
   return (2 * common) / (A.length + B.length);
 }
 
-interface Hunk { from: number; to: number; before: string; after: string }
+export interface Hunk { from: number; to: number; before: string; after: string }
 /** Word diff of a against b, as hunks in a's coordinates, with step 6 (join close pieces). */
-function hunks(a: string, b: string): Hunk[] {
+export function hunks(a: string, b: string): Hunk[] {
   const out: Hunk[] = [];
   let pos = 0;
   for (const part of diffWordsWithSpace(a, b)) {

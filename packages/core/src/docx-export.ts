@@ -396,7 +396,9 @@ export async function exportDocx(project: Project, folder: string, profile: Expo
   const textWidthNow = () => (landscapeNow ? pageHeight : pageWidth) - 2 * margin;
 
   // R42: every export for co-authors saves a snapshot, the base of the three-way merge
-  const snapshot = markers ? await saveSnapshot(project, folder, "DOCX para coautores") : null;
+  const snapshot = markers ? await saveSnapshot(project, folder, "DOCX para coautores", { kind: "sent", reason: "coauthors-docx" }) : null;
+  // record 0099: what went to the journal stays in the history too
+  if (!markers) await saveSnapshot(project, folder, "Word para la revista", { kind: "sent", reason: "journal-docx" });
 
   // record 0095: each tracked change as a Word revision, with the author and date of its
   // registry (a change without one, under "SciDesk" and the date of the export); w:id is

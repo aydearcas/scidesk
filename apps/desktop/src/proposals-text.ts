@@ -110,6 +110,8 @@ export function proposalStates(doc: PMNodeType, copies: Copy[]): Map<string, Pro
   return out;
 }
 
+/** The origin a change brought from a set of proposals has in the registry. */
+const ORIGIN = { "docx-copy": "docx", history: "history", "llm-package": "llm", "conflict-copy": "conflict-copy", scidesk: "scidesk" } as const;
 const textOf = (s: string) => s.replaceAll(ATOM, "").replace(/[\r\n]+/g, " ");
 
 /**
@@ -123,6 +125,15 @@ export function placeInto(tr: Transaction, set: ProposalSetFile, states: Map<str
   type Op = { p: Proposal; from: number; to: number; run: (mark: Mark) => void };
   const ops: Op[] = [];
   const keepMarks = (pos: number) => doc.resolve(pos).marks().filter((m) => !SUGGESTION.test(m.type.name));
+  // the proposed content as nodes (with its citations and formats, record 0099), or its text
+  const inline = (p: Proposal, text: string, around: readonly Mark[], mark: Mark): PMNodeType[] => {
+    if (p.content?.length) {
+      try {
+        return (p.content as Record<string, unknown>[]).map((j) => { const n = schema.nodeFromJSON(j); return n.mark(mark.addToSet(n.marks.filter((m) => !SUGGESTION.test(m.type.name)))); });
+      } catch { /* a node this editor does not know here: the text */ }
+    }
+    return text ? [schema.text(text, [...around, mark])] : [];
+  };
   for (const p of set.proposals) {
     const s = states.get(p.id);
     if (s?.kind !== "can-place" || (which && !which.has(p.id))) continue;
@@ -133,7 +144,7 @@ export function placeInto(tr: Transaction, set: ProposalSetFile, states: Map<str
       const pos = b.pos + b.node.nodeSize;
       const $pos = doc.resolve(pos);
       const text = textOf(p.after).trim();
-      const para = (mark: Mark) => schema.nodes.paragraph.create({ id: newId("b") }, text ? schema.text(text, [mark]) : null, [mark]);
+      const para = (mark: Mark) => schema.nodes.paragraph.create({ id: newId("b") }, inline(p, text, [], mark), [mark]);
       const probe = para(schema.marks.insertion.create({ id: "ch-probe" }));
       if (!$pos.parent.canReplace($pos.index(), $pos.index(), Fragment.from(probe))) continue;
       ops.push({ p, from: pos, to: pos, run: (mark) => { tr.insert(pos, para(mark)); } });
@@ -153,7 +164,8 @@ export function placeInto(tr: Transaction, set: ProposalSetFile, states: Map<str
     if ((p.kind === "insert" || p.kind === "replace") && !text) continue;
     const marks = keepMarks(to);
     ops.push({ p, from, to, run: (mark) => {
-      if (text) tr.insert(to, schema.text(text, [...marks, mark]));
+      const nodes = inline(p, text, marks, mark);
+      if (nodes.length) tr.insert(to, Fragment.from(nodes));
       if (to > from) tr.addMark(from, to, schema.marks.deletion.create({ id: mark.attrs.id }));
     } });
   }
@@ -164,7 +176,7 @@ export function placeInto(tr: Transaction, set: ProposalSetFile, states: Map<str
   for (const op of ops) {
     if (op.to > floor) continue;
     const id = newId("ch");
-    track.registry[id] = { author: op.p.author, date: op.p.date ?? set.created, origin: "docx", source: op.p.id };
+    track.registry[id] = { author: op.p.author, date: op.p.date ?? set.created, origin: ORIGIN[set.origin.kind] ?? "docx", source: op.p.id };
     op.run(schema.marks.insertion.create({ id }));
     placed.push(op.p.id);
     floor = op.from;
@@ -213,7 +225,7 @@ export function layOut(editor: Editor, all: Copy[], shown: Copy[]): string[] {
     const ins = chs.map((c) => texts.get(c)?.ins ?? "").join("").replaceAll("\u200b", "");
     const del = chs.map((c) => texts.get(c)?.del ?? "").join("");
     const wants = p.kind === "delete-paragraph" ? { ins: "", del: p.before } : { ins: p.kind === "insert-paragraph" ? textOf(p.after).trim() : textOf(p.after), del: p.kind === "insert-paragraph" ? "" : p.before };
-    if (ins === wants.ins && del.replaceAll(ATOM, "") === wants.del.replaceAll(ATOM, "")) out.push(...chs);
+    if (ins.replaceAll(ATOM, "") === wants.ins && del.replaceAll(ATOM, "") === wants.del.replaceAll(ATOM, "")) out.push(...chs);
   }
   let state: EditorState = editor.state;
   const steps: Transaction["steps"][number][] = [];

@@ -994,3 +994,31 @@ button.nav-item.level-1.filter-all:hover { background: var(--accent-hover); }
 .quick-cite:hover .drag-grip { background: var(--text-3); }
 .btn.wizard-cancel { border-color: #8A93A0; }
 .btn.wizard-cancel:hover:not(:disabled) { border-color: var(--text-3); }
+
+/* record 0099: the history of versions */
+.history-timeline { display: flex; flex-direction: column; gap: 8px; padding: 0 10px 12px; overflow: auto; }
+.history-timeline > .panel-head { padding-left: 4px; }
+.history-timeline > .btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; }
+.versions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.versions .versions { margin: 2px 0 4px 14px; }
+.version { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; background: none; cursor: pointer; font: inherit; color: inherit; }
+.version:hover { background: var(--hover, rgba(0, 0, 0, 0.04)); }
+.version.active { border-color: var(--accent); }
+.version.kind-named .version-name, .version.kind-sent .version-name { font-weight: 600; }
+.version.kind-sent .version-name::before { content: "↗ "; color: var(--accent); }
+.version.kind-auto .version-name { color: var(--text-2, inherit); }
+.version-day > .link { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; }
+.version-new { display: flex; flex-direction: column; gap: 6px; }
+.history-tab .history-view { max-width: 980px; margin: 0 auto; padding: 20px 28px 40px; display: flex; flex-direction: column; gap: 10px; }
+.history-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.history-head h2 { margin: 0; font-size: 18px; }
+.history-head p { margin: 2px 0 0; }
+.history-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.history-actions .field { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.version-blocks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.version-section { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 10px 0 2px; }
+.version-section h4 { margin: 0; font-size: 13px; color: var(--accent); }
+.version-block { cursor: pointer; }
+.version-block .tag { float: right; margin-left: 8px; }
+.version-text { margin: 0; font-family: var(--doc-font); font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.version-block .thread-actions { margin-top: 6px; }
