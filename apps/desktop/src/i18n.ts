@@ -48,6 +48,10 @@ const es = {
   corePending_one: "queda 1 pendiente en el texto (XX, ??, [REF]…)", corePending_other: "quedan {{count}} pendientes en el texto (XX, ??, [REF]…)",
   corePasteNoCaption: "la tabla pegada no tenía delante «Tabla N.»: escribe su título",
   coreUncaptioned_one: "1 tabla sin «Tabla N.» al lado: su título está vacío", coreUncaptioned_other: "{{count}} tablas sin «Tabla N.» al lado: su título está vacío",
+  coreBibMismatch: "la bibliografía del Word tiene {{entries}} entradas y sus citas citan {{refs}} referencias: las citas se quedan como texto (revísalas en Word)",
+  coreCitesUnread_one: "1 cita no lleva los datos de su referencia (sin formatear, o de Mendeley Cite): se queda como texto", coreCitesUnread_other: "{{count}} citas no llevan los datos de su referencia (sin formatear, o de Mendeley Cite): se quedan como texto",
+  coreBibText: "la bibliografía ha entrado como texto", coreNoTitle: "ningún párrafo tiene el estilo Título: el título es el nombre del archivo",
+  fromWordCitations_one: "1 cita viva de {{manager}}, con {{refs}} referencias en la biblioteca", fromWordCitations_other: "{{count}} citas vivas de {{manager}}, con sus {{refs}} referencias en la biblioteca",
   checksTab: "Comprobaciones", checksPending: "Calculando…", noWarnings: "Ningún aviso.", goTo: "Ir", addNamed: "Añadir «{{section}}»", beforeReferences: " (antes de la bibliografía)", restoreWarning: "Restaurar", ignoreNote: "Nota (opcional)",
   ignoredCount_one: "1 aviso ignorado", ignoredCount_other: "{{count}} avisos ignorados", inAbstract: "en el resumen", inPart: "en {{path}}", inAlt: "en el texto alternativo de la figura",
   tableWords: {
@@ -520,6 +524,10 @@ const en: typeof es = {
   corePending_one: "1 pending marker left in the text (XX, ??, [REF]…)", corePending_other: "{{count}} pending markers left in the text (XX, ??, [REF]…)",
   corePasteNoCaption: "the pasted table had no “Table N.” before it: write its title",
   coreUncaptioned_one: "1 table without “Tabla N.” next to it: its title is empty", coreUncaptioned_other: "{{count}} tables without “Tabla N.” next to them: their titles are empty",
+  coreBibMismatch: "the Word’s bibliography has {{entries}} entries and its citations cite {{refs}} references: the citations stay as text (check them in Word)",
+  coreCitesUnread_one: "1 citation carries no data of its reference (unformatted, or from Mendeley Cite): it stays as text", coreCitesUnread_other: "{{count}} citations carry no data of their references (unformatted, or from Mendeley Cite): they stay as text",
+  coreBibText: "the bibliography came in as text", coreNoTitle: "no paragraph has the Title style: the title is the file name",
+  fromWordCitations_one: "1 live citation from {{manager}}, with {{refs}} references in the library", fromWordCitations_other: "{{count}} live citations from {{manager}}, with their {{refs}} references in the library",
   checksTab: "Checks", checksPending: "Computing…", noWarnings: "No warnings.", goTo: "Go", addNamed: "Add “{{section}}”", beforeReferences: " (before the references)", restoreWarning: "Restore", ignoreNote: "Note (optional)",
   ignoredCount_one: "1 ignored warning", ignoredCount_other: "{{count}} ignored warnings", inAbstract: "in the abstract", inPart: "in {{path}}", inAlt: "in the figure’s text alternative",
   tableWords: {

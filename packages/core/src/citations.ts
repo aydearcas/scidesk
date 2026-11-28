@@ -20,6 +20,8 @@ export interface Run {
   font?: string; size?: number;
   /** Record 0060: the language of a fragment (a `lang` mark), as a BCP 47 tag. */
   lang?: string;
+  /** Record 0104: in a Word document read, a citation field (its number among the fields read). */
+  cite?: number;
 }
 
 /** The marks of a text node as a run's format (the same in every export). */

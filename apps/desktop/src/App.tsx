@@ -144,6 +144,13 @@ function coreWarning(w: string, t: TFunction): string {
   if (/^the pasted table has no "Tabla N\." caption/.test(w)) return t("corePasteNoCaption");
   m = /^(\d+) table\(s\) without a "Tabla N\." caption/.exec(w);
   if (m) return t("coreUncaptioned", { count: Number(m[1]) });
+  // record 0104: the citations of a Word
+  m = /^the document's bibliography has (\d+) entries but its citations cite (\d+) references/.exec(w);
+  if (m) return t("coreBibMismatch", { entries: Number(m[1]), refs: Number(m[2]) });
+  m = /^(\d+) citation\(s\) carry no reference data/.exec(w);
+  if (m) return t("coreCitesUnread", { count: Number(m[1]) });
+  if (/^the bibliography came in as text/.test(w)) return t("coreBibText");
+  if (/^no paragraph with the Title style/.test(w)) return t("coreNoTitle");
   return w;
 }
 const coreWarnings = (ws: string[], t: TFunction) => ws.map((w) => coreWarning(w, t)).join("; ");
@@ -632,7 +639,10 @@ export function App() {
     if (!target) return;
     const { project: p, report } = await projectFromWord(target.fs, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, checkLang: checkWords });
     await show(p, target.path);
-    setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures }) + (report.warnings.length ? ` — ${coreWarnings(report.warnings, t)}` : ""));
+    setMessage(t("fromWordDone", { headings: report.headings, tables: report.tables, figures: report.figures })
+      // record 0104: the citations that came in live
+      + (report.citations ? `. ${t("fromWordCitations", { count: report.citations, refs: report.references, manager: ({ endnote: "EndNote", zotero: "Zotero", mendeley: "Mendeley" } as const)[report.citationManager ?? "zotero"] })}` : "")
+      + (report.warnings.length ? ` — ${coreWarnings(report.warnings, t)}` : ""));
   });
   const open = run(async () => {
     if (!inTauri) return;

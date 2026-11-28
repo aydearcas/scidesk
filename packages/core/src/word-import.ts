@@ -4,8 +4,9 @@
 // (merged cells, header rows, alignment, relative widths) as .scitable with the caption
 // recognised by "Tabla 1." / "Table 1", their notes, and images extracted to figures/ with
 // "Figura 1." captions. Cross-references written as "tabla 2" become live cross-references.
-// Tracked changes are taken as accepted. Citations stay as their text for now: turning
-// EndNote, Zotero and Mendeley fields into live citations is phase 2 (record 0028).
+// Tracked changes are taken as accepted. Record 0104: the citations of EndNote, Zotero and
+// Mendeley Desktop become live citations, with their references in the library, when they
+// match the document's own bibliography (record 0028); else they stay as their text.
 // Styles are recognised by their built-in name (Word localises the ids: "Ttulo1").
 import type { Run } from "./citations.ts";
 import { DOMParser, type Element, type Node } from "@xmldom/xmldom";
@@ -15,6 +16,12 @@ import type { ProjectFs } from "./fs.ts";
 import { createProject, loadProject, saveDocument, type Project } from "./project.ts";
 import { cleanLangMarks, normalLang, verifyLangMarks, type LangCheck } from "./lang.ts";
 import { roleFromName } from "./sections.ts";
+import { fieldKind, endnoteToCsl, readCitationField, type CitationManager, type FieldCitation } from "./word-citations.ts";
+import { normalizeCsl } from "./library-import.ts";
+import { now, saveJson } from "./project.ts";
+import { setCitationStyle } from "./library.ts";
+import { bundledStyle } from "./resources.ts";
+import { LOCATOR_LABELS, validate } from "@scidesk/formats";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const kids = (n: Node): Element[] => {
@@ -43,11 +50,20 @@ const FIGURE_CAPTION = /^\s*(figura|figure|fig\.)\s*(\d+)\s*[.:\-–—]?\s*/i;
 export const NOTE_START = /^\s*((abreviaturas|abbreviations|notas?|notes?|fuente|source)\b|[a-z*†‡§¶][.)]?\s|[A-Z][A-Za-z0-9-]{0,11}\s?:\s)/;
 const IMAGE_EXT: Record<string, string> = { png: "png", jpg: "jpg", jpeg: "jpg", gif: "gif", tif: "tiff", tiff: "tiff", svg: "svg", eps: "eps", pdf: "pdf" };
 
-interface Para { kind: "p"; style: string; outline: number | null; runs: Run[]; text: string; list: { num: string; ordered: boolean } | null; images: string[]; align: string | null; indent: number | null }
+interface Para { kind: "p"; style: string; outline: number | null; runs: Run[]; text: string; list: { num: string; ordered: boolean } | null; images: string[]; align: string | null; indent: number | null; bibliography?: boolean }
 interface Tbl { kind: "t"; rows: { header: boolean; cells: { colspan: number; vmerge: "restart" | "continue" | null; paras: Para[]; align: string | null }[] }[]; grid: number[] }
 type Item = Para | Tbl;
 
-export interface WordImportReport { title: string; headings: number; paragraphs: number; tables: number; figures: number; abstract: boolean; abstractLanguages: string[]; crossReferences: number; warnings: string[] }
+export interface WordImportReport {
+  title: string; headings: number; paragraphs: number; tables: number; figures: number; abstract: boolean; abstractLanguages: string[]; crossReferences: number; warnings: string[];
+  /** Record 0104: the citations that came in live, the references they cite, from which manager, and the style chosen. */
+  citations: number; references: number; citationManager: CitationManager | null; citationStyle: string | null;
+}
+
+/** A field of the document being read: its code, what it shows (a citation's runs) and the fields inside its code. */
+interface OpenField { instr: string; data: string; phase: "instr" | "result"; kind: ReturnType<typeof fieldKind> | null; deleted: boolean; runs: Run[]; children: OpenField[] }
+/** A citation field read, with the runs it showed (its text, if it cannot become a live citation). */
+interface WordCitation { field: FieldCitation | null; runs: Run[] }
 
 /** Reads a DOCX as a flat list of paragraphs and tables, with the style names resolved. */
 async function readWord(bytes: Uint8Array) {
@@ -85,6 +101,10 @@ async function readWord(bytes: Uint8Array) {
   for (const m of (relsXml ?? "").matchAll(/<Relationship [^>]*Target="([^"]+)"[^>]*Id="([^"]+)"/g)) rels.set(m[2], m[1]);
 
   const images = new Map<string, { bytes: Uint8Array; ext: string }>();
+  // record 0104: the fields open, outermost first (a bibliography spans paragraphs), and the citations read
+  const open: OpenField[] = [];
+  const citations: WordCitation[] = [];
+  const isCitation = (k: OpenField["kind"]) => k === "endnote" || k === "zotero" || k === "mendeley";
   /** Record 0069: a paragraph's own left indent in steps of 1.25 cm (709 twips), without a hanging indent. */
   function indentOf(ind: Element | undefined): number | null {
     if (!ind || attr(ind, "hanging")) return null;
@@ -99,7 +119,7 @@ async function readWord(bytes: Uint8Array) {
     const numPr = child(pPr, "numPr");
     const numId = attr(child(numPr, "numId"), "val");
     const P: Para = { kind: "p", style: info.name, outline: outlineHere ? Number(outlineHere) : info.outline, runs: [], text: "", list: numId && numId !== "0" ? { num: numId, ordered: ordered.has(numId) } : null, images: [], align: attr(child(pPr, "jc"), "val") || null, indent: indentOf(child(pPr, "ind")) };
-    let inFieldCode = 0;
+    if (open.some((x) => x.phase === "result" && x.kind === "bibliography")) P.bibliography = true;
     const run = (r: Element, deleted: boolean) => {
       const rPr = child(r, "rPr");
       const on = (n: string) => { const e = child(rPr, n); return !!e && !["0", "false", "off"].includes(attr(e, "val")); };
@@ -118,8 +138,29 @@ async function readWord(bytes: Uint8Array) {
       };
       for (const e of kids(r)) {
         const ln = e.localName;
-        if (ln === "fldChar") { const t = attr(e, "fldCharType"); if (t === "begin") inFieldCode++; else if (t === "separate" && inFieldCode) inFieldCode--; continue; }
-        if (ln === "instrText" || inFieldCode || deleted) continue; // field codes never; field results yes
+        if (ln === "fldChar") {
+          const t = attr(e, "fldCharType");
+          if (t === "begin") open.push({ instr: "", data: (child(e, "fldData")?.textContent ?? "").replace(/\s/g, ""), phase: "instr", kind: null, deleted, runs: [], children: [] });
+          else if (t === "separate" && open.length) {
+            const x = open.at(-1)!;
+            x.phase = "result";
+            x.kind = fieldKind(x.instr);
+            if (x.kind === "bibliography") P.bibliography = true;
+          } else if (t === "end" && open.length) {
+            const x = open.pop()!;
+            x.kind ??= fieldKind(x.instr);
+            if (open.length) open.at(-1)!.children.push(x);
+            // a citation: one marker in the text, its reference data apart (EndNote's long XML in its EN.CITE.DATA)
+            if (isCitation(x.kind) && !x.deleted) {
+              const data = x.data || x.children.find((c) => fieldKind(c.instr) === "endnote-data")?.data || "";
+              citations.push({ field: readCitationField(x.instr, data), runs: x.runs });
+              pushRun({ text: "\ufffc", cite: citations.length - 1 });
+            }
+          }
+          continue;
+        }
+        if (ln === "instrText" || ln === "delInstrText") { const x = open.at(-1); if (x?.phase === "instr" && !deleted) x.instr += e.textContent ?? ""; continue; }
+        if (deleted || open.some((x) => x.phase === "instr")) continue; // field codes never; field results yes
         if (ln === "t") push(e.textContent ?? "", f);
         else if (ln === "tab") push("\t", f);
         else if (ln === "br" && attr(e, "type") !== "page") push(" ", f);
@@ -135,9 +176,16 @@ async function readWord(bytes: Uint8Array) {
     };
     const push = (text: string, f: Omit<Run, "text">) => {
       if (!text) return;
-      const last = P.runs.at(-1);
-      if (last && sameFormat(last, f)) last.text += text;
-      else P.runs.push({ text, ...f });
+      // what a citation shows goes with the citation
+      const sink = [...open].reverse().find((x) => x.phase === "result" && isCitation(x.kind));
+      const runs = sink ? sink.runs : P.runs;
+      const last = runs.at(-1);
+      if (last && last.cite === undefined && sameFormat(last, f)) last.text += text;
+      else runs.push({ text, ...f });
+    };
+    const pushRun = (r: Run) => {
+      const sink = [...open].reverse().find((x) => x.phase === "result" && isCitation(x.kind));
+      (sink ? sink.runs : P.runs).push(r);
     };
     const walk = (n: Element, deleted: boolean) => {
       for (const e of kids(n)) {
@@ -182,19 +230,25 @@ async function readWord(bytes: Uint8Array) {
     const f = zip.file(`word/${target}`);
     if (f) images.set(target, { bytes: await f.async("uint8array"), ext: (/\.([a-z0-9]+)$/i.exec(target)?.[1] ?? "").toLowerCase() });
   }
-  return { items, images };
+  // record 0104: the style of a Zotero document (its ZOTERO_PREF properties)
+  const custom = await zip.file("docProps/custom.xml")?.async("string");
+  const prefs = custom ? [...custom.matchAll(/name="ZOTERO_PREF_\d+"[^>]*>\s*<vt:lpwstr>([^<]*)<\/vt:lpwstr>/g)].map((m) => m[1]).join("") : "";
+  const zoteroStyle = /&lt;style id=&quot;([^&]+)&quot;|<style id="([^"]+)"/.exec(prefs);
+  return { items, images, citations, zoteroStyle: zoteroStyle ? zoteroStyle[1] ?? zoteroStyle[2] : null };
 }
 
 /** Two runs with the same format (they can be one). */
 export const sameFormat = (a: Omit<Run, "text">, b: Omit<Run, "text">) =>
   !!a.bold === !!b.bold && !!a.italic === !!b.italic && !!a.sup === !!b.sup && !!a.sub === !!b.sub && !!a.underline === !!b.underline && a.color === b.color && a.highlight === b.highlight && a.lang === b.lang;
-export const inline = (runs: Run[]): PMNode[] => runs.filter((r) => r.text).map((r) => {
+export const inline = (runs: Run[], cite?: (i: number) => PMNode[]): PMNode[] => runs.filter((r) => r.text).flatMap((r): PMNode[] => {
+  // record 0104: a citation field (only where the reader passes how to make it)
+  if (r.cite !== undefined) return cite ? cite(r.cite) : [];
   const marks = [
     r.bold && { type: "bold" }, r.italic && { type: "italic" }, r.underline && { type: "underline" }, r.sup && { type: "superscript" }, r.sub && { type: "subscript" },
     r.color && { type: "textColor", attrs: { color: r.color.toUpperCase() } }, r.highlight && { type: "highlight", attrs: { color: r.highlight } },
     r.lang && { type: "lang", attrs: { lang: r.lang } },
   ].filter(Boolean) as { type: string; attrs?: Record<string, unknown> }[];
-  return marks.length ? { type: "text", text: r.text, marks } : { type: "text", text: r.text };
+  return [marks.length ? { type: "text", text: r.text, marks } : { type: "text", text: r.text }];
 });
 /** Runs without a leading pattern (the "Tabla 1. " of a caption). */
 export function stripLead(runs: Run[], re: RegExp): Run[] {
@@ -216,8 +270,61 @@ export function stripLead(runs: Run[], re: RegExp): Run[] {
  * is; nothing of it is sent anywhere.
  */
 export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { fileName: string; name?: string; lang?: string; checkLang?: LangCheck }): Promise<{ project: Project; report: WordImportReport }> {
-  const { items, images } = await readWord(bytes);
+  const { items, images, citations, zoteroStyle } = await readWord(bytes);
   const warnings: string[] = [];
+
+  // --- record 0104: the references of the citations, in order of first citation, and whether to trust them
+  const date = now();
+  const refs = new Map<string, string>(); // manager:key -> r- id
+  const entries: { id: string; csl: Record<string, unknown>; added: string; source: Record<string, unknown> }[] = [];
+  const failed = new Set<string>();
+  let manager: CitationManager | null = null;
+  for (const c of citations) {
+    if (!c.field) continue;
+    manager ??= c.field.manager;
+    for (const x of c.field.cites) {
+      const key = `${c.field.manager}:${x.key}`;
+      if (refs.has(key) || failed.has(key) || !x.record) continue;
+      const first = c.field.manager === "endnote" ? endnoteToCsl(x.record) : { csl: x.record, unmapped: {} };
+      const { csl, unmapped } = normalizeCsl(first.csl);
+      const extra = { ...first.unmapped, ...unmapped };
+      const id = newId("r");
+      const entry = { id, csl, added: date, source: { kind: `${c.field.manager}-field`, file: opts.fileName, key: x.key, date, ...(Object.keys(extra).length ? { unmapped: extra } : {}) } };
+      if (validate("library", { schemaVersion: 1, references: [entry] }).length) { failed.add(key); continue; }
+      refs.set(key, id);
+      entries.push(entry);
+    }
+  }
+  // checked against the document's own bibliography before anything is replaced (record 0028)
+  const bibEntries = items.filter((i): i is Para => i.kind === "p" && !!i.bibliography && !!i.text.trim()).length;
+  const resolvable = (c: WordCitation) => !!c.field && c.field.cites.every((x) => refs.has(`${c.field!.manager}:${x.key}`));
+  const live = entries.length > 0 && (bibEntries === 0 || bibEntries === entries.length);
+  if (entries.length && !live) warnings.push(`the document's bibliography has ${bibEntries} entries but its citations cite ${entries.length} references: the citations stay as their text`);
+  const unread = citations.filter((c) => !resolvable(c)).length;
+  if (live && unread) warnings.push(`${unread} citation(s) carry no reference data (unformatted, or from Mendeley Cite): they stay as their text`);
+  let liveCitations = 0;
+  const LABELS_OK = new Set<string>(LOCATOR_LABELS);
+  const citeNode = (i: number): PMNode[] => {
+    const c = citations[i];
+    if (!live || !resolvable(c)) return inline(c.runs);
+    liveCitations++;
+    return [{ type: "citation", attrs: { id: newId("c"), items: c.field!.cites.map((x) => ({
+      ref: refs.get(`${c.field!.manager}:${x.key}`)!,
+      ...(x.locator ? { locator: x.locator, ...(x.label && LABELS_OK.has(x.label) ? { label: x.label } : {}) } : {}),
+      ...(x.prefix ? { prefix: x.prefix } : {}), ...(x.suffix ? { suffix: x.suffix } : {}), ...(x.suppressAuthor ? { suppressAuthor: true } : {}),
+    })) } }];
+  };
+  // the style: the Zotero document's, if SciDesk has it; else numbers (superscript or not) or author and year, as the citations show
+  let style: string | null = null;
+  if (live) {
+    if (zoteroStyle && bundledStyle(zoteroStyle)) style = zoteroStyle;
+    else {
+      const shown = citations.filter(resolvable).map((c) => ({ text: c.runs.map((r) => r.text).join("").trim(), sup: c.runs.some((r) => r.sup) }));
+      const numeric = shown.filter((x) => /^[[(]?\s*\d+(\s*[-–,;]\s*\d+)*\s*[\])]?$/.test(x.text)).length >= shown.length * 0.8;
+      const Z = "http://www.zotero.org/styles/";
+      style = numeric ? (shown.filter((x) => x.sup).length >= shown.length / 2 ? `${Z}nlm-citation-sequence-superscript` : `${Z}nlm-citation-sequence`) : `${Z}apa`;
+    }
+  }
   const headingsText = items.filter((i): i is Para => i.kind === "p" && i.outline !== null).map((p) => p.text).join(" ");
   const lang = opts.lang ?? (/\b(introducci[oó]n|m[eé]todos|resultados|discusi[oó]n|resumen|bibliograf[ií]a)\b/i.test(headingsText) || !/\b(introduction|methods|results|discussion)\b/i.test(headingsText) ? "es" : "en");
 
@@ -277,7 +384,8 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
   const XREF = /\b(tablas?|tables?|figuras?|figures?|figs?\.)\s+(\d+)\b/gi;
   const withXrefs = (runs: Run[]): PMNode[] => {
     const out: PMNode[] = [];
-    for (const node of inline(runs)) {
+    for (const node of inline(runs, citeNode)) {
+      if (node.type !== "text") { out.push(node); continue; }
       const text = node.text!;
       let last = 0;
       for (const m of text.matchAll(XREF)) {
@@ -312,6 +420,8 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
   const figureAt = new Map(figures.map((f) => [f.at, f]));
   items.forEach((it, i) => {
     if (consumed.has(i)) return;
+    // record 0104: the bibliography the manager wrote: SciDesk writes its own under the references heading
+    if (live && it.kind === "p" && it.bibliography) return;
     const t = tableAt.get(i);
     if (t) { currentList = null; body.push({ type: "tableRef", attrs: { id: tableId.get(t.number), src: `tables/tabla-${t.number}.scitable` } }); return; }
     if (it.kind === "t") return;
@@ -368,12 +478,17 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
     title.push({ type: "title", attrs: { id: newId("b"), lang }, content: [{ type: "text", text: fallback }] });
     warnings.push("no paragraph with the Title style: the file name is the title");
   }
-  if (body.some((n) => n.type === "heading" && n.attrs!.role === "references")) warnings.push("the bibliography came in as text; the citations become live citations in phase 2");
+  if (!live && body.some((n) => n.type === "heading" && n.attrs!.role === "references")) warnings.push("the bibliography came in as text");
 
   // --- the project
   const titleText = (title[0].content ?? []).map((c) => c.text).join("");
   const p = await createProject(fs, { name: opts.name ?? shortTitle(titleText, 80), fileName: opts.fileName.replace(/\.docx$/i, "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w-]+/g, "-").toLowerCase().slice(0, 40) || "articulo", title: titleText, lang });
   const art = p.articles[0];
+  // record 0104: the library of the citations, and the style they were in
+  if (live) {
+    await saveJson(p, "references/library.json", { schemaVersion: 1, references: entries });
+    if (style) await setCitationStyle(p, art.folder, style);
+  }
   // record 0060: Word's language marks, without those that repeat the language around them
   // and, with dictionaries, without those that are wrong (Spanish text marked as English)
   const envelope = async (documentType: string, doc: PMNode) => {
@@ -398,16 +513,16 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
         content: cells.filter((c) => c.vmerge !== "continue").map((c) => ({
           type: ri < headerRows ? "tableHeader" : "tableCell",
           attrs: { colspan: c.colspan, rowspan: c.vmerge === "restart" ? rowspan(ri, c.col) : 1, align: ({ center: "center", right: "right", end: "right", left: null, start: null } as Record<string, string | null>)[c.align ?? ""] ?? null },
-          content: (c.paras.length ? c.paras : [{ kind: "p", runs: [] } as unknown as Para]).map((cp) => ({ type: "paragraph", attrs: { id: newId("b"), lang: null }, ...(inline(cp.runs).length ? { content: inline(cp.runs) } : {}) })),
+          content: (c.paras.length ? c.paras : [{ kind: "p", runs: [] } as unknown as Para]).map((cp) => ({ type: "paragraph", attrs: { id: newId("b"), lang: null }, ...(inline(cp.runs, citeNode).length ? { content: inline(cp.runs, citeNode) } : {}) })),
         })),
       })).filter((r) => r.content.length),
     };
     const part: PMNode = {
       type: "tablePart", attrs: { id: tableId.get(t.number) },
       content: [
-        { type: "tableCaption", attrs: { id: newId("b"), lang: null }, ...(inline(t.caption).length ? { content: inline(t.caption) } : {}) },
+        { type: "tableCaption", attrs: { id: newId("b"), lang: null }, ...(inline(t.caption, citeNode).length ? { content: inline(t.caption, citeNode) } : {}) },
         tableNode,
-        ...t.notes.map((n) => ({ type: "tableNote", attrs: { id: newId("n"), kind: "general", lang: null }, content: inline(n.runs) })),
+        ...t.notes.map((n) => ({ type: "tableNote", attrs: { id: newId("n"), kind: "general", lang: null }, content: inline(n.runs, citeNode) })),
       ],
     };
     await saveDocument(p, art, `tables/tabla-${t.number}.scitable`, await envelope("table", part));
@@ -421,13 +536,13 @@ export async function projectFromWord(fs: ProjectFs, bytes: Uint8Array, opts: { 
     const part: PMNode = {
       type: "figurePart",
       attrs: { id: figureId.get(f.number), image: file, alt: null, credit: null, license: null },
-      content: [{ type: "figureCaption", attrs: { id: newId("b"), lang: null }, ...(inline(f.caption).length ? { content: inline(f.caption) } : {}) }],
+      content: [{ type: "figureCaption", attrs: { id: newId("b"), lang: null }, ...(inline(f.caption, citeNode).length ? { content: inline(f.caption, citeNode) } : {}) }],
     };
     await saveDocument(p, art, `figures/figura-${f.number}.scifigure`, await envelope("figure", part));
     if (!f.caption.length) warnings.push(`figure ${f.number} has no "Figura N." caption next to it`);
   }
   const project = await loadProject(fs);
-  return { project, report: { title: titleText, headings, paragraphs, tables: tables.length, figures: figures.length, abstract: sections.some((x) => x.content.length), abstractLanguages: sections.filter((x) => x.content.length).map((x) => x.lang), crossReferences, warnings } };
+  return { project, report: { title: titleText, headings, paragraphs, tables: tables.length, figures: figures.length, abstract: sections.some((x) => x.content.length), abstractLanguages: sections.filter((x) => x.content.length).map((x) => x.lang), crossReferences, warnings, citations: liveCitations, references: live ? entries.length : 0, citationManager: live ? manager : null, citationStyle: style } };
 }
 
 /** A title cut to at most `max` characters at a word, with "…" (not in the middle of a word). */
