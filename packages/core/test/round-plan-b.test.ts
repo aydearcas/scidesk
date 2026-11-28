@@ -68,6 +68,21 @@ describe("plan B: a copy that does not say which version it came from (record 01
     expect(back.set.proposals.filter((x) => x.status !== "noise-hidden").map((x) => `${x.kind} «${x.before}»→«${x.after}»`)).toEqual([]);
   });
 
+  it("keeps only what changed of a stretch replaced whole with tracking (record 0103)", async () => {
+    const p = await trackedProject();
+    const out = await exportDocx(p, "main", "coauthors", await nodeResources());
+    const zip = await JSZip.loadAsync(out.bytes);
+    const xml = await zip.file("word/document.xml")!.async("string");
+    const R = 'w:author="Marta Ríos Navarro" w:date="2026-11-27T09:00:00Z"';
+    // as Word's find and replace leaves it: the whole stretch deleted and written again
+    zip.file("word/document.xml", xml.replace('<w:r><w:t xml:space="preserve">Primera mitad.</w:t></w:r>',
+      `<w:del w:id="9101" ${R}><w:r><w:delText xml:space="preserve">Primera mitad.</w:delText></w:r></w:del><w:ins w:id="9102" ${R}><w:r><w:t xml:space="preserve">Primera mitad, revisada.</w:t></w:r></w:ins>`));
+    const back = await importCopy(p, "main", await zip.generateAsync({ type: "uint8array" }), { fileName: "rios.docx", returnedBy: { name: "Marta Ríos Navarro" } });
+    const shown = back.set.proposals.filter((x) => x.status !== "noise-hidden" && x.kind !== "comment");
+    expect(shown.map((x) => [x.kind, x.before, x.after, (x.anchor as { from: number }).from])).toEqual([["replace", "mitad.", "mitad, revisada.", "Primera ".length]]);
+    expect(back.set.integrity).toBe("ok");
+  });
+
   it("says so when no version of the article matches it", async () => {
     const p = await trackedProject();
     await exportDocx(p, "main", "coauthors", await nodeResources());

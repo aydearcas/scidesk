@@ -198,6 +198,18 @@ function alignByContent(base: BaseBlock[], paragraphs: DocxParagraph[], match: M
   }
 }
 
+/** How much two texts share at their start and at their end, in whole words (and the spaces between). */
+function sharedEdges(a: string, b: string): [number, number] {
+  if (!a || !b) return [0, 0];
+  const ta = a.match(/\s+|\S+/g) ?? [], tb = b.match(/\s+|\S+/g) ?? [];
+  let i = 0;
+  while (i < ta.length && i < tb.length && ta[i] === tb[i]) i++;
+  let j = 0;
+  while (j < ta.length - i && j < tb.length - i && ta[ta.length - 1 - j] === tb[tb.length - 1 - j]) j++;
+  const len = (xs: string[]) => xs.reduce((n, x) => n + x.length, 0);
+  return [len(ta.slice(0, i)), len(ta.slice(ta.length - j))];
+}
+
 export interface Hunk { from: number; to: number; before: string; after: string }
 /** Word diff of a against b, as hunks in a's coordinates, with step 6 (join close pieces). */
 export function hunks(a: string, b: string): Hunk[] {
@@ -434,7 +446,17 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
         k++;
       }
       k--;
-      const from = toBase(start), to = toBase(pos);
+      // record 0103: a stretch replaced whole (Word's find and replace, a sentence typed again)
+      // keeps only what changed, by whole words: "población adulta" → "población adulta mundial" inserts " mundial"
+      let from = toBase(start), to = toBase(pos);
+      const [lead, tail] = sharedEdges(before, after);
+      // only where the text deleted is the sent text as it is (nothing untracked inside it)
+      if (lead + tail > 0 && to - from === before.length) {
+        before = before.slice(lead, before.length - tail);
+        after = after.slice(lead, after.length - tail);
+        from += lead;
+        to -= tail;
+      }
       push({ author: { name: author }, tracked: true, kind: before && after ? "replace" : before ? "delete" : "insert", anchor: { file: b.file, block: b.id, from, to }, before, after, ...(s.date ? { date: s.date.replace(/\.\d+Z$/, "Z") } : {}) });
     }
   }
