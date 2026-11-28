@@ -238,3 +238,23 @@ test("a comment on a word: the name the first time, the thread in Review, a repl
   await expect(page.locator("footer.statusbar").getByText("Guardado")).toBeVisible({ timeout: 10_000 });
   expect(errors).toEqual([]);
 });
+
+test("a journal's profile is edited, kept on this computer and given to the article (record 0105)", async ({ page }) => {
+  const { errors } = await openDemo(page);
+  await page.getByRole("button", { name: "Revista", exact: true }).click();
+  await page.locator(".journal-item", { hasText: "Reumatología Clínica" }).click();
+  await page.getByRole("button", { name: "Usar en este artículo" }).click();
+  await expect(page.locator("footer.statusbar")).toContainText(/\/ 3000 palabras/);
+  // the words limit of original articles, changed and saved: the project's copy waits
+  const original = page.locator(".jf-type").first();
+  await original.locator("summary").click();
+  const words = original.locator(".jf-row", { hasText: "Palabras del texto" }).locator("input");
+  await words.fill("3500");
+  await page.getByRole("button", { name: "Guardar en el programa" }).click();
+  await expect(page.locator(".journal-banner.warn")).toContainText("anterior a tu perfil");
+  await expect(page.locator("footer.statusbar")).toContainText(/\/ 3000 palabras/);
+  await page.locator(".journal-banner.warn").getByRole("button", { name: "Actualizar la copia del proyecto" }).click();
+  await expect(page.locator("footer.statusbar")).toContainText(/\/ 3500 palabras/);
+  await expect(page.locator(".journal-banner.quiet")).toContainText("al día");
+  expect(errors).toEqual([]);
+});

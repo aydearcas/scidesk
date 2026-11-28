@@ -17,7 +17,7 @@ export type SnapshotKind = "named" | "sent" | "auto";
  */
 export type SnapshotReason =
   | "coauthors-docx" | "journal-docx" | "journal-pdf" | "daily" | "before-import" | "before-restore"
-  | "before-bringing" | "before-recovery" | "before-adapting" | "before-deleting";
+  | "before-bringing" | "before-recovery" | "before-adapting" | "before-deleting" | "before-journal";
 
 export interface SnapshotInfo {
   id: string;

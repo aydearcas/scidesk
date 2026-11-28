@@ -67,6 +67,10 @@ import { baseBlocksOf, CopyError, decideProposals, defaultRecipients, loadPropos
 import { RoundBoard, type RoundActions } from "./RoundBoard.tsx";
 import { blocksById, compareVersions, currentFiles, ensureDailySnapshot, listSnapshots, loadSnapshot, proposalsFromVersion, restoreSnapshot, saveVersionProposals, type SnapshotInfo, type VersionBlock } from "@scidesk/core";
 import { HistoryTimeline, HistoryView, useVersionName } from "./History.tsx";
+import { copyState, forgetStoredProfile, knownJournals, newProfile, saveStoredGuide, saveStoredProfile, setArticleJournal, storedGuide, storedProfiles, writeProjectJournal, JOURNAL_CATALOG, BUNDLED_STYLES, sameJson as sameJsonValue } from "@scidesk/core";
+import type { JournalProfileFile } from "@scidesk/formats";
+import { JournalList, JournalTab, type ProfileOrigin } from "./JournalView.tsx";
+import { journalProfile } from "./platform.ts";
 import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, useTheirs, type Copy, type ProposalState } from "./proposals-text.ts";
 import type { ProposalActions } from "./ReviewPanel.tsx";
 import { TrackNameDialog } from "./TrackNameDialog.tsx";
@@ -115,12 +119,12 @@ export function fitZoomFor(room: number): number {
 
 /** A manuscript is "doc:<article folder>": one tab per article of the project (record 0015); a table's own tab is "table:<id>". */
 // file:<path>: a table not placed in the text, in an editor of its own over its file
-type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings" | "history";
-type View = "article" | "library" | "history";
+type CenterTab = `doc:${string}` | `table:${string}` | `file:${string}` | "library" | "authors" | "settings" | "history" | "journal";
+type View = "article" | "library" | "journal" | "history";
 type RightTab = "warnings" | "review" | "details";
 /** Record 0094: the blocks with a tracked change of their own, which carry the line in the margin. */
 const CHANGED_BLOCKS = ":is(p, h1, h2, h3, h4, h5, h6, li, td, th):has(> ins.change, > del.change, > span.change-modification)";
-const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings", history: "history" };
+const TAB_ICONS: Record<string, IconName> = { library: "library", authors: "users", settings: "settings", history: "history", journal: "journal" };
 const isDoc = (k: string): k is `doc:${string}` => k.startsWith("doc:");
 const isTableTab = (k: string): k is `table:${string}` => k.startsWith("table:");
 const isFileTab = (k: string): k is `file:${string}` => k.startsWith("file:");
@@ -174,6 +178,10 @@ export function App() {
   const [roundState, setRounds] = useState<{ folder: string; list: RoundEntry[]; unnoted: SnapshotInfo | null } | null>(null);
   // record 0099: the article's versions, the one chosen, what it is compared with and the comparison
   const [versions, setVersions] = useState<SnapshotInfo[] | null>(null);
+  // record 0105: the journal profiles of this computer, and the one open in the "Journal" tab
+  const [storedJournals, setStoredJournals] = useState<JournalProfileFile[]>([]);
+  const [journalOpen, setJournalOpen] = useState<{ base: JournalProfileFile; origin: ProfileOrigin; guide: string; key: number } | null>(null);
+  const journalDirty = useRef(false);
   const [versionSel, setVersionSel] = useState<string | null>(null);
   const [versionAgainst, setVersionAgainst] = useState("current");
   const [versionBlocks, setVersionBlocks] = useState<VersionBlock[] | null>(null);
@@ -462,6 +470,19 @@ export function App() {
     const rec = new Recovery(store, p);
     recovery.current = rec;
     setRecoveries((await rec.pending()).pending);
+    // record 0105: a journal profile edited on this computer since the project's copy was made
+    setJournalOpen(null);
+    journalDirty.current = false;
+    void storedProfiles(store).then((list) => {
+      setStoredJournals(list);
+      for (const a of p.articles) {
+        const id = a.article.journal, copy = id ? p.journals.get(id) : undefined, mine = id ? list.find((x) => x.id === id) : undefined;
+        if (copy && mine && copyState(copy, mine) === "computer-newer") {
+          setMessage(t("ui.journal.openNewer", { title: mine.journal.title.value }), null, { label: t("ui.journal.updateCopy"), run: () => void updateCopyRef.current(mine) });
+          break;
+        }
+      }
+    }).catch(() => {});
     // first in the recent projects of this computer, with a summary of each article
     rounds.current.clear();
     if (where) {
@@ -815,12 +836,14 @@ export function App() {
     } else if (tab === k) setTab(docTab);
     if (k === "library" && view === "library") setView("article");
     if (k === "history" && view === "history") setView("article");
+    if (k === "journal" && view === "journal") setView("article");
   };
   const chooseView = (v: View) => {
     setView(v);
     if (!settings.left) updateSettings({ left: true });
-    openTab(v === "library" ? "library" : v === "history" ? "history" : docTab);
+    openTab(v === "library" ? "library" : v === "history" ? "history" : v === "journal" ? "journal" : docTab);
     if (v === "history") void loadVersions();
+    if (v === "journal") void loadJournals(true);
   };
   const showRight = (r: RightTab) => { setRightTab(r); if (!settings.right) updateSettings({ right: true }); };
   openReview.current = () => showRight("review");
@@ -2174,6 +2197,104 @@ export function App() {
 
   const versionName = useVersionName();
   /** The article's versions (what is on screen saved first, so "the text as it is now" is on disk). */
+  // ---------------------------------------------------------------- the journal (record 0105)
+
+  const knownJournalList = useMemo(() => knownJournals(storedJournals), [storedJournals]);
+  const projectOnlyJournals = project ? [...project.journals.values()].filter((p) => !knownJournalList.some((k) => k.id === p.id)) : [];
+  const currentJournalId = article?.article.journal ?? null;
+  const currentJournal = project && currentJournalId ? {
+    id: currentJournalId,
+    title: project.journals.get(currentJournalId)?.journal.title.value ?? currentJournalId,
+    state: project.journals.get(currentJournalId) ? copyState(project.journals.get(currentJournalId)!, storedJournals.find((p) => p.id === currentJournalId)) : null,
+  } : null;
+  /** What the form starts from: this computer's profile, else the project's copy, else SciDesk's, else a new one with the journal's style. */
+  const journalBase = async (id: string, stored: JournalProfileFile[]): Promise<{ base: JournalProfileFile; origin: ProfileOrigin } | null> => {
+    const mine = stored.find((p) => p.id === id);
+    if (mine) return { base: mine, origin: "mine" };
+    const entry = JOURNAL_CATALOG.find((j) => j.id === id);
+    const bundled = entry?.profile ? await journalProfile(entry.profile) : null;
+    const copy = project?.journals.get(id);
+    if (copy) return { base: copy, origin: bundled && sameJsonValue(copy, bundled) ? "bundled" : "project" };
+    if (bundled) return { base: bundled, origin: "bundled" };
+    if (entry) return { base: newProfile({ title: entry.title, from: entry, lang: article?.article.lang }), origin: "new" };
+    return null;
+  };
+  const openJournal = async (id: string, stored: JournalProfileFile[] = storedJournals) => {
+    if (journalDirty.current && journalOpen && journalOpen.base.id !== id) {
+      setMessage(t("ui.journal.unsavedSwitch"), null, { label: t("ui.journal.discardOpen"), run: () => { journalDirty.current = false; void openJournal(id, stored); } });
+      return;
+    }
+    const b = await journalBase(id, stored);
+    if (!b) return;
+    const guide = await storedGuide(await localStore(), id).catch(() => "");
+    journalDirty.current = false;
+    setJournalOpen((o) => ({ ...b, guide, key: (o?.key ?? 0) + 1 }));
+    openTab("journal");
+  };
+  const loadJournals = async (openCurrent = false) => {
+    const list = await storedProfiles(await localStore()).catch(() => [] as JournalProfileFile[]);
+    setStoredJournals(list);
+    if (openCurrent && !journalOpen && currentJournalId) await openJournal(currentJournalId, list);
+  };
+  const newJournal = (title: string, url: string) => {
+    if (journalDirty.current) { setMessage(t("ui.journal.unsavedSwitch"), null, { label: t("ui.journal.discardOpen"), run: () => { journalDirty.current = false; newJournal(title, url); } }); return; }
+    const taken = [...knownJournalList.map((j) => j.id), ...(project ? [...project.journals.keys()] : [])];
+    const base = newProfile({ title, guideUrl: url, lang: article?.article.lang, taken });
+    setJournalOpen((o) => ({ base, origin: "new", guide: "", key: (o?.key ?? 0) + 1 }));
+    openTab("journal");
+  };
+  const updateJournalCopy = async (p: JournalProfileFile) => {
+    if (!project) return;
+    try {
+      await writeProjectJournal(project, p, styleText);
+      setStoredJournals((l) => [...l]);
+      setMessage(t("ui.journal.copyUpdated", { title: p.journal.title.value }));
+      await recompute();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  };
+  const updateCopyRef = useRef(updateJournalCopy);
+  updateCopyRef.current = updateJournalCopy;
+  const saveJournal = async (p: JournalProfileFile, guide: string): Promise<JournalProfileFile | null> => {
+    try {
+      const store = await localStore();
+      const saved = await saveStoredProfile(store, p);
+      await saveStoredGuide(store, saved.id, guide);
+      const list = await storedProfiles(store);
+      setStoredJournals(list);
+      journalDirty.current = false;
+      setJournalOpen((o) => ({ base: saved, origin: "mine", guide, key: (o?.key ?? 0) + 1 }));
+      const copy = project?.journals.get(saved.id);
+      if (copy && copyState(copy, saved) === "computer-newer") setMessage(t("ui.journal.savedOffer"), null, { label: t("ui.journal.updateCopy"), run: () => void updateCopyRef.current(saved) });
+      else setMessage(t("ui.journal.saved"));
+      return saved;
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); return null; }
+  };
+  /** Another journal for the article on screen (or none): a snapshot first, then its copy and, if it followed the journal, the style. */
+  const changeJournal = async (p: JournalProfileFile | null) => {
+    if (!project || !article) return;
+    if ((article.article.journal ?? null) === (p?.id ?? null)) return;
+    try {
+      const snap = await saveSnapshot(project, article.folder, t("ui.journal.snapshotLabel"), { reason: "before-journal" });
+      const r = await setArticleJournal(project, article.folder, p, styleText);
+      const style = BUNDLED_STYLES.find((s) => s.id === article.article.citationStyle.id)?.name ?? article.article.citationStyle.id;
+      setMessage(p
+        ? `${t("ui.journal.changed", { title: p.journal.title.value, snapshot: snap.id })}${r.styleChanged ? ` ${t("ui.journal.styleFollows", { style })}` : ""}`
+        : t("ui.journal.cleared", { snapshot: snap.id }));
+      setStoredJournals((l) => [...l]);
+      await recompute();
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  };
+  const forgetJournal = async (id: string) => {
+    const store = await localStore();
+    await forgetStoredProfile(store, id);
+    const list = await storedProfiles(store);
+    setStoredJournals(list);
+    journalDirty.current = false;
+    setJournalOpen(null);
+    setMessage(t("ui.journal.forgotten"));
+    if (await journalBase(id, list)) await openJournal(id, list);
+  };
+
   const loadVersions = async (select?: string) => {
     if (!project || !article) return;
     await save();
@@ -2456,7 +2577,7 @@ export function App() {
       const u = outline?.unplaced.find((x) => x.src === k.slice(5));
       return `${u?.caption || k.slice(5)} · ${t("ui.unplacedShort")}`;
     }
-    if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : k === "history" ? t("ui.history.title") : t("ui.settings");
+    if (!isDoc(k)) return k === "library" ? t("library") : k === "authors" ? t("ui.authorsGroup") : k === "history" ? t("ui.history.title") : k === "journal" ? t("ui.journal.tab") : t("ui.settings");
     const a = project?.articles.find((x) => x.folder === k.slice(4));
     const title = a === article ? outline?.title?.text : a ? savedTitle(a) : "";
     return title || t("ui.manuscript");
@@ -2501,9 +2622,9 @@ export function App() {
       )}
       <div className="workspace">
         <nav className="viewbar" aria-label={t("ui.views.label")}>
-          {(["article", "library", "history"] as View[]).map((v) => (
+          {(["article", "library", "journal", "history"] as View[]).map((v) => (
             <button key={v} className={`view-button${view === v && project ? " active" : ""}`} aria-pressed={view === v && !!project} disabled={!project} onClick={() => chooseView(v)}>
-              <Icon name={v === "article" ? "article" : v === "library" ? "library" : "history"} size={20} /><span>{t(`ui.views.${v}`)}</span>
+              <Icon name={v === "article" ? "article" : v === "library" ? "library" : v === "journal" ? "journal" : "history"} size={20} /><span>{t(`ui.views.${v}`)}</span>
             </button>
           ))}
         </nav>
@@ -2522,6 +2643,9 @@ export function App() {
                   }}
                   onSectionMenu={(block, x, y) => { if (!editor) return; const i = headingIndex(editor.state.doc, block); if (i >= 0) setFloatMenu({ x, y, items: sectionItems(i, x, y), label: t("ui.sections.section") }); }}
                   articles={project!.articles.map((a) => ({ folder: a.folder, title: (a === article ? outline?.title?.text : savedTitle(a)) || a.folder }))} onSwitchArticle={(f) => void switchArticle(f)} onNewArticle={() => void newArticle()} />
+              : view === "journal"
+              ? <JournalList known={knownJournalList} projectOnly={projectOnlyJournals} current={currentJournal} selected={journalOpen?.base.id ?? null}
+                  onSelect={(id) => void openJournal(id)} onNew={newJournal} onClear={() => void changeJournal(null)} />
               : view === "history"
               ? <HistoryTimeline versions={versions} selected={versionSel} onSelect={(id) => { setVersionSel(id); openTab("history"); }} onName={nameVersion} naming={namingTick} />
               : <LibraryFilters project={project!} uses={uses} filter={libraryFilter} onFilter={(f) => { setLibraryFilter(f); openTab("library"); }} onImport={() => refsInput.current?.click()} onSyncZotero={() => void syncZotero(false)} />}
@@ -2605,6 +2729,16 @@ export function App() {
                 register={(src, flush) => { if (flush) unplacedFlush.current.set(src, flush); else unplacedFlush.current.delete(src); }} />
             </div>
           ))}
+          {project && article && tab === "journal" && (
+            <div className="tab-body journal-tab-body">
+              {journalOpen
+                ? <JournalTab key={journalOpen.key} base={journalOpen.base} origin={journalOpen.origin} guide={journalOpen.guide}
+                    projectCopy={project.journals.get(journalOpen.base.id) ?? null} stored={storedJournals.find((p) => p.id === journalOpen.base.id) ?? null}
+                    isCurrent={article.article.journal === journalOpen.base.id} articleTitle={outline?.title?.text || article.folder}
+                    onSave={saveJournal} onUse={(p) => changeJournal(p)} onUpdateCopy={updateJournalCopy} onForget={forgetJournal} onDirty={(d) => { journalDirty.current = d; }} />
+                : <p className="muted journal-empty">{t("ui.journal.pick")}</p>}
+            </div>
+          )}
           {project && tab === "history" && (
             <div className="tab-body history-tab">
               <HistoryView versions={versions} selected={versionSel} against={versionAgainst} onAgainst={setVersionAgainst} blocks={versionBlocks}

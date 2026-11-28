@@ -20,6 +20,9 @@ const PATHS: Record<string, string> = {
   generalNote: "M6 4h12v16H6z M9 9h6 M9 13h6 M9 17h3",
   alignLeft: "M4 6h16 M4 10h10 M4 14h16 M4 18h10",
   plus: "M12 5v14 M5 12h14",
+  // record 0105: a journal (a bound issue with lines on its cover)
+  journal: "M6 3h11a1 1 0 0 1 1 1v16H7a2 2 0 0 1-2-2V4a1 1 0 0 1 1-1z M5 18a2 2 0 0 1 2-2h11 M9 7h6 M9 10.5h4",
+  chevronUp: "M6 15l6-6 6 6",
   // record 0076: a table's borders
   borders: "M4 4h16v16H4z M12 4v16 M4 12h16",
   // record 0073: justified text, and a block quotation (a bar beside indented lines)

@@ -33,4 +33,5 @@ export * from "./document-font.ts";
 export * from "./table-borders.ts";
 export * from "./blinding.ts";
 export * from "./tracking.ts";
+export * from "./journal-profiles.ts";
 export { stripImageMetadata, exifOrientation } from "./image-metadata.ts";

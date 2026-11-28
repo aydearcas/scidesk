@@ -480,7 +480,7 @@ Un panel que se va actualizando mientras escribes. Es la cara del programa y lo 
   - Al editar un perfil del programa, los proyectos que lo usan ofrecen actualizar su copia; nunca se cambia sola.
 - Durante el desarrollo no se preparan perfiles de serie salvo el de Reumatología Clínica. El programa lo usarán muchas personas con revistas distintas, y los perfiles se hacen bajo demanda.
 - Más adelante, en la vista «Revistas», se podrá generar con LLM un lote de perfiles de una selección de revistas. Primero, uno a uno.
-- Hoy (fase 1) la revista solo se elige al crear el artículo, y únicamente Reumatología Clínica tiene perfil. Elegir o cambiar de revista después, el formulario y el paquete llegan con la vista «Revista».
+- En la fase 1 la revista solo se elegía al crear el artículo, y únicamente Reumatología Clínica tenía perfil. **Desde el 28/11/2026 (ficha 0105)** está la vista «Revista»: el formulario con la guía al lado, los perfiles guardados en el equipo, la copia del proyecto que se ofrece actualizar y el cambio de revista de un artículo ya creado. Falta el paquete para LLM.
 
 **Módulo de adaptación a revista** **[V1]**
 
@@ -879,7 +879,7 @@ Cada parte termina con algo usable, y la 2a prueba el modelo de propuestas antes
 
 ### Fase 3: el proyecto completo y la revista (L)
 - CRediT, contribuciones, carta de presentación, declaraciones y material suplementario con numeración S.
-- Perfiles de revista (catálogo y creación con un paquete para LLM), módulo de adaptación a revista y panel de comprobaciones completo: abreviaturas con la leyenda de cada tabla y figura (R11), coherencia de cifras (R8) y manuscrito cegado (R9).
+- Perfiles de revista (catálogo y creación con un paquete para LLM), módulo de adaptación a revista y panel de comprobaciones completo: abreviaturas con la leyenda de cada tabla y figura (R11), coherencia de cifras (R8) y manuscrito cegado (R9). **[Hecho, ficha 0105]** La vista «Revista» con el formulario del perfil, los perfiles del equipo y el cambio de revista de un artículo. **[Hecho, fichas 0087 a 0089]** El manuscrito cegado.
 - Biblioteca vinculada a Zotero. Más estilos (buscador del repositorio CSL), DOI y PMID en línea (opcional), búsqueda en PubMed y Crossref desde el buscador de citas, citas escritas a mano resueltas (R24), EndNote XML y .enw, y verificación de referencias (R10).
 - Idioma por fragmento (R20), búsqueda y reemplazo en todo el proyecto (R22), y cambios desde otro equipo y copias en conflicto (R27).
 - Plantillas PRISMA, CONSORT, STROBE y CARE, y las demás según se necesiten.

@@ -4,7 +4,7 @@
 // author guide carries the literal quote that supports it (what the LLM package must
 // return, record 0018). SciDesk warns when a datum was checked more than 12 months ago.
 import Type, { type TSchema } from "typebox";
-import { DateOnly, Lang, SchemaVersion, Strict } from "./common.ts";
+import { DateOnly, DateTime, Lang, SchemaVersion, Strict } from "./common.ts";
 import { ARTICLE_TYPES } from "./project.ts";
 import { SECTION_ROLES } from "./scidoc.ts";
 
@@ -61,12 +61,15 @@ const ArticleTypeRules = Strict({
   opening: Type.Optional(Sourced(Type.String(), "Fixed opening, e.g. 'Señor editor'.")),
 });
 
-const DECLARATIONS = ["funding", "conflicts", "ethics", "consent", "data-availability", "registration", "ai-use", "acknowledgements", "contributions"] as const;
+export const DECLARATIONS = ["funding", "conflicts", "ethics", "consent", "data-availability", "registration", "ai-use", "acknowledgements", "contributions"] as const;
 
 export const JournalProfile = Strict({
   schemaVersion: SchemaVersion,
   id: Type.String({ pattern: "^[a-z0-9-]+$", description: "Profile id, e.g. reumatologia-clinica." }),
   extends: Type.Optional(Type.String({ pattern: "^[a-z0-9-]+$", description: "Base profile (e.g. of the publisher) whose data this one inherits (supposition of record 0014)." })),
+  // when the profile was last saved in the form (record 0105): which of two copies is newer
+  updated: Type.Optional(DateTime),
+  areas: Type.Optional(Type.Array(Type.String({ pattern: "^[a-z0-9-]+$" }), { description: "Areas of the journal (ids of SciDesk's areas, record 0050), to suggest it to whoever works in them." })),
   sources: Type.Array(Source, { minItems: 1 }),
   journal: Strict({
     title: Sourced(Type.String()),

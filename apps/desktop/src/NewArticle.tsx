@@ -4,14 +4,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  areaFit, areaName, articlePlan, BUNDLED_STYLES, splitByAreas, folderName, journalSummary, journalTranslations, NEW_ARTICLE_TYPES, searchJournals,
+  areaFit, areaName, articlePlan, BUNDLED_STYLES, splitByAreas, folderName, journalSummary, journalTranslations, NEW_ARTICLE_TYPES,
   collectionTree, ZoteroError, ZoteroLocal,
   type CatalogJournal, type JournalSummary, type ZoteroCollectionInfo,
 } from "@scidesk/core";
 import type { JournalProfileFile } from "@scidesk/formats";
 import { Icon } from "./icons.tsx";
 import { shortPath } from "./Home.tsx";
-import { defaultLocation, folderState, inTauri, journalProfile, pickLocation, zoteroTransport } from "./platform.ts";
+import { defaultLocation, folderState, inTauri, journalProfile, localStore, pickLocation, zoteroTransport } from "./platform.ts";
+import { knownJournals, searchKnownJournals, storedProfiles, type KnownJournal } from "@scidesk/core";
 
 export interface NewArticleChoice {
   title: string;
@@ -122,10 +123,13 @@ export function NewArticle({ onCancel, onCreate, uiLang, areas = [], openProject
     return () => { live = false; };
   }, [location, folder]);
 
-  const chooseJournal = async (j: CatalogJournal | null) => {
+  // record 0105: the profiles of this computer first, then SciDesk's catalogue
+  const [known, setKnown] = useState<KnownJournal[]>(() => knownJournals([]));
+  useEffect(() => { void localStore().then(storedProfiles).then((list) => setKnown(knownJournals(list))).catch(() => {}); }, []);
+  const chooseJournal = async (j: KnownJournal | null) => {
     setJournal(j);
     setStyle(null);
-    const p = j?.profile ? await journalProfile(j.profile) : null;
+    const p = j?.stored ?? (j?.profile ? await journalProfile(j.profile) : null);
     setProfile(p);
     // the languages the journal asks for, besides the manuscript's
     if (p) setAlso(journalTranslations(p, lang).includes(other));
@@ -137,11 +141,11 @@ export function NewArticle({ onCancel, onCreate, uiLang, areas = [], openProject
   const citationStyle = style ?? journal?.styleId ?? BUNDLED_STYLES[0].id;
   const styleName = (id: string) => BUNDLED_STYLES.find((s) => s.id === id)?.name ?? id;
   // the journals of the user's areas first (record 0050)
-  const { suggested, others } = splitByAreas(searchJournals(query), areas);
-  const journalButton = (j: CatalogJournal) => (
+  const { suggested, others } = splitByAreas(searchKnownJournals(known, query), areas);
+  const journalButton = (j: KnownJournal) => (
     <button key={j.id} role="option" aria-selected={journal?.id === j.id} className={`choice journal${journal?.id === j.id ? " selected" : ""}`} onClick={() => void chooseJournal(j)}>
-      <span className="journal-name"><b>{j.title}</b>{j.profile ? <span className="badge correct">{t("ui.wizard.withProfile")}</span> : <span className="badge">{t("ui.wizard.noProfile")}</span>}</span>
-      <span className="muted small">{[j.publisher, areas.length && areaFit(j.areas, areas) === 1 ? t("ui.wizard.generalJournal") : null, j.profile ? t("ui.wizard.profileText", { style: styleName(j.styleId) }) : t("ui.wizard.noProfileText", { style: styleName(j.styleId) })].filter(Boolean).join(" · ")}</span>
+      <span className="journal-name"><b>{j.title}</b>{j.origin === "mine" ? <span className="badge correct">{t("ui.wizard.yourProfile")}</span> : j.profile ? <span className="badge correct">{t("ui.wizard.withProfile")}</span> : <span className="badge">{t("ui.wizard.noProfile")}</span>}</span>
+      <span className="muted small">{[j.publisher, areas.length && areaFit(j.areas, areas) === 1 ? t("ui.wizard.generalJournal") : null, j.origin !== "style-only" ? t("ui.wizard.profileText", { style: styleName(j.styleId) }) : t("ui.wizard.noProfileText", { style: styleName(j.styleId) })].filter(Boolean).join(" · ")}</span>
     </button>
   );
 

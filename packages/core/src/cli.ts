@@ -57,7 +57,8 @@ import { compareVersions, currentFiles, restoreSnapshot } from "./history.ts";
 import { defaultBlindReplacement, setBlindOmitted, setBlindReplacement } from "./blinding.ts";
 import { titlePageModel } from "./title-page.ts";
 import { sectionNumberingOf, sectionNumbers, setSectionNumbering, type SectionNumbering } from "./sections.ts";
-import type { PMNode } from "@scidesk/formats";
+import { copyState, knownJournals, profileIssues, setArticleJournal, storedProfile, storedProfiles, writeProjectJournal } from "./journal-profiles.ts";
+import type { JournalProfileFile, PMNode } from "@scidesk/formats";
 
 const [cmd, dir, ...rest] = process.argv.slice(2);
 const opt = (name: string, def?: string) => {
@@ -85,14 +86,17 @@ async function main() {
     const areas = i >= 0 ? (all[i + 1] ?? "").split(",").map((a) => a.trim()).filter(Boolean) : [];
     const unknown = areas.filter((a) => !AREAS.some((x) => x.id === a));
     if (unknown.length) throw new Error(`unknown area ${unknown.join(", ")} (see: scidesk areas)`);
-    const { suggested, others } = splitByAreas(JOURNAL_CATALOG, areas);
-    const line = (j: (typeof JOURNAL_CATALOG)[number]) => console.log(`${j.id.padEnd(38)} ${j.profile ? "profile   " : "style only"}  ${j.title}${areas.length && areaFit(j.areas, areas) === 1 ? "  (general)" : ""}`);
+    // record 0105: this computer's profiles first, then SciDesk's
+    const j = all.indexOf("--store");
+    const known = knownJournals(await storedProfiles(new NodeStore(j >= 0 ? all[j + 1] : appLocalDataDir())).catch(() => []));
+    const { suggested, others } = splitByAreas(known, areas);
+    const line = (j: (typeof known)[number]) => console.log(`${j.id.padEnd(38)} ${j.origin === "mine" ? "yours     " : j.profile ? "profile   " : "style only"}  ${j.title}${areas.length && areaFit(j.areas, areas) === 1 ? "  (general)" : ""}`);
     if (areas.length) { console.log("suggested for your areas:"); suggested.forEach(line); console.log(others.length ? "other journals:" : ""); }
     others.forEach(line);
     return;
   }
   if (!cmd || !dir) {
-    console.log("usage: scidesk <new|add-article|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show|comments|history|snapshot|compare|restore> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
+    console.log("usage: scidesk <new|add-article|journal|zotero|table-words|section-numbering|demo|from-word|check|export|import|refs|library|ref-delete|style|authors|recover|ignore|show|comments|history|snapshot|compare|restore> <project folder> …  |  scidesk styles  |  scidesk journals  |  scidesk areas  |  scidesk zotero-collections");
     process.exit(2);
   }
   const fs = new NodeFs(dir);
@@ -100,10 +104,12 @@ async function main() {
     case "new":
     case "add-article": {
       const lang = opt("lang", "es")!;
+      // record 0105: a profile of this computer wins over SciDesk's of the same id
+      const mine = opt("journal") ? await storedProfile(new NodeStore(opt("store", appLocalDataDir())!), opt("journal")!) : null;
       const entry = opt("journal") ? JOURNAL_CATALOG.find((j) => j.id === opt("journal")) : undefined;
-      if (opt("journal") && !entry) throw new Error(`unknown journal ${opt("journal")} (see: scidesk journals)`);
-      const profile = entry?.profile ? JSON.parse(await readAsset(`journals/${entry.profile}`)) : null;
-      const style = opt("style") ? findStyle(opt("style")!)?.id : entry?.styleId;
+      if (opt("journal") && !entry && !mine) throw new Error(`unknown journal ${opt("journal")} (see: scidesk journals)`);
+      const profile = mine ?? (entry?.profile ? JSON.parse(await readAsset(`journals/${entry.profile}`)) : null);
+      const style = opt("style") ? findStyle(opt("style")!)?.id : mine?.citationStyle.value.id ?? entry?.styleId;
       if (opt("style") && !style) throw new Error(`unknown style ${opt("style")} (see: scidesk styles)`);
       const choices = {
         title: opt("title", "Título del artículo")!, lang,
@@ -289,6 +295,45 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
       const p = await loadProject(fs);
       await deleteReference(p, positional[0] ?? "");
       console.log(`deleted ${positional[0]}`);
+      break;
+    }
+    case "journal": {
+      // record 0105: the article's journal; a profile of this computer, of the project, of SciDesk's or a file
+      const p = await loadProject(fs);
+      const folder = opt("article", "main")!;
+      const art = p.articles.find((a) => a.folder === folder);
+      if (!art) throw new Error(`no article ${folder}`);
+      const store = new NodeStore(opt("store", appLocalDataDir())!);
+      const readStyle = (f: string) => readAsset(`styles/${f}`);
+      const key = positional[0];
+      if (rest.includes("--none")) { await setArticleJournal(p, folder, null); console.log(`${folder}: no journal`); break; }
+      if (rest.includes("--update-copy")) {
+        const id = art.article.journal;
+        const mine = id ? await storedProfile(store, id) : null;
+        if (!mine) throw new Error("the article's journal has no profile on this computer");
+        await writeProjectJournal(p, mine, readStyle);
+        console.log(`${folder}: copy of ${mine.journal.title.value} updated`);
+        break;
+      }
+      if (!key) {
+        const id = art.article.journal;
+        const copy = id ? p.journals.get(id) : undefined;
+        console.log(copy ? `${folder}: ${copy.journal.title.value} (${id}); this computer: ${copyState(copy, await storedProfile(store, id!))}` : `${folder}: no journal`);
+        break;
+      }
+      let profile: JournalProfileFile | null = null;
+      if (key.endsWith(".json")) {
+        profile = JSON.parse(await readFile(key, "utf8"));
+        const issues = profileIssues(profile);
+        if (issues.length) throw new Error(`not a valid journal profile: ${issues[0].path} ${issues[0].message}`);
+      } else {
+        const entry = JOURNAL_CATALOG.find((j) => j.id === key);
+        profile = (await storedProfile(store, key)) ?? p.journals.get(key) ?? (entry?.profile ? JSON.parse(await readAsset(`journals/${entry.profile}`)) : null);
+        if (!profile) throw new Error(`no profile ${key} on this computer, in the project or in SciDesk${entry ? " (SciDesk has only its style: make its profile in the window)" : ""}`);
+      }
+      await saveSnapshot(p, folder, "Antes de cambiar de revista", { reason: "before-journal" });
+      const r = await setArticleJournal(p, folder, profile, readStyle);
+      console.log(`${folder}: ${profile!.journal.title.value} (${profile!.id})${r.styleChanged ? `; style ${art.article.citationStyle.id}` : ""}`);
       break;
     }
     case "style": {
