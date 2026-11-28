@@ -46,7 +46,7 @@ function ArticleRow({ a }: { a: RecentArticle }) {
         <span className={`recent-words${over ? " over" : ""}`}>{a.limit !== null ? t("ui.home.wordsOf", { words: n(a.words), limit: n(a.limit) }) : t("ui.home.words", { count: a.words, words: n(a.words) })}</span>
       </div>
       <div className="recent-sub muted small">
-        {type}{a.journal ? ` · ${a.journal}` : ""}{a.round ? ` · ${t("ui.home.copiesBack", { count: a.round.copies })}` : ""}
+        {type}{a.journal ? ` · ${a.journal}` : ""}{a.round ? ` · ${a.round.expected ? t("ui.home.copiesBackOf", { count: a.round.copies, total: a.round.expected }) : t("ui.home.copiesBack", { count: a.round.copies })}` : ""}
         {!a.round && !a.ready && a.blocking ? ` · ${t("ui.home.blocking", { count: a.blocking })}` : ""}
         {!a.round && !a.ready && a.pending ? ` · ${t("ui.home.pending", { count: a.pending })}` : ""}
       </div>

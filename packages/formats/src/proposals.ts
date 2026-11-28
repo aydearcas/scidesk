@@ -13,7 +13,7 @@
 // code unit of text and each inline atom count 1), plus the text before and after, which
 // lets SciDesk find the place again in the current copy and check the anchor.
 import Type from "typebox";
-import { AuthorRef, DateTime, SchemaVersion, Strict } from "./common.ts";
+import { AuthorRef, DateOnly, DateTime, SchemaVersion, Strict } from "./common.ts";
 import { IdOf } from "./ids.ts";
 
 export const PROPOSAL_KINDS = [
@@ -103,6 +103,12 @@ export const Round = Strict({
   id: IdOf("rd"),
   name: Type.String({ minLength: 1, description: "E.g. 'Coautores, 1.ª ronda'." }),
   sent: Strict({ snapshot: IdOf("s"), date: DateTime, file: Type.Optional(Type.String({ description: "Copy of the DOCX sent, relative to the round folder." })) }),
+  recipients: Type.Optional(Type.Array(Strict({
+    name: Type.String({ minLength: 1, description: "As the user knows them; a returned copy is theirs when its returnedBy has this name (or person)." }),
+    person: Type.Optional(IdOf("p", "The person of people.json, when they are in the directory.")),
+    email: Type.Optional(Type.String()),
+  }), { description: "Record 0102: to whom the copy was sent (the round board says who has returned theirs and who is missing)." })),
+  deadline: Type.Optional(DateOnly),
   copies: Type.Array(Strict({
     id: IdOf("cp"),
     file: Type.String({ pattern: "^copies/[^/\\\\]+\\.docx$" }),

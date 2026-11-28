@@ -44,7 +44,11 @@ export interface CommentActions {
   onDone: () => void;
 }
 
-export function ReviewPanel({ copies, states, proposalActions, onImport, threads, active, comment, editor, copyRequest }: {
+export function ReviewPanel({ board, awaited, copies, states, proposalActions, onImport, threads, active, comment, editor, copyRequest }: {
+  /** Record 0102: the round board, above the copies. */
+  board: React.ReactNode;
+  /** Who the latest round still waits for: offered when writing who returns a copy. */
+  awaited: string[];
   /** The returned copies of the article, in the order they go into the text. */
   copies: PanelCopy[];
   /** What each proposal is now (in the text, can go there, cannot…); null while it is worked out. */
@@ -102,7 +106,9 @@ export function ReviewPanel({ copies, states, proposalActions, onImport, threads
       <details className="returned-copy" open={copyOpen} onToggle={(e) => setCopyOpen((e.currentTarget as HTMLDetailsElement).open)}>
         <summary>{t("ui.proposals.copies")}{pending ? <span className="count">{pending}</span> : null}</summary>
         <p className="muted small">{t("ui.reviewIntro")}</p>
-        <label className="field">{t("returnedBy")}<input value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
+        {board}
+        <label className="field">{t("returnedBy")}<input list="awaited-people" value={returnedBy} onChange={(e) => setReturnedBy(e.target.value)} /></label>
+        <datalist id="awaited-people">{awaited.map((n) => <option key={n} value={n} />)}</datalist>
         <label className={`file-button btn${returnedBy.trim() ? "" : " disabled"}`}>{t("importCopy")}<input ref={input} type="file" accept=".docx" onChange={() => void onFile()} aria-label={t("importCopy")} /></label>
         {problem && <p className="field-error" role="alert">{problem}</p>}
         {copies.length === 0 && <p className="muted small">{t("ui.reviewEmpty")}</p>}

@@ -56,6 +56,11 @@
       },
       "type": "array"
     },
+    "deadline": {
+      "description": "Calendar date, ISO 8601.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "type": "string"
+    },
     "id": {
       "description": "Id of a review round.",
       "pattern": "^rd-[a-z0-9]{1,24}$",
@@ -65,6 +70,32 @@
       "description": "E.g. 'Coautores, 1.ª ronda'.",
       "minLength": 1,
       "type": "string"
+    },
+    "recipients": {
+      "description": "Record 0102: to whom the copy was sent (the round board says who has returned theirs and who is missing).",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "description": "As the user knows them; a returned copy is theirs when its returnedBy has this name (or person).",
+            "minLength": 1,
+            "type": "string"
+          },
+          "person": {
+            "description": "The person of people.json, when they are in the directory.",
+            "pattern": "^p-[a-z0-9]{1,24}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array"
     },
     "schemaVersion": {
       "const": 1,

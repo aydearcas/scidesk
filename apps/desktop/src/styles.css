@@ -458,6 +458,18 @@ body.dragging-section, body.dragging-section * { cursor: grabbing !important; us
 .proposal.state-decided { opacity: 0.65; }
 .proposal-bulk { display: flex; flex-wrap: wrap; gap: 6px; }
 .proposal-note.agree { color: var(--accent); }
+/* record 0102: the round board */
+.round-board { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.round-board p { margin: 0; }
+.round-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.round-deadline { display: flex; align-items: center; gap: 6px; }
+.round-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.round-rows li { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.round-rows li.missing .who b { font-weight: 600; }
+.round-rows li .link:last-child { margin-left: auto; }
+.round-add { display: flex; gap: 6px; }
+.round-add input { flex: 1; min-width: 0; }
+.round-unnoted { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 /* record 0100: the three versions of a stretch */
 .three-way { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; margin: 6px 0 0; }
 .three-way dt { color: var(--text-3); }

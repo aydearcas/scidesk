@@ -11,7 +11,8 @@ export interface RecentArticle {
   words: number;
   limit: number | null;
   /** The latest review round with coauthors, if there is one. */
-  round: { number: number; copies: number } | null;
+  /** The latest round: its number, the copies returned and, when noted, how many it was sent to (record 0102). */
+  round: { number: number; copies: number; expected?: number } | null;
   /** Record 0054: ready to submit by the checks (core's readiness); absent in lists saved before. */
   ready?: boolean;
   /** Warnings that block submission and pending markers left, not ignored. */
@@ -78,7 +79,7 @@ export async function roundOf(project: Project, folder: string): Promise<RecentA
   if (!files.length) return null;
   try {
     const last = JSON.parse((await project.fs.readText(files.at(-1)!)) ?? "{}");
-    return { number: files.length, copies: Array.isArray(last.copies) ? last.copies.length : 0 };
+    return { number: files.length, copies: Array.isArray(last.copies) ? last.copies.length : 0, ...(Array.isArray(last.recipients) && last.recipients.length ? { expected: last.recipients.length } : {}) };
   } catch {
     return { number: files.length, copies: 0 };
   }

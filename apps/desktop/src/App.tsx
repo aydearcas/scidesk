@@ -63,7 +63,8 @@ import { insertPageBreak } from "./page-break.ts";
 import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
 import { revealIn, scrollerOf } from "./reveal.ts";
 import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
-import { baseBlocksOf, CopyError, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
+import { baseBlocksOf, CopyError, decideProposals, defaultRecipients, loadProposalSets, noteRound, roundBoard, roundsOf, sameName, saveProposalSet, type BoardRow, type RoundEntry } from "@scidesk/core";
+import { RoundBoard, type RoundActions } from "./RoundBoard.tsx";
 import { blocksById, compareVersions, currentFiles, ensureDailySnapshot, listSnapshots, loadSnapshot, proposalsFromVersion, restoreSnapshot, saveVersionProposals, type SnapshotInfo, type VersionBlock } from "@scidesk/core";
 import { HistoryTimeline, HistoryView, useVersionName } from "./History.tsx";
 import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, useTheirs, type Copy, type ProposalState } from "./proposals-text.ts";
@@ -162,6 +163,8 @@ export function App() {
   const [numberingTick, setNumberingTick] = useState(0);
   // record 0097: the returned copies of the article on screen, in the order they go into the text, and the ones hidden
   const [copies, setCopies] = useState<{ folder: string; list: Copy[]; order: string[]; hidden: string[] } | null>(null);
+  // record 0102: the article's rounds, and the last Word for co-authors when no round notes it
+  const [roundState, setRounds] = useState<{ folder: string; list: RoundEntry[]; unnoted: SnapshotInfo | null } | null>(null);
   // record 0099: the article's versions, the one chosen, what it is compared with and the comparison
   const [versions, setVersions] = useState<SnapshotInfo[] | null>(null);
   const [versionSel, setVersionSel] = useState<string | null>(null);
@@ -1219,8 +1222,11 @@ export function App() {
     // in the browser preview the file is offered as a link, never downloaded on its own
     // record 0089: the figures the journal takes apart, written next to the Word
     const figures = "figureFiles" in r && r.figureFiles?.length ? t("exportedFigures", { count: r.figureFiles.length, folder: r.figureFiles[0].replace(/\/[^/]*$/, "") }) : "";
+    // record 0102: whom it is sent to, for the round board
+    if (kind === "coauthors") void loadRounds();
     setMessage(t(r.snapshot ? "exported" : "exportedPlain", { path: r.path, snapshot: r.snapshot }) + figures + (r.warnings.length ? ` — ${coreWarnings(r.warnings, t)}` : ""),
-      inTauri ? null : { url: docxUrl(r.bytes), name: r.path.split("/").pop()! });
+      inTauri ? null : { url: docxUrl(r.bytes), name: r.path.split("/").pop()! },
+      kind === "coauthors" && r.snapshot ? { label: t("ui.round.note"), run: () => { showRight("review"); setCopyRequest((n) => n + 1); void noteSending(); } } : null);
   });
   // the PDF for the journal (record 0040): Typst in Rust; the browser preview offers the Typst source instead
   const exportPdfFile = run(async () => {
@@ -1245,6 +1251,7 @@ export function App() {
       if (e instanceof CopyError) throw new Error(t(`ui.proposals.copyError.${e.code}`));
       throw e;
     }
+    void loadRounds();
     // record 0101: a copy that did not say which version it came from was matched by its text
     const found = r.foundBy === "content" ? t("ui.proposals.foundByContent", { name: versionName(r.sent), date: new Date(r.sent.created).toLocaleDateString(i18n.language), percent: Math.round((r.sent.score ?? 0) * 100) }) : "";
     // record 0099: the text as it was before the copy's proposals go into it
@@ -1935,6 +1942,72 @@ export function App() {
   const copyList = copies && copies.folder === article?.folder ? copies : null;
   const orderedCopies = copyList ? copyList.order.map((x) => copyList.list.find((c) => c.file === x)!).filter(Boolean) : [];
   const shownCopies = orderedCopies.filter((c) => !copyList!.hidden.includes(c.file));
+  // ---------------------------------------------------------------- the round board (record 0102)
+
+  const loadRounds = async () => {
+    if (!project || !article) return;
+    const folder = article.folder;
+    const list = await roundsOf(project, folder);
+    const sent = (await listSnapshots(project.fs, folder)).find((s) => s.reason === "coauthors-docx");
+    const unnoted = sent && !list.some((r) => r.round.sent.snapshot === sent.id) && (!list.length || sent.created > list.at(-1)!.round.sent.date) ? sent : null;
+    setRounds({ folder, list, unnoted });
+  };
+  useEffect(() => { setRounds(null); void loadRounds(); }, [project, article?.folder]); // eslint-disable-line react-hooks/exhaustive-deps
+  const roundList = roundState && roundState.folder === article?.folder ? roundState : null;
+  const boards = useMemo(() => {
+    const out = new Map<string, BoardRow[]>();
+    for (const r of roundList?.list ?? []) {
+      out.set(r.round.id, roundBoard(r.round, (copyId) => {
+        const c = copyList?.list.find((x) => x.set.origin.copy === copyId);
+        return c ? c.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length : null;
+      }));
+    }
+    return out;
+  }, [roundList, copyList]);
+  /** Notes the round of the last Word for co-authors, sent to whoever signs but the user. */
+  const noteSending = async () => {
+    if (!project || !article) return;
+    const folder = article.folder;
+    const sent = (await listSnapshots(project.fs, folder)).find((s) => s.reason === "coauthors-docx");
+    if (!sent) return;
+    await noteRound(project, folder, sent.id, sent.created, { recipients: defaultRecipients(project, folder, settings.userName) });
+    await loadRounds();
+  };
+  const changeRound = async (id: string, patch: (r: RoundEntry["round"]) => Parameters<typeof noteRound>[4]) => {
+    const e = roundList?.list.find((x) => x.round.id === id);
+    if (!project || !article || !e) return;
+    await noteRound(project, article.folder, e.round.sent.snapshot, e.round.sent.date, patch(e.round));
+    await loadRounds();
+  };
+  const personNamed = (name: string) => project?.people.people.find((p) => sameName(p.kind === "group" ? p.name : `${p.given} ${p.family}`, name));
+  const roundActions: RoundActions = {
+    onNote: () => void noteSending().catch((e) => setError(String(e))),
+    onDeadline: (id, date) => void changeRound(id, () => ({ deadline: date })).catch((e) => setError(String(e))),
+    onAdd: (id, name) => void changeRound(id, (r) => {
+      if ((r.recipients ?? []).some((x) => sameName(x.name, name))) return {};
+      const p = personNamed(name);
+      return { recipients: [...(r.recipients ?? []), { name, ...(p ? { person: p.id } : {}), ...(p?.email ? { email: p.email } : {}) }] };
+    }).catch((e) => setError(String(e))),
+    onRemove: (id, index) => void changeRound(id, (r) => ({ recipients: (r.recipients ?? []).filter((_, i) => i !== index) })).catch((e) => setError(String(e))),
+    onRemind: (id, row) => {
+      const e = roundList?.list.find((x) => x.round.id === id);
+      if (!e || !article) return;
+      const p = row.person ? project?.people.people.find((x) => x.id === row.person) : undefined;
+      const first = p?.kind === "person" ? p.given : row.name.split(/\s+/)[0];
+      const date = (iso: string) => new Date(iso).toLocaleDateString(i18n.language, { day: "numeric", month: "long" });
+      const title = (outline?.title?.text || savedTitle(article) || article.folder).trim();
+      const late = !!e.round.deadline && e.round.deadline < new Date().toISOString().slice(0, 10);
+      const text = t(late ? "ui.round.reminderLate" : e.round.deadline ? "ui.round.reminderDeadline" : "ui.round.reminderText", { name: first, title, date: date(e.round.sent.date), deadline: e.round.deadline ? date(`${e.round.deadline}T12:00:00Z`) : "" });
+      // where the clipboard cannot be written, the text itself, to copy by hand
+      void Promise.resolve(navigator.clipboard?.writeText(text)).then(() => setMessage(t("ui.round.reminded", { name: row.name })), () => setMessage(t("ui.round.reminderHere", { text })));
+    },
+  };
+  const roundPeople = (project?.people.people ?? []).map((p) => (p.kind === "group" ? p.name : `${p.given} ${p.family}`));
+  const awaited = (() => {
+    const last = roundList?.list.at(-1);
+    return last ? (boards.get(last.round.id) ?? []).filter((r) => r.sent && !r.copies.length).map((r) => r.name) : [];
+  })();
+
   const blockIndexHas = (id: string) => { let found = false; editor?.state.doc.descendants((n) => { if (found) return false; if (n.attrs.id === id) found = true; return !found; }); return found; };
   const proposalById = (id: string) => {
     for (const c of copyList?.list ?? []) { const p = c.set.proposals.find((x) => x.id === id); if (p) return { p, copy: c }; }
@@ -2055,7 +2128,7 @@ export function App() {
     },
     onCopy: (id) => {
       const text = proposalById(id)?.p.after ?? "";
-      void navigator.clipboard?.writeText(text).then(() => setMessage(t("ui.proposals.copied", { text: text.length > 60 ? `${text.slice(0, 58)}…` : text })));
+      void Promise.resolve(navigator.clipboard?.writeText(text)).then(() => setMessage(t("ui.proposals.copied", { text: text.length > 60 ? `${text.slice(0, 58)}…` : text })), () => setMessage(text));
     },
     onDone: (id) => recordProposals([id], "edited"),
     onAll: (file, accept) => {
@@ -2570,7 +2643,7 @@ export function App() {
               {rightTab === "warnings" && <ChecksPanel report={report} onGo={goTo} onIgnore={ignore} onRestore={restore} showSections={showSections} onBlind={blind} articleLang={article?.article.lang ?? "es"}
                 onAddSection={(role) => { if (editor && article) { openTab(docTab); addSection(editor, role, article.article.lang); } }}
                 onTableWords={tableWords} journalSays={(article?.article.journal ? project?.journals.get(article.article.journal)?.articleTypes.find((x) => x.articleType === article.article.articleType)?.limits.wordsIncludeTables?.value : null) ?? null} />}
-              {rightTab === "review" && <ReviewPanel copies={orderedCopies.map((c) => ({ file: c.file, name: c.name, set: c.set, shown: !copyList!.hidden.includes(c.file) }))} states={proposalView} proposalActions={proposalActions} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
+              {rightTab === "review" && <ReviewPanel board={roundList && (roundList.list.length || roundList.unnoted) ? <RoundBoard rounds={roundList.list} boards={boards} unnoted={roundList.unnoted} people={roundPeople} actions={roundActions} /> : null} awaited={awaited} copies={orderedCopies.map((c) => ({ file: c.file, name: c.name, set: c.set, shown: !copyList!.hidden.includes(c.file) }))} states={proposalView} proposalActions={proposalActions} onImport={importReturnedCopy} threads={commentThreads} active={activeComment} comment={commentActions}
                 editor={editor && isDoc(tab) ? editor : null} copyRequest={copyRequest} />}
               {rightTab === "details" && (
                 <DetailsPanel selected={selected} project={project!} folder={article!.folder} outline={outline} rendering={rendering} uses={useSites}

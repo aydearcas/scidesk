@@ -124,19 +124,10 @@ export async function importCopy(project: Project, folder: string, bytes: Uint8A
   const sentComments = Object.assign({}, ...sentDocs.map((d) => d.comments ?? {})) as Record<string, SentComment>;
 
   // the round of that snapshot, or a new one
-  const roundsDir = `articles/${folder}/rounds/`;
-  const roundFiles = (await project.fs.list(roundsDir)).filter((p) => p.endsWith("/round.json"));
-  let round: RoundFile | null = null;
-  let roundFolder = "";
-  for (const f of roundFiles) {
-    const r = JSON.parse((await project.fs.readText(f))!) as RoundFile;
-    if (r.sent.snapshot === snapshotId) { round = r; roundFolder = f.slice(0, -"round.json".length); break; }
-  }
-  if (!round) {
-    const n = roundFiles.length + 1;
-    roundFolder = `${roundsDir}ronda-${n}/`;
-    round = { schemaVersion: 1, id: newId("rd"), name: `Ronda ${n}`, sent: { snapshot: snapshotId, date: snapshot.created }, copies: [] };
-  }
+  const { round, folder: roundFolder } = await roundFor(project, folder, snapshotId, snapshot.created);
+  // record 0102: a copy from someone the round was sent to is theirs (their person, if known)
+  const recipient = (round.recipients ?? []).find((r) => sameName(r.name, opts.returnedBy.name));
+  if (recipient?.person && !opts.returnedBy.person) opts = { ...opts, returnedBy: { ...opts.returnedBy, person: recipient.person } };
   const copyId = newId("cp");
   let name = slug(opts.fileName.replace(/\.docx$/i, ""));
   if (round.copies.some((c) => c.file === `copies/${name}.docx`)) name = `${name}-${copyId.slice(3, 7)}`;
@@ -153,3 +144,101 @@ export async function importCopy(project: Project, folder: string, bytes: Uint8A
   const { files: _files, format: _format, ...sent } = snapshot;
   return { round: round.id, roundFolder, copyFile: roundFolder + copyFile, proposalsFile, set, foundBy, sent: { ...sent, ...(score !== undefined ? { score } : {}) } };
 }
+
+// ---------------------------------------------------------------- the rounds and their board (record 0102)
+
+/** Two names of one person, whatever their accents, case and spaces. */
+export const sameName = (a: string, b: string) => {
+  const n = (x: string) => x.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  return n(a) === n(b);
+};
+
+export interface RoundEntry { folder: string; round: RoundFile }
+
+/** The article's rounds, the oldest first, with the folder of each one (ending in "/"). */
+export async function roundsOf(project: Project, folder: string): Promise<RoundEntry[]> {
+  const out: RoundEntry[] = [];
+  for (const f of (await project.fs.list(`articles/${folder}/rounds/`)).filter((p) => p.endsWith("/round.json"))) {
+    try { out.push({ folder: f.slice(0, -"round.json".length), round: JSON.parse((await project.fs.readText(f))!) as RoundFile }); } catch { /* not a round */ }
+  }
+  return out.sort((a, b) => a.round.sent.date.localeCompare(b.round.sent.date));
+}
+
+/** The round of the version sent `snapshot`, or a new one ("Ronda N", not written yet). */
+export async function roundFor(project: Project, folder: string, snapshot: string, date: string): Promise<{ round: RoundFile; folder: string; created: boolean }> {
+  const all = await roundsOf(project, folder);
+  const found = all.find((r) => r.round.sent.snapshot === snapshot);
+  if (found) return { ...found, created: false };
+  let n = all.length + 1;
+  const taken = new Set(all.map((r) => r.folder));
+  while (taken.has(`articles/${folder}/rounds/ronda-${n}/`)) n++;
+  return { round: { schemaVersion: 1, id: newId("rd"), name: `Ronda ${n}`, sent: { snapshot, date }, copies: [] }, folder: `articles/${folder}/rounds/ronda-${n}/`, created: true };
+}
+
+/** Who signs the article, but the user: whom a round is sent to unless the user says otherwise. */
+export function defaultRecipients(project: Project, folder: string, me = ""): NonNullable<RoundFile["recipients"]> {
+  const art = project.articles.find((a) => a.folder === folder);
+  if (!art) return [];
+  const out: NonNullable<RoundFile["recipients"]> = [];
+  for (const a of art.authors?.authors ?? []) {
+    const p = project.people.people.find((x) => x.id === a.person);
+    if (!p) continue;
+    const name = p.kind === "group" ? p.name : `${p.given} ${p.family}`.trim();
+    if (me && sameName(name, me)) continue;
+    out.push({ name, person: p.id, ...(p.email ? { email: p.email } : {}) });
+  }
+  return out;
+}
+
+/**
+ * Notes a round for a version sent to co-authors (made after the export, or the one there
+ * is), with whom it was sent to and the deadline, if any; written at once.
+ */
+export async function noteRound(project: Project, folder: string, snapshot: string, date: string, patch: { name?: string; recipients?: RoundFile["recipients"]; deadline?: string | null }): Promise<RoundEntry> {
+  const { round, folder: dir } = await roundFor(project, folder, snapshot, date);
+  const next: RoundFile = { ...round };
+  if (patch.name?.trim()) next.name = patch.name.trim();
+  if (patch.recipients) next.recipients = patch.recipients;
+  if (patch.deadline === null) delete next.deadline; else if (patch.deadline) next.deadline = patch.deadline;
+  const issues = validate("round", next);
+  if (issues.length) throw new Error(`invalid round: ${issues[0].path} ${issues[0].message}`);
+  await project.fs.write(`${dir}round.json`, stableStringify(next));
+  return { folder: dir, round: next };
+}
+
+/** One line of the round board: someone the round was sent to, or someone who returned a copy anyway. */
+export interface BoardRow {
+  name: string;
+  person?: string;
+  email?: string;
+  /** Sent to them (false: a copy came back from someone not on the list). */
+  sent: boolean;
+  /** Their copies in this round, the latest last. */
+  copies: RoundFile["copies"];
+  /** Proposals of their copies still to decide (null when their proposals are not loaded). */
+  pending: number | null;
+}
+
+/**
+ * The round board (record 0102; R5): each person the round was sent to, with the copies they
+ * returned and how many of their proposals are left to decide, and then whoever returned a
+ * copy without being on the list. `pendingOf` counts the pending proposals of a copy.
+ */
+export function roundBoard(round: RoundFile, pendingOf: (copy: string) => number | null): BoardRow[] {
+  const mine = (c: RoundFile["copies"][number], r: { name: string; person?: string }) => (r.person && c.returnedBy.person === r.person) || sameName(c.returnedBy.name, r.name);
+  const rows: BoardRow[] = [];
+  const claimed = new Set<string>();
+  for (const r of round.recipients ?? []) {
+    const copies = round.copies.filter((c) => !claimed.has(c.id) && mine(c, r)).sort((a, b) => a.received.localeCompare(b.received));
+    copies.forEach((c) => claimed.add(c.id));
+    rows.push({ name: r.name, ...(r.person ? { person: r.person } : {}), ...(r.email ? { email: r.email } : {}), sent: true, copies, pending: sum(copies.map((c) => pendingOf(c.id))) });
+  }
+  for (const c of round.copies) {
+    if (claimed.has(c.id)) continue;
+    const row = rows.find((x) => !x.sent && mine(c, x));
+    if (row) { row.copies.push(c); row.pending = sum([row.pending, pendingOf(c.id)]); }
+    else rows.push({ name: c.returnedBy.name, ...(c.returnedBy.person ? { person: c.returnedBy.person } : {}), sent: false, copies: [c], pending: pendingOf(c.id) });
+  }
+  return rows;
+}
+const sum = (xs: (number | null)[]) => (xs.some((x) => x === null) ? null : xs.reduce<number>((a, b) => a + (b ?? 0), 0));
