@@ -874,7 +874,7 @@ Cada parte termina con algo usable, y la 2a prueba el modelo de propuestas antes
 
 **Fase 2b: la ronda completa.**
 - **Ronda de revisión con coautores** (5.11): varias copias, también sin control de cambios, fusión a tres bandas con conflictos entre coautores y copias que llegan tarde (R2), autor tomado de la marca de Word, filtro de ruido (R4), plan B cuando se pierden las marcas (R3) y tablero de la ronda (R5).
-- **[Hecho, fichas 0097, 0098 y 0100]** Varias copias a la vez, también sin control de cambios, con sus coincidencias y conflictos entre coautores (0098) y con tu copia, en tres versiones (0100). Quedan el plan B y el tablero de la ronda.
+- **[Hecho, fichas 0097, 0098 y 0100]** Varias copias a la vez, también sin control de cambios, con sus coincidencias y conflictos entre coautores (0098) y con tu copia, en tres versiones (0100). Plan B cuando se pierden las marcas, hecho en la ficha 0101. Queda el tablero de la ronda.
 - **Terminado cuando:** mandas el artículo a tres coautores, dos te lo devuelven con control de cambios y uno sin él, una de las copias llega cuando ya has integrado las otras y seguido escribiendo, y lo integras todo en tu copia maestra desde una sola vista, sin perder citas ni formato.
 
 ### Fase 3: el proyecto completo y la revista (L)

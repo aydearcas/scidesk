@@ -257,7 +257,7 @@ ${a.folder}: ${r.counts.main}${lim("words")} words in the text (tables ${r.count
       const p = await loadProject(fs);
       const r = await importCopy(p, opt("article", "main")!, new Uint8Array(await readFile(file)), { fileName: basename(file), returnedBy: { name: by } });
       const s = r.set;
-      console.log(JSON.stringify({ round: r.roundFolder, proposals: r.proposalsFile, count: s.proposals.length, tracked: s.proposals.filter((x) => x.tracked).length, untracked: s.proposals.filter((x) => !x.tracked).length, hiddenNoise: s.hiddenNoise, integrity: s.integrity }));
+      console.log(JSON.stringify({ round: r.roundFolder, proposals: r.proposalsFile, sent: r.sent.id, foundBy: r.foundBy, ...(r.sent.score !== undefined ? { match: Math.round(r.sent.score * 100) / 100 } : {}), count: s.proposals.length, tracked: s.proposals.filter((x) => x.tracked).length, untracked: s.proposals.filter((x) => !x.tracked).length, hiddenNoise: s.hiddenNoise, integrity: s.integrity }));
       break;
     }
     case "from-word": {

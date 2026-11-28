@@ -17,7 +17,7 @@ import { now } from "./project.ts";
 import { LABELS, commentDurableId, keywordsText, revisionDate } from "./docx-export.ts";
 
 /** Headings the export writes itself ("Resumen", "Pies de figura"…): not content. */
-const GENERATED = new Set(Object.values(LABELS).flatMap((l) => [l.abstract, l.bib, l.captions]));
+export const GENERATED = new Set(Object.values(LABELS).flatMap((l) => [l.abstract, l.bib, l.captions]));
 
 export interface BaseBlock {
   file: string; id: string; text: string; citations: string[];
@@ -91,13 +91,111 @@ const norm = (s: string) => s.normalize("NFC").replace(/[\u00a0\u2009\u202f\s]+/
 function similarity(a: string, b: string) {
   if (a === b) return 1;
   if (!a || !b) return 0;
-  const words = (s: string) => norm(s).toLowerCase().split(/\s+/).filter(Boolean);
+  // words by their letters and digits: "mitad." and "mitad," are the same word
+  const words = (s: string) => norm(s).toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   const A = words(a), B = words(b);
+  if (!A.length || !B.length) return A.length === B.length ? 1 : 0;
   const count = new Map<string, number>();
   for (const w of A) count.set(w, (count.get(w) ?? 0) + 1);
   let common = 0;
   for (const w of B) { const c = count.get(w) ?? 0; if (c) { common++; count.set(w, c - 1); } }
   return (2 * common) / (A.length + B.length);
+}
+
+/**
+ * The text the export writes before a block itself ("Palabras clave: ", "Tabla 1. ", a note's
+ * letter): with the bookmarks, it is the paragraph's lead; without them (plan B), it is
+ * recognised here, and taken as the lead when that makes the paragraph match its block better.
+ */
+export const GENERATED_LEAD = new RegExp(`^(?:(?:${Object.values(LABELS).flatMap((l) => [l.keywords]).join("|")}): |(?:${Object.values(LABELS).flatMap((l) => [l.table, l.figure]).join("|")}) \\d+\\.\\s?|[a-z] )`);
+
+/** Word counts of a text, for comparing paragraphs quickly. */
+function wordsOf(s: string): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const w of norm(s).toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []) out.set(w, (out.get(w) ?? 0) + 1);
+  return out;
+}
+function overlap(a: Map<string, number>, b: Map<string, number>, na: number, nb: number) {
+  if (!na || !nb) return na === nb ? 0.55 : 0;
+  let common = 0;
+  for (const [w, c] of a) common += Math.min(c, b.get(w) ?? 0);
+  return (2 * common) / (na + nb);
+}
+
+/**
+ * Step 1 without bookmarks (plan B, records 0029 and 0101): between the paragraphs already
+ * matched, the copy's paragraphs and the sent blocks are paired keeping their order, with the
+ * best total similarity (each pair at least 0.5), as a sequence alignment. A paragraph whose
+ * generated lead makes it match better without it gets that lead taken off.
+ */
+function alignByContent(base: BaseBlock[], paragraphs: DocxParagraph[], match: Map<number, number>, used: Set<number>) {
+  const info = paragraphs.map((p) => {
+    const text = rejectedText(p);
+    const lead = p.blocks.length || p.lead ? "" : GENERATED_LEAD.exec(text)?.[0] ?? "";
+    const w = wordsOf(text), ws = lead ? wordsOf(text.slice(lead.length)) : null;
+    return { p, text, lead, w, nw: [...w.values()].reduce((a, b) => a + b, 0), ws, nws: ws ? [...ws.values()].reduce((a, b) => a + b, 0) : 0 };
+  });
+  const bw = base.map((b) => { const w = wordsOf(b.text); return { w, n: [...w.values()].reduce((a, c) => a + c, 0) }; });
+  const sim = (k: number, i: number): { s: number; strip: boolean } => {
+    const x = info[k], y = bw[i];
+    if (x.text === base[i].text) return { s: 1.01, strip: false };
+    const raw = overlap(x.w, y.w, x.nw, y.n);
+    const cut = x.ws ? (x.text.slice(x.lead.length) === base[i].text ? 1.01 : overlap(x.ws, y.w, x.nws, y.n)) : 0;
+    return cut > raw ? { s: cut, strip: true } : { s: raw, strip: false };
+  };
+  const strip = new Set<number>();
+  const pair = (k: number, i: number, cut: boolean) => { match.set(paragraphs[k].index, i); used.add(i); if (cut) strip.add(k); };
+  // the anchors: the pairs already made, kept only while they go forward in both
+  const anchors: [number, number][] = [[-1, -1]];
+  const byIndex = new Map(paragraphs.map((p, k) => [p.index, k]));
+  for (const [ci, bi] of [...match].sort((a, b) => a[0] - b[0])) {
+    const k = byIndex.get(ci)!;
+    if (bi > anchors[anchors.length - 1][1]) anchors.push([k, bi]);
+  }
+  anchors.push([paragraphs.length, base.length]);
+  for (let g = 0; g + 1 < anchors.length; g++) {
+    const cs: number[] = [], bs: number[] = [];
+    for (let k = anchors[g][0] + 1; k < anchors[g + 1][0]; k++) if (!match.has(paragraphs[k].index)) cs.push(k);
+    for (let i = anchors[g][1] + 1; i < anchors[g + 1][1]; i++) if (!used.has(i)) bs.push(i);
+    if (!cs.length || !bs.length) continue;
+    if (cs.length * bs.length > 250_000) {
+      // too big to align whole: the nearest good match ahead, as before
+      let from = 0;
+      for (const k of cs) {
+        let best = -1, score = 0.5, cut = false;
+        for (let j = from; j < bs.length && j < from + 200; j++) { const r = sim(k, bs[j]); if (r.s > score) { best = j; score = r.s; cut = r.strip; } }
+        if (best >= 0) { pair(k, bs[best], cut); from = best + 1; }
+      }
+      continue;
+    }
+    // the alignment: D[a][b] = best total for the first a paragraphs and b blocks
+    const A = cs.length, B = bs.length;
+    const D = Array.from({ length: A + 1 }, () => new Float64Array(B + 1));
+    const S = Array.from({ length: A }, () => new Float64Array(B));
+    for (let a = 1; a <= A; a++) {
+      for (let b = 1; b <= B; b++) {
+        const r = sim(cs[a - 1], bs[b - 1]).s;
+        S[a - 1][b - 1] = r;
+        D[a][b] = Math.max(D[a - 1][b], D[a][b - 1], r >= 0.5 ? D[a - 1][b - 1] + r : -Infinity);
+      }
+    }
+    for (let a = A, b = B; a > 0 && b > 0;) {
+      const r = S[a - 1][b - 1];
+      if (r >= 0.5 && D[a][b] === D[a - 1][b - 1] + r) { pair(cs[a - 1], bs[b - 1], sim(cs[a - 1], bs[b - 1]).strip); a--; b--; }
+      else if (D[a][b] === D[a - 1][b]) a--;
+      else b--;
+    }
+  }
+  // the generated leads recognised: off the paragraph's text (only from text nobody changed)
+  for (const k of strip) {
+    const p = paragraphs[k];
+    let n = info[k].lead.length;
+    const first = p.segments.findIndex((x) => x.text.length > 0);
+    if (first < 0 || p.segments.slice(0, first + 1).some((x) => x.kind !== "same") || p.segments[first].text.length < n) continue;
+    p.lead = info[k].lead;
+    p.segments[first] = { ...p.segments[first], text: p.segments[first].text.slice(n) };
+    n = 0;
+  }
 }
 
 export interface Hunk { from: number; to: number; before: string; after: string }
@@ -292,17 +390,7 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
       if (similarity(base[i].text, rejectedText(p)) >= 0.5 || base[i].text === rejectedText(p)) { match.set(p.index, i); used.add(i); break; }
     }
   }
-  let cursor = 0;
-  for (const p of copy.paragraphs) {
-    if (match.has(p.index)) { cursor = match.get(p.index)! + 1; continue; }
-    let best = -1, score = 0.5;
-    for (let i = cursor; i < base.length; i++) {
-      if (used.has(i)) continue;
-      const s = similarity(base[i].text, rejectedText(p));
-      if (s > score) { best = i; score = s; }
-    }
-    if (best >= 0) { match.set(p.index, best); used.add(best); cursor = best + 1; }
-  }
+  alignByContent(base, copy.paragraphs, match, used);
 
   const push = (p: Omit<ProposalSetFile["proposals"][number], "id" | "status" | "decision">) => {
     const noise = p.kind !== "insert-paragraph" && p.kind !== "delete-paragraph" && norm(p.before) === norm(p.after);
@@ -318,7 +406,8 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
       const tracked = p.segments.length > 0 && p.segments.every((s) => s.kind === "ins" || !s.text.trim());
       const author = tracked ? { name: p.segments.find((s) => s.author)!.author! } : info.returnedBy;
       const text = p.segments.filter((s) => s.kind !== "del").map((s) => s.text).join("");
-      if (!p.blocks.length && p.segments.every((s) => s.kind === "same") && GENERATED.has(text.trim())) continue;
+      // a heading the export writes, or the place of a figure it could not draw ("[figures/…]")
+      if (!p.blocks.length && p.segments.every((s) => s.kind === "same") && (GENERATED.has(text.trim()) || /^\[figures\/[^\]]+\]$/.test(text.trim()))) continue;
       if (text.trim()) push({ author, tracked, kind: "insert-paragraph", anchor: { file: (lastBase ?? base[0]).file, after: lastBase?.id ?? null }, before: "", after: text, date });
       continue;
     }
@@ -350,7 +439,8 @@ export function proposalsFromCopy(base: BaseBlock[], copy: DocxRead, info: CopyI
     }
   }
   for (const [i, b] of base.entries()) {
-    if (used.has(i)) continue;
+    // an empty paragraph the copy does not have is no change anyone made
+    if (used.has(i) || !b.text.trim()) continue;
     push({ author: info.returnedBy, tracked: false, kind: "delete-paragraph", anchor: { file: b.file, block: b.id, from: 0, to: b.text.length }, before: b.text, after: "", date });
   }
   // record 0096: the comments, never noise and never text

@@ -63,7 +63,7 @@ import { insertPageBreak } from "./page-break.ts";
 import { landscapeState, landscapeText, refreshLandscapeLabels, setLandscape } from "./landscape.ts";
 import { revealIn, scrollerOf } from "./reveal.ts";
 import { changeAt, changeInfo, changeRange, decide, decideMany, isTracking, setMarkupView, setTracking, stepChange, track, type ChangeRecord, type MarkupView } from "./track-changes.ts";
-import { baseBlocksOf, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
+import { baseBlocksOf, CopyError, decideProposals, loadProposalSets, saveProposalSet } from "@scidesk/core";
 import { blocksById, compareVersions, currentFiles, ensureDailySnapshot, listSnapshots, loadSnapshot, proposalsFromVersion, restoreSnapshot, saveVersionProposals, type SnapshotInfo, type VersionBlock } from "@scidesk/core";
 import { HistoryTimeline, HistoryView, useVersionName } from "./History.tsx";
 import { acceptCommentProposal, bringIntoText, layOut, proposalStates, chooseInstead, useTheirs, type Copy, type ProposalState } from "./proposals-text.ts";
@@ -1237,7 +1237,16 @@ export function App() {
   });
   const importReturnedCopy = async (file: File, returnedBy: string) => {
     if (!project || !article) return;
-    const r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
+    let r: Awaited<ReturnType<typeof importCopy>>;
+    try {
+      r = await importCopy(project, article.folder, new Uint8Array(await file.arrayBuffer()), { fileName: file.name, returnedBy: { name: returnedBy } });
+    } catch (e) {
+      // record 0101: why, in the user's language
+      if (e instanceof CopyError) throw new Error(t(`ui.proposals.copyError.${e.code}`));
+      throw e;
+    }
+    // record 0101: a copy that did not say which version it came from was matched by its text
+    const found = r.foundBy === "content" ? t("ui.proposals.foundByContent", { name: versionName(r.sent), date: new Date(r.sent.created).toLocaleDateString(i18n.language), percent: Math.round((r.sent.score ?? 0) * 100) }) : "";
     // record 0099: the text as it was before the copy's proposals go into it
     await save();
     await saveSnapshot(project, article.folder, t("ui.history.reason.before-import"), { reason: "before-import" });
@@ -1251,7 +1260,7 @@ export function App() {
     const placed = bringIntoText(editor, copy, next.list);
     if (placed.length && (markup === "none" || markup === "original")) setMarkup("all");
     const rest = copy.set.proposals.filter((p) => p.status !== "noise-hidden" && p.decision === "pending").length - placed.length;
-    if (placed.length || rest) setMessage((placed.length ? t("ui.proposals.imported", { name: returnedBy, count: placed.length }) : `${returnedBy}:`) + (rest ? t("ui.proposals.importedRest", { count: rest }) : ""));
+    if (placed.length || rest || found) setMessage((placed.length ? t("ui.proposals.imported", { name: returnedBy, count: placed.length }) : `${returnedBy}:`) + (rest ? t("ui.proposals.importedRest", { count: rest }) : "") + (found ? ` ${found}` : ""));
   };
 
   const onRefs = run(async () => {
